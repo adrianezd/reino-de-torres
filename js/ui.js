@@ -355,4 +355,10 @@ function initGame() {
 document.addEventListener('DOMContentLoaded', initGame);
 if ('serviceWorker' in navigator && window.isSecureContext) {
   window.addEventListener('load', function () { navigator.serviceWorker.register('sw.js').catch(function () {}); });
+  // si llega una versión nueva del juego, recarga una vez para estrenarla
+  var hadSW = !!navigator.serviceWorker.controller, reloaded = false;
+  navigator.serviceWorker.addEventListener('controllerchange', function () {
+    if (!hadSW || reloaded || (typeof battle !== 'undefined' && battle && !battle.ended)) return;
+    reloaded = true; location.reload();
+  });
 }
