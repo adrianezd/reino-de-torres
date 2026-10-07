@@ -210,3 +210,53 @@ button { font: inherit; color: inherit; cursor: pointer; touch-action: manipulat
   .battle { max-width: 560px; margin: 0 auto; border-left: 3px solid var(--ink); border-right: 3px solid var(--ink); }
 }
 @media (prefers-reduced-motion: reduce) { * { animation: none !important; } }
+
+/* =========================================================
+   Estilo de los diseños nuevos (assets/ui/boton): verde lima
+   brillante, marco dorado grueso y reflejo superior.
+   ========================================================= */
+:root { --gold-frame: #f5c400; --gold-dark: #4a3200; }
+.btn, .summon-btn, .mode-btn, .big-choice, .tile-btn, .back, .b-btn, .stage, .dcard {
+  position: relative; overflow: hidden;
+}
+.btn::after, .summon-btn::after, .mode-btn::after, .big-choice::after, .tile-btn::after, .b-btn::after, .stage::after {
+  content: ''; position: absolute; left: 6%; right: 6%; top: 5%; height: 38%;
+  border-radius: 999px 999px 40% 40%;
+  background: linear-gradient(180deg, rgba(255,255,255,0.55), rgba(255,255,255,0.05));
+  pointer-events: none;
+}
+.btn-green, .summon-btn {
+  background: linear-gradient(180deg, #c4f74a 0%, #86dc22 48%, #4caa12 100%);
+  border: 4px solid var(--gold-frame);
+  box-shadow: 0 0 0 3px var(--gold-dark), 0 7px 0 var(--gold-dark), inset 0 -6px 0 rgba(20,80,0,0.35);
+  color: #fff; text-shadow: 0 2px 0 #1e5a00, 0 0 2px #1e5a00;
+}
+.summon-btn small { color: #fff; text-shadow: 0 1px 0 #1e5a00; }
+.summon-btn:active, .btn-green:active { transform: translateY(4px); box-shadow: 0 0 0 3px var(--gold-dark), 0 3px 0 var(--gold-dark), inset 0 -6px 0 rgba(20,80,0,0.35); }
+.btn-red { border: 4px solid var(--gold-frame); box-shadow: 0 0 0 3px var(--gold-dark), 0 7px 0 var(--gold-dark); }
+.btn-ghost { border: 4px solid #8fa0d8; box-shadow: 0 0 0 3px var(--ink), 0 6px 0 var(--ink); }
+.mode-btn, .big-choice { border: 4px solid var(--gold-frame); box-shadow: 0 0 0 3px var(--gold-dark), 0 7px 0 var(--gold-dark), inset 0 -6px 0 rgba(0,0,0,0.18); }
+.mode-btn:active { box-shadow: 0 0 0 3px var(--gold-dark), 0 3px 0 var(--gold-dark); }
+.m-campaign { background: linear-gradient(180deg, #c4f74a 0%, #86dc22 48%, #4caa12 100%); }
+.m-campaign b, .m-campaign small { text-shadow: 0 2px 0 #1e5a00; }
+.tile-btn, .stage, .back, .b-btn { border-color: #e0b400; box-shadow: 0 0 0 2px var(--gold-dark), 0 5px 0 var(--gold-dark); }
+.b-btn.quit { border-color: var(--gold-frame); }
+.dcard { border-color: var(--gold-frame); box-shadow: 0 0 0 2px var(--gold-dark), 0 4px 0 var(--gold-dark); }
+.dcard img { width: 50px; height: 50px; }
+.ucard { box-shadow: 0 0 0 2px var(--gold-dark), 0 5px 0 var(--gold-dark); }
+.ucard img { max-width: 84px; }
+.deck-preview img { width: 62px; height: 62px; }
+.cmd-btn { box-shadow: 0 0 0 3px var(--gold-dark); border-color: var(--gold-frame); }
+.mana { border-color: var(--gold-frame); box-shadow: 0 0 0 2px var(--gold-dark); }
+.pill { border-color: rgba(245,196,0,0.6); }
+
+/* botón grande de jugar con la imagen del diseño */
+.play-hero {
+  display: block; width: min(190px, 52%); margin: 0 auto 16px; padding: 0; border: none; background: none;
+  filter: drop-shadow(0 8px 0 rgba(20,20,60,0.45));
+  animation: playPulse 1.6s ease-in-out infinite;
+}
+.play-hero img { width: 100%; display: block; }
+.play-hero span { position: absolute; left: 0; right: 0; bottom: -2px; text-align: center; font-family: 'Lilita One'; font-size: 0.95rem; color: #fff; text-shadow: 0 2px 0 var(--ink); }
+.play-hero:active { transform: translateY(4px) scale(0.98); }
+@keyframes playPulse { 50% { transform: scale(1.04); } }

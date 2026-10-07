@@ -61,6 +61,7 @@ function renderMenu(name, arg) {
     html = topBar() +
       '<div class="logo"><div class="logo-crest">🏰</div><h1>Reino de Torres</h1><p>Invoca tropas, fusiónalas y defiende tu reino</p></div>' +
       '<div class="deck-preview">' + meta.deck.map(function (id) { return '<img src="' + unitIcon(id, 0, 96) + '" alt="' + esc(UNITS[id].name) + '">'; }).join('') + '</div>' +
+      '<button class="play-hero" data-go="playNext" aria-label="Jugar la siguiente fase de la campaña"><img src="assets/ui/boton.webp" alt=""></button>' +
       '<div class="mode-list">' +
       modeBtn('campaign', '🗺️', 'Campaña', '15 fases con jefes · ' + totalStars() + '/45 ⭐', 'm-campaign') +
       modeBtn('duelPick', '⚔️', 'Duelo 1 contra 1', 'Aguanta más que tu rival', 'm-duel') +
@@ -143,6 +144,12 @@ function bindMenu() {
       sfx('tap');
       var g = b.dataset.go;
       if (g === 'coop') { startBattle('coop'); return; }
+      if (g === 'playNext') {
+        var next = 1;
+        while (next < CAMPAIGN.length && (meta.campaign[next] || 0) > 0) next++;
+        startBattle('campaign', { stage: next });
+        return;
+      }
       if (g === 'freeChest') { var r = claimFreeChest(); if (r) showChest(r); else toast('Vuelve mañana a por otro cofre'); return; }
       showScreen(g);
     };
@@ -305,6 +312,9 @@ function loop(t) {
   requestAnimationFrame(loop);
 }
 
+window.onArtReady = function () {
+  if (imgReadyCount >= 14 && currentScreen !== 'battle') renderMenu(currentScreen);
+};
 function initGame() {
   canvas = $('cv');
   ctx = canvas.getContext('2d');

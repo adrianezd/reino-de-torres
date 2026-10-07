@@ -24,17 +24,39 @@ var PATH_LEN = (function () {
 })();
 var BASE_CROSS_TIME = 17; // segundos que tarda un monstruo normal en dar la vuelta
 
-function pathPos(d) {
-  var acc = 0;
-  for (var i = 1; i < WAYPOINTS.length; i++) {
-    var a = WAYPOINTS[i - 1], b = WAYPOINTS[i];
+/* Geometría de un tablero: casillas (x0, y0, cw, ch), tamaño (W, H) y
+   recorrido de los monstruos (way). Hay dos: el tablero dibujado y el
+   tablero ilustrado de la campaña (assets/tablero.*). */
+function makeGeo(g) {
+  g.len = 0;
+  for (var i = 1; i < g.way.length; i++) g.len += Math.hypot(g.way[i].x - g.way[i - 1].x, g.way[i].y - g.way[i - 1].y);
+  return g;
+}
+var VECTOR_GEO = makeGeo({ W: BOARD_W, H: BOARD_H, x0: PATH_W, y0: PATH_W, cw: 1, ch: 1, way: WAYPOINTS });
+// Medidas tomadas de la ilustración (1672×941): se recorta para quitar la
+// interfaz de las esquinas y 1 unidad = ancho de una casilla (143,8 px).
+var FIELD_PX = { iw: 1672, ih: 941, cx: 250, cy: 110, cw: 1180, ch: 831, cell: 143.8 };
+function fpx(px, py) { return { x: (px - FIELD_PX.cx) / FIELD_PX.cell, y: (py - FIELD_PX.cy) / FIELD_PX.cell }; }
+var FIELD_GEO = makeGeo({
+  image: 'board/tablero',
+  W: FIELD_PX.cw / FIELD_PX.cell, H: FIELD_PX.ch / FIELD_PX.cell,
+  x0: fpx(477, 315).x, y0: fpx(477, 315).y, cw: (1196 - 477) / 5 / FIELD_PX.cell, ch: (690 - 315) / 3 / FIELD_PX.cell,
+  // entran por el camino de abajo, rodean el campo y salen por el mismo camino
+  way: [fpx(805, 990), fpx(805, 767), fpx(322, 767), fpx(322, 185), fpx(1352, 185), fpx(1352, 767), fpx(866, 767), fpx(866, 990)]
+});
+
+function geoPos(g, d) {
+  var acc = 0, w = g.way;
+  for (var i = 1; i < w.length; i++) {
+    var a = w[i - 1], b = w[i];
     var seg = Math.hypot(b.x - a.x, b.y - a.y);
     if (d <= acc + seg) { var t = (d - acc) / seg; return { x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) * t }; }
     acc += seg;
   }
-  return { x: WAYPOINTS[3].x, y: WAYPOINTS[3].y };
+  return { x: w[w.length - 1].x, y: w[w.length - 1].y };
 }
-function cellCenter(i) { return { x: PATH_W + (i % COLS) + 0.5, y: PATH_W + Math.floor(i / COLS) + 0.5 }; }
+function geoCell(g, i) { return { x: g.x0 + ((i % COLS) + 0.5) * g.cw, y: g.y0 + (Math.floor(i / COLS) + 0.5) * g.ch }; }
+function cellCenter(i) { return geoCell(VECTOR_GEO, i); }
 function neighbors(i) {
   var c = i % COLS, r = Math.floor(i / COLS), out = [];
   if (c > 0) out.push(i - 1);
@@ -57,6 +79,7 @@ function Board(opts) {
   this.commander = opts.commander || 'aria';
   this.lives = opts.lives;               // objeto compartido { v, max }
   this.biome = opts.biome || 'prado';
+  this.geo = opts.geo || VECTOR_GEO;
   this.mana = opts.mana || 100;
   this.summonCost = 10;
   this.power = {};
@@ -83,6 +106,8 @@ function shuffleArr(a) {
 }
 
 /* ---------- estadísticas ---------- */
+Board.prototype.cc = function (i) { return geoCell(this.geo, i); };
+Board.prototype.pos = function (d) { return geoPos(this.geo, d); };
 Board.prototype.unitPower = function (id) {
   return (1 + POWER_BONUS * ((this.power[id] || 1) - 1)) * (1 + CARD_BONUS * ((this.cardLv[id] || 1) - 1));
 };
@@ -123,7 +148,7 @@ Board.prototype.summon = function () {
   this.mana -= this.summonCost;
   this.summonCost += 10;
   this.cells[i] = { id: pick(this.deck), rank: 1, cd: Math.random(), frozen: 0, anim: 1, gen: 0 };
-  this.addFx('ring', cellCenter(i), UNITS[this.cells[i].id].color);
+  this.addFx('ring', this.cc(i), UNITS[this.cells[i].id].color);
   return 'ok';
 };
 Board.prototype.canMerge = function (a, b) {
@@ -138,7 +163,7 @@ Board.prototype.merge = function (from, to) {
   v.rank++;
   v.anim = 1;
   v.frozen = 0;
-  var p = cellCenter(to);
+  var p = this.cc(to);
   this.addFx('burst', p, '#ffd166');
   this.addText(p.x, p.y - 0.45, 'Rango ' + v.rank, '#ffd166', true);
   return true;
@@ -150,7 +175,7 @@ Board.prototype.powerUp = function (id) {
   if (this.mana < cost) return 'mana';
   this.mana -= cost;
   this.power[id] = lv + 1;
-  for (var i = 0; i < this.cells.length; i++) if (this.cells[i] && this.cells[i].id === id) { this.cells[i].anim = 0.8; this.addFx('ring', cellCenter(i), '#7dffb0'); }
+  for (var i = 0; i < this.cells.length; i++) if (this.cells[i] && this.cells[i].id === id) { this.cells[i].anim = 0.8; this.addFx('ring', this.cc(i), '#7dffb0'); }
   return 'ok';
 };
 Board.prototype.useCommander = function () {
@@ -159,11 +184,11 @@ Board.prototype.useCommander = function () {
   var cmd = this.commander;
   if (cmd === 'aria') {
     this.enemies.forEach(function (e) { e.stun = Math.max(e.stun, 3); });
-    this.addFx('flash', { x: BOARD_W / 2, y: BOARD_H / 2 }, '#bfefff');
+    this.addFx('flash', { x: this.geo.W / 2, y: this.geo.H / 2 }, '#bfefff');
   } else if (cmd === 'merlo') {
     this.mana += 120;
-    this.addText(BOARD_W / 2, BOARD_H / 2, '+120 💧', '#7dfcff', true);
-    this.addFx('flash', { x: BOARD_W / 2, y: BOARD_H / 2 }, '#b26bff');
+    this.addText(this.geo.W / 2, this.geo.H / 2, '+120 💧', '#7dfcff', true);
+    this.addFx('flash', { x: this.geo.W / 2, y: this.geo.H / 2 }, '#b26bff');
   } else if (cmd === 'brann') {
     var targets = this.enemies.slice().sort(function (a, b) { return b.d - a.d; }).slice(0, 6);
     var dmg = 520 * hpScale();
@@ -184,11 +209,11 @@ Board.prototype.spawn = function (kind, hp, opt) {
   var e = {
     id: ++ENEMY_SEQ, kind: kind, boss: boss, seed: Math.random() * 10,
     hp: hp, maxHp: hp, d: opt.d || 0, x: 0, y: 0,
-    speed: (PATH_LEN / BASE_CROSS_TIME) * d.speed * (opt.speedMult || 1),
+    speed: (this.geo.len / BASE_CROSS_TIME) * d.speed * (opt.speedMult || 1),
     slowPct: 0, slowT: 0, poison: 0, poisonT: 0, stun: 0, shield: 0, abilityT: 3, dead: false,
     armor: d.armor || 0, dodge: d.dodge || 0
   };
-  var p = pathPos(e.d); e.x = p.x; e.y = p.y;
+  var p = this.pos(e.d); e.x = p.x; e.y = p.y;
   this.enemies.push(e);
   return e;
 };
@@ -239,7 +264,7 @@ Board.prototype.fire = function (i, u) {
   var d = UNITS[u.id];
   var target = this.findTarget(d.target);
   if (!target) return false;
-  var from = cellCenter(i);
+  var from = this.cc(i);
   u.aim = Math.atan2(target.y - from.y, target.x - from.x);
   u.recoil = 1;
   if (d.chain) {
@@ -316,7 +341,7 @@ Board.prototype.update = function (dt) {
         u.gen = 0;
         var amt = Math.round(d.manaGen.amount * u.rank * (1 + 0.25 * ((this.power[u.id] || 1) - 1)));
         this.mana += amt;
-        var p = cellCenter(i);
+        var p = this.cc(i);
         this.addText(p.x, p.y - 0.5, '+' + amt + ' 💧', '#7dfcff');
       }
       continue;
@@ -358,9 +383,9 @@ Board.prototype.update = function (dt) {
     if (e.shield > 0) e.shield -= dt;
     if (e.stun > 0) { e.stun -= dt; }
     else e.d += e.speed * evSpeed * (1 - e.slowPct) * dt;
-    var p2 = pathPos(e.d); e.x = p2.x; e.y = p2.y;
+    var p2 = this.pos(e.d); e.x = p2.x; e.y = p2.y;
     if (e.boss) this.bossAbility(e, dt);
-    if (e.d >= PATH_LEN) {
+    if (e.d >= this.geo.len) {
       e.dead = true;
       var loss = e.boss ? 2 : 1;
       this.lives.v = Math.max(0, this.lives.v - loss);
@@ -386,7 +411,7 @@ Board.prototype.bossAbility = function (e, dt) {
   if (ab === 'freeze') {
     e.abilityT = 7;
     var units = this.cells.map(function (u, i) { return u ? i : -1; }).filter(function (i) { return i >= 0; });
-    shuffleArr(units).slice(0, 2).forEach(function (i) { this.cells[i].frozen = 3; this.addFx('ring', cellCenter(i), '#bfefff'); }, this);
+    shuffleArr(units).slice(0, 2).forEach(function (i) { this.cells[i].frozen = 3; this.addFx('ring', this.cc(i), '#bfefff'); }, this);
     this.addText(p.x, p.y - 0.6, '¡Congela!', '#bfefff', true);
   } else if (ab === 'shield') {
     e.abilityT = 8; e.shield = 2.2;
@@ -400,9 +425,9 @@ Board.prototype.bossAbility = function (e, dt) {
     var list = this.cells.map(function (u, i) { return u ? i : -1; }).filter(function (i) { return i >= 0; });
     if (list.length) {
       var i = pick(list), u = this.cells[i];
-      if (u.rank > 1) { u.rank--; this.addText(cellCenter(i).x, cellCenter(i).y - 0.4, '-1 rango', '#ff6a2c', true); }
+      if (u.rank > 1) { u.rank--; this.addText(this.cc(i).x, this.cc(i).y - 0.4, '-1 rango', '#ff6a2c', true); }
       else u.frozen = 4;
-      this.addFx('boom', cellCenter(i), '#ff6a2c');
+      this.addFx('boom', this.cc(i), '#ff6a2c');
     }
   } else {
     e.abilityT = 99;
