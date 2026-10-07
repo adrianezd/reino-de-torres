@@ -192,9 +192,9 @@ var COMMANDER_ORDER = ['aria', 'merlo', 'brann'];
 
 /* Eventos que pueden tocar al empezar una oleada (a partir de la 3). */
 var WAVE_EVENTS = [
-  { id: 'eclipse', name: 'Eclipse',        icon: '🌑', desc: 'Los monstruos van un 25% más rápido.' },
-  { id: 'lluvia',  name: 'Lluvia de maná', icon: '🌧️', desc: 'Cada baja da el doble de maná.' },
-  { id: 'niebla',  name: 'Niebla',         icon: '🌫️', desc: 'Los espectros esquivan más.' },
-  { id: 'horda',   name: 'Horda',          icon: '👹', desc: 'Llegan un 40% más de monstruos, más débiles.' },
-  { id: 'calma',   name: 'Calma',          icon: '🍃', desc: 'Monstruos más lentos esta oleada.' }
+  { id: 'eclipse', name: 'Eclipse', pic: 'assets/events/eclipse.webp',        icon: '🌑', desc: 'Los monstruos van un 25% más rápido.' },
+  { id: 'lluvia',  name: 'Lluvia de maná', pic: 'assets/events/lluvia.webp', icon: '🌧️', desc: 'Cada baja da el doble de maná.' },
+  { id: 'niebla',  name: 'Niebla', pic: 'assets/events/niebla.webp',         icon: '🌫️', desc: 'Los espectros esquivan más.' },
+  { id: 'horda',   name: 'Horda', pic: 'assets/events/horda.webp',          icon: '👹', desc: 'Llegan un 40% más de monstruos, más débiles.' },
+  { id: 'calma',   name: 'Calma', pic: 'assets/events/calma.webp',          icon: '🍃', desc: 'Monstruos más lentos esta oleada.' }
 ];

@@ -239,7 +239,7 @@ function updateHud(force) {
   setHtml('summonCost', p.summonCost + ' ' + MANA_ICO);
   $('summonBtn').classList.toggle('poor', p.mana < p.summonCost || !p.freeCells().length);
   setTxt('bWave', b.wave ? 'Oleada ' + b.wave + (b.maxWaves !== Infinity ? '/' + b.maxWaves : '') : 'Preparando…');
-  setTxt('bEvent', b.event ? b.event.icon + ' ' + b.event.name : '');
+  setHtml('bEvent', b.event ? '<img src="' + b.event.pic + '" alt="">' + esc(b.event.name) : '');
   $('bEvent').hidden = !b.event;
   setHtml('bLives', heartsHtml(p.lives));
   $('bLivesBox').title = (b.mode === 'coop' ? 'Vidas compartidas: ' : 'Tus vidas: ') + p.lives.v;
@@ -271,9 +271,9 @@ function refreshUnitInfo() {
   box.hidden = false;
 }
 var bannerTimer = null;
-function showBanner(title, sub) {
+function showBanner(title, sub, pic) {
   var el = $('banner');
-  el.innerHTML = '<b>' + esc(title) + '</b>' + (sub ? '<small>' + esc(sub) + '</small>' : '');
+  el.innerHTML = (pic ? '<img class="banner-pic" src="' + pic + '" alt="">' : '') + '<b>' + esc(title) + '</b>' + (sub ? '<small>' + esc(sub) + '</small>' : '');
   el.classList.remove('show'); void el.offsetWidth; el.classList.add('show');
 }
 

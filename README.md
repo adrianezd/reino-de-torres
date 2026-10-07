@@ -50,6 +50,7 @@ Oro, cartas con 10 niveles, cofres de madera, plata y oro, cofre gratis diario, 
 - `assets/tiles/*.webp`: suelo de las casillas Altar, Fuente y Atalaya.
 - `assets/tablero.*`, `assets/boards/arena.webp` y `assets/boards/lava.webp`: tableros ilustrados de la campaña (prado, arena con marco de madera para hielo, ruinas y desierto, y lava para volcán y cripta).
 - `assets/commanders/*.webp`: retratos de Aria, Merlo y Brann.
+- `assets/events/*.webp`: medallones de los eventos de oleada (recortados de `assets/wave_events.jpg`).
 - `assets/ui/`: botón de jugar, botones verde y amarillo, corazón de vida, gota y frasco de maná, aro del comandante, marcos de carta, carta de la colección y fondo del menú.
 - Los `assets/*.jpg|png` sueltos son los originales; las versiones del juego son los `.webp` recortados.
 

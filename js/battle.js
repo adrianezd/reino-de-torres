@@ -93,8 +93,8 @@ function startWave() {
   }
   b.spawnInterval = Math.max(0.45, 14 / count);
   b.spawnT = 0;
-  var sub = b.event ? b.event.icon + ' ' + b.event.name + ': ' + b.event.desc : isBossWave(b.wave) ? '👑 ¡Llega un jefe al final!' : '';
-  showBanner('Oleada ' + b.wave + (b.maxWaves !== Infinity ? ' / ' + b.maxWaves : ''), sub);
+  var sub = b.event ? b.event.name + ': ' + b.event.desc : isBossWave(b.wave) ? '👑 ¡Llega un jefe al final!' : '';
+  showBanner('Oleada ' + b.wave + (b.maxWaves !== Infinity ? ' / ' + b.maxWaves : ''), sub, b.event ? b.event.pic : null);
   sfx('wave');
   updateHud(true);
 }
