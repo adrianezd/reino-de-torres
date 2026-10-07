@@ -500,3 +500,22 @@ body {
   .pause-stats { grid-template-columns: repeat(2, 1fr); }
   .pause-ribbon h2 { font-size: 1.7rem; }
 }
+
+/* =========================================================
+   Textos de las cartas legibles: el nombre va en una placa
+   dentro del marco (sin pisar la madera de abajo) y nombre,
+   nivel y contador llevan contorno oscuro y sombra.
+   ========================================================= */
+.ucard, .deck-slots .ucard { padding-bottom: 16%; }
+.ucard small, .deck-slots .ucard small {
+  position: relative; z-index: 1; margin-top: 5px; padding: 1px 7px 2px; max-width: 100%;
+  font-family: 'Lilita One', 'Nunito', sans-serif; font-weight: 400; font-size: 0.78rem; line-height: 1.15; letter-spacing: 0.02em;
+  color: #fff; background: linear-gradient(180deg, rgba(20,24,60,0.85), rgba(10,12,34,0.9));
+  border: 2px solid rgba(245,196,0,0.75); border-radius: 8px;
+  -webkit-text-stroke: 3px var(--ink); paint-order: stroke fill;
+  text-shadow: 0 2px 0 var(--ink);
+}
+.ulv { -webkit-text-stroke: 3px var(--ink); paint-order: stroke fill; text-shadow: 0 2px 0 var(--ink); }
+.ucard .ubar em { font-family: 'Lilita One', sans-serif; font-weight: 400; font-size: 0.66rem; color: #fff; -webkit-text-stroke: 2.5px var(--ink); paint-order: stroke fill; }
+.ucard.locked small { filter: none; }
+.deck-slots .ucard small { padding: 1px 3px 2px; font-size: 0.72rem; letter-spacing: 0; -webkit-text-stroke-width: 2.5px; }
