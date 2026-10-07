@@ -296,13 +296,79 @@ function showResult(res) {
   };
   $('resMenu').onclick = function () { closeOverlay(); battle = null; showScreen(res.mode === 'campaign' ? 'campaign' : 'home'); };
 }
+function fmtTime(sec) { sec = Math.floor(sec); return Math.floor(sec / 60) + ':' + ('0' + sec % 60).slice(-2); }
 function confirmQuit() {
   if (!battle || battle.ended) return;
+  if (battle.paused && $('pauseCard')) { resumeBattle(); return; }
   battle.paused = true;
-  openOverlay('<div class="modal-card"><h2>⏸ Pausa</h2><p>' + (battle.mode === 'campaign' ? 'Fase ' + battle.stage.id + ' · ' : '') + 'Oleada ' + battle.wave + '</p>' +
-    '<button class="btn btn-green" id="qResume">Seguir jugando</button><button class="btn btn-red" id="qQuit">Salir de la partida</button></div>');
-  $('qResume').onclick = function () { closeOverlay(); battle.paused = false; };
-  $('qQuit').onclick = function () { closeOverlay(); battle.ended = true; battle = null; showScreen('home'); };
+  sfx('tap');
+  var b = battle, p = b.player;
+  var where = b.mode === 'campaign' ? '🗺️ Fase ' + b.stage.id + ' · ' + esc(b.stage.name)
+    : b.mode === 'duel' ? '⚔️ Duelo contra ' + esc(b.other.name) : '🤝 Con ' + esc(b.other.name) + ' contra la horda';
+  var wave = b.wave ? b.wave + (b.maxWaves !== Infinity ? '<small>/' + b.maxWaves + '</small>' : '') : '—';
+  var prog = b.maxWaves !== Infinity ? Math.min(1, b.wave / b.maxWaves) : 0;
+  function stat(ico, val, lbl) { return '<div class="ps-stat"><i>' + ico + '</i><b>' + val + '</b><small>' + lbl + '</small></div>'; }
+  openOverlay('<div class="pause-wrap"><div class="pause-rays"></div>' +
+    '<div class="modal-card pause-card" id="pauseCard" role="dialog" aria-labelledby="pauseTitle">' +
+    '<div class="pause-medal"><span></span><span></span></div>' +
+    '<div class="pause-ribbon"><h2 id="pauseTitle">Pausa</h2></div>' +
+    '<p class="pause-where">' + where + '</p>' +
+    (b.maxWaves !== Infinity ? '<div class="pause-prog" title="Progreso de la fase"><i style="width:' + (prog * 100) + '%"></i></div>' : '') +
+    '<div class="pause-stats">' +
+      stat('🌊', wave, 'Oleada') +
+      stat('💀', fmtNum(p.kills), 'Bajas') +
+      stat('⏱️', fmtTime(b.time), 'Tiempo') +
+      stat(MANA_ICO, Math.floor(p.mana), 'Maná') +
+    '</div>' +
+    '<div class="pause-lives">' + heartsHtml(p.lives) + '<small>' + (b.mode === 'coop' ? 'Vidas compartidas' : 'Vidas') + '</small></div>' +
+    '<div class="pause-opts">' +
+      '<button class="pause-opt' + (meta.settings.sound ? ' on' : '') + '" id="pSound"><i>' + (meta.settings.sound ? '🔊' : '🔇') + '</i>Sonido</button>' +
+      '<button class="pause-opt on" id="pSpeed"><i>⏩</i>Velocidad <b>x' + b.speed + '</b></button>' +
+    '</div>' +
+    '<button class="btn btn-green pause-resume" id="qResume">▶ Seguir jugando</button>' +
+    '<div class="pause-row">' +
+      '<button class="btn btn-ghost" id="qRestart">↻ Reiniciar</button>' +
+      '<button class="btn btn-red" id="qQuit">🏠 Salir</button>' +
+    '</div>' +
+    '<p class="pause-confirm" id="qConfirm" hidden></p>' +
+    '</div></div>');
+  $('qResume').onclick = resumeBattle;
+  $('pSound').onclick = function () {
+    meta.settings.sound = !meta.settings.sound; saveMeta();
+    this.classList.toggle('on', meta.settings.sound);
+    this.querySelector('i').textContent = meta.settings.sound ? '🔊' : '🔇';
+    sfx('tap');
+  };
+  $('pSpeed').onclick = function () {
+    b.speed = b.speed === 1 ? 2 : b.speed === 2 ? 3 : 1;
+    this.querySelector('b').textContent = 'x' + b.speed;
+    updateHud(); sfx('tap');
+  };
+  // reiniciar y salir piden un segundo toque para no perder la partida sin querer
+  var armed = null;
+  function arm(btn, msg, act) {
+    if (armed === btn.id) { act(); return; }
+    armed = btn.id;
+    ['qRestart', 'qQuit'].forEach(function (id) { $(id).classList.toggle('armed', id === btn.id); });
+    var c = $('qConfirm'); c.textContent = msg; c.hidden = false;
+    c.classList.remove('shake'); void c.offsetWidth; c.classList.add('shake');
+    sfx('no'); buzz(20);
+  }
+  $('qRestart').onclick = function () {
+    arm(this, 'Toca otra vez para empezar de nuevo', function () {
+      closeOverlay(); b.ended = true;
+      startBattle(b.mode, b.mode === 'campaign' ? { stage: b.stage.id } : b.opts);
+    });
+  };
+  $('qQuit').onclick = function () {
+    arm(this, 'Toca otra vez para salir: perderás esta partida', function () {
+      closeOverlay(); b.ended = true; battle = null; showScreen('home');
+    });
+  };
+}
+function resumeBattle() {
+  if (!battle) return;
+  closeOverlay(); battle.paused = false; sfx('tap');
 }
 
 /* ---------- bucle ---------- */
