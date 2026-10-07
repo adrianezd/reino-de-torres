@@ -43,6 +43,13 @@ Tower defense de fusión para móvil y escritorio, gratis y sin anuncios. Invoca
 
 Oro, cartas con 10 niveles, cofres de madera, plata y oro, cofre gratis diario, mazo de 5 tropas, trofeos y estrellas. Todo se guarda en el navegador.
 
+## Arte
+
+- `assets/units/*.webp`: fichas ilustradas de las 12 tropas (recortadas de los originales `assets/*.jpg`).
+- `assets/enemies/blob.webp`: la gelatina; el resto de monstruos y jefes se crean a partir de ella (color y accesorios).
+- `assets/ui/boton.webp`: botón de jugar; el estilo de todos los botones sigue este diseño.
+- `assets/tablero.(png|jpg|webp)`: tablero ilustrado de la campaña (1672×941). Si no está, se usa el tablero dibujado.
+
 ## Técnica
 
 HTML, CSS y JavaScript sin dependencias ni build. Dibujo vectorial en canvas y sonido sintetizado. Funciona sin conexión tras la primera visita.

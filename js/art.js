@@ -44,6 +44,49 @@ function star(c, x, y, r, pts) {
   c.closePath();
 }
 
+/* ---------- imágenes de los diseños (assets/) ---------- */
+var IMG = {};
+var IMG_LIST = { units: UNIT_ORDER, enemies: ['blob'], ui: ['boton'] };
+var imgReadyCount = 0;
+Object.keys(IMG_LIST).forEach(function (dir) {
+  IMG_LIST[dir].forEach(function (id) {
+    var im = new Image();
+    im.onload = function () { im.ready = true; imgReadyCount++; _unitIconCache = {}; _tintCache = {}; if (window.onArtReady) window.onArtReady(); };
+    im.src = 'assets/' + dir + '/' + id + '.webp';
+    IMG[dir + '/' + id] = im;
+  });
+});
+// tablero ilustrado de la campaña: se prueba con varias extensiones
+(function loadBoard(exts) {
+  if (!exts.length) return;
+  var im = new Image();
+  im.onload = function () { im.ready = true; IMG['board/tablero'] = im; };
+  im.onerror = function () { loadBoard(exts.slice(1)); };
+  im.src = 'assets/tablero.' + exts[0];
+})(['webp', 'png', 'jpg', 'jpeg']);
+function art(key) { var im = IMG[key]; return im && im.ready ? im : null; }
+
+/* Copia teñida de una imagen (para crear monstruos a partir de la gelatina). */
+var _tintCache = {};
+function tinted(key, color, strength) {
+  var k = key + color + strength;
+  if (_tintCache[k]) return _tintCache[k];
+  var im = art(key);
+  if (!im) return null;
+  var cv = document.createElement('canvas');
+  cv.width = im.naturalWidth; cv.height = im.naturalHeight;
+  var c = cv.getContext('2d');
+  c.drawImage(im, 0, 0);
+  c.globalCompositeOperation = 'color';
+  c.globalAlpha = strength == null ? 1 : strength;
+  c.fillStyle = color; c.fillRect(0, 0, cv.width, cv.height);
+  c.globalAlpha = 1;
+  c.globalCompositeOperation = 'destination-in';
+  c.drawImage(im, 0, 0);
+  _tintCache[k] = cv;
+  return cv;
+}
+
 var RANK_RIMS = ['#9fb3c8', '#9fb3c8', '#c9d4e6', '#ffd166', '#ffb020', '#c77dff', '#ff5fd2', '#ff3b5c'];
 
 /* ---------- ficha de tropa ---------- */
@@ -58,6 +101,25 @@ function drawUnit(c, id, x, y, r, rank, now, opt) {
   // aura de rango alto
   if (rank >= 5) glow(c, 0, 0, r * 1.35, RANK_RIMS[rank], 0.45 + Math.sin(now / 300) * 0.12);
 
+  var pic = art('units/' + id);
+  if (pic) {
+    // diseño ilustrado: la ficha ya trae su marco
+    c.fillStyle = 'rgba(0,0,0,0.35)'; c.beginPath(); c.ellipse(0, r * 0.9, r * 0.8, r * 0.22, 0, 0, Math.PI * 2); c.fill();
+    if (rank >= 4) {
+      c.lineWidth = r * 0.09; c.strokeStyle = alpha(RANK_RIMS[rank], 0.75 + Math.sin(now / 250) * 0.2);
+      circle(c, 0, bob, r * 1.06); c.stroke();
+    }
+    var sz = r * 2.12;
+    c.drawImage(pic, -sz / 2, -sz / 2 + bob, sz, sz);
+    if (!opt.noRank) drawRankStars(c, rank, r);
+    if (opt.frozen) {
+      circle(c, 0, bob, r * 0.98); c.fillStyle = 'rgba(170,225,255,0.55)'; c.fill();
+      c.strokeStyle = '#ffffff'; c.lineWidth = r * 0.06; c.stroke();
+    }
+    c.restore();
+    return;
+  }
+
   // base: disco con el color de la tropa
   circle(c, 0, r * 0.06, r); c.fillStyle = 'rgba(0,0,0,0.35)'; c.fill();
   var bg = c.createRadialGradient(-r * 0.3, -r * 0.4, r * 0.1, 0, 0, r);
@@ -65,7 +127,12 @@ function drawUnit(c, id, x, y, r, rank, now, opt) {
   circle(c, 0, 0, r); c.fillStyle = bg; c.fill();
   // aro de rango
   c.lineWidth = r * (0.1 + Math.min(rank, 7) * 0.012);
-  c.strokeStyle = RANK_RIMS[rank];
+  var rim = c.createLinearGradient(-r, -r, r, r);
+  rim.addColorStop(0, shade(RANK_RIMS[rank].length === 7 ? RANK_RIMS[rank] : '#c9d4e6', 80));
+  rim.addColorStop(0.45, RANK_RIMS[rank]);
+  rim.addColorStop(0.55, shade(RANK_RIMS[rank], -40));
+  rim.addColorStop(1, shade(RANK_RIMS[rank], 30));
+  c.strokeStyle = rim;
   circle(c, 0, 0, r * 0.95); c.stroke();
   circle(c, 0, 0, r); ink(c, r * 0.05);
 
@@ -109,7 +176,7 @@ function drawBody(c, u, r, bob) {
 
 function face(c, r, hy, opt) {
   opt = opt || {};
-  var ex = r * 0.15, ey = hy + r * 0.02, er = r * 0.075;
+  var ex = r * 0.15, ey = hy + r * 0.02, er = r * (opt && opt.big ? 0.092 : 0.075);
   if (!opt.noEyes) {
     [-1, 1].forEach(function (s) {
       if (opt.patch && s === 1) {
@@ -120,6 +187,7 @@ function face(c, r, hy, opt) {
       c.fillStyle = '#ffffff'; c.beginPath(); c.ellipse(s * ex, ey, er, er * 1.15, 0, 0, Math.PI * 2); c.fill();
       c.fillStyle = opt.eyeColor || '#2a1e3a'; circle(c, s * ex + er * 0.15, ey + er * 0.1, er * 0.62); c.fill();
       c.fillStyle = '#ffffff'; circle(c, s * ex + er * 0.35, ey - er * 0.25, er * 0.22); c.fill();
+      if (opt.big) { c.fillStyle = 'rgba(255,255,255,0.85)'; circle(c, s * ex - er * 0.2, ey + er * 0.45, er * 0.12); c.fill(); }
     });
   }
   if (opt.brows) {
@@ -147,17 +215,37 @@ function drawHead(c, id, u, r, bob, now) {
   var i;
   switch (id) {
     case 'lyra': {
-      // capucha verde con hoja, arco a la espalda
-      c.strokeStyle = '#7a4a1e'; c.lineWidth = r * 0.08;
-      c.beginPath(); c.arc(r * 0.18, hy + r * 0.1, r * 0.62, -1.2, 1.0); c.stroke();
-      c.strokeStyle = '#f4ead0'; c.lineWidth = r * 0.02;
-      c.beginPath(); c.moveTo(r * 0.18 + Math.cos(-1.2) * r * 0.62, hy + r * 0.1 + Math.sin(-1.2) * r * 0.62); c.lineTo(r * 0.18 + Math.cos(1.0) * r * 0.62, hy + r * 0.1 + Math.sin(1.0) * r * 0.62); c.stroke();
+      // capucha verde con hoja, broche y arco en la mano
       c.beginPath(); c.moveTo(-r * 0.46, hy + r * 0.38); c.quadraticCurveTo(-r * 0.5, hy - r * 0.5, 0, hy - r * 0.62); c.quadraticCurveTo(r * 0.5, hy - r * 0.5, r * 0.46, hy + r * 0.38); c.closePath();
       c.fillStyle = vgrad(c, hy - r * 0.6, hy + r * 0.4, '#5fd47e', '#2a8a45'); c.fill(); ink(c, r * 0.045);
+      // mechones que asoman de la capucha
+      c.fillStyle = vgrad(c, hy - r * 0.3, hy + r * 0.45, '#ffb35c', '#d9762a');
+      [-1, 1].forEach(function (sd) {
+        c.beginPath(); c.moveTo(sd * r * 0.3, hy - r * 0.2); c.quadraticCurveTo(sd * r * 0.46, hy + r * 0.15, sd * r * 0.3, hy + r * 0.46); c.quadraticCurveTo(sd * r * 0.22, hy + r * 0.15, sd * r * 0.3, hy - r * 0.2); c.fill(); ink(c, r * 0.025);
+      });
       headBase(c, u, r, hy + r * 0.04);
-      c.fillStyle = '#e8a050'; c.beginPath(); c.moveTo(-r * 0.3, hy - r * 0.14); c.quadraticCurveTo(0, hy - r * 0.38, r * 0.3, hy - r * 0.14); c.quadraticCurveTo(0, hy - r * 0.22, -r * 0.3, hy - r * 0.14); c.fill();
-      face(c, r, hy + r * 0.06, {});
+      c.fillStyle = vgrad(c, hy - r * 0.35, hy - r * 0.05, '#ffbf6a', '#e0802e');
+      c.beginPath(); c.moveTo(-r * 0.34, hy - r * 0.02); c.quadraticCurveTo(-r * 0.3, hy - r * 0.36, 0, hy - r * 0.34); c.quadraticCurveTo(r * 0.3, hy - r * 0.36, r * 0.34, hy - r * 0.02);
+      c.quadraticCurveTo(r * 0.18, hy - r * 0.14, r * 0.06, hy - r * 0.06); c.quadraticCurveTo(-r * 0.02, hy - r * 0.16, -r * 0.12, hy - r * 0.06); c.quadraticCurveTo(-r * 0.22, hy - r * 0.16, -r * 0.34, hy - r * 0.02); c.closePath();
+      c.fill(); ink(c, r * 0.025);
+      face(c, r, hy + r * 0.07, { big: true, eyeColor: '#2f7a3a' });
       c.fillStyle = '#b8f27a'; c.beginPath(); c.ellipse(-r * 0.2, hy - r * 0.48, r * 0.12, r * 0.05, -0.6, 0, Math.PI * 2); c.fill(); ink(c, r * 0.025);
+      // broche de hoja en el cuello de la capa
+      c.save(); c.translate(0, r * 0.42 + bob); c.rotate(-0.5);
+      c.beginPath(); c.moveTo(0, -r * 0.1); c.quadraticCurveTo(r * 0.09, 0, 0, r * 0.1); c.quadraticCurveTo(-r * 0.09, 0, 0, -r * 0.1);
+      c.fillStyle = vgrad(c, -r * 0.1, r * 0.1, '#ffe27a', '#d4a020'); c.fill(); ink(c, r * 0.02);
+      c.strokeStyle = '#8a6418'; c.lineWidth = r * 0.012; c.beginPath(); c.moveTo(0, -r * 0.08); c.lineTo(0, r * 0.08); c.stroke();
+      c.restore();
+      // arquito de madera en la mano
+      c.save(); c.translate(r * 0.46, r * 0.36 + bob); c.rotate(-0.25);
+      c.strokeStyle = INK; c.lineWidth = r * 0.11;
+      c.beginPath(); c.arc(-r * 0.2, 0, r * 0.36, -1.15, 1.15); c.stroke();
+      c.strokeStyle = '#a8703a'; c.lineWidth = r * 0.065;
+      c.beginPath(); c.arc(-r * 0.2, 0, r * 0.36, -1.15, 1.15); c.stroke();
+      c.strokeStyle = '#f4ead0'; c.lineWidth = r * 0.018;
+      c.beginPath(); c.moveTo(-r * 0.2 + Math.cos(-1.15) * r * 0.36, Math.sin(-1.15) * r * 0.36); c.lineTo(-r * 0.2 + Math.cos(1.15) * r * 0.36, Math.sin(1.15) * r * 0.36); c.stroke();
+      circle(c, r * 0.15, 0, r * 0.075); c.fillStyle = u.skin; c.fill(); ink(c, r * 0.022);
+      c.restore();
       break;
     }
     case 'brasa': {
@@ -333,7 +421,7 @@ function drawHead(c, id, u, r, bob, now) {
 }
 
 /* ---------- monstruos ---------- */
-function drawEnemy(c, e, r, now) {
+function drawEnemyVector(c, e, r, now) {
   var d = e.boss ? BOSSES[e.kind] : ENEMIES[e.kind];
   var col = d.color;
   c.save();
@@ -385,17 +473,128 @@ function drawEnemy(c, e, r, now) {
   if (e.shield > 0) { c.strokeStyle = 'rgba(200,210,230,0.95)'; c.lineWidth = r * 0.14; circle(c, e.x, e.y, r * 1.25); c.stroke(); }
 }
 
+/* Monstruos con el diseño ilustrado de la gelatina: cada tipo es una
+   gelatina de otro color con sus propios accesorios. */
+var ENEMY_LOOK = {
+  blob:   { tint: null,      scale: 1 },
+  imp:    { tint: '#ff7a2a', scale: 0.92, horns: '#c8261a', tail: true, brows: true },
+  brute:  { tint: '#8c8ca6', scale: 1.08, helmet: true, tusks: true, brows: true },
+  ghost:  { tint: '#9d86ff', scale: 0.95, alpha: 0.8 },
+  rey:    { tint: '#3ea6ff', scale: 1, crown: '#ffd166' },
+  gelido: { tint: '#8fe3ff', scale: 1, iceCrown: true, brows: true },
+  coloso: { tint: '#9a9aa8', scale: 1.05, crown: '#c9a24a', plates: true, brows: true },
+  nigro:  { tint: '#9b5cff', scale: 1, hood: true, staff: true },
+  dragon: { tint: '#ff4b2b', scale: 1, horns: '#ffd166', wings: true, brows: true }
+};
+function drawEnemy(c, e, r, now) {
+  var base = art('enemies/blob');
+  if (!base) { drawEnemyVector(c, e, r, now); return; }
+  var look = ENEMY_LOOK[e.kind] || ENEMY_LOOK.blob;
+  var body = look.tint ? tinted('enemies/blob', look.tint, 0.85) : base;
+  var col = (e.boss ? BOSSES[e.kind] : ENEMIES[e.kind]).color;
+  var S = r * 2.5 * look.scale;
+  var squash = 1 + Math.sin(now / 140 + e.seed) * 0.05;
+  var float = e.kind === 'ghost' ? Math.sin(now / 300 + e.seed) * r * 0.15 : 0;
+  c.save();
+  c.translate(e.x, e.y + float);
+  c.fillStyle = 'rgba(0,0,0,0.28)'; c.beginPath(); c.ellipse(0, r * 0.82 - float, r * 0.85, r * 0.22, 0, 0, Math.PI * 2); c.fill();
+  if (e.boss) glow(c, 0, 0, r * 1.7, col, 0.4);
+  c.scale(1 / squash, squash);
+  var top = -S * 0.56; // parte superior de la imagen
+  var Y = function (f) { return top + f * S; }; // fracción vertical de la imagen
+  var X = function (f) { return (f - 0.5) * S; };
+
+  // detrás del cuerpo
+  if (look.wings) {
+    var flap = Math.sin(now / 160) * 0.15;
+    [-1, 1].forEach(function (sd) {
+      c.save(); c.translate(sd * S * 0.3, Y(0.45)); c.rotate(sd * (0.35 + flap));
+      c.beginPath(); c.moveTo(0, 0); c.quadraticCurveTo(sd * S * 0.35, -S * 0.32, sd * S * 0.42, -S * 0.02); c.quadraticCurveTo(sd * S * 0.28, -S * 0.04, sd * S * 0.22, S * 0.12); c.closePath();
+      c.fillStyle = vgrad(c, -S * 0.3, S * 0.1, '#ff8a5a', '#a01e12'); c.fill(); ink(c, r * 0.06);
+      c.restore();
+    });
+  }
+  if (look.tail) {
+    c.strokeStyle = shade(look.tint, -40); c.lineWidth = r * 0.12;
+    c.beginPath(); c.moveTo(X(0.75), Y(0.82)); c.quadraticCurveTo(X(1.02), Y(0.78), X(0.98), Y(0.55)); c.stroke();
+    c.fillStyle = look.horns; c.beginPath(); c.moveTo(X(0.98), Y(0.47)); c.lineTo(X(1.06), Y(0.58)); c.lineTo(X(0.9), Y(0.57)); c.closePath(); c.fill();
+  }
+  if (look.staff) {
+    c.strokeStyle = '#5a3a20'; c.lineWidth = r * 0.12; c.beginPath(); c.moveTo(X(0.92), Y(0.95)); c.lineTo(X(0.92), Y(0.12)); c.stroke();
+    glow(c, X(0.92), Y(0.1), r * 0.45, '#7dffb0', 0.7);
+    c.fillStyle = '#f2ead8'; circle(c, X(0.92), Y(0.1), r * 0.2); c.fill(); ink(c, r * 0.05);
+    c.fillStyle = '#1a1028'; circle(c, X(0.88), Y(0.09), r * 0.05); c.fill(); circle(c, X(0.96), Y(0.09), r * 0.05); c.fill();
+  }
+
+  if (look.alpha) c.globalAlpha = look.alpha;
+  c.drawImage(body, -S / 2, top, S, S);
+  c.globalAlpha = 1;
+
+  // delante del cuerpo
+  if (look.hood) {
+    c.beginPath(); c.moveTo(X(0.1), Y(0.62)); c.quadraticCurveTo(X(0.06), Y(0.0), X(0.5), Y(-0.04)); c.quadraticCurveTo(X(0.94), Y(0.0), X(0.9), Y(0.62)); c.closePath();
+    c.ellipse(0, Y(0.38), S * 0.3, S * 0.24, 0, 0, Math.PI * 2, true);
+    c.fillStyle = vgrad(c, Y(0), Y(0.6), '#5a3a8a', '#1e1236'); c.fill('evenodd'); ink(c, r * 0.07);
+  }
+  if (look.helmet) {
+    c.beginPath(); c.moveTo(X(0.2), Y(0.3)); c.quadraticCurveTo(X(0.5), Y(0.02), X(0.8), Y(0.3)); c.lineTo(X(0.8), Y(0.36)); c.lineTo(X(0.2), Y(0.36)); c.closePath();
+    c.fillStyle = vgrad(c, Y(0.05), Y(0.36), '#d6dae6', '#6a6e7c'); c.fill(); ink(c, r * 0.06);
+    c.fillStyle = '#f2ead8';
+    [-1, 1].forEach(function (sd) { c.beginPath(); c.moveTo(X(0.5 + sd * 0.28), Y(0.24)); c.quadraticCurveTo(X(0.5 + sd * 0.46), Y(0.12), X(0.5 + sd * 0.44), Y(-0.04)); c.quadraticCurveTo(X(0.5 + sd * 0.36), Y(0.12), X(0.5 + sd * 0.22), Y(0.2)); c.fill(); ink(c, r * 0.04); });
+  }
+  if (look.plates) {
+    c.fillStyle = 'rgba(90,90,104,0.9)';
+    [[0.24, 0.62], [0.68, 0.66], [0.46, 0.8]].forEach(function (p) { rrect(c, X(p[0]), Y(p[1]), S * 0.14, S * 0.1, S * 0.02); c.fill(); ink(c, r * 0.04); });
+  }
+  if (look.tusks) {
+    c.fillStyle = '#f7f0dc';
+    [-1, 1].forEach(function (sd) { c.beginPath(); c.moveTo(X(0.5 + sd * 0.1), Y(0.58)); c.lineTo(X(0.5 + sd * 0.14), Y(0.46)); c.lineTo(X(0.5 + sd * 0.17), Y(0.58)); c.closePath(); c.fill(); ink(c, r * 0.035); });
+  }
+  if (look.brows) {
+    c.strokeStyle = INK; c.lineWidth = r * 0.11; c.lineCap = 'round';
+    [-1, 1].forEach(function (sd) { c.beginPath(); c.moveTo(X(0.5 + sd * 0.28), Y(0.24)); c.lineTo(X(0.5 + sd * 0.08), Y(0.31)); c.stroke(); });
+  }
+  if (look.horns) {
+    c.fillStyle = look.horns;
+    [-1, 1].forEach(function (sd) { c.beginPath(); c.moveTo(X(0.5 + sd * 0.12), Y(0.12)); c.quadraticCurveTo(X(0.5 + sd * 0.26), Y(-0.06), X(0.5 + sd * 0.3), Y(-0.12)); c.quadraticCurveTo(X(0.5 + sd * 0.28), Y(0.06), X(0.5 + sd * 0.24), Y(0.16)); c.closePath(); c.fill(); ink(c, r * 0.05); });
+  }
+  if (look.crown) {
+    var cw = S * 0.34, cy = Y(0.1);
+    c.beginPath(); c.moveTo(-cw / 2, cy); c.lineTo(-cw / 2, cy - cw * 0.45); c.lineTo(-cw / 4, cy - cw * 0.2); c.lineTo(0, cy - cw * 0.55); c.lineTo(cw / 4, cy - cw * 0.2); c.lineTo(cw / 2, cy - cw * 0.45); c.lineTo(cw / 2, cy); c.closePath();
+    c.fillStyle = vgrad(c, cy - cw * 0.55, cy, '#fff1a8', look.crown); c.fill(); ink(c, r * 0.06);
+    c.fillStyle = '#ff3b5c'; circle(c, 0, cy - cw * 0.14, cw * 0.08); c.fill();
+  }
+  if (look.iceCrown) {
+    for (var k = -2; k <= 2; k++) {
+      var hx = k * S * 0.07, hh = (k === 0 ? 0.22 : Math.abs(k) === 1 ? 0.16 : 0.1) * S;
+      c.beginPath(); c.moveTo(hx - S * 0.04, Y(0.12)); c.lineTo(hx, Y(0.12) - hh); c.lineTo(hx + S * 0.04, Y(0.12)); c.closePath();
+      c.fillStyle = vgrad(c, Y(0.12) - hh, Y(0.12), '#ffffff', '#58c9ff'); c.fill(); ink(c, r * 0.04);
+    }
+  }
+  c.restore();
+
+  if (e.slowPct > 0) { c.strokeStyle = 'rgba(160,225,255,0.85)'; c.lineWidth = r * 0.1; circle(c, e.x, e.y, r * 1.1); c.stroke(); }
+  if (e.poison > 0) { c.fillStyle = 'rgba(120,255,90,0.9)'; circle(c, e.x + r * 0.75, e.y - r * 0.7, r * 0.18); c.fill(); }
+  if (e.stun > 0) { c.fillStyle = '#ffe6a3'; c.font = 'bold ' + (r * 0.9).toFixed(3) + 'px sans-serif'; c.textAlign = 'center'; c.fillText('✦', e.x, e.y - r * 1.35); }
+  if (e.shield > 0) { c.strokeStyle = 'rgba(200,210,230,0.95)'; c.lineWidth = r * 0.14; circle(c, e.x, e.y, r * 1.3); c.stroke(); }
+}
+
 /* ---------- icono para la interfaz (canvas → dataURL, cacheado) ---------- */
 var _unitIconCache = {};
 function unitIcon(id, rank, size) {
   size = size || 128;
+  if (!rank) return 'assets/units/' + id + '.webp';
+  if (!art('units/' + id)) { var tmp = drawIconCanvas(id, rank, size); return tmp; }
   var k = id + '_' + (rank || 1) + '_' + size;
   if (_unitIconCache[k]) return _unitIconCache[k];
+  _unitIconCache[k] = drawIconCanvas(id, rank, size);
+  return _unitIconCache[k];
+}
+function drawIconCanvas(id, rank, size) {
   var cv = document.createElement('canvas');
   cv.width = size; cv.height = size;
   var c = cv.getContext('2d');
   if (!c) return '';
-  drawUnit(c, id, size / 2, size * 0.54, size * 0.36, rank || 1, 1000, { still: true, noRank: !rank });
-  _unitIconCache[k] = cv.toDataURL();
-  return _unitIconCache[k];
+  drawUnit(c, id, size / 2, size * 0.47, size * 0.4, rank || 1, 1000, { still: true, noRank: !rank });
+  return cv.toDataURL();
 }
