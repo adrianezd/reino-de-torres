@@ -20,7 +20,8 @@ function startBattle(mode, opts) {
   var lv = cardLevels();
   var lives = mode === 'campaign' ? { v: 5, max: 5 } : mode === 'duel' ? { v: 3, max: 3 } : { v: 6, max: 6 };
   // la campaña (un jugador) usa el tablero ilustrado si está disponible
-  var geo = mode === 'campaign' && art('board/tablero') ? FIELD_GEO : VECTOR_GEO;
+  var fg = FIELD_GEOS[BIOME_FIELD[biome] || 'prado'];
+  var geo = mode === 'campaign' && art(fg.image) ? fg : mode === 'campaign' && art('board/tablero') ? FIELD_GEO : VECTOR_GEO;
   var player = new Board({ name: 'Tú', deck: deck, cardLv: lv, commander: meta.commander, lives: lives, biome: biome, geo: geo });
   battle = {
     mode: mode, stage: stage, opts: opts,
@@ -80,7 +81,10 @@ function startWave() {
   if (b.wave >= 2) mix.push('imp');
   if (b.wave >= 3) mix.push('brute');
   if (b.wave >= 4) mix.push('ghost', 'imp');
-  if (b.wave >= 8) mix.push('brute', 'ghost');
+  if (b.wave >= 3) mix.push('orco');
+  if (b.wave >= 5) mix.push('escarcha', 'orco');
+  if (b.wave >= 6) mix.push('rocoso');
+  if (b.wave >= 8) mix.push('brute', 'ghost', 'rocoso', 'escarcha');
   b.queue = [];
   for (var i = 0; i < count; i++) b.queue.push({ kind: pick(mix) });
   if (isBossWave(b.wave)) {
@@ -282,11 +286,23 @@ function drawBattle(now) {
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   var bio = BIOMES[battle.player.biome];
   var g = ctx.createLinearGradient(0, 0, 0, layout.h);
-  if (battle.player.geo.image) { g.addColorStop(0, '#5cc23a'); g.addColorStop(1, '#3f9a2a'); }
+  if (battle.player.geo.image && battle.player.geo.px.fade) { g.addColorStop(0, '#5cc23a'); g.addColorStop(1, '#3f9a2a'); }
   else { g.addColorStop(0, shade(bio.bg, 20)); g.addColorStop(1, shade(bio.bg, -30)); }
   ctx.fillStyle = g; ctx.fillRect(0, 0, layout.w, layout.h);
-  var fieldPic = battle.player.geo.image && !battle.other ? art(battle.player.geo.image) : null;
-  if (fieldPic) {
+  var G0 = battle.player.geo;
+  var fieldPic = G0.image && !battle.other ? art(G0.image) : null;
+  var fondo = art('ui/fondo');
+  var grassy = ['prado', 'bosque', 'pantano'].indexOf(battle.player.biome) !== -1;
+  if (fondo && ((fieldPic && G0.px.bg === 'fondo') || (!fieldPic && grassy))) {
+    // prado ilustrado de fondo, a pantalla completa
+    var k = Math.max(layout.w / fondo.naturalWidth, layout.h / fondo.naturalHeight);
+    var fw = fondo.naturalWidth * k, fh = fondo.naturalHeight * k;
+    ctx.drawImage(fondo, (layout.w - fw) / 2, (layout.h - fh) / 2, fw, fh);
+    if (G0.px && G0.px.bg === 'fondo' && battle.player.biome !== 'prado') {
+      // tono del bioma por encima del prado
+      ctx.fillStyle = alpha(BIOMES[battle.player.biome].bg, 0.45); ctx.fillRect(0, 0, layout.w, layout.h);
+    }
+  } else if (fieldPic && G0.px.fade) {
     // césped del mismo tono que la ilustración, con matas y flores sueltas
     var gg = ctx.createLinearGradient(0, 0, 0, layout.h);
     gg.addColorStop(0, '#6fc322'); gg.addColorStop(0.5, '#6abd1f'); gg.addColorStop(1, '#5aa81b');
@@ -337,9 +353,9 @@ function drawBoard(b, L, now, isMain) {
   var pic = G.image ? art(G.image) : null;
   if (pic) {
     // tablero ilustrado (recortado sin la interfaz de las esquinas)
-    var kx = pic.naturalWidth / FIELD_PX.iw, ky = pic.naturalHeight / FIELD_PX.ih;
-    ctx.drawImage(pic, FIELD_PX.cx * kx, FIELD_PX.cy * ky, FIELD_PX.cw * kx, FIELD_PX.ch * ky, 0, 0, G.W, G.H);
-    if (!battle.other) {
+    var F = G.px, kx = pic.naturalWidth / F.iw, ky = pic.naturalHeight / F.ih;
+    ctx.drawImage(pic, F.cx * kx, F.cy * ky, F.cw * kx, F.ch * ky, 0, 0, G.W, G.H);
+    if (!battle.other && F.fade) {
       // funde los bordes superior e inferior con el césped de alrededor
       var fz = 0.35;
       var g1 = ctx.createLinearGradient(0, 0, 0, fz); g1.addColorStop(0, '#6fc322'); g1.addColorStop(1, 'rgba(111,195,34,0)');
@@ -350,10 +366,7 @@ function drawBoard(b, L, now, isMain) {
     for (var ti = 0; ti < COLS * ROWS; ti++) {
       var tt = b.tiles[ti];
       if (!tt) continue;
-      var tc = b.cc(ti);
-      rrect(ctx, tc.x - G.cw * 0.47, tc.y - G.ch * 0.47, G.cw * 0.94, G.ch * 0.94, 0.12);
-      ctx.fillStyle = alpha(TILES[tt].color, 0.22 + Math.sin(now / 500 + ti) * 0.07); ctx.fill();
-      ctx.strokeStyle = alpha(TILES[tt].color, 0.9); ctx.lineWidth = 0.05; ctx.stroke();
+      drawTileFloor(tt, b.cc(ti), G, ti, now);
     }
   } else {
   // marco
@@ -374,11 +387,7 @@ function drawBoard(b, L, now, isMain) {
     var c = cellCenter(i);
     rrect(ctx, c.x - 0.47, c.y - 0.47, 0.94, 0.94, 0.14);
     ctx.fillStyle = (i + Math.floor(i / COLS)) % 2 ? bio.grass : bio.grass2; ctx.fill();
-    var tile = b.tiles[i];
-    if (tile) {
-      ctx.strokeStyle = alpha(TILES[tile].color, 0.85); ctx.lineWidth = 0.05; ctx.stroke();
-      ctx.fillStyle = alpha(TILES[tile].color, 0.18 + Math.sin(now / 500 + i) * 0.06); ctx.fill();
-    }
+    if (b.tiles[i]) drawTileFloor(b.tiles[i], c, b.geo, i, now);
   }
   // franja inferior bajo el tablero
   ctx.fillStyle = shade(bio.frame, -10);
@@ -391,7 +400,7 @@ function drawBoard(b, L, now, isMain) {
   // marcas de casillas especiales
   Object.keys(b.tiles).forEach(function (k) {
     var cc = b.cc(+k);
-    if (!b.cells[k]) {
+    if (!b.cells[k] && !art('tiles/' + b.tiles[k])) {
       ctx.globalAlpha = 0.85;
       drawTileIcon(b.tiles[k], cc.x, cc.y, 0.32);
       ctx.globalAlpha = 1;
@@ -498,8 +507,29 @@ function drawGate(x, y) {
   rrect(ctx, x - 0.32, y - 0.38, 0.64, 0.5, 0.12); ctx.fillStyle = '#5a3a20'; ctx.fill(); ink(ctx, 0.04);
   ctx.fillStyle = '#ffd166'; star(ctx, x, y - 0.12, 0.14); ctx.fill();
 }
+/* Suelo de una casilla especial: su ilustración (altar, fuente, atalaya)
+   ocupando la casilla, con un brillo suave del color de la casilla. */
+function drawTileFloor(type, cc, G, i, now) {
+  var pic = art('tiles/' + type), t = TILES[type];
+  var s = Math.min(G.cw, G.ch);
+  if (!pic) {
+    rrect(ctx, cc.x - G.cw * 0.47, cc.y - G.ch * 0.47, G.cw * 0.94, G.ch * 0.94, 0.12);
+    ctx.fillStyle = alpha(t.color, 0.22 + Math.sin(now / 500 + i) * 0.07); ctx.fill();
+    ctx.strokeStyle = alpha(t.color, 0.9); ctx.lineWidth = 0.05; ctx.stroke();
+    return;
+  }
+  glow(ctx, cc.x, cc.y, s * 0.62, t.color, 0.35 + Math.sin(now / 500 + i) * 0.12);
+  var w = s * 0.96, h = w * pic.naturalHeight / pic.naturalWidth;
+  ctx.drawImage(pic, cc.x - w / 2, cc.y - h / 2, w, h);
+}
 function drawTileIcon(type, x, y, r) {
   var t = TILES[type];
+  var pic = art('tiles/' + type);
+  if (pic) {
+    circle(ctx, x, y, r * 1.15); ctx.fillStyle = 'rgba(14,12,28,0.55)'; ctx.fill();
+    ctx.drawImage(pic, x - r, y - r, r * 2, r * 2);
+    return;
+  }
   // medallón con marco dorado, como las fichas ilustradas
   circle(ctx, x, y, r * 1.12); ctx.fillStyle = '#4a3200'; ctx.fill();
   var rim = ctx.createLinearGradient(x - r, y - r, x + r, y + r);

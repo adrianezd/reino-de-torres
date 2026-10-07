@@ -46,9 +46,11 @@ Oro, cartas con 10 niveles, cofres de madera, plata y oro, cofre gratis diario, 
 ## Arte
 
 - `assets/units/*.webp`: fichas ilustradas de las 12 tropas (recortadas de los originales `assets/*.jpg`).
-- `assets/enemies/blob.webp`: la gelatina; el resto de monstruos y jefes se crean a partir de ella (color y accesorios).
-- `assets/ui/boton.webp`: botón de jugar; el estilo de todos los botones sigue este diseño.
-- `assets/tablero.(png|jpg|webp)`: tablero ilustrado de la campaña (1672×941). Si no está, se usa el tablero dibujado.
+- `assets/enemies/*.webp`: gelatina, espectro, ogro, orco, rocoso, gólem de escarcha y los jefes Señor Gélido, Coloso (con versión blindada), Nigromante y Dragón. El Diablillo y el Rey Gelatina salen de la gelatina teñida.
+- `assets/tiles/*.webp`: suelo de las casillas Altar, Fuente y Atalaya.
+- `assets/tablero.*`, `assets/boards/arena.webp` y `assets/boards/lava.webp`: tableros ilustrados de la campaña (prado, arena con marco de madera para hielo, ruinas y desierto, y lava para volcán y cripta).
+- `assets/ui/`: botón de jugar, botón de invocar, marco de carta en partida, carta de la colección y fondo del menú.
+- Los `assets/*.jpg|png` sueltos son los originales; las versiones del juego son los `.webp` recortados.
 
 ## Técnica
 

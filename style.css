@@ -260,3 +260,55 @@ button { font: inherit; color: inherit; cursor: pointer; touch-action: manipulat
 .play-hero span { position: absolute; left: 0; right: 0; bottom: -2px; text-align: center; font-family: 'Lilita One'; font-size: 0.95rem; color: #fff; text-shadow: 0 2px 0 var(--ink); }
 .play-hero:active { transform: translateY(4px) scale(0.98); }
 @keyframes playPulse { 50% { transform: scale(1.04); } }
+
+/* =========================================================
+   Ilustraciones de la interfaz (assets/ui): fondo del menú,
+   botón de invocar, marco de las cartas en partida y carta de
+   la colección.
+   ========================================================= */
+body {
+  background:
+    linear-gradient(180deg, rgba(27,42,107,0.55), rgba(22,32,90,0.92) 55%),
+    url('assets/ui/fondo.webp') center top / cover no-repeat,
+    linear-gradient(180deg, var(--bg1), var(--bg2));
+}
+.summon-btn {
+  background: url('assets/ui/boton-invocar.webp') center / 100% 100% no-repeat;
+  border: none; box-shadow: none; border-radius: 22px; height: 64px;
+  filter: drop-shadow(0 4px 0 var(--gold-dark));
+}
+.summon-btn::after { display: none; }
+.summon-btn:active { transform: translateY(3px); box-shadow: none; filter: drop-shadow(0 1px 0 var(--gold-dark)); }
+.summon-btn.poor { filter: grayscale(0.8) brightness(0.75); }
+.dcard {
+  border: none; box-shadow: none; border-radius: 10px; padding: 6px 4px 8px;
+  background: url('assets/ui/marco-carta.webp') center / 100% 100% no-repeat, radial-gradient(circle at 50% 40%, color-mix(in srgb, var(--rc) 55%, #1d2c78), #16215a 75%) center / 86% 86% no-repeat;
+}
+.dcard img { width: 46px; height: 46px; }
+.ucard {
+  border: none; box-shadow: none; color: #3a2410;
+  background: url('assets/ui/carta.webp') center / 100% 100% no-repeat;
+  padding: 8px 6px 12px;
+}
+.ucard small { color: #3a2410; }
+.ucard .ubar em { color: #fff; }
+
+/* sin barra de desplazamiento visible en los menús (se sigue pudiendo
+   desplazar) y menú más compacto en pantallas bajas */
+.menu, .overlay { scrollbar-width: none; -ms-overflow-style: none; }
+.menu::-webkit-scrollbar, .overlay::-webkit-scrollbar, .overlay *::-webkit-scrollbar { display: none; }
+@media (max-height: 900px) {
+  .logo { margin: 2px 0 6px; }
+  .logo-crest { font-size: 2.2rem; }
+  .deck-preview { margin: 2px 0 8px; }
+  .deck-preview img { width: 52px; height: 52px; }
+  .play-hero { width: min(150px, 42%); margin-bottom: 10px; }
+  .mode-list { gap: 8px; }
+  .mode-btn { padding: 10px 14px; }
+  .home-grid { margin-top: 10px; }
+}
+@media (max-height: 760px) {
+  .logo p { display: none; }
+  .play-hero { width: min(120px, 34%); }
+  .mode-btn b { font-size: 1.15rem; }
+}

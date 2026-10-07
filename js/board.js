@@ -33,17 +33,37 @@ function makeGeo(g) {
   return g;
 }
 var VECTOR_GEO = makeGeo({ W: BOARD_W, H: BOARD_H, x0: PATH_W, y0: PATH_W, cw: 1, ch: 1, way: WAYPOINTS });
-// Medidas tomadas de la ilustración (1672×941): se recorta para quitar la
-// interfaz de las esquinas y 1 unidad = ancho de una casilla (143,8 px).
-var FIELD_PX = { iw: 1672, ih: 941, cx: 250, cy: 110, cw: 1180, ch: 831, cell: 143.8 };
-function fpx(px, py) { return { x: (px - FIELD_PX.cx) / FIELD_PX.cell, y: (py - FIELD_PX.cy) / FIELD_PX.cell }; }
-var FIELD_GEO = makeGeo({
-  image: 'board/tablero',
-  W: FIELD_PX.cw / FIELD_PX.cell, H: FIELD_PX.ch / FIELD_PX.cell,
-  x0: fpx(477, 315).x, y0: fpx(477, 315).y, cw: (1196 - 477) / 5 / FIELD_PX.cell, ch: (690 - 315) / 3 / FIELD_PX.cell,
-  // entran por el camino de abajo, rodean el campo y salen por el mismo camino
-  way: [fpx(805, 990), fpx(805, 767), fpx(322, 767), fpx(322, 185), fpx(1352, 185), fpx(1352, 767), fpx(866, 767), fpx(866, 990)]
-});
+/* Tableros ilustrados de la campaña. Medidas en píxeles de cada imagen:
+   recorte visible (cx, cy, cw, ch), casillas (gx0..gx1, gy0..gy1) y
+   recorrido de los monstruos (way). 1 unidad = ancho de una casilla. */
+var FIELDS = {
+  // prado (assets/tablero.*): entran por el camino de abajo y salen por el mismo
+  prado: { image: 'board/tablero', iw: 1672, ih: 941, cx: 250, cy: 110, cw: 1180, ch: 831, fade: true,
+    gx0: 477, gy0: 315, gx1: 1196, gy1: 690,
+    way: [[805, 990], [805, 767], [322, 767], [322, 185], [1352, 185], [1352, 767], [866, 767], [866, 990]] },
+  // arena con marco de madera (assets/boards/arena.webp)
+  arena: { image: 'boards/arena', iw: 1248, ih: 832, cx: 80, cy: 60, cw: 1090, ch: 772, bg: 'fondo',
+    gx0: 272, gy0: 228, gx1: 970, gy1: 606,
+    way: [[590, 850], [590, 670], [195, 670], [195, 163], [1050, 163], [1050, 670], [655, 670], [655, 850]] },
+  // río de lava (assets/boards/lava.webp)
+  lava: { image: 'boards/lava', iw: 1248, ih: 832, cx: 260, cy: 150, cw: 705, ch: 570,
+    gx0: 420, gy0: 302, gx1: 808, gy1: 530,
+    way: [[585, 740], [585, 615], [318, 615], [318, 210], [905, 210], [905, 615], [640, 615], [640, 740]] }
+};
+var BIOME_FIELD = { prado: 'prado', bosque: 'prado', pantano: 'prado', hielo: 'arena', ruinas: 'arena', desierto: 'arena', volcan: 'lava', cripta: 'lava' };
+function fieldGeo(id) {
+  var f = FIELDS[id], cell = (f.gx1 - f.gx0) / COLS;
+  var P = function (q) { return { x: (q[0] - f.cx) / cell, y: (q[1] - f.cy) / cell }; };
+  return makeGeo({
+    image: f.image, px: f,
+    W: f.cw / cell, H: f.ch / cell,
+    x0: (f.gx0 - f.cx) / cell, y0: (f.gy0 - f.cy) / cell, cw: 1, ch: (f.gy1 - f.gy0) / ROWS / cell,
+    way: f.way.map(P)
+  });
+}
+var FIELD_GEOS = {};
+Object.keys(FIELDS).forEach(function (id) { FIELD_GEOS[id] = fieldGeo(id); });
+var FIELD_GEO = FIELD_GEOS.prado;
 
 function geoPos(g, d) {
   var acc = 0, w = g.way;
@@ -296,7 +316,7 @@ Board.prototype.nearestTo = function (p, exclude, maxD) {
 Board.prototype.applyHit = function (e, dmg, d, u) {
   var mult = RANK_MULT[u.rank] * this.unitPower(u.id);
   if (d.slow) {
-    e.slowPct = Math.min(d.slow.max + 0.03 * (u.rank - 1), e.slowPct + d.slow.pct);
+    e.slowPct = Math.min(d.slow.max + 0.03 * (u.rank - 1), e.slowPct + d.slow.pct * (1 - (e.boss ? 0 : ENEMIES[e.kind].slowRes || 0)));
     e.slowT = d.slow.dur;
   }
   if (d.poison) { e.poison += d.poison.dps * mult * 0.35; e.poisonT = d.poison.dur; }
@@ -413,12 +433,14 @@ Board.prototype.bossAbility = function (e, dt) {
     var units = this.cells.map(function (u, i) { return u ? i : -1; }).filter(function (i) { return i >= 0; });
     shuffleArr(units).slice(0, 2).forEach(function (i) { this.cells[i].frozen = 3; this.addFx('ring', this.cc(i), '#bfefff'); }, this);
     this.addText(p.x, p.y - 0.6, '¡Congela!', '#bfefff', true);
+    this.spawn('escarcha', e.maxHp * 0.05, { d: Math.max(0, e.d - 0.4) });
   } else if (ab === 'shield') {
     e.abilityT = 8; e.shield = 2.2;
     this.addText(p.x, p.y - 0.6, '¡Escudo!', '#c9d4e6', true);
+    this.spawn('rocoso', e.maxHp * 0.05, { d: Math.max(0, e.d - 0.4) });
   } else if (ab === 'summon') {
     e.abilityT = 4;
-    for (var k = 0; k < 2; k++) this.spawn('imp', e.maxHp * 0.03, { d: Math.max(0, e.d - 0.3 - k * 0.3) });
+    for (var k = 0; k < 2; k++) this.spawn('ghost', e.maxHp * 0.03, { d: Math.max(0, e.d - 0.3 - k * 0.3) });
     this.addText(p.x, p.y - 0.6, '¡Invoca!', '#b26bff', true);
   } else if (ab === 'burn') {
     e.abilityT = 9;

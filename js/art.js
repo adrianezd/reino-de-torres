@@ -46,7 +46,13 @@ function star(c, x, y, r, pts) {
 
 /* ---------- imágenes de los diseños (assets/) ---------- */
 var IMG = {};
-var IMG_LIST = { units: UNIT_ORDER, enemies: ['blob'], ui: ['boton'] };
+var IMG_LIST = {
+  units: UNIT_ORDER,
+  enemies: ['blob', 'ghost', 'brute', 'orco', 'rocoso', 'escarcha', 'gelido', 'coloso', 'coloso2', 'nigro', 'dragon'],
+  tiles: ['altar', 'fuente', 'atalaya'],
+  boards: ['lava', 'arena'],
+  ui: ['boton', 'fondo']
+};
 var imgReadyCount = 0;
 Object.keys(IMG_LIST).forEach(function (dir) {
   IMG_LIST[dir].forEach(function (id) {
@@ -486,7 +492,35 @@ var ENEMY_LOOK = {
   nigro:  { tint: '#9b5cff', scale: 1, hood: true, staff: true },
   dragon: { tint: '#ff4b2b', scale: 1, horns: '#ffd166', wings: true, brows: true }
 };
+/* Monstruos con ilustración propia (assets/enemies/<id>.webp). El Coloso
+   cambia a su versión de grietas azules mientras tiene el escudo puesto. */
+function enemyPic(e) {
+  if (e.kind === 'coloso' && e.shield > 0 && art('enemies/coloso2')) return art('enemies/coloso2');
+  return art('enemies/' + e.kind);
+}
+function drawEnemyPic(c, e, r, now, pic) {
+  var d = e.boss ? BOSSES[e.kind] : ENEMIES[e.kind];
+  var H = r * (e.boss ? 3 : 2.5) * (d.picScale || 1);
+  var W = H * pic.naturalWidth / pic.naturalHeight;
+  var float = e.kind === 'ghost' ? Math.sin(now / 300 + e.seed) * r * 0.15 : 0;
+  var step = Math.abs(Math.sin(now / 160 + e.seed)) * r * 0.08;
+  c.save();
+  c.translate(e.x, e.y);
+  c.fillStyle = 'rgba(0,0,0,0.28)'; c.beginPath(); c.ellipse(0, r * 0.82, r * 0.85, r * 0.22, 0, 0, Math.PI * 2); c.fill();
+  if (e.boss) glow(c, 0, 0, r * 1.7, d.color, 0.4);
+  if (e.kind === 'ghost') c.globalAlpha = 0.85;
+  c.rotate(Math.sin(now / 200 + e.seed) * 0.05);
+  c.drawImage(pic, -W / 2, r * 0.95 - H - step + float, W, H);
+  c.globalAlpha = 1;
+  c.restore();
+  if (e.slowPct > 0) { c.strokeStyle = 'rgba(160,225,255,0.85)'; c.lineWidth = r * 0.1; circle(c, e.x, e.y, r * 1.1); c.stroke(); }
+  if (e.poison > 0) { c.fillStyle = 'rgba(120,255,90,0.9)'; circle(c, e.x + r * 0.75, e.y - r * 0.7, r * 0.18); c.fill(); }
+  if (e.stun > 0) { c.fillStyle = '#ffe6a3'; c.font = 'bold ' + (r * 0.9).toFixed(3) + 'px sans-serif'; c.textAlign = 'center'; c.fillText('✦', e.x, e.y - r * 1.35); }
+  if (e.shield > 0) { c.strokeStyle = 'rgba(120,220,255,0.8)'; c.lineWidth = r * 0.12; circle(c, e.x, e.y, r * 1.35); c.stroke(); }
+}
 function drawEnemy(c, e, r, now) {
+  var pic = enemyPic(e);
+  if (pic) { drawEnemyPic(c, e, r, now, pic); return; }
   var base = art('enemies/blob');
   if (!base) { drawEnemyVector(c, e, r, now); return; }
   var look = ENEMY_LOOK[e.kind] || ENEMY_LOOK.blob;
