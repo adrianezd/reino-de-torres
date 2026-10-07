@@ -1,0 +1,13 @@
+{
+  "name": "Reino de Torres",
+  "short_name": "Reino de Torres",
+  "description": "Tower defense de fusión: invoca, fusiona y defiende tu reino.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#16205a",
+  "theme_color": "#1b2a6b",
+  "lang": "es",
+  "icons": [{ "src": "favicon.svg", "sizes": "any", "type": "image/svg+xml" }, { "src": "icon-512.png", "sizes": "512x512", "type": "image/png" }]
+}
