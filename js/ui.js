@@ -203,7 +203,7 @@ function buildBattleHud() {
   var b = battle;
   var deck = $('deckBar');
   deck.innerHTML = b.player.deck.map(function (id) {
-    return '<button class="dcard" data-power="' + id + '" style="--rc:' + UNITS[id].color + '"><img src="' + unitIcon(id, 0, 96) + '" alt=""><span class="dlv" id="dlv_' + id + '">1</span><span class="dcost" id="dcost_' + id + '">100💧</span></button>';
+    return '<button class="dcard" data-power="' + id + '" style="--rc:' + UNITS[id].color + '"><img src="' + unitIcon(id, 0, 96) + '" alt=""><span class="dlv" id="dlv_' + id + '">1</span><span class="dcost" id="dcost_' + id + '">100</span></button>';
   }).join('');
   deck.querySelectorAll('[data-power]').forEach(function (btn) {
     btn.onclick = function () {
@@ -223,23 +223,30 @@ function buildBattleHud() {
 }
 var _hud = {};
 function setTxt(id, v) { if (_hud[id] === v) return; _hud[id] = v; var e = $(id); if (e) e.textContent = v; }
+function setHtml(id, v) { if (_hud[id] === v) return; _hud[id] = v; var e = $(id); if (e) e.innerHTML = v; }
+var MANA_ICO = '<img class="mi" src="assets/ui/mana.webp" alt="maná">';
+function heartsHtml(l) {
+  var s = '';
+  for (var i = 0; i < l.max; i++) s += '<img class="heart' + (i < l.v ? '' : ' lost') + '" src="assets/ui/vida.webp" alt="">';
+  return s;
+}
 function updateHud(force) {
   var b = battle;
   if (!b) return;
   if (force) _hud = {};
   var p = b.player;
   setTxt('bMana', Math.floor(p.mana));
-  setTxt('summonCost', p.summonCost + ' 💧');
+  setHtml('summonCost', p.summonCost + ' ' + MANA_ICO);
   $('summonBtn').classList.toggle('poor', p.mana < p.summonCost || !p.freeCells().length);
   setTxt('bWave', b.wave ? 'Oleada ' + b.wave + (b.maxWaves !== Infinity ? '/' + b.maxWaves : '') : 'Preparando…');
   setTxt('bEvent', b.event ? b.event.icon + ' ' + b.event.name : '');
   $('bEvent').hidden = !b.event;
-  setTxt('bLives', hearts(p.lives));
-  setTxt('bLivesLabel', b.mode === 'coop' ? 'Vidas compartidas' : 'Tus vidas');
+  setHtml('bLives', heartsHtml(p.lives));
+  $('bLivesBox').title = (b.mode === 'coop' ? 'Vidas compartidas: ' : 'Tus vidas: ') + p.lives.v;
   p.deck.forEach(function (id) {
     var lv = p.power[id] || 1;
     setTxt('dlv_' + id, String(lv));
-    setTxt('dcost_' + id, lv >= POWER_MAX ? 'MÁX' : POWER_COSTS[lv] + '💧');
+    setHtml('dcost_' + id, lv >= POWER_MAX ? 'MÁX' : POWER_COSTS[lv] + MANA_ICO);
     var el = document.querySelector('[data-power="' + id + '"]');
     if (el) el.classList.toggle('poor', lv >= POWER_MAX || p.mana < POWER_COSTS[lv]);
   });

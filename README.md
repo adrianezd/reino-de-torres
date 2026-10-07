@@ -49,7 +49,7 @@ Oro, cartas con 10 niveles, cofres de madera, plata y oro, cofre gratis diario, 
 - `assets/enemies/*.webp`: gelatina, espectro, ogro, orco, rocoso, gólem de escarcha y los jefes Señor Gélido, Coloso (con versión blindada), Nigromante y Dragón. El Diablillo y el Rey Gelatina salen de la gelatina teñida.
 - `assets/tiles/*.webp`: suelo de las casillas Altar, Fuente y Atalaya.
 - `assets/tablero.*`, `assets/boards/arena.webp` y `assets/boards/lava.webp`: tableros ilustrados de la campaña (prado, arena con marco de madera para hielo, ruinas y desierto, y lava para volcán y cripta).
-- `assets/ui/`: botón de jugar, botón de invocar, marco de carta en partida, carta de la colección y fondo del menú.
+- `assets/ui/`: botón de jugar, botones verde y amarillo, corazón de vida, gota y frasco de maná, aro del comandante, marcos de carta, carta de la colección y fondo del menú.
 - Los `assets/*.jpg|png` sueltos son los originales; las versiones del juego son los `.webp` recortados.
 
 ## Técnica

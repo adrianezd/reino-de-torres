@@ -15,7 +15,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Nunito:wght@700;800;900&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=6">
+<link rel="stylesheet" href="style.css?v=7">
 </head>
 <body>
   <div id="menu" class="menu"></div>
@@ -23,7 +23,9 @@
   <div id="battleScreen" class="battle" hidden>
     <div class="b-top">
       <button class="b-btn quit" id="bQuit" aria-label="Pausa y salir">✕</button>
+      <div class="lives" id="bLivesBox"><span id="bLives"></span></div>
       <div class="b-wave"><b id="bWave">Oleada 1</b><span id="bEvent" class="b-event" hidden></span></div>
+      <div class="mana" aria-label="Maná"><img src="assets/ui/contador-mana.webp" alt=""><b id="bMana">100</b></div>
       <button class="b-btn speed" id="bSpeed" aria-label="Velocidad">x1</button>
     </div>
     <div id="arena" class="arena">
@@ -32,13 +34,9 @@
       <div id="unitInfo" class="unit-info" hidden></div>
     </div>
     <div class="b-bottom">
-      <div class="b-status">
-        <div class="lives"><small id="bLivesLabel">Tus vidas</small><span id="bLives">❤️❤️❤️</span></div>
-        <div class="mana"><span class="drop">💧</span><b id="bMana">100</b></div>
-      </div>
       <div class="b-actions">
         <button id="cmdBtn" class="cmd-btn" aria-label="Habilidad del comandante"><span id="cmdIco">🌨️</span></button>
-        <button id="summonBtn" class="summon-btn">🎲 Invocar<small id="summonCost">10 💧</small></button>
+        <button id="summonBtn" class="summon-btn">Invocar<small id="summonCost">10</small></button>
       </div>
       <div id="deckBar" class="deck-bar"></div>
     </div>
@@ -47,11 +45,11 @@
   <div id="overlay" class="overlay" hidden></div>
   <div id="toast" class="toast"></div>
 
-  <script src="js/data.js?v=6"></script>
-  <script src="js/art.js?v=6"></script>
-  <script src="js/meta.js?v=6"></script>
-  <script src="js/board.js?v=6"></script>
-  <script src="js/battle.js?v=6"></script>
-  <script src="js/ui.js?v=6"></script>
+  <script src="js/data.js?v=7"></script>
+  <script src="js/art.js?v=7"></script>
+  <script src="js/meta.js?v=7"></script>
+  <script src="js/board.js?v=7"></script>
+  <script src="js/battle.js?v=7"></script>
+  <script src="js/ui.js?v=7"></script>
 </body>
 </html>
