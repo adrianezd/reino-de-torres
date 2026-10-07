@@ -285,7 +285,16 @@ function drawBattle(now) {
   if (battle.player.geo.image) { g.addColorStop(0, '#5cc23a'); g.addColorStop(1, '#3f9a2a'); }
   else { g.addColorStop(0, shade(bio.bg, 20)); g.addColorStop(1, shade(bio.bg, -30)); }
   ctx.fillStyle = g; ctx.fillRect(0, 0, layout.w, layout.h);
-  drawScenery(now);
+  var fieldPic = battle.player.geo.image && !battle.other ? art(battle.player.geo.image) : null;
+  if (fieldPic) {
+    // césped del mismo tono que la ilustración, con matas y flores sueltas
+    var gg = ctx.createLinearGradient(0, 0, 0, layout.h);
+    gg.addColorStop(0, '#6fc322'); gg.addColorStop(0.5, '#6abd1f'); gg.addColorStop(1, '#5aa81b');
+    ctx.fillStyle = gg; ctx.fillRect(0, 0, layout.w, layout.h);
+    drawLawn();
+  } else {
+    drawScenery(now);
+  }
   if (battle.other) {
     drawBoard(battle.other, layout.other, now, false);
     // separador
@@ -294,6 +303,27 @@ function drawBattle(now) {
     ctx.fillRect(0, sy, layout.w, 3);
   }
   drawBoard(battle.player, layout.main, now, true);
+}
+var lawn = { key: '', items: [] };
+function drawLawn() {
+  var key = layout.w + 'x' + layout.h;
+  if (lawn.key !== key) {
+    lawn.key = key; lawn.items = [];
+    var seed = 11, rnd2 = function () { seed = (seed * 9301 + 49297) % 233280; return seed / 233280; };
+    for (var i = 0; i < 90; i++) lawn.items.push({ x: rnd2() * layout.w, y: rnd2() * layout.h, t: rnd2(), s: 5 + rnd2() * 6 });
+  }
+  lawn.items.forEach(function (it) {
+    if (it.t < 0.8) { // mata de hierba
+      ctx.strokeStyle = 'rgba(40,110,20,0.55)'; ctx.lineWidth = 2; ctx.lineCap = 'round';
+      ctx.beginPath(); ctx.moveTo(it.x - it.s * 0.5, it.y); ctx.lineTo(it.x - it.s * 0.7, it.y - it.s);
+      ctx.moveTo(it.x, it.y); ctx.lineTo(it.x, it.y - it.s * 1.3);
+      ctx.moveTo(it.x + it.s * 0.5, it.y); ctx.lineTo(it.x + it.s * 0.7, it.y - it.s); ctx.stroke();
+    } else { // florecilla
+      ctx.fillStyle = '#ffffff';
+      for (var k = 0; k < 5; k++) { var a = k * Math.PI * 2 / 5; circle(ctx, it.x + Math.cos(a) * 3.2, it.y + Math.sin(a) * 3.2, 2.6); ctx.fill(); }
+      ctx.fillStyle = '#ffd34d'; circle(ctx, it.x, it.y, 2.2); ctx.fill();
+    }
+  });
 }
 
 function drawBoard(b, L, now, isMain) {
@@ -309,6 +339,14 @@ function drawBoard(b, L, now, isMain) {
     // tablero ilustrado (recortado sin la interfaz de las esquinas)
     var kx = pic.naturalWidth / FIELD_PX.iw, ky = pic.naturalHeight / FIELD_PX.ih;
     ctx.drawImage(pic, FIELD_PX.cx * kx, FIELD_PX.cy * ky, FIELD_PX.cw * kx, FIELD_PX.ch * ky, 0, 0, G.W, G.H);
+    if (!battle.other) {
+      // funde los bordes superior e inferior con el césped de alrededor
+      var fz = 0.35;
+      var g1 = ctx.createLinearGradient(0, 0, 0, fz); g1.addColorStop(0, '#6fc322'); g1.addColorStop(1, 'rgba(111,195,34,0)');
+      ctx.fillStyle = g1; ctx.fillRect(-0.02, -0.02, G.W + 0.04, fz);
+      var g2 = ctx.createLinearGradient(0, G.H - fz, 0, G.H); g2.addColorStop(0, 'rgba(90,168,27,0)'); g2.addColorStop(1, '#5fac1c');
+      ctx.fillStyle = g2; ctx.fillRect(-0.02, G.H - fz, G.W + 0.04, fz + 0.02);
+    }
     for (var ti = 0; ti < COLS * ROWS; ti++) {
       var tt = b.tiles[ti];
       if (!tt) continue;
