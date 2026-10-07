@@ -41,14 +41,15 @@ var FIELDS = {
   prado: { image: 'board/tablero', iw: 1672, ih: 941, cx: 250, cy: 110, cw: 1180, ch: 831, fade: true,
     gx0: 477, gy0: 315, gx1: 1196, gy1: 690,
     way: [[805, 990], [805, 767], [322, 767], [322, 185], [1352, 185], [1352, 767], [866, 767], [866, 990]] },
-  // arena con marco de madera (assets/boards/arena.webp)
-  arena: { image: 'boards/arena', iw: 1248, ih: 832, cx: 80, cy: 60, cw: 1090, ch: 772, bg: 'fondo',
-    gx0: 272, gy0: 228, gx1: 970, gy1: 606,
-    way: [[590, 850], [590, 670], [195, 670], [195, 163], [1050, 163], [1050, 670], [655, 670], [655, 850]] },
-  // río de lava (assets/boards/lava.webp)
-  lava: { image: 'boards/lava', iw: 1248, ih: 832, cx: 260, cy: 150, cw: 705, ch: 570,
-    gx0: 420, gy0: 302, gx1: 808, gy1: 530,
-    way: [[585, 740], [585, 615], [318, 615], [318, 210], [905, 210], [905, 615], [640, 615], [640, 740]] }
+  // arena y lava: imágenes ya encajadas a la medida del prado (1180×831 y las
+  // casillas en el mismo sitio), así las casillas miden igual en los tres.
+  // Entrada y salida por abajo en el medio, como en el prado.
+  arena: { image: 'boards/arena', iw: 1180, ih: 831, cx: 0, cy: 0, cw: 1180, ch: 831, bg: 'fondo',
+    gx0: 227, gy0: 205, gx1: 946, gy1: 580,
+    way: [[558, 880], [558, 643], [148, 643], [148, 141], [1028, 141], [1028, 643], [622, 643], [622, 880]] },
+  lava: { image: 'boards/lava', iw: 1180, ih: 831, cx: 0, cy: 0, cw: 1180, ch: 831,
+    gx0: 227, gy0: 205, gx1: 946, gy1: 580,
+    way: [[560, 880], [560, 720], [42, 720], [42, 54], [1126, 54], [1126, 720], [620, 720], [620, 880]] }
 };
 var BIOME_FIELD = { prado: 'prado', bosque: 'prado', pantano: 'prado', hielo: 'arena', ruinas: 'arena', desierto: 'arena', volcan: 'lava', cripta: 'lava' };
 function fieldGeo(id) {
