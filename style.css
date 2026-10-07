@@ -387,3 +387,17 @@ body {
   background: url('assets/ui/marco-carta.webp') center / 100% 100% no-repeat, linear-gradient(180deg, #2b3c8f, #1a2563) center / 84% 84% no-repeat;
 }
 .deck-slots .ucard small { color: #fff; }
+
+/* retratos de los comandantes (assets/commanders) */
+.cmd-ico { background: none; border: none; width: 64px; height: 64px; }
+.cmd-ico img { width: 100%; height: 100%; filter: drop-shadow(0 3px 0 rgba(0,0,0,0.35)); }
+.cmd-btn span { overflow: hidden; filter: none; background: #16215a; }
+.cmd-btn span img { position: absolute; inset: -6%; width: 112%; height: 112%; }
+/* la parte aún sin cargar se ve oscura y se va destapando como un reloj */
+.cmd-btn span::after {
+  content: ''; position: absolute; inset: 0; border-radius: 50%;
+  background: conic-gradient(transparent var(--charge), rgba(8,10,30,0.68) 0);
+}
+.cmd-btn span i { position: absolute; right: -2px; bottom: -2px; font-style: normal; font-size: 0.8rem; z-index: 1; display: none; }
+.cmd-btn.ready span::after { background: none; }
+.cmd-btn.ready span { box-shadow: 0 0 14px 4px var(--cc); }

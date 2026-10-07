@@ -184,9 +184,9 @@ var TILES = {
 
 /* Comandantes: habilidad que se carga con el tiempo. */
 var COMMANDERS = {
-  aria:  { name: 'Aria',  title: 'Capitana de Escarcha', color: '#7fd6ff', icon: '🌨️', ability: 'Ventisca',  desc: 'Congela a todos los enemigos 3 segundos.', cd: 30 },
-  merlo: { name: 'Merlo', title: 'Archimago',            color: '#b26bff', icon: '✨', ability: 'Marea de maná', desc: 'Te da 120 de maná al instante.', cd: 35 },
-  brann: { name: 'Brann', title: 'General Enano',        color: '#ff8f3c', icon: '☄️', ability: 'Meteoro',   desc: 'Un meteorito golpea a los enemigos más adelantados.', cd: 28 }
+  aria:  { name: 'Aria',  title: 'Capitana de Escarcha', color: '#7fd6ff', icon: '🌨️', pic: 'assets/commanders/aria.webp', ability: 'Ventisca',  desc: 'Congela a todos los enemigos 3 segundos.', cd: 30 },
+  merlo: { name: 'Merlo', title: 'Archimago',            color: '#b26bff', icon: '✨', pic: 'assets/commanders/merlo.webp', ability: 'Marea de maná', desc: 'Te da 120 de maná al instante.', cd: 35 },
+  brann: { name: 'Brann', title: 'General Enano',        color: '#ff8f3c', icon: '☄️', pic: 'assets/commanders/brann.webp', ability: 'Meteoro',   desc: 'Un meteorito golpea a los enemigos más adelantados.', cd: 28 }
 };
 var COMMANDER_ORDER = ['aria', 'merlo', 'brann'];
 

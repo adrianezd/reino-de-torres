@@ -100,7 +100,7 @@ function renderMenu(name, arg) {
     html = backBar('Comandante') + '<p class="lead">Su habilidad se carga durante la partida. Pulsa su retrato para usarla.</p>' +
       COMMANDER_ORDER.map(function (k) {
         var c = COMMANDERS[k];
-        return '<button class="big-choice cmd ' + (meta.commander === k ? 'sel' : '') + '" data-cmd="' + k + '" style="--cc:' + c.color + '"><span class="cmd-ico">' + c.icon + '</span><span><b>' + c.name + ' · ' + c.title + '</b><small>' + c.ability + ': ' + c.desc + ' (cada ' + c.cd + ' s)</small></span></button>';
+        return '<button class="big-choice cmd ' + (meta.commander === k ? 'sel' : '') + '" data-cmd="' + k + '" style="--cc:' + c.color + '"><span class="cmd-ico"><img src="' + c.pic + '" alt="' + esc(c.name) + '"></span><span><b>' + c.name + ' · ' + c.title + '</b><small>' + c.ability + ': ' + c.desc + ' (cada ' + c.cd + ' s)</small></span></button>';
       }).join('');
   } else if (name === 'howto') {
     html = backBar('Cómo jugar') + '<div class="howto">' +
@@ -216,7 +216,7 @@ function buildBattleHud() {
   });
   var c = COMMANDERS[b.player.commander];
   $('cmdBtn').style.setProperty('--cc', c.color);
-  $('cmdIco').textContent = c.icon;
+  $('cmdIco').innerHTML = '<img src="' + c.pic + '" alt="' + esc(c.name) + '"><i>' + c.icon + '</i>';
   $('cmdBtn').title = c.ability + ': ' + c.desc;
   $('unitInfo').hidden = true;
   updateHud(true);
