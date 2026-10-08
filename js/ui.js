@@ -65,8 +65,9 @@ function renderMenu(name, arg) {
   if (name === 'home') {
     var free = freeChestReady();
     html = topBar() +
-      '<div class="logo"><div class="logo-crest">🏰</div><h1>Reino de Torres</h1><p>Invoca tropas, fusiónalas y defiende tu reino</p></div>' +
-      // el mazo, cada retrato en uno de los cinco aros del banner
+      '<div class="logo"><h1><img src="assets/ui/titulo.webp" alt="Reino de Torres"></h1><p>Invoca tropas, fusiónalas y defiende tu reino</p></div>' +
+      // el mazo bajo su letrero, cada retrato en uno de los cinco aros del banner
+      '<div class="deck-sign"><span>Mazo actual</span></div>' +
       '<div class="deck-preview">' + meta.deck.map(function (id, i) { return '<img src="' + unitIcon(id, 0, 96) + '" alt="' + esc(UNITS[id].name) + '" style="left:' + DECK_RINGS[i] + '%">'; }).join('') + '</div>' +
       '<button class="play-hero" data-go="playNext" aria-label="Jugar la siguiente fase de la campaña"><img src="assets/ui/boton-jugar.webp" alt=""></button>' +
       '<div class="slots" id="chestSlots">' + slotsInner() + '</div>' +
@@ -286,10 +287,15 @@ function showCardModal(id) {
   var rar = RARITY[u.rarity], el = ELEMENTS[u.element];
   var need = cardsNeeded(c.lv), gold = cardUpgradeGold(c.lv), maxed = c.lv >= CARD_MAX;
   var dmgAt = function (lv) { return Math.round(u.dmg * (1 + CARD_BONUS * (lv - 1))); };
+  var manaAt = function (lv) { return Math.round(u.manaGen.amount * (1 + CARD_BONUS * (lv - 1))); };
+  var buffAt = function (lv) { return Math.round(u.buff.speed * (1 + CARD_BONUS * (lv - 1)) * 100); };
   var stats = unitStatsHtml(u, c.lv), traits = unitTraitsHtml(u);
   var pct = maxed ? 100 : Math.min(100, c.n / need * 100);
   var why = maxed ? '' : c.n < need ? (need - c.n === 1 ? 'Falta 1 carta' : 'Faltan ' + (need - c.n) + ' cartas') : meta.gold < gold ? 'Te faltan ' + (gold - meta.gold) + ' 🪙' : '';
-  var gain = !maxed && u.dmg ? '<span class="uc-gain">⚔️ ' + dmgAt(c.lv) + ' → <b>' + dmgAt(c.lv + 1) + '</b></span>' : '';
+  var gain = maxed ? ''
+    : u.dmg ? '<span class="uc-gain">⚔️ ' + dmgAt(c.lv) + ' → <b>' + dmgAt(c.lv + 1) + '</b></span>'
+    : u.manaGen ? '<span class="uc-gain">💧 ' + manaAt(c.lv) + ' → <b>' + manaAt(c.lv + 1) + '</b></span>'
+    : u.buff ? '<span class="uc-gain">🎵 ' + buffAt(c.lv) + '% → <b>' + buffAt(c.lv + 1) + '%</b></span>' : '';
   var html = '<div class="modal-card unit-card rar-' + u.rarity + '" style="--rc:' + rar.color + ';--ec:' + el.color + '">' +
     '<button class="uc-x" id="mcX" aria-label="Cerrar">✕</button>' +
     '<div class="uc-hero"><div class="uc-rays"></div><img class="uc-img" src="' + unitIcon(id, Math.min(7, c.lv), 220) + '" alt=""></div>' +
@@ -317,13 +323,13 @@ function showCardModal(id) {
 }
 
 function unitStatsHtml(u, lv) {
-  var dmg = Math.round((u.dmg || 0) * (1 + CARD_BONUS * (lv - 1)));
+  var mult = 1 + CARD_BONUS * (lv - 1), dmg = Math.round((u.dmg || 0) * mult);
   var stat = function (icon, val, label) { return '<div class="ps-stat"><i>' + icon + '</i><b>' + val + '</b><small>' + label + '</small></div>'; };
   return u.dmg
     ? stat('⚔️', dmg, 'Daño') + stat('⏱️', u.rate, 'Disparos/s') + stat('📈', Math.round(dmg * u.rate), 'Daño/s')
     : u.manaGen
-      ? stat('💧', '+' + u.manaGen.amount, 'Maná') + stat('⏱️', u.manaGen.every + ' s', 'Cada') + stat('✨', '×rango', 'Fusión')
-      : stat('🎵', '+' + Math.round(u.buff.speed * 100) + '%', 'Velocidad') + stat('📍', '4', 'Vecinas') + stat('✨', '×rango', 'Fusión');
+      ? stat('💧', '+' + Math.round(u.manaGen.amount * mult), 'Maná') + stat('⏱️', u.manaGen.every + ' s', 'Cada') + stat('✨', '×rango', 'Fusión')
+      : stat('🎵', '+' + Math.round(u.buff.speed * mult * 100) + '%', 'Velocidad') + stat('📍', '4', 'Vecinas') + stat('✨', '×rango', 'Fusión');
 }
 function unitTraitsHtml(u) {
   return unitTraits(u).map(function (t) { return '<span class="uc-trait"><i>' + t[0] + '</i><b>' + t[1] + '</b><small>' + t[2] + '</small></span>'; }).join('');
@@ -816,8 +822,8 @@ function refreshUnitInfo() {
   var aff = b.player.affinity(i);
   var bits = [];
   if (d.dmg) bits.push('⚔️ ' + fmtNum(b.player.unitDamage(i)) + ' por golpe');
-  if (d.manaGen) bits.push('💧 +' + Math.round(d.manaGen.amount * u.rank * (1 + 0.25 * ((b.player.power[u.id] || 1) - 1))) + ' cada ' + d.manaGen.every + ' s');
-  if (d.buff) bits.push('🎵 +' + Math.round(d.buff.speed * u.rank * (1 + 0.1 * ((b.player.power[u.id] || 1) - 1)) * 100) + '% vel. a vecinas');
+  if (d.manaGen) bits.push('💧 +' + b.player.manaAmount(u) + ' cada ' + d.manaGen.every + ' s');
+  if (d.buff) bits.push('🎵 +' + Math.round(b.player.buffSpeed(u) * 100) + '% vel. a vecinas');
   if (aff) bits.push(ELEMENTS[d.element].icon + ' Afinidad +' + Math.round(aff * AFFINITY_BONUS * 100) + '%');
   if (b.player.tiles[i]) bits.push(TILES[b.player.tiles[i]].icon + ' ' + TILES[b.player.tiles[i]].name);
   box.innerHTML = '<img src="' + unitIcon(u.id, u.rank, 72) + '" alt=""><div><b>' + esc(d.name) + ' · Rango ' + u.rank + '</b><small>' + esc(d.role) + ' · ' + bits.join(' · ') + '</small><small class="hint">Toca otra igual para fusionar o una casilla vacía para moverla</small></div>';

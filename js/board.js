@@ -132,8 +132,16 @@ function shuffleArr(a) {
 /* ---------- estadísticas ---------- */
 Board.prototype.cc = function (i) { return geoCell(this.geo, i); };
 Board.prototype.pos = function (d) { return geoPos(this.geo, d); };
+Board.prototype.cardMult = function (id) { return 1 + CARD_BONUS * ((this.cardLv[id] || 1) - 1); };
 Board.prototype.unitPower = function (id) {
-  return (1 + POWER_BONUS * ((this.power[id] || 1) - 1)) * (1 + CARD_BONUS * ((this.cardLv[id] || 1) - 1));
+  return (1 + POWER_BONUS * ((this.power[id] || 1) - 1)) * this.cardMult(id);
+};
+// maná que reparte una tropa de maná y velocidad que da una de apoyo (suben con el rango, la mejora de la partida y el nivel de carta)
+Board.prototype.manaAmount = function (u) {
+  return Math.round(UNITS[u.id].manaGen.amount * u.rank * (1 + 0.25 * ((this.power[u.id] || 1) - 1)) * this.cardMult(u.id));
+};
+Board.prototype.buffSpeed = function (u) {
+  return UNITS[u.id].buff.speed * u.rank * (1 + 0.1 * ((this.power[u.id] || 1) - 1)) * this.cardMult(u.id);
 };
 Board.prototype.affinity = function (i) {
   var u = this.cells[i];
@@ -152,7 +160,7 @@ Board.prototype.unitSpeed = function (i) {
   var s = 1;
   neighbors(i).forEach(function (j) {
     var v = this.cells[j];
-    if (v && UNITS[v.id].buff && !(v.frozen > 0)) s += UNITS[v.id].buff.speed * v.rank * (1 + 0.1 * ((this.power[v.id] || 1) - 1));
+    if (v && UNITS[v.id].buff && !(v.frozen > 0)) s += this.buffSpeed(v);
   }, this);
   if (this.tiles[i] === 'atalaya') s += TILES.atalaya.speed;
   return s;
@@ -371,7 +379,7 @@ Board.prototype.update = function (dt) {
       u.gen += dt;
       if (u.gen >= d.manaGen.every) {
         u.gen = 0;
-        var amt = Math.round(d.manaGen.amount * u.rank * (1 + 0.25 * ((this.power[u.id] || 1) - 1)));
+        var amt = this.manaAmount(u);
         this.mana += amt;
         u.atk = 0.5; // pose de ataque al repartir el maná
         var p = this.cc(i);
