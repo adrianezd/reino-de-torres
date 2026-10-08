@@ -74,7 +74,8 @@ function art(key) { var im = IMG[key]; return im && im.ready ? im : null; }
 
 /* Poses del tablero: cuerpo recortado sin chapa, en reposo y disparando.
    face: hacia dónde mira la pose de ataque (1 derecha, -1 izquierda). */
-var POSES = { lyra: { face: 1 }, brasa: { face: -1 }, rocco: { face: -1 }, sombra: { face: -1 } };
+var POSES = { lyra: { face: 1 }, brasa: { face: -1 }, rocco: { face: -1 }, sombra: { face: -1 },
+  doblon: { face: 1 }, volta: { face: 1 }, mirra: { face: 1 } };
 var ATK_POSE_TIME = 0.15;
 Object.keys(POSES).forEach(function (id) {
   ['idle', 'attack'].forEach(function (pose) {

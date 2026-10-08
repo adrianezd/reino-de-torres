@@ -364,6 +364,7 @@ Board.prototype.update = function (dt) {
         u.gen = 0;
         var amt = Math.round(d.manaGen.amount * u.rank * (1 + 0.25 * ((this.power[u.id] || 1) - 1)));
         this.mana += amt;
+        u.atk = 0.5; // lanza las monedas al aire
         var p = this.cc(i);
         this.addText(p.x, p.y - 0.5, '+' + amt + ' 💧', '#7dfcff');
       }
