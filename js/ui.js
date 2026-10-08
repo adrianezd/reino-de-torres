@@ -143,7 +143,7 @@ function shopHtml() {
   var chests = CHEST_ORDER.map(function (k) {
     var ch = CHESTS[k];
     return '<button class="sh-chest" data-buychest="' + k + '" style="--cc:' + ch.color + '"><img class="sh-chest-pic" src="' + chestPic(k) + '" alt=""><b>' + ch.name.replace('Cofre de ', '') + '</b>' +
-      '<small>' + ch.cards + ' cartas · ' + ch.gold[0] + ' a ' + ch.gold[1] + ' 🪙</small>' + price('gems', ch.price, meta.gems < ch.price) + '</button>';
+      '<small>' + ch.cards + ' cartas<br>' + ch.gold[0] + ' a ' + ch.gold[1] + ' 🪙</small>' + price('gems', ch.price, meta.gems < ch.price) + '</button>';
   }).join('');
   var golds = SHOP_GOLD.map(function (p, i) {
     return '<button class="sh-gold" data-buygold="' + i + '"><img class="sh-gold-pic" src="assets/chests/oro-' + ['monedas', 'saco', 'cofre'][i] + '.webp" alt=""><b>' + p.gold + ' 🪙</b>' + price('gems', p.gems, meta.gems < p.gems) + '</button>';
@@ -418,10 +418,13 @@ function showChest(r, from) {
   chestFxOn = true;
   var open = new Image(); open.src = chestPic(r.type, true);   // precargado para que el cambio no parpadee
   var rect = from && from.getBoundingClientRect();
+  if (rect && !rect.width) rect = null;
   var vw = window.innerWidth, vh = window.innerHeight;
-  var size = rect && rect.width ? rect.width : Math.min(vw * 0.45, 190);
-  var cx = rect && rect.width ? rect.left + rect.width / 2 : vw / 2;
-  var cy = rect && rect.width ? rect.top + rect.height / 2 : vh * 0.42;
+  // al abrirse sube al centro de la parte de arriba (en el móvil, desde la tarjeta
+  // de la esquina se saldría de la pantalla) y la carta baja al centro
+  var size2 = Math.min(vw * 0.42, 170), cx2 = vw / 2, cy2 = Math.max(vh * 0.27, size2 * 0.75);
+  var size = rect ? rect.width : size2, cx = rect ? rect.left + rect.width / 2 : cx2, cy = rect ? rect.top + rect.height / 2 : cy2;
+  var cardY = Math.min(vh - 125, cy2 + size2 * 0.62 + 115);
   var fx = document.createElement('div');
   fx.className = 'chest-fx';
   fx.style.setProperty('--cc', CHESTS[r.type].color);
@@ -431,7 +434,7 @@ function showChest(r, from) {
     '<img class="cfx-chest shake" src="' + chestPic(r.type) + '" alt=""></div>';
   document.body.appendChild(fx);
   if (from) from.style.visibility = 'hidden';
-  var chest = fx.querySelector('.cfx-chest'), timers = [], done = false;
+  var chest = fx.querySelector('.cfx-chest'), spot = fx.querySelector('.cfx-at'), timers = [], done = false;
   function at(ms, fn) { timers.push(setTimeout(fn, ms)); }
   function finish() {
     if (done) return;
@@ -443,18 +446,21 @@ function showChest(r, from) {
     chestFxOn = false;
     chestResult(r);
   }
-  fx.onclick = finish;
+  // el toque que compra no puede saltarse la animación nada más empezar
+  var t0 = Date.now();
+  fx.onclick = function () { if (Date.now() - t0 > 450) finish(); };
   sfx('tap'); buzz(15);
   at(300, function () {
     chest.src = open.src;
     chest.classList.remove('shake');
     chest.classList.add('opened');
     fx.classList.add('open');
+    spot.style.transform = 'translate(-50%, -50%) translate(' + (cx2 - cx) + 'px,' + (cy2 - cy) + 'px) scale(' + size2 / size + ')';
     sfx('chest'); buzz(35);
-    chestCoins(fx, cx, cy - size * 0.12, size);
   });
+  at(rect ? 560 : 340, function () { chestCoins(fx, cx2, cy2 - size2 * 0.12, size2); });
   var best = bestChestCard(r);
-  if (best) at(460, function () { chestCardOut(fx, best, cx, cy, vw, vh); });
+  if (best) at(rect ? 640 : 460, function () { chestCardOut(fx, best, cx2, cy2, vw / 2, cardY); });
   at(best ? 2000 : 1400, finish);
 }
 // monedas: salen disparadas del cofre y vuelan al contador de oro (o caen si no se ve)
@@ -483,7 +489,7 @@ function chestCoins(fx, x, y, size) {
   }
 }
 // la mejor carta del cofre sale de dentro y crece hasta el centro de la pantalla
-function chestCardOut(fx, best, x, y, vw, vh) {
+function chestCardOut(fx, best, x, y, tx, ty) {
   var u = UNITS[best.id], rar = RARITY[u.rarity];
   var el = document.createElement('div');
   el.className = 'cfx-card';
@@ -493,8 +499,8 @@ function chestCardOut(fx, best, x, y, vw, vh) {
   var tf = function (tx, ty, s, rot) { return 'translate(' + tx + 'px,' + ty + 'px) translate(-50%,-50%) scale(' + s + ') rotate(' + rot + 'deg)'; };
   el.animate([
     { transform: tf(x, y, 0.12, -14), opacity: 0 },
-    { transform: tf(x + (vw / 2 - x) * 0.3, y - 40, 0.45, -8), opacity: 1, offset: 0.3 },
-    { transform: tf(vw / 2, vh * 0.46, 1, 0), opacity: 1 }
+    { transform: tf(x + (tx - x) * 0.3, y - 30, 0.45, -8), opacity: 1, offset: 0.3 },
+    { transform: tf(tx, ty, 1, 0), opacity: 1 }
   ], { duration: 700, easing: 'cubic-bezier(0.25, 1.25, 0.45, 1)', fill: 'both' });
 }
 function chestResult(r) {
