@@ -91,7 +91,7 @@ var UNITS = {
     dmg: 30, rate: 0.9, proj: 'holy', bossMult: 3, target: 'strong',
     desc: 'Golpes sagrados que hacen el triple de daño a los jefes.'
   },
-  // legendarias que solo salen en cofres (chestOnly); noArt: true para una tropa aún sin ilustración
+  // legendarias que solo salen en el cofre de oro (chestOnly); noArt: true para una tropa aún sin ilustración
   fenix: {
     element: 'fuego', name: 'Ígnea', title: 'Ave Fénix', role: 'Área ardiente', rarity: 'legendaria', chestOnly: true,
     color: '#ff7a1a', color2: '#ffe066', skin: '#ffd2a6',
@@ -179,12 +179,13 @@ var BIOMES = {
   cripta:   { grass: '#4a4470', grass2: '#423c66', path: '#6d628f', path2: '#615782', frame: '#c9a2ff', bg: '#1d1838' }
 };
 
-// secret: probabilidad por cofre de desbloquear una legendaria que solo sale en cofres
+// rare / epic / legend: probabilidad por carta (puede salir cualquier tropa, aunque no la tengas;
+// las legendarias solo en el cofre de oro)
 // gems: gemas que trae el cofre · price: lo que cuesta en la tienda (en gemas)
 var CHESTS = {
-  madera: { name: 'Cofre de madera', gold: [40, 80],   gems: [0, 2],  cards: 6,  rare: 0.15, epic: 0.03, legend: 0,     secret: 0.002, color: '#a0663a', price: 15 },
-  plata:  { name: 'Cofre de plata',  gold: [90, 160],  gems: [1, 4],  cards: 12, rare: 0.3,  epic: 0.08, legend: 0.01,  secret: 0.006, color: '#c9d4e6', price: 40 },
-  oro:    { name: 'Cofre de oro',    gold: [200, 320], gems: [4, 10], cards: 24, rare: 0.4,  epic: 0.15, legend: 0.04,  secret: 0.02,  color: '#ffd166', price: 90 }
+  madera: { name: 'Cofre de madera', gold: [40, 80],   gems: [0, 2],  cards: 6,  rare: 0.15, epic: 0.03, legend: 0,    color: '#a0663a', price: 15 },
+  plata:  { name: 'Cofre de plata',  gold: [90, 160],  gems: [1, 4],  cards: 12, rare: 0.3,  epic: 0.08, legend: 0,    color: '#c9d4e6', price: 40 },
+  oro:    { name: 'Cofre de oro',    gold: [200, 320], gems: [4, 10], cards: 24, rare: 0.4,  epic: 0.15, legend: 0.04, color: '#ffd166', price: 90 }
 };
 var CHEST_ORDER = ['madera', 'plata', 'oro'];
 

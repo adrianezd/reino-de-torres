@@ -43,7 +43,7 @@ Tower defense de fusión para móvil y escritorio, gratis y sin anuncios. Invoca
 
 Oro, gemas, cartas con 10 niveles, cofres de madera, plata y oro, cofre gratis diario, mazo de 5 tropas, trofeos y estrellas. Todo se guarda en el navegador.
 
-**🛒 Tienda:** ofertas de cartas que cambian cada día (por oro o, las épicas y legendarias, por gemas), cofres por gemas y oro a cambio de gemas. Las gemas salen en los cofres, por cada estrella nueva de la campaña, al ganar duelos y en el cooperativo. Al tocar un cofre se ve su ficha (qué trae y la probabilidad de rara, épica, legendaria y legendaria secreta) y hay que darle a Abrir. Al abrirlo sale primero el oro y luego las cartas una a una, con un contador de las que quedan; «Saltar» va directo al resumen.
+**🛒 Tienda:** ofertas de cartas que cambian cada día (por oro o, las épicas y legendarias, por gemas), cofres por gemas y oro a cambio de gemas. Las gemas salen en los cofres, por cada estrella nueva de la campaña, al ganar duelos y en el cooperativo. Al tocar un cofre se ve su ficha (qué trae y la probabilidad de rara, épica y legendaria; puede tocar cualquier tropa aunque no la tengas y las legendarias solo salen en el de oro) y hay que darle a Abrir. Al abrirlo sale primero el oro y luego las cartas una a una, con un contador de las que quedan; «Saltar» va directo al resumen.
 
 La ficha de cada tropa muestra una mini partida con la tropa en acción.
 

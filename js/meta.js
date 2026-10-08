@@ -75,36 +75,35 @@ function upgradeCard(id) {
   return true;
 }
 
-/* Cofre: oro + cartas repartidas entre las tropas desbloqueadas según rareza. */
+/* Cofre: oro + cartas de cualquier tropa según rareza, la tengas o no (la
+   primera carta de una tropa nueva la desbloquea). Las legendarias solo salen
+   en el cofre que tiene legend > 0 (el de oro). */
 function openChest(type) {
   var ch = CHESTS[type];
   var gold = Math.round(ch.gold[0] + Math.random() * (ch.gold[1] - ch.gold[0]));
   var gems = Math.round(ch.gems[0] + Math.random() * (ch.gems[1] - ch.gems[0]));
-  var owned = Object.keys(meta.cards);
   var byRarity = { comun: [], rara: [], epica: [], legendaria: [] };
-  owned.forEach(function (id) { byRarity[UNITS[id].rarity].push(id); });
+  UNIT_ORDER.forEach(function (id) { byRarity[UNITS[id].rarity].push(id); });
   var got = {};
   for (var i = 0; i < ch.cards; i++) {
     var roll = Math.random(), pool;
-    if (roll < ch.legend && byRarity.legendaria.length) pool = byRarity.legendaria;
-    else if (roll < ch.legend + ch.epic && byRarity.epica.length) pool = byRarity.epica;
-    else if (roll < ch.legend + ch.epic + ch.rare && byRarity.rara.length) pool = byRarity.rara;
-    else pool = byRarity.comun.length ? byRarity.comun : owned;
+    if (roll < ch.legend) pool = byRarity.legendaria;
+    else if (roll < ch.legend + ch.epic) pool = byRarity.epica;
+    else if (roll < ch.legend + ch.epic + ch.rare) pool = byRarity.rara;
+    else pool = byRarity.comun;
     var id = pool[Math.floor(Math.random() * pool.length)];
     got[id] = (got[id] || 0) + 1;
   }
   meta.gold += gold;
   meta.gems += gems;
-  Object.keys(got).forEach(function (id) { meta.cards[id].n += got[id]; });
-  // muy de vez en cuando, una legendaria que solo sale en cofres
-  var secret = null;
-  var hidden = UNIT_ORDER.filter(function (id) { return UNITS[id].chestOnly && !meta.cards[id]; });
-  if (hidden.length && Math.random() < ch.secret) {
-    secret = hidden[Math.floor(Math.random() * hidden.length)];
-    meta.cards[secret] = { lv: 1, n: 0 };
-  }
+  var fresh = [];
+  Object.keys(got).forEach(function (id) {
+    if (meta.cards[id]) { meta.cards[id].n += got[id]; return; }
+    meta.cards[id] = { lv: 1, n: got[id] - 1 };
+    fresh.push(id);
+  });
   saveMeta();
-  return { type: type, gold: gold, gems: gems, cards: got, secret: secret };
+  return { type: type, gold: gold, gems: gems, cards: got, fresh: fresh };
 }
 
 function todayKey() {

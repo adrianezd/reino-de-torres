@@ -767,7 +767,6 @@ body {
 .sh-offer.sold img { filter: grayscale(0.7); }
 .sh-chests, .sh-golds { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
 .sh-chest { border-color: var(--cc); }
-.sh-chest small { color: var(--muted); font-size: 0.62rem; line-height: 1.25; text-align: center; white-space: nowrap; }
 .sh-chest-pic { width: 88%; aspect-ratio: 1; object-fit: contain; filter: drop-shadow(0 0 8px var(--cc)); }
 .sh-gold-pic { width: 70%; aspect-ratio: 1; object-fit: contain; }
 .sh-chest .sh-price, .sh-gold .sh-price { min-width: 0; width: 100%; }
@@ -806,11 +805,14 @@ body {
 .cfx-card b { font-size: 1.15rem; text-shadow: 0 2px 0 var(--ink); white-space: nowrap; }
 .cfx-card small { color: var(--gold); font-family: 'Lilita One'; font-size: 1.25rem; text-shadow: 0 2px 0 var(--ink); }
 .cfx-card.r-epica, .cfx-card.r-legendaria { box-shadow: 0 6px 0 var(--ink), 0 0 50px 14px color-mix(in srgb, var(--rc) 65%, transparent); }
-.cfx-card.r-legendaria, .cfx-card.secret { background: linear-gradient(180deg, #4a3a9f, #241a6a); }
+.cfx-card.r-legendaria { background: linear-gradient(180deg, #4a3a9f, #241a6a); }
 .cfx-gold { --rc: #ffd166; }
 .cfx-gold img { width: 100px; height: 100px; }
 .cfx-gold b { font-family: 'Lilita One'; font-weight: 400; font-size: 1.6rem; color: var(--gold); }
 .cfx-rar { position: absolute; top: -13px; background: var(--rc, var(--gold)); color: #1a1030; font-size: 0.78rem; padding: 1px 10px; border-radius: 9px; border: 2px solid var(--ink); white-space: nowrap; }
+.cfx-new { position: absolute; top: 10px; right: -10px; transform: rotate(12deg); padding: 2px 8px; border-radius: 8px; background: linear-gradient(180deg, #ff6a7d, #c22a44); border: 2px solid #fff; box-shadow: 0 0 0 2px var(--ink); font-size: 0.78rem; font-weight: 900; white-space: nowrap; }
+.chest-card { position: relative; }
+.chest-card.fresh::before { content: '¡Nueva!'; position: absolute; top: -8px; right: -6px; padding: 0 5px; border-radius: 6px; background: #c22a44; border: 2px solid #fff; font-size: 0.55rem; font-weight: 900; transform: rotate(10deg); }
 .cfx-bar { position: relative; width: 100%; height: 16px; margin-top: 6px; border-radius: 8px; background: rgba(0,0,0,0.45); border: 2px solid var(--ink); overflow: hidden; }
 .cfx-bar span { position: absolute; left: 0; top: 0; bottom: 0; background: linear-gradient(90deg, #3aa0ff, #6fd2ff); }
 .cfx-bar.full span { background: linear-gradient(90deg, #4caa12, #c4f74a); }

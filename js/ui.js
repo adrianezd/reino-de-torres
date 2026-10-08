@@ -143,8 +143,7 @@ function shopHtml() {
   }).join('');
   var chests = CHEST_ORDER.map(function (k) {
     var ch = CHESTS[k];
-    return '<button class="sh-chest" data-buychest="' + k + '" style="--cc:' + ch.color + '"><img class="sh-chest-pic" src="' + chestPic(k) + '" alt=""><b>' + ch.name.replace('Cofre de ', '') + '</b>' +
-      '<small>' + ch.cards + ' cartas<br>' + ch.gold[0] + ' a ' + ch.gold[1] + ' 🪙</small>' + price('gems', ch.price, meta.gems < ch.price) + '</button>';
+    return '<button class="sh-chest" data-buychest="' + k + '" style="--cc:' + ch.color + '"><img class="sh-chest-pic" src="' + chestPic(k) + '" alt=""><b>' + k.charAt(0).toUpperCase() + k.slice(1) + '</b>' + price('gems', ch.price, meta.gems < ch.price) + '</button>';
   }).join('');
   var golds = SHOP_GOLD.map(function (p, i) {
     return '<button class="sh-gold" data-buygold="' + i + '"><img class="sh-gold-pic" src="assets/chests/oro-' + ['monedas', 'saco', 'cofre'][i] + '.webp" alt=""><b>' + p.gold + ' 🪙</b>' + price('gems', p.gems, meta.gems < p.gems) + '</button>';
@@ -184,7 +183,7 @@ function cardHtml(id, inDeck, inColl) {
     return '<div class="ucard locked" style="--rc:' + RARITY[u.rarity].color + '">' +
       '<span class="uel">' + ELEMENTS[u.element].icon + '</span>' +
       '<span class="uport"><img src="' + unitIcon(id, 0, 128) + '" alt=""><i class="ulock">' + (u.chestOnly ? '🎁' : '🔒') + '</i></span>' +
-      '<div class="ulv ulv-lock">' + (u.chestOnly ? 'Solo en cofres' : from ? 'Fase ' + from.id : 'Bloqueada') + '</div>' +
+      '<div class="ulv ulv-lock">' + (u.chestOnly ? 'Cofre de oro' : from ? 'Fase ' + from.id : 'Bloqueada') + '</div>' +
       '<small>' + esc(u.name) + '</small></div>';
   }
   var need = cardsNeeded(c.lv), pct = c.lv >= CARD_MAX ? 100 : Math.min(100, c.n / need * 100);
@@ -280,7 +279,7 @@ function showCardModal(id) {
     '<div class="uc-ribbon"><h2>' + esc(u.name) + '</h2></div>' +
     '<p class="uc-title">' + esc(u.title) + '</p>' +
     '<div class="uc-chips"><span class="uc-chip rar">' + (u.rarity === 'legendaria' ? '★ ' : '') + rar.name + '</span><span class="uc-chip el">' + el.icon + ' ' + el.name + '</span><span class="uc-chip">' + esc(u.role) + '</span></div>' +
-    '<p class="uc-desc">' + esc(u.desc) + (u.chestOnly ? '<br><em>🎁 Solo sale en cofres</em>' : '') + '</p>' +
+    '<p class="uc-desc">' + esc(u.desc) + (u.chestOnly ? '<br><em>🎁 Solo sale en el cofre de oro</em>' : '') + '</p>' +
     '<div class="uc-demo"><canvas id="ucDemo" aria-label="' + esc(u.name) + ' en acción"></canvas><span>En acción</span></div>' +
     '<div class="pause-stats uc-stats">' + stats + '</div>' +
     (traits ? '<div class="uc-traits">' + traits + '</div>' : '') +
@@ -409,11 +408,11 @@ function showCodes() {
   $('codeX').onclick = closeOverlay;
 }
 
-/* Aviso de legendaria secreta desbloqueada en un cofre. */
-function secretHtml(r) {
-  if (!r.secret) return '';
-  var u = UNITS[r.secret];
-  return '<div class="res-unlock secret"><img src="' + unitIcon(r.secret, 0, 96) + '" alt=""><b>¡Legendaria secreta: ' + esc(u.name) + '!</b></div>';
+/* Aviso de tropas nuevas desbloqueadas en un cofre. */
+function chestNewHtml(r) {
+  if (!r.fresh || !r.fresh.length) return '';
+  if (r.fresh.length > 1) return '<div class="res-unlock secret"><b>¡' + r.fresh.length + ' tropas nuevas!</b></div>';
+  return '<div class="res-unlock secret"><img src="' + unitIcon(r.fresh[0], 0, 96) + '" alt=""><b>¡Tropa nueva: ' + esc(UNITS[r.fresh[0]].name) + '!</b></div>';
 }
 /* ---------- cofres: ficha, apertura y reparto ----------
    Ficha: qué trae y la probabilidad de cada rareza; hay que darle a Abrir.
@@ -434,7 +433,6 @@ function chestOdds(p, n) {
 }
 function showChestInfo(k) {
   var ch = CHESTS[k], poor = meta.gems < ch.price;
-  var secretsLeft = UNIT_ORDER.some(function (id) { return UNITS[id].chestOnly && !meta.cards[id]; });
   var row = function (color, name, sub, odds) {
     return '<div class="ci-row" style="--rc:' + color + '"><i></i><span><b>' + name + '</b>' + (sub ? '<small>' + sub + '</small>' : '') + '</span><em>' + odds + '</em></div>';
   };
@@ -445,9 +443,8 @@ function showChestInfo(k) {
     '<h3 class="ci-t">Probabilidad por cofre</h3>' +
     row(RARITY.rara.color, 'Rara', '', chestOdds(ch.rare, ch.cards)) +
     row(RARITY.epica.color, 'Épica', '', chestOdds(ch.epic, ch.cards)) +
-    row(RARITY.legendaria.color, 'Legendaria', '', chestOdds(ch.legend, ch.cards)) +
-    row('#ff5ad1', 'Legendaria secreta', 'Solo sale en cofres', secretsLeft ? chestOdds(ch.secret, 1) : 'Ya las tienes') +
-    '<p class="ci-note">Salen cartas de las tropas que ya tienes, salvo la secreta.</p>' +
+    row(RARITY.legendaria.color, 'Legendaria', ch.legend ? '' : 'Solo en el cofre de oro', chestOdds(ch.legend, ch.cards)) +
+    '<p class="ci-note">Puede tocarte cualquier tropa, aunque aún no la tengas.</p>' +
     '<button class="btn chest-ok' + (poor ? ' poor' : '') + '" id="ciOpen">Abrir<span>💎 ' + ch.price + '</span></button>' +
     '<button class="btn btn-ghost" id="ciX">Cerrar</button></div>');
   $('ciOpen').onclick = function () {
@@ -464,8 +461,7 @@ function chestItems(r) {
   var items = [{ gold: r.gold, gems: r.gems }];
   Object.keys(r.cards).sort(function (a, b) {
     return RARITY_RANK.indexOf(UNITS[a].rarity) - RARITY_RANK.indexOf(UNITS[b].rarity) || r.cards[a] - r.cards[b];
-  }).forEach(function (id) { items.push({ id: id, n: r.cards[id] }); });
-  if (r.secret) items.push({ id: r.secret, n: 1, secret: true });
+  }).forEach(function (id) { items.push({ id: id, n: r.cards[id], fresh: (r.fresh || []).indexOf(id) !== -1 }); });
   return items;
 }
 // from: imagen del cofre de la que sale (ficha del cofre); sin ella, sale en el centro
@@ -535,7 +531,7 @@ function showChest(r, from) {
 }
 // sonido y sacudida del cofre según la rareza; destello blanco con las legendarias
 function chestBump(chest, fx, it) {
-  var rar = it.secret ? 'legendaria' : UNITS[it.id].rarity;
+  var rar = UNITS[it.id].rarity;
   sfx({ comun: 'tap', rara: 'merge', epica: 'power', legendaria: 'win' }[rar]);
   if (rar === 'epica' || rar === 'legendaria') buzz(rar === 'legendaria' ? 60 : 30);
   chest.classList.remove('bump'); void chest.offsetWidth; chest.classList.add('bump');
@@ -581,9 +577,9 @@ function chestItemIn(fx, it, x, y, tx, ty) {
   } else {
     var u = UNITS[it.id], rar = RARITY[u.rarity], c = meta.cards[it.id];
     var max = c.lv >= CARD_MAX, need = cardsNeeded(c.lv), pct = max ? 100 : Math.min(100, c.n / need * 100);
-    el.className = 'cfx-card r-' + u.rarity + (it.secret ? ' secret' : '');
-    el.style.setProperty('--rc', it.secret ? '#ff5ad1' : rar.color);
-    el.innerHTML = '<span class="cfx-rar">' + (it.secret ? '¡Nueva! Secreta' : rar.name) + '</span>' +
+    el.className = 'cfx-card r-' + u.rarity + (it.fresh ? ' fresh' : '');
+    el.style.setProperty('--rc', rar.color);
+    el.innerHTML = '<span class="cfx-rar">' + rar.name + '</span>' + (it.fresh ? '<span class="cfx-new">¡Nueva!</span>' : '') +
       '<img src="' + unitIcon(it.id, 0, 160) + '" alt=""><b>' + esc(u.name) + '</b><small>×' + it.n + '</small>' +
       '<div class="cfx-bar' + (!max && c.n >= need ? ' full' : '') + '"><span style="width:' + pct + '%"></span><em>' + (max ? 'MÁX' : 'Nv ' + c.lv + ' · ' + c.n + '/' + need) + '</em></div>';
   }
@@ -605,10 +601,10 @@ function chestItemOut(el, vw, ty) {
 }
 function chestResult(r) {
   var ch = CHESTS[r.type];
-  var cards = chestItems(r).slice(1).filter(function (it) { return !it.secret; }).reverse().map(function (it) {
-    return '<div class="chest-card" style="--rc:' + RARITY[UNITS[it.id].rarity].color + '"><img src="' + unitIcon(it.id, 0, 96) + '" alt=""><b>×' + it.n + '</b><small>' + esc(UNITS[it.id].name) + '</small></div>';
+  var cards = chestItems(r).slice(1).reverse().map(function (it) {
+    return '<div class="chest-card' + (it.fresh ? ' fresh' : '') + '" style="--rc:' + RARITY[UNITS[it.id].rarity].color + '"><img src="' + unitIcon(it.id, 0, 96) + '" alt=""><b>×' + it.n + '</b><small>' + esc(UNITS[it.id].name) + '</small></div>';
   }).join('');
-  openOverlay('<div class="modal-card chest-modal"><div class="chest-pic"><img class="chest-pic-rays" src="assets/chests/destello.webp" alt=""><img class="chest-pic-img" src="' + chestPic(r.type, true) + '" alt=""></div><h2>' + ch.name + '</h2><p class="gold-big">+' + r.gold + ' 🪙' + (r.gems ? ' · +' + r.gems + ' 💎' : '') + '</p>' + secretHtml(r) + '<div class="chest-cards">' + cards + '</div><button class="btn chest-ok" id="chestOk">¡Genial!</button></div>');
+  openOverlay('<div class="modal-card chest-modal"><div class="chest-pic"><img class="chest-pic-rays" src="assets/chests/destello.webp" alt=""><img class="chest-pic-img" src="' + chestPic(r.type, true) + '" alt=""></div><h2>' + ch.name + '</h2><p class="gold-big">+' + r.gold + ' 🪙' + (r.gems ? ' · +' + r.gems + ' 💎' : '') + '</p>' + chestNewHtml(r) + '<div class="chest-cards">' + cards + '</div><button class="btn chest-ok" id="chestOk">¡Genial!</button></div>');
   $('chestOk').onclick = function () { closeOverlay(); renderMenu(currentScreen === 'battle' ? 'home' : currentScreen); };
 }
 
@@ -694,7 +690,7 @@ function showBanner(title, sub, pic) {
 function showResult(res) {
   var title = res.mode === 'coop' ? (res.won ? '¡Gran defensa!' : 'Fin de la partida') : res.won ? '¡Victoria!' : 'Derrota';
   var stars = res.mode === 'campaign' && res.won ? '<div class="res-stars">' + '★★★'.slice(0, res.stars).padEnd(3, '☆') + '</div>' : '';
-  var chest = res.chestResult ? '<div class="res-chest">🎁 ' + CHESTS[res.chestResult.type].name + ': +' + res.chestResult.gold + ' 🪙 y ' + Object.keys(res.chestResult.cards).reduce(function (s, k) { return s + res.chestResult.cards[k]; }, 0) + ' cartas</div>' + secretHtml(res.chestResult) : '';
+  var chest = res.chestResult ? '<div class="res-chest">🎁 ' + CHESTS[res.chestResult.type].name + ': +' + res.chestResult.gold + ' 🪙 y ' + Object.keys(res.chestResult.cards).reduce(function (s, k) { return s + res.chestResult.cards[k]; }, 0) + ' cartas</div>' + chestNewHtml(res.chestResult) : '';
   var unlock = res.unlocked ? '<div class="res-unlock"><img src="' + unitIcon(res.unlocked, 0, 96) + '" alt=""><b>¡Nueva tropa: ' + esc(UNITS[res.unlocked].name) + '!</b></div>' : '';
   openOverlay('<div class="modal-card result ' + (res.won ? 'win' : 'lose') + '"><div class="res-emoji">' + (res.won ? '🏆' : '💀') + '</div><h2>' + title + '</h2>' + stars +
     '<p>' + res.lines.map(esc).join('<br>') + '</p>' +
