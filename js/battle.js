@@ -366,7 +366,9 @@ function drawBattle(now) {
   var fieldPic = G0.image ? art(G0.image) : null;
   var fondo = art('ui/fondo');
   var grassy = ['prado', 'bosque', 'pantano'].indexOf(battle.player.biome) !== -1;
-  if (fondo && ((fieldPic && G0.px.bg === 'fondo') || (!fieldPic && grassy))) {
+  if (fieldPic && G0.px.over) {
+    drawBackdrop(fieldPic, G0.px);
+  } else if (fondo && ((fieldPic && G0.px.bg === 'fondo') || (!fieldPic && grassy))) {
     // prado ilustrado de fondo, a pantalla completa
     var k = Math.max(layout.w / fondo.naturalWidth, layout.h / fondo.naturalHeight);
     var fw = fondo.naturalWidth * k, fh = fondo.naturalHeight * k;
@@ -399,6 +401,25 @@ function drawBattle(now) {
     }
   }
   drawBoard(battle.player, layout.main, now, true);
+}
+/* Fondo de los tableros «over»: su propia zona de juego muy desenfocada
+   (reducida a 40 px y ampliada) y oscurecida, a pantalla completa, para
+   que cualquier forma de pantalla quede rellena con sus colores. */
+var _backdrop = {};
+function drawBackdrop(pic, F) {
+  var cv = _backdrop[F.image];
+  if (!cv) {
+    var kx = pic.naturalWidth / F.iw, ky = pic.naturalHeight / F.ih;
+    cv = document.createElement('canvas'); cv.width = 40; cv.height = Math.max(1, Math.round(40 * F.ch / F.cw));
+    cv.getContext('2d').drawImage(pic, F.cx * kx, F.cy * ky, F.cw * kx, F.ch * ky, 0, 0, cv.width, cv.height);
+    _backdrop[F.image] = cv;
+  }
+  var k = Math.max(layout.w / cv.width, layout.h / cv.height);
+  ctx.imageSmoothingEnabled = true;
+  ctx.drawImage(cv, (layout.w - cv.width * k) / 2, (layout.h - cv.height * k) / 2, cv.width * k, cv.height * k);
+  var v = ctx.createRadialGradient(layout.w / 2, layout.h / 2, Math.min(layout.w, layout.h) * 0.2, layout.w / 2, layout.h / 2, Math.max(layout.w, layout.h) * 0.75);
+  v.addColorStop(0, 'rgba(6,8,24,0.35)'); v.addColorStop(1, 'rgba(6,8,24,0.7)');
+  ctx.fillStyle = v; ctx.fillRect(0, 0, layout.w, layout.h);
 }
 var lawn = { key: '', items: [] };
 function drawLawn() {
@@ -440,7 +461,12 @@ function drawBoard(b, L, now, isMain) {
   if (pic) {
     // tablero ilustrado (recortado sin la interfaz de las esquinas)
     var F = G.px, kx = pic.naturalWidth / F.iw, ky = pic.naturalHeight / F.ih;
-    ctx.drawImage(pic, F.cx * kx, F.cy * ky, F.cw * kx, F.ch * ky, 0, 0, G.W, G.H);
+    if (F.over && !dual) {
+      // ilustración entera con la zona de juego en su sitio: el marco asoma
+      // por arriba, abajo y los lados hasta donde llegue la pantalla
+      var upx = F.cw / G.W; // píxeles de la imagen por unidad
+      ctx.drawImage(pic, -F.cx / upx, -F.cy / upx, F.iw / upx, F.ih / upx);
+    } else ctx.drawImage(pic, F.cx * kx, F.cy * ky, F.cw * kx, F.ch * ky, 0, 0, G.W, G.H);
     if (F.fade) {
       // funde los bordes superior e inferior con el césped de alrededor
       // (con dos tableros, el inferior apenas, para que se vea el camino)
@@ -549,6 +575,18 @@ function drawBoard(b, L, now, isMain) {
       ctx.lineTo(f.x2, f.y2); ctx.stroke(); ctx.globalAlpha = 1;
     } else if (f.type === 'pic') {
       drawPicFx(ctx, f);
+    } else if (f.type === 'sweep') {
+      // habilidad de Aria o Merlo: la ola cruza el tablero y se apaga al final
+      var sw = G.W * 0.8;
+      ctx.globalAlpha = t < 0.8 ? 1 : (1 - t) * 5;
+      drawFxPic(ctx, f.key, -sw / 2 + (G.W + sw) * t, f.y, sw, 0);
+      ctx.globalAlpha = 1;
+    } else if (f.type === 'fall') {
+      // meteoro de Brann: baja en diagonal y desaparece al tocar suelo
+      if (f.life <= METEOR_FALL) {
+        var q = 1 - f.life / METEOR_FALL;
+        drawFxPic(ctx, f.key, f.x - 1.9 * (1 - q), f.y - 0.25 - 2.6 * (1 - q), f.size, 0);
+      }
     } else if (f.type === 'flash') {
       ctx.globalAlpha = (f.life / f.max) * 0.5; ctx.fillStyle = f.color; ctx.fillRect(0, 0, G.W, G.H); ctx.globalAlpha = 1;
     } else {

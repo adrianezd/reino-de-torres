@@ -8,8 +8,14 @@ function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { '
    cambian en todo el HTML de menús, modales, avisos y marcador. */
 var ICON_FILES = { '🪙': 'icons/moneda', '💎': 'icons/gema', '🏆': 'icons/trofeo', '⭐': 'icons/estrella', '👑': 'icons/corona', '🔒': 'icons/candado',
   '⏱': 'icons/reloj', '⏳': 'icons/reloj', '🎟': 'icons/ticket', '❓': 'icons/pergamino', '⚔': 'icons/espadas', '💧': 'icons/gota', '🎁': 'chests/madera',
-  '🗺': 'icons/estrella', '🤝': 'icons/escudo', '🌑': 'events/eclipse', '🌧': 'events/lluvia', '🌫': 'events/niebla', '👹': 'events/horda', '🍃': 'events/calma' };
-var ICON_RE = /(🪙|💎|🏆|⭐|👑|🔒|⏱|⏳|🎟|❓|⚔|💧|🎁|🗺|🤝|🌑|🌧|🌫|👹|🍃)️?/g;
+  '🗺': 'icons/estrella', '🤝': 'icons/escudo', '🌑': 'events/eclipse', '🌧': 'events/lluvia', '🌫': 'events/niebla', '👹': 'events/horda', '🍃': 'events/calma',
+  // elementos, rasgos, estadísticas, rivales, pausa y tutorial (assets/set-icons-2.jpg)
+  '🔥': 'icons/fuego', '❄': 'icons/hielo', '🌿': 'icons/hoja', '🔮': 'icons/arcano', '⚙': 'icons/engranaje', '💥': 'icons/explosion', '☠': 'icons/veneno',
+  '⚡': 'icons/rayo', '🗡': 'icons/critico', '🛡': 'icons/perfora', '🎵': 'icons/musica', '🎯': 'icons/diana', '📈': 'icons/grafico', '📍': 'icons/vecinas',
+  '✨': 'icons/chispas', '💀': 'icons/calavera', '🌊': 'icons/ola', '🙂': 'icons/rival-facil', '😠': 'icons/rival-normal', '😈': 'icons/rival-dificil',
+  '🔊': 'icons/sonido', '🔇': 'icons/silencio', '⏩': 'icons/rapido', '↻': 'icons/reiniciar', '🏠': 'icons/casa', '⚠': 'icons/aviso', '👇': 'icons/mano',
+  '🎲': 'icons/dado', '↔': 'icons/recolocar', '⬆': 'icons/mejorar' };
+var ICON_RE = new RegExp('(' + Object.keys(ICON_FILES).join('|') + ')️?', 'g');
 // tres estrellas de fase: las que no se han ganado, apagadas
 function starRow(n) { var s = ''; for (var i = 0; i < 3; i++) s += '<x-ico class="' + (i < n ? '' : 'off') + '" style="background-image:url(assets/icons/estrella.webp)"></x-ico>'; return s; }
 // etiqueta propia con la imagen de fondo: así no le afectan las reglas de
@@ -120,11 +126,18 @@ function renderMenu(name, arg) {
       '<div class="card-grid">' + (collHtml || '<p class="muted coll-empty">No hay tropas de esta rareza</p>') + '</div>' +
       '<div class="legend"><b>Afinidad:</b> ' + Object.keys(ELEMENTS).map(function (k) { return ELEMENTS[k].icon + ' ' + ELEMENTS[k].name; }).join(' · ') + '. Dos tropas del mismo elemento juntas se potencian.</div>';
   } else if (name === 'commanders') {
+    // tarjetas con el comandante de cuerpo entero; en los medallones de abajo
+    // se enciende el suyo. Debajo, la habilidad del elegido con su efecto.
+    var cs = COMMANDERS[meta.commander];
     html = backBar('Mazo', true) + deckTabs('commanders') + '<p class="lead">Su habilidad se carga durante la partida. Pulsa su retrato para usarla.</p>' +
-      COMMANDER_ORDER.map(function (k) {
+      '<div class="cmd-cards">' + COMMANDER_ORDER.map(function (k, i) {
         var c = COMMANDERS[k];
-        return '<button class="big-choice cmd ' + (meta.commander === k ? 'sel' : '') + '" data-cmd="' + k + '" style="--cc:' + c.color + '"><span class="cmd-ico"><img src="' + c.pic + '" alt="' + esc(c.name) + '"></span><span><b>' + c.name + ' · ' + c.title + '</b><small>' + c.ability + ': ' + c.desc + ' (cada ' + c.cd + ' s)</small></span></button>';
-      }).join('');
+        return '<button class="cmd-card' + (meta.commander === k ? ' sel' : '') + '" data-cmd="' + k + '" style="--cc:' + c.color + '" aria-label="' + esc(c.name) + '">' +
+          '<img class="cmd-body" src="assets/commanders/' + k + '-cuerpo.webp" alt=""><span class="cmd-frame"></span><b>' + esc(c.name) + '</b>' +
+          COMMANDER_ORDER.map(function (o, j) { return j === i ? '' : '<i class="cmd-dim" style="left:' + [26, 50.8, 75.8][j] + '%"></i>'; }).join('') + '</button>';
+      }).join('') + '</div>' +
+      '<div class="cmd-detail" style="--cc:' + cs.color + '"><img src="assets/fx/' + CMD_FX[meta.commander] + '.webp" alt=""><div><b>' + esc(cs.name) + ' · ' + esc(cs.title) + '</b>' +
+      '<small><em>' + esc(cs.ability) + ':</em> ' + esc(cs.desc) + '</small><small>' + ico('icons/reloj') + ' Se carga en ' + cs.cd + ' s</small></div></div>';
   } else if (name === 'shop') {
     html = backBar('Tienda', true) + shopHtml();
   } else if (name === 'howto') {
@@ -176,6 +189,8 @@ function rivalCardsText(off) {
   if (!off) return 'Cartas a tu nivel';
   return 'Cartas ' + Math.abs(off) + (Math.abs(off) === 1 ? ' nivel ' : ' niveles ') + (off < 0 ? 'por debajo' : 'por encima') + ' de las tuyas';
 }
+// efecto ilustrado de la habilidad de cada comandante (assets/fx)
+var CMD_FX = { aria: 'ventisca', merlo: 'marea', brann: 'meteoro' };
 function modeBtn(go, icon, title, sub, cls) {
   return '<button class="mode-btn ' + cls + '" data-go="' + go + '"><span class="mode-ico">' + icon + '</span><span><b>' + title + '</b><small>' + sub + '</small></span><span class="mode-go">▶</span></button>';
 }
@@ -856,7 +871,7 @@ function showResult(res) {
     ? '<div class="res-chest"><img src="' + chestPic(res.chest) + '" alt=""><span><b>' + CHESTS[res.chest].name + '</b><small>Guardado en tus cofres · tarda ' + fmtDur(CHESTS[res.chest].time) + ' en abrirse</small></span></div>'
     : '<div class="res-chest full"><img src="' + chestPic(res.chest) + '" alt=""><span><b>Tus cofres están llenos</b><small>Abre alguno para que quepan los próximos</small></span></div>';
   var unlock = res.unlocked ? '<div class="res-unlock"><img src="' + unitIcon(res.unlocked, 0, 96) + '" alt=""><b>¡Nueva tropa: ' + esc(UNITS[res.unlocked].name) + '!</b></div>' : '';
-  openOverlay('<div class="modal-card result ' + (res.won ? 'win' : 'lose') + '"><div class="res-emoji">' + (res.won ? '🏆' : res.draw ? '🤝' : '💀') + '</div><h2>' + title + '</h2>' + stars +
+  openOverlay('<div class="modal-card result ' + (res.won ? 'win' : 'lose') + '"><div class="res-emoji">' + (res.won ? '🏆' : res.draw ? '🤝' : ico('icons/derrota')) + '</div><h2>' + title + '</h2>' + stars +
     '<p>' + res.lines.map(esc).join('<br>') + '</p>' +
     '<p class="res-gold">+' + res.gold + ' 🪙' + (res.gems ? ' · +' + res.gems + ' 💎' : '') + (res.trophies ? ' · ' + (res.trophies > 0 ? '+' : '') + res.trophies + ' 🏆' : '') + '</p>' + chest + unlock +
     '<p class="muted">Bajas ' + res.kills + ' · Daño ' + fmtNum(res.damage) + '</p>' + dmgSummary(res) +
@@ -921,7 +936,7 @@ function confirmQuit() {
   $('pSound').onclick = function () {
     meta.settings.sound = !meta.settings.sound; saveMeta();
     this.classList.toggle('on', meta.settings.sound);
-    this.querySelector('i').textContent = meta.settings.sound ? '🔊' : '🔇';
+    this.querySelector('i').innerHTML = icons(meta.settings.sound ? '🔊' : '🔇');
     sfx('tap');
   };
   $('pSpeed').onclick = function () {

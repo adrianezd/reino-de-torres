@@ -104,6 +104,12 @@ var FX_OF = { fire: 'fuego', ice: 'hielo', poison: 'veneno', bomb: 'canon' };
     IMG['fx/' + el + '-' + part] = im;
   });
 });
+['ventisca', 'marea', 'meteoro', 'crater'].forEach(function (k) {
+  var im = new Image();
+  im.onload = function () { im.ready = true; };
+  im.src = 'assets/fx/' + k + '.webp';
+  IMG['fx/' + k] = im;
+});
 var FX_TURNS = { 'fx/fuego-bola': true, 'fx/hielo-bola': true, 'fx/hielo-destello': true, 'fx/canon-destello': true };
 /* Aturdido: dos estrellas que giran sobre la cabeza. */
 function drawStun(c, x, y, r, now) {

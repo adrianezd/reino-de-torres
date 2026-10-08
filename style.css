@@ -1142,3 +1142,40 @@ x-ico.off { filter: grayscale(1) brightness(0.45); opacity: 0.75; }
 .stage-s x-ico { width: 1.15em; height: 1.15em; margin: 0 -0.05em; }
 .res-stars x-ico { width: 1.1em; height: 1.1em; margin: 0 0.04em; filter: drop-shadow(0 3px 0 var(--ink)); }
 .res-stars x-ico.off { filter: grayscale(1) brightness(0.45) drop-shadow(0 3px 0 var(--ink)); }
+
+/* barra de recursos: icono centrado en altura con el número */
+.res-bar .pill { display: inline-flex; align-items: center; }
+.res-bar .pill x-ico { vertical-align: 0; margin: -0.5em 0.14em -0.5em -0.55em; }
+
+/* =========================================================
+   Comandantes: tarjeta de madera y piedra (assets/ui/tarjeta-comandante)
+   con el cuerpo entero dentro, nombre en la placa y su medallón
+   encendido; debajo, la habilidad del elegido con su efecto.
+   ========================================================= */
+.cmd-cards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin: 4px 0 12px; }
+.cmd-card {
+  position: relative; aspect-ratio: 330 / 512; padding: 0; border: 0; background: none;
+  filter: drop-shadow(0 4px 0 rgba(10,12,40,0.45)); transition: transform 0.15s cubic-bezier(0.3, 1.6, 0.5, 1);
+}
+.cmd-card::before {
+  content: ''; position: absolute; left: 13%; right: 11%; top: 11%; bottom: 31%;
+  background: radial-gradient(circle at 50% 42%, color-mix(in srgb, var(--cc) 55%, #1a2766), #111a4a 78%);
+}
+.cmd-card .cmd-body { position: absolute; left: 14%; width: 74%; bottom: 33%; height: 50%; object-fit: contain; object-position: 50% 100%; }
+.cmd-card .cmd-frame { position: absolute; inset: 0; background: url(assets/ui/tarjeta-comandante.webp) center / 100% 100% no-repeat; }
+.cmd-card b {
+  position: absolute; left: 13%; right: 11%; top: 68%; height: 9.8%; display: grid; place-items: center;
+  font-family: 'Lilita One', 'Nunito', sans-serif; font-weight: 400; font-size: clamp(0.85rem, 4vw, 1.1rem); color: #3a2410; letter-spacing: 0.02em;
+}
+.cmd-card .cmd-dim { position: absolute; top: 86.4%; width: 19.5%; aspect-ratio: 1; transform: translate(-50%, -50%); border-radius: 50%; background: rgba(8,10,30,0.62); }
+.cmd-card.sel { transform: translateY(-6px) scale(1.03); filter: drop-shadow(0 4px 0 rgba(10,12,40,0.45)) drop-shadow(0 0 10px var(--cc)); }
+.cmd-card:active { transform: translateY(2px) scale(0.98); }
+.cmd-detail {
+  display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 16px; text-align: left;
+  background: rgba(6,10,36,0.55); border: 2px solid color-mix(in srgb, var(--cc) 60%, transparent);
+}
+.cmd-detail > img { width: 84px; height: 64px; object-fit: contain; flex-shrink: 0; }
+.cmd-detail b { display: block; font-family: 'Lilita One', 'Nunito', sans-serif; font-weight: 400; font-size: 1.1rem; text-shadow: 0 2px 0 var(--ink); }
+.cmd-detail small { display: block; font-size: 0.82rem; color: #dfe6ff; margin-top: 2px; }
+.cmd-detail em { font-style: normal; color: var(--cc); }
+.pause-opt i x-ico { width: 1.2em; height: 1.2em; margin: 0; }
