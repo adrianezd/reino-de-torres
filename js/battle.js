@@ -19,16 +19,18 @@ function startBattle(mode, opts) {
   var deck = meta.deck.slice();
   var lv = cardLevels();
   var lives = mode === 'campaign' ? { v: 5, max: 5 } : mode === 'duel' ? { v: 3, max: 3 } : { v: 6, max: 6 };
-  // tablero ilustrado si está disponible: la campaña usa el de su bioma y
-  // el duelo y el cooperativo, el del bosque (con dos tableros a la vez)
-  var fid = BIOME_FIELD[biome] || 'prado';
-  if (Array.isArray(fid)) {
-    // al azar entre los que ya han cargado
-    var ready = fid.filter(function (k) { return art(FIELD_GEOS[k].image); });
-    fid = ready.length ? pick(ready) : fid[0];
+  // tablero ilustrado (al azar entre los que ya han cargado): la campaña usa
+  // uno de su bioma; el duelo y el cooperativo, cualquiera, con un bioma
+  // que le pegue para el decorado de alrededor
+  var loaded = function (k) { return art(FIELD_GEOS[k].image); };
+  var choices = stage ? [].concat(BIOME_FIELD[biome] || 'prado') : Object.keys(FIELD_GEOS);
+  var ready = choices.filter(loaded);
+  var fid = ready.length ? pick(ready) : loaded('prado') ? 'prado' : null;
+  if (!stage && fid) {
+    var fits = Object.keys(BIOME_FIELD).filter(function (bk) { return [].concat(BIOME_FIELD[bk]).indexOf(fid) !== -1; });
+    if (fits.length) biome = pick(fits);
   }
-  var fg = FIELD_GEOS[fid];
-  var geo = mode === 'campaign' && art(fg.image) ? fg : art('board/tablero') ? FIELD_GEO : VECTOR_GEO;
+  var geo = fid ? FIELD_GEOS[fid] : VECTOR_GEO;
   var player = new Board({ name: 'Tú', deck: deck, cardLv: lv, commander: meta.commander, lives: lives, biome: biome, geo: geo, mana: stage ? stage.mana : 100 });
   battle = {
     mode: mode, stage: stage, opts: opts,
@@ -388,7 +390,8 @@ function drawBattle(now) {
     var sy = layout.other.oy + layout.other.g.H * layout.other.sc + 4;
     if (fieldPic) {
       var sg = ctx.createLinearGradient(0, sy - 3, 0, sy + 5);
-      sg.addColorStop(0, 'rgba(30,70,10,0)'); sg.addColorStop(0.5, 'rgba(30,70,10,0.35)'); sg.addColorStop(1, 'rgba(30,70,10,0)');
+      var sep = G0.px.fade ? '30,70,10' : '0,0,0'; // verde sobre el césped, oscuro en los demás
+      sg.addColorStop(0, 'rgba(' + sep + ',0)'); sg.addColorStop(0.5, 'rgba(' + sep + ',0.35)'); sg.addColorStop(1, 'rgba(' + sep + ',0)');
       ctx.fillStyle = sg; ctx.fillRect(0, sy - 3, layout.w, 8);
     } else {
       ctx.fillStyle = 'rgba(0,0,0,0.25)';
@@ -574,9 +577,9 @@ function drawBoard(b, L, now, isMain) {
     b.texts.forEach(function (t) {
       var p = toS(t.x, t.y);
       ctx.globalAlpha = Math.min(1, t.life / t.max * 1.6);
-      ctx.font = '900 ' + Math.max(10, sc * (t.big ? 0.3 : 0.22)) + 'px Nunito, sans-serif';
-      ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(10,8,20,0.85)'; ctx.strokeText(t.text, p.x, p.y);
-      ctx.fillStyle = t.color; ctx.fillText(t.text, p.x, p.y);
+      var fs = Math.max(10, sc * (t.big ? 0.3 : 0.22));
+      ctx.font = '900 ' + fs + 'px Nunito, sans-serif';
+      drawFloatText(ctx, t.text, p.x, p.y, fs, t.color);
     });
     ctx.globalAlpha = 1;
   }
@@ -587,17 +590,29 @@ function drawBoard(b, L, now, isMain) {
   }
   // cabecera del tablero rival/aliado
   if (!isMain) {
-    var label = (battle.mode === 'duel' ? '⚔️ ' : '🤝 ') + b.name;
-    ctx.font = '900 13px Nunito, sans-serif'; ctx.textAlign = 'left';
-    ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(0,0,0,0.6)';
-    var hy = L.oy - 9;
-    ctx.strokeText(label, L.ox + 4, hy); ctx.fillStyle = '#fff'; ctx.fillText(label, L.ox + 4, hy);
-    ctx.textAlign = 'right';
-    var info = (battle.mode === 'duel' ? hearts(b.lives) + '   ' : '') + '💧 ' + Math.floor(b.mana);
-    ctx.strokeText(info, L.ox + G.W * sc - 4, hy); ctx.fillText(info, L.ox + G.W * sc - 4, hy);
+    // izquierda: espadas (rival) o escudo (aliado) y su nombre
+    var hy = L.oy - 9, isz = 16, lx = L.ox + 4;
+    ctx.font = '900 13px Nunito, sans-serif'; ctx.textBaseline = 'middle';
+    ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(0,0,0,0.6)'; ctx.fillStyle = '#fff';
+    var lic = art(battle.mode === 'duel' ? 'icons/espadas' : 'icons/escudo');
+    if (lic) { ctx.drawImage(lic, lx, hy - isz / 2, isz, isz); lx += isz + 3; }
+    ctx.textAlign = 'left'; ctx.strokeText(b.name, lx, hy); ctx.fillText(b.name, lx, hy);
+    // derecha: maná con la gota y, en el duelo, sus corazones
+    var rx = L.ox + G.W * sc - 4, mtxt = String(Math.floor(b.mana));
+    ctx.textAlign = 'right'; ctx.strokeText(mtxt, rx, hy); ctx.fillText(mtxt, rx, hy);
+    rx -= ctx.measureText(mtxt).width + 2;
+    var gi = art('icons/gota');
+    if (gi) { ctx.drawImage(gi, rx - isz, hy - isz / 2, isz, isz); rx -= isz + 8; }
+    var vi = art('ui/vida');
+    if (battle.mode === 'duel' && vi) {
+      for (var hi = b.lives.max - 1; hi >= 0; hi--) {
+        ctx.globalAlpha = hi < b.lives.v ? 1 : 0.3;
+        ctx.drawImage(vi, rx - 14, hy - 6.5, 14, 13); rx -= 13;
+      }
+      ctx.globalAlpha = 1;
+    }
   }
 }
-function hearts(l) { var s = ''; for (var i = 0; i < l.max; i++) s += i < l.v ? '❤️' : '🖤'; return s; }
 
 /* Portal de piedra con un remolino mágico dentro (tablero dibujado). */
 function drawPortal(x, y, now, col) {

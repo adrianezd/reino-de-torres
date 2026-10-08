@@ -55,10 +55,22 @@ var FIELDS = {
   // la boca de abajo, dan la vuelta entera al río y vuelven a la misma boca
   lava2: { image: 'boards/lava2', iw: 1248, ih: 832, cx: 30, cy: 0, cw: 1188, ch: 832, portal: true,
     gx0: 322, gy0: 282, gx1: 928, gy1: 596,
-    way: [[603, 770], [603, 660], [247, 660], [247, 214], [1006, 214], [1006, 660], [652, 660], [652, 770]] }
+    way: [[603, 770], [603, 660], [247, 660], [247, 214], [1006, 214], [1006, 660], [652, 660], [652, 770]] },
+  // hielo, roca y veneno (sin fondo, de assets/tablero-*.jpg): camino en U
+  // abierto por abajo. Hielo y veneno van recortados por los lados, justo
+  // fuera del camino, para que las casillas no queden pequeñas en el móvil.
+  hielo: { image: 'boards/hielo', iw: 1024, ih: 572, cx: 175, cy: 10, cw: 675, ch: 552, portal: true,
+    gx0: 333, gy0: 178, gx1: 690, gy1: 393,
+    way: [[322, 505], [300, 445], [255, 385], [245, 300], [250, 215], [290, 150], [380, 118], [640, 118], [730, 150], [772, 215], [778, 300], [770, 385], [725, 445], [700, 505]] },
+  roca: { image: 'boards/roca', iw: 1024, ih: 572, cx: 165, cy: 25, cw: 695, ch: 520, portal: true,
+    gx0: 323, gy0: 175, gx1: 700, gy1: 397,
+    way: [[395, 452], [300, 440], [250, 390], [238, 290], [255, 185], [320, 130], [420, 113], [605, 113], [705, 130], [770, 185], [788, 290], [775, 390], [725, 440], [628, 452]] },
+  veneno: { image: 'boards/veneno', iw: 1024, ih: 572, cx: 240, cy: 55, cw: 545, ch: 465, portal: true,
+    gx0: 362, gy0: 193, gx1: 660, gy1: 378,
+    way: [[400, 500], [400, 440], [320, 390], [305, 300], [320, 190], [380, 148], [640, 148], [700, 190], [718, 300], [705, 390], [625, 440], [625, 500]] }
 };
 // con varios tableros para un bioma se elige uno al azar en cada partida
-var BIOME_FIELD = { prado: 'prado', bosque: 'prado', pantano: 'prado', hielo: 'arena', ruinas: 'arena', desierto: 'arena', volcan: ['lava', 'lava2'], cripta: ['lava', 'lava2'] };
+var BIOME_FIELD = { prado: 'prado', bosque: 'prado', pantano: ['prado', 'veneno'], hielo: ['arena', 'hielo'], ruinas: ['arena', 'roca'], desierto: 'arena', volcan: ['lava', 'lava2'], cripta: ['lava', 'lava2'] };
 function fieldGeo(id) {
   var f = FIELDS[id], cell = (f.gx1 - f.gx0) / COLS;
   var P = function (q) { return { x: (q[0] - f.cx) / cell, y: (q[1] - f.cy) / cell }; };

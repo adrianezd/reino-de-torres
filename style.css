@@ -1118,3 +1118,27 @@ x-ico {
 .code-ico x-ico, .chest-ico x-ico { width: 1.4em; height: 1.4em; }
 .ulock x-ico { width: 1.15em; height: 1.15em; margin: 0; vertical-align: -0.2em; }
 .sh-price x-ico, .btn x-ico { width: 1.4em; height: 1.4em; vertical-align: -0.38em; }
+
+/* Tarjetas de la tienda (ofertas, cofres y oro) con el mismo marco de
+   madera y pizarra (assets/ui/tarjeta-tienda.webp). Va como border-image
+   para que las esquinas no se deformen en las tarjetas altas. */
+.sh-offer, .sh-chest, .sh-gold {
+  padding: 0 0 2px; gap: 2px; border-radius: 0; box-shadow: none; background: none;
+  border: 21px solid transparent; border-image: url(assets/ui/tarjeta-tienda.webp) 21% fill / 21px stretch;
+  filter: drop-shadow(0 4px 0 rgba(10,12,40,0.45));
+}
+/* luz del color de la rareza (o del cofre) detrás del dibujo */
+.sh-offer::before, .sh-chest::before {
+  content: ''; position: absolute; inset: -4px; z-index: -1; pointer-events: none;
+  background: radial-gradient(circle at 50% 36%, color-mix(in srgb, var(--rc, var(--cc)) 42%, transparent), transparent 68%);
+}
+.sh-offer { filter: drop-shadow(0 4px 0 rgba(10,12,40,0.45)) drop-shadow(0 0 5px color-mix(in srgb, var(--rc) 60%, transparent)); }
+.sh-offer img { margin-top: 4px; }
+.sh-chest-pic { filter: none; }
+.sh-rar { top: -29px; }
+.sh-new { top: -12px; right: -14px; }
+.sh-chest:active, .sh-gold:active, .sh-offer:active { transform: translateY(3px); box-shadow: none; filter: drop-shadow(0 1px 0 rgba(10,12,40,0.45)); }
+x-ico.off { filter: grayscale(1) brightness(0.45); opacity: 0.75; }
+.stage-s x-ico { width: 1.15em; height: 1.15em; margin: 0 -0.05em; }
+.res-stars x-ico { width: 1.1em; height: 1.1em; margin: 0 0.04em; filter: drop-shadow(0 3px 0 var(--ink)); }
+.res-stars x-ico.off { filter: grayscale(1) brightness(0.45) drop-shadow(0 3px 0 var(--ink)); }

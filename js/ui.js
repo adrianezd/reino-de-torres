@@ -7,8 +7,11 @@ function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { '
 /* Iconos ilustrados (assets/icons) en lugar de los emojis del sistema: se
    cambian en todo el HTML de menús, modales, avisos y marcador. */
 var ICON_FILES = { '🪙': 'icons/moneda', '💎': 'icons/gema', '🏆': 'icons/trofeo', '⭐': 'icons/estrella', '👑': 'icons/corona', '🔒': 'icons/candado',
-  '⏱': 'icons/reloj', '⏳': 'icons/reloj', '🎟': 'icons/ticket', '❓': 'icons/pergamino', '⚔': 'icons/espadas', '💧': 'icons/gota', '🎁': 'chests/madera' };
-var ICON_RE = /(🪙|💎|🏆|⭐|👑|🔒|⏱|⏳|🎟|❓|⚔|💧|🎁)️?/g;
+  '⏱': 'icons/reloj', '⏳': 'icons/reloj', '🎟': 'icons/ticket', '❓': 'icons/pergamino', '⚔': 'icons/espadas', '💧': 'icons/gota', '🎁': 'chests/madera',
+  '🗺': 'icons/estrella', '🤝': 'icons/escudo', '🌑': 'events/eclipse', '🌧': 'events/lluvia', '🌫': 'events/niebla', '👹': 'events/horda', '🍃': 'events/calma' };
+var ICON_RE = /(🪙|💎|🏆|⭐|👑|🔒|⏱|⏳|🎟|❓|⚔|💧|🎁|🗺|🤝|🌑|🌧|🌫|👹|🍃)️?/g;
+// tres estrellas de fase: las que no se han ganado, apagadas
+function starRow(n) { var s = ''; for (var i = 0; i < 3; i++) s += '<x-ico class="' + (i < n ? '' : 'off') + '" style="background-image:url(assets/icons/estrella.webp)"></x-ico>'; return s; }
 // etiqueta propia con la imagen de fondo: así no le afectan las reglas de
 // «img», «span» o «i» de los sitios donde cae (precios, huecos, cartas…)
 function ico(name) { return '<x-ico style="background-image:url(assets/' + name + '.webp)"></x-ico>'; }
@@ -99,7 +102,7 @@ function renderMenu(name, arg) {
       return '<button class="stage ' + (open ? '' : 'locked') + '" ' + (open ? 'data-stage="' + st.id + '"' : 'disabled') + '>' +
         '<span class="stage-n">' + st.id + '</span>' +
         '<span class="stage-t"><b>' + esc(st.name) + '</b><small>' + st.waves + ' oleadas · Jefe: ' + esc(BOSSES[st.boss].name) + (st.unlock && !isUnlocked(st.unlock) ? ' · 🎁 ' + esc(UNITS[st.unlock].name) : '') + '</small></span>' +
-        '<span class="stage-s">' + (open ? '★★★'.slice(0, stars).padEnd(3, '☆') : '🔒') + '</span></button>';
+        '<span class="stage-s">' + (open ? starRow(stars) : '🔒') + '</span></button>';
     }).join('') + '</div>';
   } else if (name === 'duelPick') {
     html = backBar('Duelo 1 contra 1') +
@@ -161,7 +164,7 @@ function shopHtml() {
     return '<button class="sh-chest" data-buychest="' + k + '" style="--cc:' + ch.color + '"><img class="sh-chest-pic" src="' + chestPic(k) + '" alt=""><b>' + k.charAt(0).toUpperCase() + k.slice(1) + '</b>' + price('gems', ch.price, meta.gems < ch.price) + '</button>';
   }).join('');
   var golds = SHOP_GOLD.map(function (p, i) {
-    return '<button class="sh-gold" data-buygold="' + i + '"><img class="sh-gold-pic" src="assets/chests/oro-' + ['monedas', 'saco', 'cofre'][i] + '.webp" alt=""><b>' + p.gold + ' 🪙</b>' + price('gems', p.gems, meta.gems < p.gems) + '</button>';
+    return '<button class="sh-gold" data-buygold="' + i + '"><img class="sh-gold-pic" src="assets/chests/oro-' + ['monedas', 'saco', 'rebosante'][i] + '.webp" alt=""><b>' + p.gold + ' 🪙</b>' + price('gems', p.gems, meta.gems < p.gems) + '</button>';
   }).join('');
   return '<div class="sh-head"><h3>Ofertas del día</h3><small>Cambian en ' + left + ' h</small></div>' +
     '<div class="sh-offers">' + (offers || '<p class="muted">Desbloquea tropas para ver ofertas</p>') + '</div>' +
@@ -422,9 +425,9 @@ function startCardDemo(cv, id) {
     dc.textAlign = 'center'; dc.textBaseline = 'middle';
     b.texts.forEach(function (tx) {
       dc.globalAlpha = Math.min(1, tx.life / tx.max * 1.6);
-      dc.font = '900 ' + Math.max(10, sc * (tx.big ? 0.3 : 0.24)) + 'px Nunito, sans-serif';
-      dc.lineWidth = 3; dc.strokeStyle = 'rgba(10,8,20,0.85)';
-      dc.strokeText(tx.text, ox + tx.x * sc, oy + tx.y * sc); dc.fillStyle = tx.color; dc.fillText(tx.text, ox + tx.x * sc, oy + tx.y * sc);
+      var fs = Math.max(10, sc * (tx.big ? 0.3 : 0.24));
+      dc.font = '900 ' + fs + 'px Nunito, sans-serif';
+      drawFloatText(dc, tx.text, ox + tx.x * sc, oy + tx.y * sc, fs, tx.color);
     });
     dc.globalAlpha = 1;
     requestAnimationFrame(frame);
@@ -848,7 +851,7 @@ function showBanner(title, sub, pic) {
 
 function showResult(res) {
   var title = res.mode === 'coop' ? (res.won ? '¡Gran defensa!' : 'Fin de la partida') : res.draw ? 'Empate' : res.won ? '¡Victoria!' : 'Derrota';
-  var stars = res.mode === 'campaign' && res.won ? '<div class="res-stars">' + '★★★'.slice(0, res.stars).padEnd(3, '☆') + '</div>' : '';
+  var stars = res.mode === 'campaign' && res.won ? '<div class="res-stars">' + starRow(res.stars) + '</div>' : '';
   var chest = !res.chest ? '' : res.chestSlot >= 0
     ? '<div class="res-chest"><img src="' + chestPic(res.chest) + '" alt=""><span><b>' + CHESTS[res.chest].name + '</b><small>Guardado en tus cofres · tarda ' + fmtDur(CHESTS[res.chest].time) + ' en abrirse</small></span></div>'
     : '<div class="res-chest full"><img src="' + chestPic(res.chest) + '" alt=""><span><b>Tus cofres están llenos</b><small>Abre alguno para que quepan los próximos</small></span></div>';

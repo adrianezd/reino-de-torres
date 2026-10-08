@@ -50,8 +50,9 @@ var IMG_LIST = {
   units: UNIT_ORDER.filter(function (id) { return !UNITS[id].noArt; }),
   enemies: ['blob', 'ghost', 'brute', 'orco', 'rocoso', 'escarcha', 'gelido', 'coloso', 'coloso2', 'nigro', 'dragon'],
   tiles: ['altar', 'fuente', 'atalaya'],
-  boards: ['lava', 'lava2', 'arena'],
-  ui: ['boton', 'fondo']
+  boards: ['lava', 'lava2', 'arena', 'hielo', 'roca', 'veneno'],
+  ui: ['boton', 'fondo', 'vida'],
+  icons: ['estrella', 'gota', 'espadas', 'escudo']
 };
 var imgReadyCount = 0;
 Object.keys(IMG_LIST).forEach(function (dir) {
@@ -104,6 +105,26 @@ var FX_OF = { fire: 'fuego', ice: 'hielo', poison: 'veneno', bomb: 'canon' };
   });
 });
 var FX_TURNS = { 'fx/fuego-bola': true, 'fx/hielo-bola': true, 'fx/hielo-destello': true, 'fx/canon-destello': true };
+/* Aturdido: dos estrellas que giran sobre la cabeza. */
+function drawStun(c, x, y, r, now) {
+  var im = art('icons/estrella');
+  if (!im) { c.fillStyle = '#ffe6a3'; c.font = 'bold ' + (r * 0.9).toFixed(3) + 'px sans-serif'; c.textAlign = 'center'; c.fillText('✦', x, y); return; }
+  var s = r * 0.42;
+  for (var k = 0; k < 2; k++) {
+    var a = now / 260 + k * Math.PI;
+    c.drawImage(im, x + Math.cos(a) * r * 0.42 - s / 2, y + Math.sin(a) * r * 0.12 - s / 2, s, s);
+  }
+}
+/* Texto flotante con contorno (alineado al centro). Un « 💧» final se
+   dibuja con la gota ilustrada en lugar del emoji. */
+function drawFloatText(c, text, x, y, fs, color) {
+  var gota = / 💧$/.test(text) && art('icons/gota');
+  if (gota) text = text.replace(/ 💧$/, '');
+  var sz = fs * 1.25, off = gota ? sz * 0.55 : 0, w = c.measureText(text).width;
+  c.lineWidth = 3; c.strokeStyle = 'rgba(10,8,20,0.85)';
+  c.strokeText(text, x - off, y); c.fillStyle = color; c.fillText(text, x - off, y);
+  if (gota) c.drawImage(gota, x - off + w / 2 + 1, y - sz / 2, sz, sz);
+}
 /* Dibuja un efecto centrado en (x, y) con el lado mayor = size. */
 function drawFxPic(c, key, x, y, size, rot) {
   var im = art(key);
@@ -576,7 +597,7 @@ function drawEnemyVector(c, e, r, now) {
 
   if (e.slowPct > 0) { c.strokeStyle = 'rgba(160,225,255,0.85)'; c.lineWidth = r * 0.1; circle(c, e.x, e.y, r * 1.05); c.stroke(); }
   if (e.poison > 0) { c.fillStyle = 'rgba(120,255,90,0.85)'; circle(c, e.x + r * 0.7, e.y - r * 0.6, r * 0.18); c.fill(); }
-  if (e.stun > 0) { c.fillStyle = '#ffe6a3'; c.font = 'bold ' + (r * 0.9).toFixed(3) + 'px sans-serif'; c.textAlign = 'center'; c.fillText('✦', e.x, e.y - r * 1.2); }
+  if (e.stun > 0) drawStun(c, e.x, e.y - r * 1.2, r, now);
   if (e.shield > 0) { c.strokeStyle = 'rgba(200,210,230,0.95)'; c.lineWidth = r * 0.14; circle(c, e.x, e.y, r * 1.25); c.stroke(); }
 }
 
@@ -616,7 +637,7 @@ function drawEnemyPic(c, e, r, now, pic) {
   c.restore();
   if (e.slowPct > 0) { c.strokeStyle = 'rgba(160,225,255,0.85)'; c.lineWidth = r * 0.1; circle(c, e.x, e.y, r * 1.1); c.stroke(); }
   if (e.poison > 0) { c.fillStyle = 'rgba(120,255,90,0.9)'; circle(c, e.x + r * 0.75, e.y - r * 0.7, r * 0.18); c.fill(); }
-  if (e.stun > 0) { c.fillStyle = '#ffe6a3'; c.font = 'bold ' + (r * 0.9).toFixed(3) + 'px sans-serif'; c.textAlign = 'center'; c.fillText('✦', e.x, e.y - r * 1.35); }
+  if (e.stun > 0) drawStun(c, e.x, e.y - r * 1.35, r, now);
   if (e.shield > 0) { c.strokeStyle = 'rgba(120,220,255,0.8)'; c.lineWidth = r * 0.12; circle(c, e.x, e.y, r * 1.35); c.stroke(); }
 }
 function drawEnemy(c, e, r, now) {
@@ -710,7 +731,7 @@ function drawEnemy(c, e, r, now) {
 
   if (e.slowPct > 0) { c.strokeStyle = 'rgba(160,225,255,0.85)'; c.lineWidth = r * 0.1; circle(c, e.x, e.y, r * 1.1); c.stroke(); }
   if (e.poison > 0) { c.fillStyle = 'rgba(120,255,90,0.9)'; circle(c, e.x + r * 0.75, e.y - r * 0.7, r * 0.18); c.fill(); }
-  if (e.stun > 0) { c.fillStyle = '#ffe6a3'; c.font = 'bold ' + (r * 0.9).toFixed(3) + 'px sans-serif'; c.textAlign = 'center'; c.fillText('✦', e.x, e.y - r * 1.35); }
+  if (e.stun > 0) drawStun(c, e.x, e.y - r * 1.35, r, now);
   if (e.shield > 0) { c.strokeStyle = 'rgba(200,210,230,0.95)'; c.lineWidth = r * 0.14; circle(c, e.x, e.y, r * 1.3); c.stroke(); }
 }
 
