@@ -448,7 +448,7 @@ function drawBoard(b, L, now, isMain) {
       rrect(ctx, cc2.x - G.cw * 0.47, cc2.y - G.ch * 0.47, G.cw * 0.94, G.ch * 0.94, 0.14); ctx.stroke();
     }
     var r = 0.42 * Math.min(G.cw, G.ch) * (1 + u.anim * 0.25);
-    drawUnit(ctx, u.id, cc2.x, cc2.y - 0.02, r, u.rank, now, { frozen: u.frozen > 0 });
+    drawUnit(ctx, u.id, cc2.x, cc2.y - 0.02, r, u.rank, now, { frozen: u.frozen > 0, board: true, atk: u.atk, aim: u.aim });
     if (b.tiles[i]) drawTileIcon(b.tiles[i], cc2.x + G.cw * 0.33, cc2.y - G.ch * 0.33, 0.13);
     ctx.globalAlpha = 1;
   }
@@ -510,7 +510,7 @@ function drawBoard(b, L, now, isMain) {
   // arrastre
   if (isMain && drag && drag.moved && b.cells[drag.from]) {
     var du = b.cells[drag.from];
-    drawUnit(ctx, du.id, drag.x, drag.y, 0.46 * Math.min(G.cw, G.ch) * sc, du.rank, now, {});
+    drawUnit(ctx, du.id, drag.x, drag.y, 0.46 * Math.min(G.cw, G.ch) * sc, du.rank, now, { board: true });
   }
   // cabecera del tablero rival/aliado
   if (!isMain) {

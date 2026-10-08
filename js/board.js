@@ -288,6 +288,7 @@ Board.prototype.fire = function (i, u) {
   var from = this.cc(i);
   u.aim = Math.atan2(target.y - from.y, target.x - from.x);
   u.recoil = 1;
+  u.atk = ATK_POSE_TIME; // pose de ataque mientras sale el proyectil
   if (d.chain) {
     // rayo instantáneo que salta entre enemigos
     var hitSet = {}, cur = target, prev = from, dmg = this.unitDamage(i);
@@ -353,6 +354,7 @@ Board.prototype.update = function (dt) {
     if (!u) continue;
     if (u.anim > 0) u.anim = Math.max(0, u.anim - dt * 2.5);
     if (u.recoil > 0) u.recoil = Math.max(0, u.recoil - dt * 6);
+    if (u.atk > 0) u.atk = Math.max(0, u.atk - dt);
     if (u.frozen > 0) { u.frozen -= dt; continue; }
     if (this.tiles[i] === 'fuente') this.mana += TILES.fuente.mana * dt * u.rank;
     var d = UNITS[u.id];

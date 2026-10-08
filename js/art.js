@@ -72,6 +72,19 @@ Object.keys(IMG_LIST).forEach(function (dir) {
 })(['webp', 'png', 'jpg', 'jpeg']);
 function art(key) { var im = IMG[key]; return im && im.ready ? im : null; }
 
+/* Poses del tablero: cuerpo recortado sin chapa, en reposo y disparando.
+   face: hacia dónde mira la pose de ataque (1 derecha, -1 izquierda). */
+var POSES = { lyra: { face: 1 }, brasa: { face: -1 }, rocco: { face: -1 }, sombra: { face: -1 } };
+var ATK_POSE_TIME = 0.15;
+Object.keys(POSES).forEach(function (id) {
+  ['idle', 'attack'].forEach(function (pose) {
+    var im = new Image();
+    im.onload = function () { im.ready = true; };
+    im.src = 'assets/units/board/' + id + '-' + pose + '.webp';
+    IMG['pose/' + id + '-' + pose] = im;
+  });
+});
+
 /* Copia teñida de una imagen (para crear monstruos a partir de la gelatina). */
 var _tintCache = {};
 function tinted(key, color, strength) {
@@ -106,6 +119,43 @@ function drawUnit(c, id, x, y, r, rank, now, opt) {
 
   // aura de rango alto
   if (rank >= 5) glow(c, 0, 0, r * 1.35, RANK_RIMS[rank], 0.45 + Math.sin(now / 300) * 0.12);
+
+  // efecto muelle al disparar: un 10% más grande hacia arriba
+  var atk = opt.atk > 0;
+  if (atk) { c.translate(0, r * 0.9); c.scale(1.1, 1.1); c.translate(0, -r * 0.9); }
+
+  // en el tablero: cuerpo recortado sin chapa, con pose de reposo y de ataque
+  var idle = opt.board && art('pose/' + id + '-idle');
+  var hit = idle && atk && art('pose/' + id + '-attack');
+  if (idle) {
+    var foot = r * 0.9;
+    c.fillStyle = 'rgba(0,0,0,0.35)'; c.beginPath(); c.ellipse(0, foot, r * 0.7, r * 0.2, 0, 0, Math.PI * 2); c.fill();
+    if (rank >= 4) {
+      c.lineWidth = r * 0.07; c.strokeStyle = alpha(RANK_RIMS[rank], 0.75 + Math.sin(now / 250) * 0.2);
+      c.beginPath(); c.ellipse(0, foot, r * 0.8, r * 0.26, 0, 0, Math.PI * 2); c.stroke();
+    }
+    c.save();
+    c.translate(0, foot);
+    if (hit) {
+      // la pose de ataque mira hacia el enemigo
+      if (opt.aim != null && Math.cos(opt.aim) * POSES[id].face < 0) c.scale(-1, 1);
+      var sa = r * 2.35;
+      c.drawImage(hit, -sa / 2, -sa, sa, sa);
+    } else {
+      // respiración: se estira un poco hacia arriba
+      if (!opt.still) c.scale(1, 1 + Math.sin(now / 520 + x * 0.05) * 0.025);
+      var si = r * 2.15;
+      c.drawImage(idle, -si / 2, -si, si, si);
+    }
+    c.restore();
+    if (!opt.noRank) drawRankStars(c, rank, r);
+    if (opt.frozen) {
+      c.beginPath(); c.ellipse(0, r * 0.05, r * 0.85, r * 0.95, 0, 0, Math.PI * 2); c.fillStyle = 'rgba(170,225,255,0.5)'; c.fill();
+      c.strokeStyle = '#ffffff'; c.lineWidth = r * 0.06; c.stroke();
+    }
+    c.restore();
+    return;
+  }
 
   var pic = art('units/' + id);
   if (pic) {
