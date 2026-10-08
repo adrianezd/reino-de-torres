@@ -91,12 +91,12 @@ function renderMenu(name, arg) {
       }).join('') +
       '<p class="muted">Victorias ' + meta.duelWins + ' · Derrotas ' + meta.duelLosses + '</p>';
   } else if (name === 'collection') {
-    var collHtml = UNIT_ORDER.filter(function (id) { return meta.deck.indexOf(id) === -1 && (collFilter === 'all' || UNITS[id].rarity === collFilter); }).map(function (id) { return cardHtml(id, false); }).join('');
+    var collHtml = UNIT_ORDER.filter(function (id) { return collFilter === 'all' || UNITS[id].rarity === collFilter; }).map(function (id) { return cardHtml(id, meta.deck.indexOf(id) !== -1, true); }).join('');
     html = backBar('Tropas y mazo') +
       '<p class="lead">Tu mazo (5 tropas). Toca una carta para verla, cambiarla o mejorarla.</p>' +
       '<div class="deck-slots">' + meta.deck.map(function (id) { return cardHtml(id, true); }).join('') + '</div>' +
       '<h3>Colección</h3>' + rarityFilters() +
-      '<div class="card-grid">' + (collHtml || '<p class="muted coll-empty">No hay más tropas de esta rareza fuera del mazo</p>') + '</div>' +
+      '<div class="card-grid">' + (collHtml || '<p class="muted coll-empty">No hay tropas de esta rareza</p>') + '</div>' +
       '<div class="legend"><b>Afinidad:</b> ' + Object.keys(ELEMENTS).map(function (k) { return ELEMENTS[k].icon + ' ' + ELEMENTS[k].name; }).join(' · ') + '. Dos tropas del mismo elemento juntas se potencian.</div>';
   } else if (name === 'commanders') {
     html = backBar('Comandante') + '<p class="lead">Su habilidad se carga durante la partida. Pulsa su retrato para usarla.</p>' +
@@ -136,19 +136,22 @@ function rarityFilters() {
       (k === 'all' ? 'Todas' : RARITY[k].name) + '<small>' + own + '/' + ids.length + '</small></button>';
   }).join('') + '</div>';
 }
-function cardHtml(id, inDeck) {
+// inColl: carta de la colección, que marca las que ya están en el mazo
+function cardHtml(id, inDeck, inColl) {
   var u = UNITS[id], c = meta.cards[id];
   if (!c) {
     var from = CAMPAIGN.filter(function (st) { return st.unlock === id; })[0];
     return '<div class="ucard locked" style="--rc:' + RARITY[u.rarity].color + '">' +
+      '<span class="uel">' + ELEMENTS[u.element].icon + '</span>' +
       '<span class="uport"><img src="' + unitIcon(id, 0, 128) + '" alt=""><i class="ulock">' + (u.chestOnly ? '🎁' : '🔒') + '</i></span>' +
       '<div class="ulv ulv-lock">' + (u.chestOnly ? 'Solo en cofres' : from ? 'Fase ' + from.id : 'Bloqueada') + '</div>' +
-      '<small>' + esc(u.chestOnly ? '???' : u.name) + '</small></div>';
+      '<small>' + esc(u.name) + '</small></div>';
   }
   var need = cardsNeeded(c.lv), pct = c.lv >= CARD_MAX ? 100 : Math.min(100, c.n / need * 100);
   var ready = canUpgradeCard(id);
   return '<button class="ucard ' + (ready ? 'ready' : '') + '" data-card="' + id + '" style="--rc:' + RARITY[u.rarity].color + '">' +
     '<span class="uel">' + ELEMENTS[u.element].icon + '</span>' +
+    (inColl && inDeck ? '<span class="udeck">Mazo</span>' : '') +
     '<span class="uport"><img src="' + unitIcon(id, 0, 128) + '" alt=""></span>' +
     '<div class="ulv">Nv ' + c.lv + '</div>' +
     '<div class="ubar"><span style="width:' + pct + '%"></span><em>' + (c.lv >= CARD_MAX ? 'MÁX' : c.n + '/' + need) + '</em></div>' +
