@@ -19,9 +19,10 @@ function startBattle(mode, opts) {
   var deck = meta.deck.slice();
   var lv = cardLevels();
   var lives = mode === 'campaign' ? { v: 5, max: 5 } : mode === 'duel' ? { v: 3, max: 3 } : { v: 6, max: 6 };
-  // la campaña (un jugador) usa el tablero ilustrado si está disponible
+  // tablero ilustrado si está disponible: la campaña usa el de su bioma y
+  // el duelo y el cooperativo, el del bosque (con dos tableros a la vez)
   var fg = FIELD_GEOS[BIOME_FIELD[biome] || 'prado'];
-  var geo = mode === 'campaign' && art(fg.image) ? fg : mode === 'campaign' && art('board/tablero') ? FIELD_GEO : VECTOR_GEO;
+  var geo = mode === 'campaign' && art(fg.image) ? fg : art('board/tablero') ? FIELD_GEO : VECTOR_GEO;
   var player = new Board({ name: 'Tú', deck: deck, cardLv: lv, commander: meta.commander, lives: lives, biome: biome, geo: geo });
   battle = {
     mode: mode, stage: stage, opts: opts,
@@ -38,12 +39,12 @@ function startBattle(mode, opts) {
     var aiCard = {};
     var avg = Math.round(Object.keys(lv).reduce(function (s, k) { return s + lv[k]; }, 0) / Math.max(1, Object.keys(lv).length));
     UNIT_ORDER.forEach(function (id) { aiCard[id] = Math.max(1, avg + aiLv - 1); });
-    battle.other = new Board({ name: pick(RIVAL_NAMES), ai: true, aiLevel: aiLv, deck: aiDeck, cardLv: aiCard, commander: pick(COMMANDER_ORDER), lives: { v: 3, max: 3 }, biome: biome });
+    battle.other = new Board({ name: pick(RIVAL_NAMES), ai: true, aiLevel: aiLv, deck: aiDeck, cardLv: aiCard, commander: pick(COMMANDER_ORDER), lives: { v: 3, max: 3 }, biome: biome, geo: geo });
   } else if (mode === 'coop') {
     var allyDeck = shuffleArr(UNIT_ORDER.slice()).slice(0, 5);
     var allyCard = {};
     UNIT_ORDER.forEach(function (id) { allyCard[id] = Math.max(1, (lv[id] || 1)); });
-    battle.other = new Board({ name: pick(ALLY_NAMES), ai: true, aiLevel: 2, deck: allyDeck, cardLv: allyCard, commander: pick(COMMANDER_ORDER), lives: lives, biome: biome });
+    battle.other = new Board({ name: pick(ALLY_NAMES), ai: true, aiLevel: 2, deck: allyDeck, cardLv: allyCard, commander: pick(COMMANDER_ORDER), lives: lives, biome: biome, geo: geo });
   }
   if (battle.other) { battle.boards.push(battle.other); battle.other.battle = battle; }
   player.battle = battle;
@@ -210,9 +211,10 @@ function resizeCanvas() {
   if (battle && battle.other) {
     var go = battle.other.geo;
     var topH = h * 0.36;
-    var s2 = Math.min((w - pad * 2) / go.W, (topH - 22) / go.H);
+    var pw = go.image ? 0 : pad;
+    var s2 = Math.min((w - pw * 2) / go.W, (topH - 22) / go.H);
     layout.other = { sc: s2, ox: (w - go.W * s2) / 2, oy: 18, g: go };
-    var s1 = Math.min((w - pad * 2) / gm.W, (h - topH - pad - 6) / gm.H);
+    var s1 = Math.min((w - pw * 2) / gm.W, (h - topH - pad - 6) / gm.H);
     layout.main = { sc: s1, ox: (w - gm.W * s1) / 2, oy: topH + (h - topH - gm.H * s1) / 2, g: gm };
   } else {
     var mg = gm.image ? 0 : pad;
@@ -290,7 +292,7 @@ function drawBattle(now) {
   else { g.addColorStop(0, shade(bio.bg, 20)); g.addColorStop(1, shade(bio.bg, -30)); }
   ctx.fillStyle = g; ctx.fillRect(0, 0, layout.w, layout.h);
   var G0 = battle.player.geo;
-  var fieldPic = G0.image && !battle.other ? art(G0.image) : null;
+  var fieldPic = G0.image ? art(G0.image) : null;
   var fondo = art('ui/fondo');
   var grassy = ['prado', 'bosque', 'pantano'].indexOf(battle.player.biome) !== -1;
   if (fondo && ((fieldPic && G0.px.bg === 'fondo') || (!fieldPic && grassy))) {
@@ -314,9 +316,15 @@ function drawBattle(now) {
   if (battle.other) {
     drawBoard(battle.other, layout.other, now, false);
     // separador
-    ctx.fillStyle = 'rgba(0,0,0,0.25)';
     var sy = layout.other.oy + layout.other.g.H * layout.other.sc + 4;
-    ctx.fillRect(0, sy, layout.w, 3);
+    if (fieldPic) {
+      var sg = ctx.createLinearGradient(0, sy - 3, 0, sy + 5);
+      sg.addColorStop(0, 'rgba(30,70,10,0)'); sg.addColorStop(0.5, 'rgba(30,70,10,0.35)'); sg.addColorStop(1, 'rgba(30,70,10,0)');
+      ctx.fillStyle = sg; ctx.fillRect(0, sy - 3, layout.w, 8);
+    } else {
+      ctx.fillStyle = 'rgba(0,0,0,0.25)';
+      ctx.fillRect(0, sy, layout.w, 3);
+    }
   }
   drawBoard(battle.player, layout.main, now, true);
 }
@@ -351,17 +359,32 @@ function drawBoard(b, L, now, isMain) {
 
   var G = b.geo;
   var pic = G.image ? art(G.image) : null;
+  var dual = !!battle.other;
+  if (pic && dual) {
+    // con dos tableros, cada uno se recorta a su marco: los monstruos
+    // entran por el camino desde el borde del mapa
+    ctx.beginPath(); ctx.rect(0, 0, G.W, G.H); ctx.clip();
+  }
   if (pic) {
     // tablero ilustrado (recortado sin la interfaz de las esquinas)
     var F = G.px, kx = pic.naturalWidth / F.iw, ky = pic.naturalHeight / F.ih;
     ctx.drawImage(pic, F.cx * kx, F.cy * ky, F.cw * kx, F.ch * ky, 0, 0, G.W, G.H);
-    if (!battle.other && F.fade) {
+    if (F.fade) {
       // funde los bordes superior e inferior con el césped de alrededor
-      var fz = 0.35;
+      // (con dos tableros, el inferior apenas, para que se vea el camino)
+      var fz = 0.35, fb = dual ? 0.2 : fz;
       var g1 = ctx.createLinearGradient(0, 0, 0, fz); g1.addColorStop(0, '#6fc322'); g1.addColorStop(1, 'rgba(111,195,34,0)');
       ctx.fillStyle = g1; ctx.fillRect(-0.02, -0.02, G.W + 0.04, fz);
-      var g2 = ctx.createLinearGradient(0, G.H - fz, 0, G.H); g2.addColorStop(0, 'rgba(90,168,27,0)'); g2.addColorStop(1, '#5fac1c');
-      ctx.fillStyle = g2; ctx.fillRect(-0.02, G.H - fz, G.W + 0.04, fz + 0.02);
+      var g2 = ctx.createLinearGradient(0, G.H - fb, 0, G.H); g2.addColorStop(0, 'rgba(90,168,27,0)'); g2.addColorStop(1, dual ? 'rgba(95,172,28,0.6)' : '#5fac1c');
+      ctx.fillStyle = g2; ctx.fillRect(-0.02, G.H - fb, G.W + 0.04, fb + 0.02);
+      if (dual && L.ox > 1) {
+        // el tablero de arriba no llega a los lados: funde también sus bordes
+        var fside = 0.6;
+        var g3 = ctx.createLinearGradient(0, 0, fside, 0); g3.addColorStop(0, '#6abd1f'); g3.addColorStop(1, 'rgba(106,189,31,0)');
+        ctx.fillStyle = g3; ctx.fillRect(-0.02, -0.02, fside, G.H + 0.04);
+        var g4 = ctx.createLinearGradient(G.W - fside, 0, G.W, 0); g4.addColorStop(0, 'rgba(106,189,31,0)'); g4.addColorStop(1, '#6abd1f');
+        ctx.fillStyle = g4; ctx.fillRect(G.W - fside, -0.02, fside + 0.02, G.H + 0.04);
+      }
     }
     for (var ti = 0; ti < COLS * ROWS; ti++) {
       var tt = b.tiles[ti];
@@ -392,9 +415,9 @@ function drawBoard(b, L, now, isMain) {
   // franja inferior bajo el tablero
   ctx.fillStyle = shade(bio.frame, -10);
   ctx.fillRect(PATH_W, PATH_W + ROWS + 0.12, COLS, BOARD_H - PATH_W - ROWS - 0.12);
-  // portal de entrada y puerta de salida
-  drawPortal(PATH_W / 2, BOARD_H - 0.2, now, '#b26bff');
-  drawGate(BOARD_W - PATH_W / 2, BOARD_H - 0.2);
+  // portal de entrada y puerta de salida, donde empieza y acaba el camino
+  drawPortal(WAYPOINTS[0].x, WAYPOINTS[0].y, now, '#b26bff');
+  drawGate(WAYPOINTS[WAYPOINTS.length - 1].x, WAYPOINTS[WAYPOINTS.length - 1].y);
   }
 
   // marcas de casillas especiales
@@ -434,7 +457,11 @@ function drawBoard(b, L, now, isMain) {
   var ens = b.enemies.slice().sort(function (p, q) { return p.y - q.y; });
   ens.forEach(function (e) {
     var d = e.boss ? BOSSES[e.kind] : ENEMIES[e.kind];
-    drawEnemy(ctx, e, (e.boss ? 0.42 : d.size) * (G.image ? 0.82 : 1), now);
+    // en el tablero dibujado salen del portal: aparecen creciendo
+    var grow = G.image ? 1 : Math.min(1, 0.25 + e.d / 0.5);
+    if (grow < 1) ctx.globalAlpha = grow;
+    drawEnemy(ctx, e, (e.boss ? 0.42 : d.size) * (G.image ? 0.82 : 1) * grow, now);
+    ctx.globalAlpha = 1;
   });
   // proyectiles
   b.shots.forEach(function (s) { drawShot(s, now); });
@@ -462,6 +489,7 @@ function drawBoard(b, L, now, isMain) {
   var toS = function (x, y) { return { x: L.ox + x * sc, y: L.oy + y * sc }; };
   ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
   b.enemies.forEach(function (e) {
+    if (dual && pic && e.y > G.H + 0.1) return; // aún fuera del mapa
     var p = toS(e.x, e.y - (e.boss ? 0.92 : ENEMIES[e.kind].size + 0.16));
     var fs = Math.max(9, sc * (e.boss ? 0.3 : 0.22));
     ctx.font = '900 ' + fs + 'px Nunito, sans-serif';
@@ -498,10 +526,44 @@ function drawBoard(b, L, now, isMain) {
 }
 function hearts(l) { var s = ''; for (var i = 0; i < l.max; i++) s += i < l.v ? '❤️' : '🖤'; return s; }
 
+/* Portal de piedra con un remolino mágico dentro (tablero dibujado). */
 function drawPortal(x, y, now, col) {
-  glow(ctx, x, y, 0.5, col, 0.7);
-  ctx.strokeStyle = '#efd9ff'; ctx.lineWidth = 0.05;
-  for (var i = 0; i < 3; i++) { ctx.beginPath(); ctx.arc(x, y, 0.12 + i * 0.09, now / (250 + i * 90) + i, now / (250 + i * 90) + i + Math.PI * 1.3); ctx.stroke(); }
+  var R = 0.36, t = now / 1000;
+  ctx.save();
+  // sombra y halo
+  ctx.fillStyle = 'rgba(0,0,0,0.3)'; ctx.beginPath(); ctx.ellipse(x, y + 0.06, R * 1.15, R * 1.05, 0, 0, Math.PI * 2); ctx.fill();
+  glow(ctx, x, y, R * 1.9, col, 0.32 + Math.sin(t * 3) * 0.08);
+  // aro de piedra con runas
+  circle(ctx, x, y, R); ctx.fillStyle = vgrad(ctx, y - R, y + R, '#9a93a8', '#4a4458'); ctx.fill(); ink(ctx, 0.035);
+  for (var k = 0; k < 8; k++) {
+    var a = k * Math.PI / 4 + Math.PI / 8;
+    ctx.strokeStyle = 'rgba(30,24,44,0.55)'; ctx.lineWidth = 0.02;
+    ctx.beginPath(); ctx.moveTo(x + Math.cos(a) * R * 0.74, y + Math.sin(a) * R * 0.74); ctx.lineTo(x + Math.cos(a) * R, y + Math.sin(a) * R); ctx.stroke();
+    var ra = k * Math.PI / 4;
+    ctx.fillStyle = alpha('#e6c8ff', 0.55 + 0.45 * Math.sin(t * 4 + k));
+    circle(ctx, x + Math.cos(ra) * R * 0.87, y + Math.sin(ra) * R * 0.87, 0.026); ctx.fill();
+  }
+  // interior: pozo oscuro con brazos de remolino girando
+  var r = R * 0.74;
+  circle(ctx, x, y, r);
+  var core = ctx.createRadialGradient(x, y, 0, x, y, r);
+  core.addColorStop(0, '#f6e8ff'); core.addColorStop(0.18, shade(col, 30)); core.addColorStop(0.6, shade(col, -60)); core.addColorStop(1, '#140a24');
+  ctx.fillStyle = core; ctx.fill();
+  ctx.save(); circle(ctx, x, y, r); ctx.clip();
+  ctx.lineCap = 'round';
+  for (var arm = 0; arm < 4; arm++) {
+    var base = -t * 2.6 + arm * Math.PI / 2;
+    ctx.beginPath();
+    for (var s = 0; s <= 1.0001; s += 0.08) {
+      var ang = base + s * 3.2, rr = r * (0.12 + s * 0.95);
+      ctx.lineTo(x + Math.cos(ang) * rr, y + Math.sin(ang) * rr);
+    }
+    ctx.strokeStyle = alpha('#f2dcff', 0.55); ctx.lineWidth = 0.04; ctx.stroke();
+  }
+  ctx.restore();
+  ink(ctx, 0.03);
+  glow(ctx, x, y, r * 0.5, '#ffffff', 0.5 + Math.sin(t * 5) * 0.15);
+  ctx.restore();
 }
 function drawGate(x, y) {
   rrect(ctx, x - 0.32, y - 0.38, 0.64, 0.5, 0.12); ctx.fillStyle = '#5a3a20'; ctx.fill(); ink(ctx, 0.04);
