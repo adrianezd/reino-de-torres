@@ -941,3 +941,56 @@ body {
 .btn.chest-ok.alt span { background: rgba(0,20,70,0.35); text-shadow: 0 1px 0 #0d2a5a; }
 .modal-card .ci-wait { margin: 12px 0 0; font-size: 0.95rem; }
 .modal-card .ci-wait b { color: #9ad6ff; }
+
+/* =========================================================
+   Partida: franja de la próxima oleada, tutorial y barra estrecha
+   ========================================================= */
+.wave-info {
+  position: absolute; left: 8px; right: 8px; top: 6px; z-index: 3; height: 40px;
+  display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 0 8px 0 10px;
+  background: rgba(12,16,48,0.78); border: 2px solid var(--ink); border-radius: 12px; pointer-events: none;
+}
+.wi-now { display: flex; flex-direction: column; line-height: 1.05; flex-shrink: 0; }
+.wi-now b { font-family: 'Lilita One'; font-weight: 400; font-size: 0.95rem; text-shadow: 0 2px 0 var(--ink); }
+.wi-now small { font-size: 0.68rem; color: var(--muted); }
+.wi-next { display: flex; align-items: center; gap: 4px; min-width: 0; overflow: hidden; }
+.wi-next > small { font-size: 0.68rem; color: var(--muted); margin-right: 2px; }
+.wi-last { font-family: 'Lilita One'; font-weight: 400; font-size: 0.9rem; color: var(--gold); text-shadow: 0 2px 0 var(--ink); }
+.wi-chip { display: inline-flex; align-items: center; font-style: normal; font-size: 0.72rem; font-weight: 900; white-space: nowrap; }
+.wi-chip img { width: 30px; height: 30px; margin-right: -3px; }
+.wi-chip.boss { color: var(--gold); }
+.wi-chip.ev img { width: 26px; height: 26px; margin: 0 0 0 2px; }
+.coach {
+  position: absolute; left: 10px; right: 10px; z-index: 6; padding: 8px 12px; text-align: center;
+  font-size: 0.85rem; line-height: 1.3; color: #1a1030; background: #fff8d6; border: 3px solid var(--ink); border-radius: 14px;
+  box-shadow: 0 4px 0 var(--ink); pointer-events: none; animation: coachIn 0.35s ease;
+}
+.coach b { color: #b2470e; }
+.coach.top { top: 6px; }
+.coach.bottom { bottom: 8px; }
+.unit-info:not([hidden]) ~ .coach.bottom { bottom: 96px; }
+@keyframes coachIn { from { opacity: 0; transform: translateY(6px); } }
+.b-wave { min-width: 0; }
+.b-wave b { white-space: nowrap; }
+@media (max-width: 380px) {
+  .b-top { gap: 4px; }
+  .heart { width: 15px; height: 14px; }
+  .b-wave b { font-size: 0.92rem; }
+}
+
+/* Resultado: daño por tropa */
+.res-dmg { margin: 10px 0 4px; text-align: left; }
+.res-dmg h3 { font-size: 0.85rem; margin: 0 0 6px; text-align: center; color: var(--muted); }
+.rd-row { display: flex; align-items: center; gap: 6px; margin-bottom: 4px; }
+.rd-row img { width: 30px; height: 30px; border-radius: 50%; object-fit: cover; flex: none; }
+.rd-bar { position: relative; flex: 1; height: 24px; border-radius: 8px; background: rgba(0,0,0,0.3); overflow: hidden; display: flex; align-items: center; justify-content: space-between; padding: 0 8px; }
+.rd-bar i { position: absolute; left: 0; top: 0; bottom: 0; background: linear-gradient(180deg, #ffd166, #e09a12); opacity: 0.55; }
+.rd-bar b, .rd-bar em { position: relative; font-size: 0.75rem; font-style: normal; text-shadow: 0 1px 0 var(--ink); }
+
+/* Ficha de una tropa que aún no tienes y ofertas de tropas nuevas */
+.unit-card.locked .uc-img { filter: grayscale(0.4) brightness(0.85); }
+.uc-get { display: flex; flex-direction: column; gap: 3px; margin: 10px 0 6px; padding: 8px 10px; border-radius: 14px; background: rgba(6,10,36,0.45); border: 1px solid rgba(255,214,90,0.25); }
+.uc-get b { color: var(--gold); }
+.uc-get small { font-size: 0.8rem; color: #dfe6ff; }
+button.ucard.locked { cursor: pointer; }
+.sh-new { position: absolute; top: 14px; right: 10px; z-index: 1; background: #ff4f7b; color: #fff; font-size: 0.62rem; font-weight: 900; padding: 1px 6px; border-radius: 8px; border: 2px solid var(--ink); transform: rotate(8deg); }

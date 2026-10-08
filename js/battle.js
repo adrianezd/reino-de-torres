@@ -23,22 +23,25 @@ function startBattle(mode, opts) {
   // el duelo y el cooperativo, el del bosque (con dos tableros a la vez)
   var fg = FIELD_GEOS[BIOME_FIELD[biome] || 'prado'];
   var geo = mode === 'campaign' && art(fg.image) ? fg : art('board/tablero') ? FIELD_GEO : VECTOR_GEO;
-  var player = new Board({ name: 'Tú', deck: deck, cardLv: lv, commander: meta.commander, lives: lives, biome: biome, geo: geo });
+  var player = new Board({ name: 'Tú', deck: deck, cardLv: lv, commander: meta.commander, lives: lives, biome: biome, geo: geo, mana: stage ? stage.mana : 100 });
   battle = {
     mode: mode, stage: stage, opts: opts,
     boards: [player], player: player, other: null,
     wave: 0, maxWaves: stage ? stage.waves : Infinity,
     queue: [], spawnT: 0, spawnInterval: 1, gap: 3, waveTime: 0,
     event: null, ended: false, paused: false, speed: 1, time: 0,
-    selected: null, drag: null, result: null
+    selected: null, drag: null, result: null,
+    // primera partida de campaña: consejos paso a paso (ver updateCoach)
+    tutorial: mode === 'campaign' && !meta.seenTutorial, coachStep: 0, coachT: 0
   };
+  battle.next = planWave(1);
   if (mode === 'duel') {
     var aiLv = opts.level == null ? 1 : opts.level;
     var aiDeck = shuffleArr(AI_UNITS.slice()).filter(function (id) { return id !== 'melodia' || aiLv > 0; }).slice(0, 5);
     if (aiDeck.indexOf('doblon') === -1 && aiLv > 0) aiDeck[4] = 'doblon';
     var aiCard = {};
     var avg = Math.round(Object.keys(lv).reduce(function (s, k) { return s + lv[k]; }, 0) / Math.max(1, Object.keys(lv).length));
-    UNIT_ORDER.forEach(function (id) { aiCard[id] = Math.max(1, avg + aiLv - 1); });
+    UNIT_ORDER.forEach(function (id) { aiCard[id] = Math.max(1, avg + DUEL_CARD_OFFSET[aiLv]); });
     battle.other = new Board({ name: pick(RIVAL_NAMES), ai: true, aiLevel: aiLv, deck: aiDeck, cardLv: aiCard, commander: pick(COMMANDER_ORDER), lives: { v: 3, max: 3 }, biome: biome, geo: geo });
   } else if (mode === 'coop') {
     var allyDeck = shuffleArr(AI_UNITS.slice()).slice(0, 5);
@@ -59,11 +62,17 @@ function startBattle(mode, opts) {
 }
 
 /* ---------- oleadas ---------- */
+// cartas del rival del duelo respecto a la media de las tuyas (fácil, normal, difícil)
+var DUEL_CARD_OFFSET = [-2, 0, 2];
 function hpScale() {
   var b = battle, w = Math.max(1, b.wave);
-  var s = 42 * Math.pow(1.17, w - 1) * (b.stage ? b.stage.hp : 1);
+  var s = 42 * Math.pow(1.17, w - 1);
+  if (b.stage) {
+    // la dureza de la fase llega poco a poco: la primera oleada, al 55 %
+    var ramp = b.maxWaves > 1 ? 0.55 + 0.45 * (w - 1) / (b.maxWaves - 1) : 1;
+    s *= 1 + (b.stage.hp - 1) * ramp;
+  }
   if (b.mode === 'duel' && w > 12) s *= Math.pow(1.22, w - 12);
-  if (b.mode === 'coop' && w > 15) s *= Math.pow(1.12, w - 15);
   if (b.event && b.event.id === 'horda') s *= 0.7;
   return s;
 }
@@ -71,34 +80,70 @@ function isBossWave(w) {
   if (battle.mode === 'campaign') return w === battle.maxWaves;
   return w % 5 === 0;
 }
+// Se decide una oleada antes de que llegue, para poder anunciar la siguiente.
+function planWave(w) {
+  var b = battle;
+  var event = w >= 3 && Math.random() < 0.4 ? pick(WAVE_EVENTS) : null;
+  var count = Math.round((9 + w * 2) * (event && event.id === 'horda' ? 1.4 : 1));
+  var mix = ['blob', 'blob', 'blob'];
+  if (w >= 2) mix.push('imp');
+  if (w >= 3) mix.push('brute');
+  if (w >= 4) mix.push('ghost', 'imp');
+  if (w >= 3) mix.push('orco');
+  if (w >= 5) mix.push('escarcha', 'orco');
+  if (w >= 6) mix.push('rocoso');
+  if (w >= 8) mix.push('brute', 'ghost', 'rocoso', 'escarcha');
+  var queue = [];
+  for (var i = 0; i < count; i++) queue.push({ kind: pick(mix) });
+  if (isBossWave(w)) {
+    var boss = b.stage ? b.stage.boss : BOSS_ORDER[(w / 5 - 1) % BOSS_ORDER.length];
+    queue.push({ kind: boss, boss: true });
+  }
+  return { wave: w, event: event, queue: queue, count: count };
+}
 function startWave() {
   var b = battle;
-  b.wave++;
+  var plan = b.next && b.next.wave === b.wave + 1 ? b.next : planWave(b.wave + 1);
+  b.wave = plan.wave;
   b.waveTime = 0;
-  b.event = b.wave >= 3 && Math.random() < 0.4 ? pick(WAVE_EVENTS) : null;
+  b.event = plan.event;
   b.boards.forEach(function (bd) { bd.event = b.event ? b.event.id : null; });
-  var count = Math.round((9 + b.wave * 2) * (b.event && b.event.id === 'horda' ? 1.4 : 1));
-  var mix = ['blob', 'blob', 'blob'];
-  if (b.wave >= 2) mix.push('imp');
-  if (b.wave >= 3) mix.push('brute');
-  if (b.wave >= 4) mix.push('ghost', 'imp');
-  if (b.wave >= 3) mix.push('orco');
-  if (b.wave >= 5) mix.push('escarcha', 'orco');
-  if (b.wave >= 6) mix.push('rocoso');
-  if (b.wave >= 8) mix.push('brute', 'ghost', 'rocoso', 'escarcha');
-  b.queue = [];
-  for (var i = 0; i < count; i++) b.queue.push({ kind: pick(mix) });
-  if (isBossWave(b.wave)) {
-    var boss = b.stage ? b.stage.boss : BOSS_ORDER[(b.wave / 5 - 1) % BOSS_ORDER.length];
-    b.queue.push({ kind: boss, boss: true });
-  }
-  b.spawnInterval = Math.max(0.45, 14 / count);
+  b.queue = plan.queue;
+  b.next = b.wave < b.maxWaves ? planWave(b.wave + 1) : null;
+  b.spawnInterval = Math.max(0.45, 14 / plan.count);
   b.spawnT = 0;
   var sub = b.event ? b.event.name + ': ' + b.event.desc : isBossWave(b.wave) ? '👑 ¡Llega un jefe al final!' : '';
   showBanner('Oleada ' + b.wave + (b.maxWaves !== Infinity ? ' / ' + b.maxWaves : ''), sub, b.event ? b.event.pic : null);
   sfx('wave');
   updateHud(true);
 }
+/* ---------- tutorial de la primera partida ----------
+   Pasos: invocar dos tropas (la oleada espera), fusionar, mejorar una carta
+   y usar el comandante. Cada paso avanza al hacerlo; los dos últimos también
+   se pasan solos al rato. */
+function updateCoach(dt) {
+  var b = battle, p = b.player;
+  b.coachT += dt;
+  var step = b.coachStep;
+  var go = function () { b.coachStep++; b.coachT = 0; };
+  if (step === 0) { if (p.summons >= 1) go(); else showCoach('👇 Toca <b>Invocar</b> para sacar una tropa al azar de tu mazo.', 'bottom'); }
+  else if (step === 1) { if (p.summons >= 2) go(); else showCoach('👇 Invoca otra. Cada invocación cuesta 10 de maná más que la anterior. Los monstruos esperan a que tengas dos tropas.', 'bottom'); }
+  else if (step === 2) {
+    if (p.merges >= 1) { go(); return; }
+    var pair = false;
+    for (var a = 0; a < p.cells.length && !pair; a++) for (var c = a + 1; c < p.cells.length; c++) if (p.canMerge(a, c)) { pair = true; break; }
+    showCoach(pair ? '✨ Tienes dos tropas iguales: <b>arrastra una sobre la otra</b> para fusionarlas. Suben de rango y pegan mucho más.'
+      : 'Sigue invocando con el maná de las bajas. Cuando salgan dos tropas iguales, <b>arrastra una sobre la otra</b> para fusionarlas.', 'top');
+  }
+  else if (step === 3) { if (p.powers >= 1 || b.coachT > 14) go(); else showCoach('👇 Toca una <b>carta de abajo</b> para mejorar ese tipo de tropa durante la partida. Cuesta maná.', 'bottom'); }
+  else if (step === 4) {
+    if (p.cmds >= 1 || (p.charge >= 1 && b.coachT > 12)) go();
+    else if (p.charge >= 1) showCoach('👇 Tu comandante está listo: <b>toca su retrato</b> para usar su habilidad.', 'bottom');
+    else { hideCoach(); b.coachT = 0; }
+  }
+  else { hideCoach(); b.tutorial = false; meta.seenTutorial = true; saveMeta(); }
+}
+
 function spawnNext() {
   var b = battle, spec = b.queue.shift();
   var sc = hpScale();
@@ -117,8 +162,10 @@ function updateBattle(dt) {
   var b = battle;
   if (!b || b.ended || b.paused) return;
   b.time += dt;
+  if (b.tutorial) updateCoach(dt);
   if (b.gap > 0) {
-    b.gap -= dt;
+    // en el tutorial, la primera oleada espera a que invoques dos tropas
+    if (!(b.tutorial && b.wave === 0 && b.player.summons < 2)) b.gap -= dt;
     if (b.gap <= 0) {
       if (b.wave >= b.maxWaves) { endBattle(true); return; }
       startWave();
@@ -138,16 +185,19 @@ function updateBattle(dt) {
   }
   b.boards.forEach(function (bd) { bd.update(dt); });
 
-  // finales
-  if (b.player.lives.v <= 0) { endBattle(false); return; }
-  if (b.mode === 'duel' && b.other.lives.v <= 0) { endBattle(true); return; }
+  // finales (en duelo, si caéis los dos a la vez es empate)
+  var meOut = b.player.lives.v <= 0, foeOut = b.mode === 'duel' && b.other.lives.v <= 0;
+  if (meOut && foeOut) { endBattle(false, true); return; }
+  if (meOut) { endBattle(false); return; }
+  if (foeOut) { endBattle(true); return; }
 }
 
-function endBattle(won) {
+function endBattle(won, draw) {
   var b = battle;
   if (b.ended) return;
   b.ended = true;
-  var res = { won: won, mode: b.mode, lines: [], gold: 0, gems: 0, chest: null, stars: 0, trophies: 0 };
+  if (b.tutorial) { meta.seenTutorial = true; hideCoach(); }
+  var res = { won: won, draw: !!draw, mode: b.mode, lines: [], gold: 0, gems: 0, chest: null, stars: 0, trophies: 0 };
   if (b.mode === 'campaign') {
     var st = b.stage;
     if (won) {
@@ -165,7 +215,10 @@ function endBattle(won) {
       res.lines.push('Caíste en la oleada ' + b.wave + ' de ' + b.maxWaves + '.');
     }
   } else if (b.mode === 'duel') {
-    if (won) {
+    if (draw) {
+      res.gold = 40;
+      res.lines.push(b.other.name + ' y tú caísteis a la vez.');
+    } else if (won) {
       res.trophies = 25 + (b.opts.level || 1) * 5;
       res.gold = 60 + b.opts.level * 40;
       res.gems = 2 + b.opts.level * 2;
@@ -194,13 +247,18 @@ function endBattle(won) {
   saveMeta();
   res.kills = b.player.kills;
   res.damage = b.player.damage;
+  // daño de cada tropa (y del meteoro del comandante), de más a menos
+  res.dmgBy = Object.keys(b.player.dmgBy).map(function (k) { return { id: k, v: b.player.dmgBy[k] }; })
+    .filter(function (d) { return d.v >= 1; }).sort(function (p, q) { return q.v - p.v; });
+  res.commander = b.player.commander;
   b.result = res;
-  sfx(res.won ? 'win' : 'lose');
+  sfx(res.won ? 'win' : res.draw ? 'wave' : 'lose');
   setTimeout(function () { showResult(res); }, 900);
 }
 
 /* ---------- disposición ---------- */
 var layout = { main: null, other: null };
+var WAVE_INFO_H = 52;
 function resizeCanvas() {
   if (!canvas) return;
   var wrap = canvas.parentNode;
@@ -221,9 +279,10 @@ function resizeCanvas() {
     var s1 = Math.min((w - pw * 2) / gm.W, (h - topH - pad - 6) / gm.H);
     layout.main = { sc: s1, ox: (w - gm.W * s1) / 2, oy: topH + (h - topH - gm.H * s1) / 2, g: gm };
   } else {
-    var mg = gm.image ? 0 : pad;
-    var s = Math.min((w - mg * 2) / gm.W, (h - mg * 2 - 20) / gm.H);
-    layout.main = { sc: s, ox: (w - gm.W * s) / 2, oy: (h - gm.H * s) / 2 + (gm.image ? 0 : 8), g: gm };
+    // arriba queda la franja de la próxima oleada (#waveInfo)
+    var mg = gm.image ? 0 : pad, top = WAVE_INFO_H;
+    var s = Math.min((w - mg * 2) / gm.W, (h - top - mg * 2 - 20) / gm.H);
+    layout.main = { sc: s, ox: (w - gm.W * s) / 2, oy: top + (h - top - gm.H * s) / 2 + (gm.image ? 0 : 8), g: gm };
     layout.other = null;
   }
   layout.w = w; layout.h = h;

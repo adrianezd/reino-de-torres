@@ -92,7 +92,7 @@ function renderMenu(name, arg) {
     html = backBar('Duelo 1 contra 1') +
       '<p class="lead">Los dos recibís los mismos monstruos. Cada uno que se escapa te quita un corazón (el jefe, dos). Gana quien aguante más.</p>' +
       ['Fácil', 'Normal', 'Difícil'].map(function (n, i) {
-        return '<button class="big-choice d' + i + '" data-duel="' + i + '"><b>' + ['🙂', '😠', '😈'][i] + ' Rival ' + n + '</b><small>Premio: ' + (25 + i * 5) + ' 🏆 · ' + (60 + i * 40) + ' 🪙 · cofre de ' + (i >= 2 ? 'oro' : 'plata') + '</small></button>';
+        return '<button class="big-choice d' + i + '" data-duel="' + i + '"><span><b>' + ['🙂', '😠', '😈'][i] + ' Rival ' + n + '</b><small>' + rivalCardsText(DUEL_CARD_OFFSET[i]) + '</small><small>Premio: ' + (25 + i * 5) + ' 🏆 · ' + (60 + i * 40) + ' 🪙 · cofre de ' + (i >= 2 ? 'oro' : 'plata') + '</small></span></button>';
       }).join('') +
       '<p class="muted">Victorias ' + meta.duelWins + ' · Derrotas ' + meta.duelLosses + '</p>';
   } else if (name === 'collection') {
@@ -138,6 +138,7 @@ function shopHtml() {
     var u = UNITS[o.id], sold = shopBought(o.i), poor = (o.cur === 'gems' ? meta.gems : meta.gold) < o.price;
     return '<button class="sh-offer' + (sold ? ' sold' : '') + (o.cur === 'gems' ? ' gemmy' : '') + '" data-offer="' + o.i + '" style="--rc:' + RARITY[u.rarity].color + '"' + (sold ? ' disabled' : '') + '>' +
       '<span class="sh-rar">' + RARITY[u.rarity].name + '</span>' +
+      (!sold && !meta.cards[o.id] ? '<span class="sh-new">Nueva</span>' : '') +
       '<img src="' + unitIcon(o.id, 0, 112) + '" alt="">' +
       '<b>' + esc(u.name) + '</b><span class="sh-n">×' + o.n + ' cartas</span>' +
       (sold ? '<span class="sh-price sold">Comprada</span>' : price(o.cur, o.price, poor)) + '</button>';
@@ -154,6 +155,10 @@ function shopHtml() {
     '<div class="sh-head"><h3>Cofres</h3><small>También dan gemas</small></div><div class="sh-chests">' + chests + '</div>' +
     '<div class="sh-head"><h3>Oro</h3></div><div class="sh-golds">' + golds + '</div>' +
     '<p class="muted">💎 Ganas gemas en los cofres, con cada estrella nueva de la campaña, al ganar duelos y en el cooperativo.</p>';
+}
+function rivalCardsText(off) {
+  if (!off) return 'Cartas a tu nivel';
+  return 'Cartas ' + Math.abs(off) + (Math.abs(off) === 1 ? ' nivel ' : ' niveles ') + (off < 0 ? 'por debajo' : 'por encima') + ' de las tuyas';
 }
 function modeBtn(go, icon, title, sub, cls) {
   return '<button class="mode-btn ' + cls + '" data-go="' + go + '"><span class="mode-ico">' + icon + '</span><span><b>' + title + '</b><small>' + sub + '</small></span><span class="mode-go">▶</span></button>';
@@ -181,11 +186,11 @@ function cardHtml(id, inDeck, inColl) {
   var u = UNITS[id], c = meta.cards[id];
   if (!c) {
     var from = CAMPAIGN.filter(function (st) { return st.unlock === id; })[0];
-    return '<div class="ucard locked" style="--rc:' + RARITY[u.rarity].color + '">' +
+    return '<button class="ucard locked" data-card="' + id + '" style="--rc:' + RARITY[u.rarity].color + '">' +
       '<span class="uel">' + ELEMENTS[u.element].icon + '</span>' +
       '<span class="uport"><img src="' + unitIcon(id, 0, 128) + '" alt=""><i class="ulock">' + (u.chestOnly ? '🎁' : '🔒') + '</i></span>' +
       '<div class="ulv ulv-lock">' + (u.chestOnly ? 'Cofre de oro' : from ? 'Fase ' + from.id : 'Bloqueada') + '</div>' +
-      '<small>' + esc(u.name) + '</small></div>';
+      '<small>' + esc(u.name) + '</small></button>';
   }
   var need = cardsNeeded(c.lv), pct = c.lv >= CARD_MAX ? 100 : Math.min(100, c.n / need * 100);
   var ready = canUpgradeCard(id);
@@ -225,6 +230,7 @@ function bindMenu() {
     b.onclick = function () {
       var o = shopOffers()[+b.dataset.offer], r = buyOffer(+b.dataset.offer);
       if (r === 'ok') { sfx('power'); buzz(20); toast('+' + o.n + ' cartas de ' + UNITS[o.id].name); renderMenu('shop'); }
+      else if (r === 'new') { sfx('chest'); buzz(30); toast('¡Tropa nueva: ' + UNITS[o.id].name + '!'); renderMenu('shop'); }
       else if (r === 'poor') { sfx('no'); toast(o.cur === 'gems' ? 'Te faltan gemas' : 'Te falta oro'); }
     };
   });
@@ -261,18 +267,23 @@ function unitTraits(u) {
   if (u.dmg) t.push(['🎯', 'Objetivo', u.target === 'strong' ? 'El más fuerte' : 'El primero']);
   return t;
 }
+// Cómo se consigue una tropa que aún no tienes.
+function unitSources(id) {
+  var u = UNITS[id], out = [];
+  var from = CAMPAIGN.filter(function (st) { return st.unlock === id; })[0];
+  if (from) out.push('🗺️ Supera la fase ' + from.id + ' de la campaña, ' + from.name);
+  if (u.chestOnly) out.push('🎁 Solo sale en el cofre de oro');
+  else if (u.rarity === 'legendaria') out.push('🎁 También puede salir en el cofre de oro');
+  else out.push('🎁 Puede salir en los cofres y en las ofertas de la tienda');
+  return out;
+}
 function showCardModal(id) {
+  if (!meta.cards[id]) { showLockedCard(id); return; }
   var u = UNITS[id], c = meta.cards[id], inDeck = meta.deck.indexOf(id) !== -1;
   var rar = RARITY[u.rarity], el = ELEMENTS[u.element];
   var need = cardsNeeded(c.lv), gold = cardUpgradeGold(c.lv), maxed = c.lv >= CARD_MAX;
   var dmgAt = function (lv) { return Math.round(u.dmg * (1 + CARD_BONUS * (lv - 1))); };
-  var stat = function (icon, val, label) { return '<div class="ps-stat"><i>' + icon + '</i><b>' + val + '</b><small>' + label + '</small></div>'; };
-  var stats = u.dmg
-    ? stat('⚔️', dmgAt(c.lv), 'Daño') + stat('⏱️', u.rate, 'Disparos/s') + stat('📈', Math.round(dmgAt(c.lv) * u.rate), 'Daño/s')
-    : u.manaGen
-      ? stat('💧', '+' + u.manaGen.amount, 'Maná') + stat('⏱️', u.manaGen.every + ' s', 'Cada') + stat('✨', '×rango', 'Fusión')
-      : stat('🎵', '+' + Math.round(u.buff.speed * 100) + '%', 'Velocidad') + stat('📍', '8', 'Vecinas') + stat('✨', '×rango', 'Fusión');
-  var traits = unitTraits(u).map(function (t) { return '<span class="uc-trait"><i>' + t[0] + '</i><b>' + t[1] + '</b><small>' + t[2] + '</small></span>'; }).join('');
+  var stats = unitStatsHtml(u, c.lv), traits = unitTraitsHtml(u);
   var pct = maxed ? 100 : Math.min(100, c.n / need * 100);
   var why = maxed ? '' : c.n < need ? (need - c.n === 1 ? 'Falta 1 carta' : 'Faltan ' + (need - c.n) + ' cartas') : meta.gold < gold ? 'Te faltan ' + (gold - meta.gold) + ' 🪙' : '';
   var gain = !maxed && u.dmg ? '<span class="uc-gain">⚔️ ' + dmgAt(c.lv) + ' → <b>' + dmgAt(c.lv + 1) + '</b></span>' : '';
@@ -298,6 +309,38 @@ function showCardModal(id) {
   document.querySelectorAll('[data-swap]').forEach(function (b) {
     b.onclick = function () { var k = meta.deck.indexOf(b.dataset.swap); meta.deck[k] = id; saveMeta(); closeOverlay(); sfx('merge'); renderMenu('collection'); };
   });
+  $('mcClose').onclick = closeOverlay;
+  $('mcX').onclick = closeOverlay;
+}
+
+function unitStatsHtml(u, lv) {
+  var dmg = Math.round((u.dmg || 0) * (1 + CARD_BONUS * (lv - 1)));
+  var stat = function (icon, val, label) { return '<div class="ps-stat"><i>' + icon + '</i><b>' + val + '</b><small>' + label + '</small></div>'; };
+  return u.dmg
+    ? stat('⚔️', dmg, 'Daño') + stat('⏱️', u.rate, 'Disparos/s') + stat('📈', Math.round(dmg * u.rate), 'Daño/s')
+    : u.manaGen
+      ? stat('💧', '+' + u.manaGen.amount, 'Maná') + stat('⏱️', u.manaGen.every + ' s', 'Cada') + stat('✨', '×rango', 'Fusión')
+      : stat('🎵', '+' + Math.round(u.buff.speed * 100) + '%', 'Velocidad') + stat('📍', '4', 'Vecinas') + stat('✨', '×rango', 'Fusión');
+}
+function unitTraitsHtml(u) {
+  return unitTraits(u).map(function (t) { return '<span class="uc-trait"><i>' + t[0] + '</i><b>' + t[1] + '</b><small>' + t[2] + '</small></span>'; }).join('');
+}
+// Ficha de una tropa que aún no tienes: qué hace y cómo conseguirla.
+function showLockedCard(id) {
+  var u = UNITS[id], rar = RARITY[u.rarity], el = ELEMENTS[u.element], traits = unitTraitsHtml(u);
+  openOverlay('<div class="modal-card unit-card locked rar-' + u.rarity + '" style="--rc:' + rar.color + ';--ec:' + el.color + '">' +
+    '<button class="uc-x" id="mcX" aria-label="Cerrar">✕</button>' +
+    '<div class="uc-hero"><div class="uc-rays"></div><img class="uc-img" src="' + unitIcon(id, 0, 220) + '" alt=""></div>' +
+    '<div class="uc-ribbon"><h2>' + esc(u.name) + '</h2></div>' +
+    '<p class="uc-title">' + esc(u.title) + '</p>' +
+    '<div class="uc-chips"><span class="uc-chip rar">' + (u.rarity === 'legendaria' ? '★ ' : '') + rar.name + '</span><span class="uc-chip el">' + el.icon + ' ' + el.name + '</span><span class="uc-chip">' + esc(u.role) + '</span></div>' +
+    '<p class="uc-desc">' + esc(u.desc) + '</p>' +
+    '<div class="uc-demo"><canvas id="ucDemo" aria-label="' + esc(u.name) + ' en acción"></canvas><span>En acción</span></div>' +
+    '<div class="pause-stats uc-stats">' + unitStatsHtml(u, 1) + '</div>' +
+    (traits ? '<div class="uc-traits">' + traits + '</div>' : '') +
+    '<div class="uc-get"><b>🔒 Aún no la tienes</b>' + unitSources(id).map(function (t) { return '<small>' + esc(t) + '</small>'; }).join('') + '</div>' +
+    '<button class="btn btn-ghost" id="mcClose">Cerrar</button></div>');
+  startCardDemo($('ucDemo'), id);
   $('mcClose').onclick = closeOverlay;
   $('mcX').onclick = closeOverlay;
 }
@@ -691,6 +734,7 @@ function buildBattleHud() {
   $('cmdIco').innerHTML = '<img src="' + c.pic + '" alt="' + esc(c.name) + '"><i>' + c.icon + '</i>';
   $('cmdBtn').title = c.ability + ': ' + c.desc;
   $('unitInfo').hidden = true;
+  hideCoach();
   updateHud(true);
 }
 var _hud = {};
@@ -722,10 +766,44 @@ function updateHud(force) {
     var el = document.querySelector('[data-power="' + id + '"]');
     if (el) el.classList.toggle('poor', lv >= POWER_MAX || p.mana < POWER_COSTS[lv]);
   });
+  var wi = $('waveInfo'), showWi = !b.other && $('coach').hidden;
+  wi.hidden = !showWi;
+  if (showWi) setHtml('waveInfo', waveInfoHtml(b));
   var cb = $('cmdBtn');
   cb.style.setProperty('--charge', (p.charge * 360) + 'deg');
   cb.classList.toggle('ready', p.charge >= 1);
   setTxt('bSpeed', 'x' + b.speed);
+}
+/* Consejo del tutorial: abajo (junto a los botones) o arriba (sobre el tablero). */
+function showCoach(html, where) {
+  var el = $('coach');
+  if (el._h !== html) { el.innerHTML = html; el._h = html; }
+  el.className = 'coach ' + where;
+  el.hidden = false;
+}
+function hideCoach() { var el = $('coach'); if (el) { el.hidden = true; el._h = ''; } }
+
+/* Franja de arriba con un solo tablero: la oleada en curso y lo que trae la
+   siguiente (monstruos, jefe y evento). */
+function waveInfoHtml(b) {
+  var left = b.queue.length + b.player.enemies.length;
+  var now = '<span class="wi-now"><b>' + (b.wave ? 'Oleada ' + b.wave : 'Preparando') + '</b><small>' +
+    (!b.wave ? 'Coloca tus tropas' : left ? (left === 1 ? 'Queda 1' : 'Quedan ' + left) : '¡Superada!') + '</small></span>';
+  var nx = b.next;
+  if (!nx) return now + '<span class="wi-next"><b class="wi-last">👑 ¡Última oleada!</b></span>';
+  var groups = [], by = {};
+  nx.queue.forEach(function (q) {
+    var k = (q.boss ? 'B' : '') + q.kind;
+    if (!by[k]) { by[k] = { kind: q.kind, boss: !!q.boss, n: 0 }; groups.push(by[k]); }
+    by[k].n++;
+  });
+  groups.sort(function (p, q) { return (p.boss - q.boss) || (q.n - p.n); });
+  var chips = groups.slice(0, 5).map(function (g) {
+    var name = g.boss ? BOSSES[g.kind].name : ENEMIES[g.kind].name;
+    return '<i class="wi-chip' + (g.boss ? ' boss' : '') + '" title="' + esc(name) + '"><img src="' + enemyIcon(g.kind, g.boss) + '" alt="' + esc(name) + '">' + (g.boss ? '👑' : '×' + g.n) + '</i>';
+  }).join('');
+  var ev = nx.event ? '<i class="wi-chip ev" title="' + esc(nx.event.name + ': ' + nx.event.desc) + '"><img src="' + nx.event.pic + '" alt="' + esc(nx.event.name) + '"></i>' : '';
+  return now + '<span class="wi-next"><small>' + (b.wave ? 'Siguiente' : 'Llega') + '</small>' + chips + ev + '</span>';
 }
 function refreshUnitInfo() {
   var b = battle, box = $('unitInfo');
@@ -736,7 +814,7 @@ function refreshUnitInfo() {
   var bits = [];
   if (d.dmg) bits.push('⚔️ ' + fmtNum(b.player.unitDamage(i)) + ' por golpe');
   if (d.manaGen) bits.push('💧 +' + Math.round(d.manaGen.amount * u.rank * (1 + 0.25 * ((b.player.power[u.id] || 1) - 1))) + ' cada ' + d.manaGen.every + ' s');
-  if (d.buff) bits.push('🎵 +' + Math.round(d.buff.speed * u.rank * 100) + '% vel. a vecinas');
+  if (d.buff) bits.push('🎵 +' + Math.round(d.buff.speed * u.rank * (1 + 0.1 * ((b.player.power[u.id] || 1) - 1)) * 100) + '% vel. a vecinas');
   if (aff) bits.push(ELEMENTS[d.element].icon + ' Afinidad +' + Math.round(aff * AFFINITY_BONUS * 100) + '%');
   if (b.player.tiles[i]) bits.push(TILES[b.player.tiles[i]].icon + ' ' + TILES[b.player.tiles[i]].name);
   box.innerHTML = '<img src="' + unitIcon(u.id, u.rank, 72) + '" alt=""><div><b>' + esc(d.name) + ' · Rango ' + u.rank + '</b><small>' + esc(d.role) + ' · ' + bits.join(' · ') + '</small><small class="hint">Toca otra igual para fusionar o una casilla vacía para moverla</small></div>';
@@ -750,16 +828,16 @@ function showBanner(title, sub, pic) {
 }
 
 function showResult(res) {
-  var title = res.mode === 'coop' ? (res.won ? '¡Gran defensa!' : 'Fin de la partida') : res.won ? '¡Victoria!' : 'Derrota';
+  var title = res.mode === 'coop' ? (res.won ? '¡Gran defensa!' : 'Fin de la partida') : res.draw ? 'Empate' : res.won ? '¡Victoria!' : 'Derrota';
   var stars = res.mode === 'campaign' && res.won ? '<div class="res-stars">' + '★★★'.slice(0, res.stars).padEnd(3, '☆') + '</div>' : '';
   var chest = !res.chest ? '' : res.chestSlot >= 0
     ? '<div class="res-chest"><img src="' + chestPic(res.chest) + '" alt=""><span><b>' + CHESTS[res.chest].name + '</b><small>Guardado en tus cofres · tarda ' + fmtDur(CHESTS[res.chest].time) + ' en abrirse</small></span></div>'
     : '<div class="res-chest full"><img src="' + chestPic(res.chest) + '" alt=""><span><b>Tus cofres están llenos</b><small>Abre alguno para que quepan los próximos</small></span></div>';
   var unlock = res.unlocked ? '<div class="res-unlock"><img src="' + unitIcon(res.unlocked, 0, 96) + '" alt=""><b>¡Nueva tropa: ' + esc(UNITS[res.unlocked].name) + '!</b></div>' : '';
-  openOverlay('<div class="modal-card result ' + (res.won ? 'win' : 'lose') + '"><div class="res-emoji">' + (res.won ? '🏆' : '💀') + '</div><h2>' + title + '</h2>' + stars +
+  openOverlay('<div class="modal-card result ' + (res.won ? 'win' : 'lose') + '"><div class="res-emoji">' + (res.won ? '🏆' : res.draw ? '🤝' : '💀') + '</div><h2>' + title + '</h2>' + stars +
     '<p>' + res.lines.map(esc).join('<br>') + '</p>' +
     '<p class="res-gold">+' + res.gold + ' 🪙' + (res.gems ? ' · +' + res.gems + ' 💎' : '') + (res.trophies ? ' · ' + (res.trophies > 0 ? '+' : '') + res.trophies + ' 🏆' : '') + '</p>' + chest + unlock +
-    '<p class="muted">Bajas ' + res.kills + ' · Daño ' + fmtNum(res.damage) + '</p>' +
+    '<p class="muted">Bajas ' + res.kills + ' · Daño ' + fmtNum(res.damage) + '</p>' + dmgSummary(res) +
     '<button class="btn btn-green" id="resAgain">' + (res.mode === 'campaign' && res.won && battle.stage.id < 15 ? 'Siguiente fase ▶' : 'Otra vez') + '</button>' +
     '<button class="btn btn-ghost" id="resMenu">Menú</button></div>');
   $('resAgain').onclick = function () {
@@ -769,6 +847,17 @@ function showResult(res) {
     else startBattle(b.mode, b.opts);
   };
   $('resMenu').onclick = function () { closeOverlay(); battle = null; showScreen(res.mode === 'campaign' ? 'campaign' : 'home'); };
+}
+/* Daño de cada tropa en la partida, en barras (la mayor, llena). */
+function dmgSummary(res) {
+  var list = (res.dmgBy || []).slice(0, 6);
+  if (!list.length) return '';
+  var top = list[0].v, total = list.reduce(function (s, d) { return s + d.v; }, 0);
+  return '<div class="res-dmg"><h3>Daño por tropa</h3>' + list.map(function (d) {
+    var cmd = d.id === 'cmd' ? COMMANDERS[res.commander] : null;
+    var pic = cmd ? cmd.pic : unitIcon(d.id, 0, 64), name = cmd ? cmd.ability : UNITS[d.id].name;
+    return '<div class="rd-row"><img src="' + pic + '" alt=""><span class="rd-bar"><i style="width:' + Math.max(4, d.v / top * 100) + '%"></i><b>' + esc(name) + '</b><em>' + fmtNum(d.v) + ' · ' + Math.round(d.v / total * 100) + '%</em></span></div>';
+  }).join('') + '</div>';
 }
 function fmtTime(sec) { sec = Math.floor(sec); return Math.floor(sec / 60) + ':' + ('0' + sec % 60).slice(-2); }
 function confirmQuit() {
@@ -891,6 +980,13 @@ function initGame() {
   document.addEventListener('visibilitychange', function () { if (document.hidden && battle && !battle.ended && !battle.paused) confirmQuit(); });
   document.addEventListener('keydown', function (e) {
     if (!battle || currentScreen !== 'battle') return;
+    // en pausa (o al terminar) solo responde Escape, que reanuda
+    // (Espacio y Enter tampoco pulsan el botón de la partida que tenga el foco)
+    if (battle.ended || battle.paused) {
+      if ((e.key === ' ' || e.key === 'Enter') && e.target.closest && e.target.closest('#battleScreen')) e.preventDefault();
+      if (e.key === 'Escape' && !battle.ended) confirmQuit();
+      return;
+    }
     if (e.key === ' ') { e.preventDefault(); $('summonBtn').click(); }
     else if (e.key === 'q') $('cmdBtn').click();
     else if (e.key === 'Escape') confirmQuit();

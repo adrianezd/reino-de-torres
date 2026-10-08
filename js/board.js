@@ -118,6 +118,8 @@ function Board(opts) {
   this.aiTimer = 1;
   this.kills = 0;
   this.damage = 0;
+  this.dmgBy = {};                       // daño por tropa ('cmd': meteoro del comandante)
+  this.summons = 0; this.merges = 0; this.powers = 0; this.cmds = 0;
   this.leaked = 0;
   this.event = null;
   this.shake = 0;
@@ -169,6 +171,7 @@ Board.prototype.summon = function () {
   var i = pick(free);
   this.mana -= this.summonCost;
   this.summonCost += 10;
+  this.summons++;
   this.cells[i] = { id: pick(this.deck), rank: 1, cd: Math.random(), frozen: 0, anim: 1, gen: 0 };
   this.addFx('ring', this.cc(i), UNITS[this.cells[i].id].color);
   return 'ok';
@@ -183,6 +186,7 @@ Board.prototype.merge = function (from, to) {
   var v = this.cells[to];
   this.cells[from] = null;
   v.rank++;
+  this.merges++;
   v.anim = 1;
   v.frozen = 0;
   var p = this.cc(to);
@@ -197,12 +201,14 @@ Board.prototype.powerUp = function (id) {
   if (this.mana < cost) return 'mana';
   this.mana -= cost;
   this.power[id] = lv + 1;
+  this.powers++;
   for (var i = 0; i < this.cells.length; i++) if (this.cells[i] && this.cells[i].id === id) { this.cells[i].anim = 0.8; this.addFx('ring', this.cc(i), '#7dffb0'); }
   return 'ok';
 };
 Board.prototype.useCommander = function () {
   if (this.charge < 1) return false;
   this.charge = 0;
+  this.cmds++;
   var cmd = this.commander;
   if (cmd === 'aria') {
     this.enemies.forEach(function (e) { e.stun = Math.max(e.stun, 3); });
@@ -248,6 +254,8 @@ Board.prototype.hit = function (e, dmg, unitDef, kind) {
   if (unitDef && unitDef.crit && Math.random() < unitDef.crit.chance) { dmg *= unitDef.crit.mult; crit = true; }
   if (unitDef && unitDef.bossMult && e.boss) dmg *= unitDef.bossMult;
   if (!(unitDef && unitDef.pierce)) dmg *= 1 - e.armor;
+  var src = unitDef ? unitDef.id : 'cmd';
+  this.dmgBy[src] = (this.dmgBy[src] || 0) + Math.min(dmg, Math.max(0, e.hp));
   e.hp -= dmg;
   this.damage += dmg;
   if (crit) this.addText(e.x, e.y - 0.5, '¡' + fmtNum(dmg) + '!', '#ff4f7b', true);
@@ -322,7 +330,7 @@ Board.prototype.applyHit = function (e, dmg, d, u) {
     e.slowPct = Math.min(d.slow.max + 0.03 * (u.rank - 1), e.slowPct + d.slow.pct * (1 - (e.boss ? 0 : ENEMIES[e.kind].slowRes || 0)));
     e.slowT = d.slow.dur;
   }
-  if (d.poison) { e.poison += d.poison.dps * mult * 0.35; e.poisonT = d.poison.dur; }
+  if (d.poison) { e.poison += d.poison.dps * mult * 0.35; e.poisonT = d.poison.dur; e.poisonBy = d.id; }
   if (d.stun && Math.random() < d.stun.chance) { e.stun = Math.max(e.stun, d.stun.dur); }
   if (d.splash) {
     var r = d.splash + 0.06 * u.rank;
@@ -403,8 +411,9 @@ Board.prototype.update = function (dt) {
     var e = this.enemies[k];
     if (e.dead) continue;
     if (e.poison > 0) {
-      var pd = e.poison * dt;
-      e.hp -= pd * (1 - e.armor * 0.5); this.damage += pd;
+      var pd = e.poison * dt * (1 - e.armor * 0.5);
+      if (e.poisonBy) this.dmgBy[e.poisonBy] = (this.dmgBy[e.poisonBy] || 0) + Math.min(pd, Math.max(0, e.hp));
+      e.hp -= pd; this.damage += pd;
       e.poisonT -= dt;
       if (e.poisonT <= 0) e.poison = 0;
       if (e.hp <= 0) { this.kill(e); continue; }
@@ -449,7 +458,7 @@ Board.prototype.bossAbility = function (e, dt) {
     this.addText(p.x, p.y - 0.6, '¡Escudo!', '#c9d4e6', true);
     this.spawn('rocoso', e.maxHp * 0.05, { d: Math.max(0, e.d - 0.4) });
   } else if (ab === 'summon') {
-    e.abilityT = 4;
+    e.abilityT = 7;
     for (var k = 0; k < 2; k++) this.spawn('ghost', e.maxHp * 0.03, { d: Math.max(0, e.d - 0.3 - k * 0.3) });
     this.addText(p.x, p.y - 0.6, '¡Invoca!', '#b26bff', true);
   } else if (ab === 'burn') {

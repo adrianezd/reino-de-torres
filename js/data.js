@@ -112,6 +112,7 @@ var UNITS = {
   }
 };
 var UNIT_ORDER = ['lyra', 'brasa', 'nivea', 'doblon', 'rocco', 'volta', 'mirra', 'melodia', 'sombra', 'cronos', 'halcon', 'ulric', 'fenix', 'aurora', 'titan'];
+UNIT_ORDER.forEach(function (id) { UNITS[id].id = id; });
 // tropas que pueden usar los rivales y aliados de la máquina
 var AI_UNITS = UNIT_ORDER.filter(function (id) { return !UNITS[id].chestOnly; });
 var STARTER_UNITS = ['lyra', 'brasa', 'nivea', 'doblon', 'rocco'];
@@ -147,19 +148,22 @@ var BOSSES = {
 };
 var BOSS_ORDER = ['rey', 'gelido', 'coloso', 'nigro', 'dragon'];
 
-/* Campaña: 15 fases. hp: dureza de los monstruos · waves: oleadas (la última con jefe). */
+/* Campaña: 15 fases. hp: dureza de los monstruos (se alcanza del todo en la
+   última oleada; la primera llega más suave, ver hpScale) · waves: oleadas
+   (la última con jefe) · mana: maná con el que empiezas. */
 var CAMPAIGN = [];
 (function () {
   var names = ['Prado Verde', 'Colinas Suaves', 'Bosque Susurrante', 'Río Helado', 'Paso del Ogro',
     'Pantano Tóxico', 'Ruinas Antiguas', 'Desierto Rojo', 'Cañón del Eco', 'Picos Nevados',
     'Volcán Dormido', 'Torre Maldita', 'Cripta Profunda', 'Ciudadela Oscura', 'Trono del Caos'];
-  var unlocks = { 2: 'volta', 3: 'mirra', 5: 'melodia', 7: 'sombra', 9: 'cronos', 11: 'halcon', 14: 'ulric' };
+  var unlocks = { 2: 'volta', 3: 'mirra', 4: 'melodia', 6: 'sombra', 8: 'cronos', 10: 'halcon', 12: 'ulric' };
   for (var i = 0; i < 15; i++) {
     CAMPAIGN.push({
       id: i + 1,
       name: names[i],
       waves: 3 + Math.floor(i / 3),
-      hp: 1 + i * 0.3 + Math.max(0, i - 7) * 0.12,
+      hp: 1.2 + i * 0.38 - Math.max(0, i - 7) * 0.06,
+      mana: 100 + i * 10,
       boss: BOSS_ORDER[i % BOSS_ORDER.length],
       unlock: unlocks[i + 1] || null,
       gold: 60 + i * 25,
@@ -212,8 +216,7 @@ var CODES = {
   BIENVENIDA:    { gold: 500, gems: 50 },
   REINODETORRES: { chest: 'oro' },
   GEMAS:         { gems: 30 },
-  FUSION:        { gold: 400 },
-  GEMAS9999:     { gems: 9999 }
+  FUSION:        { gold: 400 }
 };
 
 /* Afinidad: cada tropa vecina (arriba/abajo/izquierda/derecha) del mismo

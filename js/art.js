@@ -57,8 +57,8 @@ var imgReadyCount = 0;
 Object.keys(IMG_LIST).forEach(function (dir) {
   IMG_LIST[dir].forEach(function (id) {
     var im = new Image();
-    im.onload = function () { im.ready = true; imgReadyCount++; _unitIconCache = {}; _tintCache = {}; if (window.onArtReady) window.onArtReady(); };
-    im.src = 'assets/' + dir + '/' + id + '.webp' + (dir === 'boards' ? '?v=3' : dir === 'tiles' ? '?v=2' : '');
+    im.onload = function () { im.ready = true; imgReadyCount++; _unitIconCache = {}; _enemyIconCache = {}; _tintCache = {}; if (window.onArtReady) window.onArtReady(); };
+    im.src = 'assets/' + dir + '/' + id + '.webp' + (dir === 'boards' ? '?v=4' : dir === 'tiles' ? '?v=2' : '');
     IMG[dir + '/' + id] = im;
   });
 });
@@ -681,6 +681,22 @@ function drawEnemy(c, e, r, now) {
 }
 
 /* ---------- icono para la interfaz (canvas → dataURL, cacheado) ---------- */
+// monstruo quieto (para la franja de la próxima oleada); se cachea cuando ya
+// han cargado sus imágenes
+var _enemyIconCache = {};
+function enemyIcon(kind, boss) {
+  var k = (boss ? 'B' : '') + kind;
+  if (_enemyIconCache[k]) return _enemyIconCache[k];
+  var cv = document.createElement('canvas');
+  cv.width = 64; cv.height = 64;
+  var c = cv.getContext('2d');
+  if (!c) return '';
+  var e = { kind: kind, boss: !!boss, x: 32, y: boss ? 40 : 38, seed: 0, slowPct: 0, poison: 0, stun: 0, shield: 0 };
+  drawEnemy(c, e, boss ? 13 : 15, 0);
+  var url = cv.toDataURL();
+  if (art('enemies/blob') && (art('enemies/' + kind) || ENEMY_LOOK[kind])) _enemyIconCache[k] = url;
+  return url;
+}
 var _unitIconCache = {};
 function unitIcon(id, rank, size) {
   size = size || 128;

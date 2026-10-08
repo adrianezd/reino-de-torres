@@ -9,7 +9,7 @@ function defaultMeta() {
   STARTER_UNITS.forEach(function (id) { cards[id] = { lv: 1, n: 0 }; });
   return {
     gold: 150, gems: 30, trophies: 0,
-    shop: { day: '', bought: [] },   // ofertas compradas hoy
+    shop: { day: '', bought: [], offers: null },   // ofertas de hoy y las ya compradas
     codes: [],                       // códigos ya canjeados
     cards: cards,
     deck: STARTER_UNITS.slice(),
@@ -164,14 +164,23 @@ function totalStars() {
 function stageUnlocked(n) { return n === 1 || (meta.campaign[n - 1] || 0) > 0; }
 
 /* ---------- tienda ---------- */
-// Ofertas del día: salen siempre igual durante el día (semilla = fecha).
+// Ofertas del día: se eligen la primera vez que se abre la tienda en el día
+// (semilla = fecha) y se guardan, para que no cambien al desbloquear tropas.
 // Tres de cartas por oro y una de carta épica o legendaria por gemas.
+// Pueden ser de tropas que aún no tienes (la primera carta la desbloquea),
+// salvo las legendarias, que solo salen en el cofre de oro.
 function shopOffers() {
-  var key = todayKey(), seed = 0;
+  var key = todayKey();
+  if (meta.shop.day !== key) meta.shop = { day: key, bought: [], offers: null };
+  if (!meta.shop.offers) { meta.shop.offers = makeShopOffers(key); saveMeta(); }
+  return meta.shop.offers;
+}
+function makeShopOffers(key) {
+  var seed = 0;
   for (var i = 0; i < key.length; i++) seed = (seed * 31 + key.charCodeAt(i)) % 233280;
   var rnd = function () { seed = (seed * 9301 + 49297) % 233280; return seed / 233280; };
-  var owned = UNIT_ORDER.filter(function (id) { return meta.cards[id]; });
-  var of = function (r) { return owned.filter(function (id) { return UNITS[id].rarity === r; }); };
+  var pool = UNIT_ORDER.filter(function (id) { return meta.cards[id] || UNITS[id].rarity !== 'legendaria'; });
+  var of = function (r) { return pool.filter(function (id) { return UNITS[id].rarity === r; }); };
   var pickFrom = function (list, taken) {
     var free = list.filter(function (id) { return taken.indexOf(id) === -1; });
     if (!free.length) free = list;
@@ -192,17 +201,19 @@ function shopOffers() {
   return out;
 }
 function shopBought(i) { return meta.shop.day === todayKey() && meta.shop.bought.indexOf(i) !== -1; }
+// 'ok', 'new' (desbloquea la tropa), 'poor' o 'sold'
 function buyOffer(i) {
   var o = shopOffers()[i];
   if (!o || shopBought(i)) return 'sold';
   var have = o.cur === 'gems' ? meta.gems : meta.gold;
   if (have < o.price) return 'poor';
   if (o.cur === 'gems') meta.gems -= o.price; else meta.gold -= o.price;
-  if (meta.shop.day !== todayKey()) meta.shop = { day: todayKey(), bought: [] };
   meta.shop.bought.push(i);
-  meta.cards[o.id].n += o.n;
+  var fresh = !meta.cards[o.id];
+  if (fresh) meta.cards[o.id] = { lv: 1, n: o.n - 1 };
+  else meta.cards[o.id].n += o.n;
   saveMeta();
-  return 'ok';
+  return fresh ? 'new' : 'ok';
 }
 function buyChest(type) {
   var ch = CHESTS[type];

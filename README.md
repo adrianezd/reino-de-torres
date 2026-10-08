@@ -6,8 +6,8 @@ Tower defense de fusión para móvil y escritorio, gratis y sin anuncios. Invoca
 
 ## Modos
 
-- **🗺️ Campaña**: 15 fases con jefe final, estrellas según las vidas que conserves y tropas nuevas que se desbloquean.
-- **⚔️ Duelo 1 contra 1**: tú y un rival (IA fácil, normal o difícil) recibís los mismos monstruos. Gana quien aguante más. Da trofeos.
+- **🗺️ Campaña**: 15 fases con jefe final, estrellas según las vidas que conserves y tropas nuevas que se desbloquean. Cada fase empieza con algo más de maná y su dureza llega poco a poco: la primera oleada viene al 55 % y la última al 100 %. La primera partida trae un tutorial paso a paso (invocar, fusionar, mejorar y comandante), y los monstruos esperan a que tengas dos tropas.
+- **⚔️ Duelo 1 contra 1**: tú y un rival (IA fácil, normal o difícil) recibís los mismos monstruos. Gana quien aguante más; si caéis a la vez es empate. El rival fácil lleva cartas 2 niveles por debajo de las tuyas y el difícil, 2 por encima (`DUEL_CARD_OFFSET` en `js/battle.js`). Da trofeos.
 - **🤝 2 contra la máquina**: tú y un aliado (IA) compartís vidas contra oleadas infinitas. Récord de oleadas.
 
 ## Tropas
@@ -31,6 +31,8 @@ Tower defense de fusión para móvil y escritorio, gratis y sin anuncios. Invoca
 
 ## Lo que lo hace distinto
 
+- **Próxima oleada**: con un solo tablero, una franja arriba dice cuántos monstruos quedan y qué trae la siguiente oleada (monstruos, jefe y evento).
+- **Daño por tropa** al terminar cada partida, para saber qué mejorar.
 - **Fusión dirigida**: dos tropas iguales del mismo rango se convierten en esa misma tropa con un rango más (no en una al azar).
 - **Recolocar tropas**: arrástralas a otra casilla o intercámbialas.
 - **Casillas especiales** que cambian cada partida: Altar (+daño), Fuente (maná) y Atalaya (+velocidad).
@@ -43,9 +45,9 @@ Tower defense de fusión para móvil y escritorio, gratis y sin anuncios. Invoca
 
 Oro, gemas, cartas con 10 niveles, cofres de madera, plata y oro, cofre gratis diario, mazo de 5 tropas, trofeos y estrellas. Todo se guarda en el navegador.
 
-**🛒 Tienda:** ofertas de cartas que cambian cada día (por oro o, las épicas y legendarias, por gemas), cofres por gemas y oro a cambio de gemas. Las gemas salen en los cofres, por cada estrella nueva de la campaña, al ganar duelos y en el cooperativo. Al tocar un cofre se ve su ficha (qué trae y la probabilidad de rara, épica y legendaria; puede tocar cualquier tropa aunque no la tengas y las legendarias solo salen en el de oro) y hay que darle a Abrir. Al abrirlo sale primero el oro y luego las cartas una a una, con un contador de las que quedan; «Saltar» va directo al resumen.
+**🛒 Tienda:** ofertas de cartas que cambian cada día (por oro o, las épicas y legendarias, por gemas). Se guardan al abrir la tienda, así que no cambian aunque desbloquees tropas, y pueden ser de tropas que aún no tienes (marcadas «Nueva»; la compra la desbloquea), salvo las legendarias. También hay cofres por gemas y oro a cambio de gemas. Las gemas salen en los cofres, por cada estrella nueva de la campaña, al ganar duelos y en el cooperativo. Al tocar un cofre se ve su ficha (qué trae y la probabilidad de rara, épica y legendaria; puede tocar cualquier tropa aunque no la tengas y las legendarias solo salen en el de oro) y hay que darle a Abrir. Al abrirlo sale primero el oro y luego las cartas una a una, con un contador de las que quedan; «Saltar» va directo al resumen.
 
-La ficha de cada tropa muestra una mini partida con la tropa en acción.
+La ficha de cada tropa muestra una mini partida con la tropa en acción. Las tropas bloqueadas también tienen ficha, con lo que hacen y cómo conseguirlas.
 
 **Navegación:** barra de pestañas abajo con Tienda, Mazo (tropas y comandante), Jugar y Equipos (bloqueado, llegará pronto).
 
