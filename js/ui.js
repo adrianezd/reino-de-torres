@@ -54,6 +54,8 @@ function showScreen(name) {
   document.querySelectorAll('[data-tab]').forEach(function (b) { b.classList.toggle('on', b.dataset.tab === tab); });
   if (name !== 'battle') renderMenu(name);
 }
+// centro de cada aro del banner del mazo (assets/ui/banner-mazo.webp), en % del ancho
+var DECK_RINGS = [13.66, 31.83, 49.95, 68.06, 86.24];
 function topBar() {
   return '<div class="res-bar"><span class="pill gold">🪙 ' + meta.gold + '</span><span class="pill gem">💎 ' + meta.gems + '</span><span class="pill trophy">🏆 ' + meta.trophies + '</span><span class="pill star">⭐ ' + totalStars() + '</span></div>';
 }
@@ -64,8 +66,9 @@ function renderMenu(name, arg) {
     var free = freeChestReady();
     html = topBar() +
       '<div class="logo"><div class="logo-crest">🏰</div><h1>Reino de Torres</h1><p>Invoca tropas, fusiónalas y defiende tu reino</p></div>' +
-      '<div class="deck-preview">' + meta.deck.map(function (id) { return '<img src="' + unitIcon(id, 0, 96) + '" alt="' + esc(UNITS[id].name) + '">'; }).join('') + '</div>' +
-      '<button class="play-hero" data-go="playNext" aria-label="Jugar la siguiente fase de la campaña"><img src="assets/ui/boton.webp" alt=""></button>' +
+      // el mazo, cada retrato en uno de los cinco aros del banner
+      '<div class="deck-preview">' + meta.deck.map(function (id, i) { return '<img src="' + unitIcon(id, 0, 96) + '" alt="' + esc(UNITS[id].name) + '" style="left:' + DECK_RINGS[i] + '%">'; }).join('') + '</div>' +
+      '<button class="play-hero" data-go="playNext" aria-label="Jugar la siguiente fase de la campaña"><img src="assets/ui/boton-jugar.webp" alt=""></button>' +
       '<div class="slots" id="chestSlots">' + slotsInner() + '</div>' +
       '<div class="mode-list">' +
       modeBtn('campaign', '🗺️', 'Campaña', '15 fases con jefes · ' + totalStars() + '/45 ⭐', 'm-campaign') +

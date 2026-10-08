@@ -994,3 +994,68 @@ body {
 .uc-get small { font-size: 0.8rem; color: #dfe6ff; }
 button.ucard.locked { cursor: pointer; }
 .sh-new { position: absolute; top: 14px; right: 10px; z-index: 1; background: #ff4f7b; color: #fff; font-size: 0.62rem; font-weight: 900; padding: 1px 6px; border-radius: 8px; border: 2px solid var(--ink); transform: rotate(8deg); }
+
+/* =========================================================
+   Pantalla principal ilustrada: barra de recursos, mazo, botón
+   de jugar, huecos de cofre, modos y barra de pestañas
+   ========================================================= */
+/* barra de recursos sobre el marco azul y oro */
+.res-bar {
+  padding: 13px 16px 15px; margin: 0 -4px 8px; gap: 5px; flex-wrap: nowrap;
+  background: url(assets/ui/header.webp) center / 100% 100% no-repeat;
+  filter: drop-shadow(0 4px 0 rgba(10,12,40,0.4));
+}
+.res-bar .pill { background: rgba(0,0,0,0.28); border-color: rgba(245,196,0,0.45); padding: 3px 9px; font-size: 0.85rem; white-space: nowrap; }
+
+/* mazo: un retrato en cada aro del banner (centros en DECK_RINGS de ui.js) */
+.deck-preview {
+  position: relative; display: block; width: min(100%, 380px); aspect-ratio: 930 / 278; margin: 2px auto 12px;
+  background: url(assets/ui/banner-mazo.webp) center / 100% 100% no-repeat;
+  filter: drop-shadow(0 4px 0 rgba(10,12,40,0.4));
+}
+.deck-preview img, .deck-preview img[style] {
+  position: absolute; top: 49.8%; width: 15%; height: auto; aspect-ratio: 1; transform: translate(-50%, -50%);
+  filter: drop-shadow(0 2px 0 rgba(0,0,0,0.35));
+}
+
+/* botón de jugar */
+.play-hero { width: min(200px, 54%); filter: drop-shadow(0 6px 0 rgba(20,20,60,0.45)); }
+
+/* huecos de cofre con su marco de madera y piedra */
+.slot {
+  height: auto; aspect-ratio: 858 / 853; padding: 0 10% 15%; border: 0; border-radius: 0; box-shadow: none;
+  background: url(assets/ui/hueco-cofre.webp) center / 100% 100% no-repeat;
+  filter: drop-shadow(0 4px 0 rgba(10,12,40,0.4));
+}
+.slot img { top: 9%; width: 60%; }
+.slot.empty { border: 0; background: url(assets/ui/hueco-cofre.webp) center / 100% 100% no-repeat; padding: 0 16%; }
+.slot.empty span { max-width: 70%; white-space: normal; color: rgba(220,228,255,0.55); text-align: center; line-height: 1.15; }
+.slot.unlocking { box-shadow: none; filter: drop-shadow(0 4px 0 rgba(10,12,40,0.4)) drop-shadow(0 0 6px #4da3ff); }
+.slot.ready { background: url(assets/ui/hueco-cofre.webp) center / 100% 100% no-repeat; animation: slotGlow 1.2s ease-in-out infinite; }
+@keyframes slotGlow { 50% { filter: drop-shadow(0 4px 0 rgba(10,12,40,0.4)) drop-shadow(0 0 10px rgba(255,209,102,0.95)); } }
+
+/* modos: banner de madera con el icono en el aro de la izquierda */
+.mode-btn {
+  position: relative; aspect-ratio: 1004 / 245; padding: 0 8% 0 21%; gap: 6px; border: 0; border-radius: 0; box-shadow: none;
+  color: #fff; filter: drop-shadow(0 5px 0 rgba(10,12,40,0.45));
+}
+.mode-btn::after { display: none; }
+.mode-btn:active { box-shadow: none; transform: translateY(3px); }
+.mode-btn.m-campaign { background: url(assets/ui/banner-campana.webp) center / 100% 100% no-repeat; }
+.mode-btn.m-duel { background: url(assets/ui/banner-duelo.webp) center / 100% 100% no-repeat; }
+.mode-btn.m-coop { background: url(assets/ui/banner-coop.webp) center / 100% 100% no-repeat; }
+.mode-btn .mode-ico {
+  position: absolute; left: 12.25%; top: 50%; transform: translate(-50%, -50%);
+  width: 10.2%; aspect-ratio: 1; display: grid; place-items: center; font-size: clamp(1.2rem, 6.5vw, 1.8rem);
+}
+.mode-btn > span:nth-child(2) { min-width: 0; }
+.mode-btn b, .m-campaign b { font-size: clamp(1.1rem, 5.6vw, 1.4rem); color: #fff; text-shadow: 0 2px 0 #5a3414, 0 0 3px #5a3414, 0 0 1px #5a3414; }
+.mode-btn small, .m-campaign small { color: #5a3414; font-weight: 800; opacity: 1; text-shadow: none; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mode-go { color: #8a5a2c; opacity: 1; }
+
+/* barra de pestañas sobre el marco azul y oro (con la joroba en el centro) */
+.navbar {
+  padding-top: 16px; border: 0; border-radius: 0; box-shadow: none;
+  background: url(assets/ui/navbar.webp) center top / 100% 100% no-repeat;
+  filter: drop-shadow(0 -4px 8px rgba(0,0,0,0.35));
+}

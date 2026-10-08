@@ -67,7 +67,8 @@ La ficha de cada tropa muestra una mini partida con la tropa en acción. Las tro
 - `assets/units/board/*-idle.webp` y `*-attack.webp`: las 15 tropas en el tablero sin chapa, en reposo (recortadas de su ficha) y atacando (de los originales `assets/*-attacking.*`).
 - `assets/commanders/*.webp`: retratos de Aria, Merlo y Brann.
 - `assets/events/*.webp`: medallones de los eventos de oleada (recortados de `assets/wave_events.jpg`).
-- `assets/ui/`: botón de jugar, botones verde y amarillo, corazón de vida, gota y frasco de maná, aro del comandante, marcos de carta, carta de la colección y fondo del menú.
+- Pantalla principal (`assets/ui/`): `header` (barra de recursos), `banner-mazo` (las 5 tropas del mazo, una por aro; centros en `DECK_RINGS` de `js/ui.js`), `boton-jugar`, `hueco-cofre` (huecos de cofre), `banner-campana`, `banner-duelo` y `banner-coop` (botones de modo, con el icono en el aro) y `navbar` (barra de pestañas). Recortados sin fondo de `assets/header.jpg`, `assets/banner-*.jpg`, `assets/boton jugar.jpg`, `assets/hueco-cofres.jpg` y `assets/navbar.jpg`.
+- `assets/ui/`: botones verde y amarillo, corazón de vida, gota y frasco de maná, aro del comandante, marcos de carta, carta de la colección y fondo del menú.
 - Los `assets/*.jpg|png` sueltos son los originales; las versiones del juego son los `.webp` recortados.
 
 ## Técnica
