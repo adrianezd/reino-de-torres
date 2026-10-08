@@ -57,6 +57,7 @@ La ficha de cada tropa muestra una mini partida con la tropa en acción.
 - `assets/enemies/*.webp`: gelatina, espectro, ogro, orco, rocoso, gólem de escarcha y los jefes Señor Gélido, Coloso (con versión blindada), Nigromante y Dragón. El Diablillo y el Rey Gelatina salen de la gelatina teñida.
 - `assets/tiles/*.webp`: suelo de las casillas Altar, Fuente y Atalaya.
 - `assets/tablero.*`, `assets/boards/arena.webp` y `assets/boards/lava.webp`: tableros ilustrados de la campaña (prado, arena con marco de madera para hielo, ruinas y desierto, y lava para volcán y cripta). En arena y lava los monstruos aparecen abajo a la izquierda, rodean las casillas en U y se van abajo a la derecha. Salen de `assets/tablero-arena.jpg` y `assets/tablero-lava.jpg`.
+- `assets/chests/*.webp`: cofres de madera, plata y oro (cerrado y `-abierto`), el destello que gira detrás al abrirlos, la moneda de las partículas y los tres paquetes de oro de la tienda. Recortados sin fondo de `assets/cofre-*.jpg`, `assets/destello-cofre.jpg` y `assets/oro.jpg`. `assets/ui/marco-tienda.webp` es el marco de las tarjetas de cofres y oro.
 - `assets/units/board/*-idle.webp` y `*-attack.webp`: las 15 tropas en el tablero sin chapa, en reposo (recortadas de su ficha) y atacando (de los originales `assets/*-attacking.*`).
 - `assets/commanders/*.webp`: retratos de Aria, Merlo y Brann.
 - `assets/events/*.webp`: medallones de los eventos de oleada (recortados de `assets/wave_events.jpg`).

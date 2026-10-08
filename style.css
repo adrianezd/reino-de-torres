@@ -762,12 +762,50 @@ body {
 .sh-price.sold { background: rgba(0,0,0,0.35); color: var(--muted); }
 .sh-offer.sold { opacity: 0.6; }
 .sh-offer.sold img { filter: grayscale(0.7); }
-.sh-chests, .sh-golds { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
-.sh-chest { border-color: var(--cc); }
+.sh-chests, .sh-golds { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.sh-chest, .sh-gold { padding: 14px 10px 12px; border: 0; box-shadow: none; background: url(assets/ui/marco-tienda.webp) center / 100% 100% no-repeat; }
 .sh-chest small { color: var(--muted); font-size: 0.62rem; text-align: center; }
-.sh-chest-ico, .sh-gold-ico { font-size: 2rem; }
-.sh-chest-ico { filter: drop-shadow(0 0 8px var(--cc)); }
-.sh-offer:active, .sh-chest:active, .sh-gold:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--ink); }
+.sh-chest-pic { width: 88%; aspect-ratio: 1; object-fit: contain; filter: drop-shadow(0 0 8px var(--cc)); }
+.sh-gold-pic { width: 70%; aspect-ratio: 1; object-fit: contain; }
+.sh-chest .sh-price, .sh-gold .sh-price { min-width: 0; width: 100%; }
+.sh-offer:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--ink); }
+.sh-chest:active, .sh-gold:active { transform: translateY(3px); }
+
+/* ---------- apertura del cofre ---------- */
+.chest-fx { position: fixed; inset: 0; z-index: 70; overflow: hidden; cursor: pointer; transition: opacity 0.25s; }
+.chest-fx.out { opacity: 0; pointer-events: none; }
+.cfx-dim { position: absolute; inset: 0; background: rgba(8,10,30,0.8); opacity: 0; transition: opacity 0.3s; }
+.chest-fx.open .cfx-dim { opacity: 1; }
+.cfx-at { position: absolute; transform: translate(-50%, -50%); }
+.cfx-chest { position: relative; z-index: 1; display: block; width: 100%; aspect-ratio: 1; object-fit: contain; }
+.cfx-chest.shake { animation: cfxShake 0.3s linear forwards; }
+@keyframes cfxShake {
+  0% { transform: scale(1); }
+  20% { transform: scale(1.2) translateX(-4%) rotate(-7deg); }
+  40% { transform: scale(1.2) translateX(4%) rotate(6deg); }
+  60% { transform: scale(1.2) translateX(-3%) rotate(-5deg); }
+  80% { transform: scale(1.2) translateX(2%) rotate(3deg); }
+  100% { transform: scale(1.2); }
+}
+.cfx-chest.opened { transform: scale(1.2); animation: cfxPop 0.35s cubic-bezier(0.3, 1.6, 0.5, 1); filter: drop-shadow(0 0 16px var(--cc)); }
+@keyframes cfxPop { from { transform: scale(1.38, 1.08); } }
+.cfx-rays { position: absolute; left: 50%; top: 42%; width: max(280%, 190px); aspect-ratio: 1; transform: translate(-50%, -50%) scale(0); opacity: 0; transition: transform 0.5s cubic-bezier(0.3, 1.5, 0.5, 1), opacity 0.3s; }
+.chest-fx.open .cfx-rays { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+.cfx-rays img { display: block; width: 100%; height: 100%; animation: cfxSpin 10s linear infinite; }
+@keyframes cfxSpin { to { transform: rotate(1turn); } }
+.cfx-coin { position: absolute; z-index: 2; width: 26px; pointer-events: none; }
+.cfx-card {
+  position: absolute; left: 0; top: 0; z-index: 3; width: 150px; padding: 16px 10px 10px; display: flex; flex-direction: column; align-items: center; gap: 2px;
+  background: linear-gradient(180deg, #2b3c8f, #182260); border: 4px solid var(--rc); border-radius: 18px;
+  box-shadow: 0 6px 0 var(--ink), 0 0 34px 8px color-mix(in srgb, var(--rc) 60%, transparent);
+}
+.cfx-card img { width: 112px; height: 112px; }
+.cfx-card b { font-size: 1.15rem; text-shadow: 0 2px 0 var(--ink); }
+.cfx-card small { color: var(--gold); font-family: 'Lilita One'; font-size: 1.1rem; }
+.cfx-rar { position: absolute; top: -12px; background: var(--rc); color: #1a1030; font-size: 0.75rem; padding: 1px 10px; border-radius: 9px; border: 2px solid var(--ink); white-space: nowrap; }
+.chest-pic { position: relative; height: 150px; margin: -6px -16px 0; overflow: hidden; display: grid; place-items: center; }
+.chest-pic-rays { position: absolute; left: 50%; top: 50%; width: 290px; height: 290px; margin: -145px 0 0 -145px; opacity: 0.75; animation: cfxSpin 12s linear infinite; }
+.chest-pic-img { position: relative; width: 140px; height: 140px; object-fit: contain; animation: popIn 0.4s, bob 2s 0.4s ease-in-out infinite; }
 
 /* ---------- ficha: mini partida ---------- */
 .uc-demo { position: relative; margin: 8px 0 4px; border: 3px solid var(--ink); border-radius: 14px; overflow: hidden; box-shadow: 0 3px 0 var(--ink); }
