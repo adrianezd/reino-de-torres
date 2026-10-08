@@ -66,6 +66,7 @@ function renderMenu(name, arg) {
       '<div class="logo"><div class="logo-crest">🏰</div><h1>Reino de Torres</h1><p>Invoca tropas, fusiónalas y defiende tu reino</p></div>' +
       '<div class="deck-preview">' + meta.deck.map(function (id) { return '<img src="' + unitIcon(id, 0, 96) + '" alt="' + esc(UNITS[id].name) + '">'; }).join('') + '</div>' +
       '<button class="play-hero" data-go="playNext" aria-label="Jugar la siguiente fase de la campaña"><img src="assets/ui/boton.webp" alt=""></button>' +
+      '<div class="slots" id="chestSlots">' + slotsInner() + '</div>' +
       '<div class="mode-list">' +
       modeBtn('campaign', '🗺️', 'Campaña', '15 fases con jefes · ' + totalStars() + '/45 ⭐', 'm-campaign') +
       modeBtn('duelPick', '⚔️', 'Duelo 1 contra 1', 'Aguanta más que tu rival', 'm-duel') +
@@ -240,6 +241,8 @@ function bindMenu() {
       else { sfx('no'); toast('Te faltan gemas'); }
     };
   });
+  var cs = $('chestSlots');
+  if (cs) cs.onclick = function (e) { var b = e.target.closest('[data-slot]'); if (b) slotTap(+b.dataset.slot, b); };
   var sc = $('soundChk'); if (sc) sc.onchange = function () { meta.settings.sound = sc.checked; saveMeta(); };
 }
 
@@ -431,8 +434,8 @@ function chestOdds(p, n) {
   if (v >= 99.5) return 'Casi segura';
   return (v < 1 ? v.toFixed(1) : v < 10 ? v.toFixed(1).replace('.0', '') : Math.round(v)).toString().replace('.', ',') + ' %';
 }
-function showChestInfo(k) {
-  var ch = CHESTS[k], poor = meta.gems < ch.price;
+function showChestInfo(k, slot) {
+  var ch = CHESTS[k], poor = meta.gems < ch.price, inSlot = slot != null;
   var row = function (color, name, sub, odds) {
     return '<div class="ci-row" style="--rc:' + color + '"><i></i><span><b>' + name + '</b>' + (sub ? '<small>' + sub + '</small>' : '') + '</span><em>' + odds + '</em></div>';
   };
@@ -445,16 +448,75 @@ function showChestInfo(k) {
     row(RARITY.epica.color, 'Épica', '', chestOdds(ch.epic, ch.cards)) +
     row(RARITY.legendaria.color, 'Legendaria', ch.legend ? '' : 'Solo en el cofre de oro', chestOdds(ch.legend, ch.cards)) +
     '<p class="ci-note">Puede tocarte cualquier tropa, aunque aún no la tengas.</p>' +
-    '<button class="btn chest-ok' + (poor ? ' poor' : '') + '" id="ciOpen">Abrir<span>💎 ' + ch.price + '</span></button>' +
+    (inSlot ? slotButtons(slot) : '<button class="btn chest-ok' + (poor ? ' poor' : '') + '" id="ciOpen">Abrir<span>💎 ' + ch.price + '</span></button>') +
     '<button class="btn btn-ghost" id="ciX">Cerrar</button></div>');
+  $('ciX').onclick = closeOverlay;
+  if (inSlot) { bindSlotButtons(slot); return; }
   $('ciOpen').onclick = function () {
     if (chestFxOn) return;
     var r = buyChest(k);
     if (!r) { sfx('no'); buzz(20); toast('Te faltan gemas'); return; }
     showChest(r, $('ciPic'));
   };
-  $('ciX').onclick = closeOverlay;
 }
+function slotButtons(i) {
+  var s = meta.slots[i], st = slotState(s), ch = CHESTS[s.type], cost = skipCost(i);
+  var canStart = st === 'locked' && !slotUnlocking();
+  return '<p class="ci-wait">⏱ ' + (st === 'unlocking' ? 'Se abre en <b id="ciLeft" data-slot="' + i + '">' + fmtDur(slotLeft(s)) + '</b>' : 'Tarda <b>' + fmtDur(ch.time) + '</b> en abrirse') + '</p>' +
+    (canStart ? '<button class="btn chest-ok" id="ciUnlock">Desbloquear<span>⏱ ' + fmtDur(ch.time) + '</span></button>' : '') +
+    '<button class="btn chest-ok' + (canStart ? ' alt' : '') + (meta.gems < cost ? ' poor' : '') + '" id="ciNow">Abrir ya<span>💎 ' + cost + '</span></button>' +
+    (st === 'locked' && !canStart ? '<p class="ci-note">Ya se está abriendo otro cofre. Se abren de uno en uno.</p>' : '');
+}
+function bindSlotButtons(i) {
+  if ($('ciUnlock')) $('ciUnlock').onclick = function () {
+    if (startUnlock(i)) { sfx('power'); buzz(20); closeOverlay(); renderMenu('home'); toast('Desbloqueando ' + CHESTS[meta.slots[i].type].name.toLowerCase()); }
+  };
+  $('ciNow').onclick = function () {
+    if (chestFxOn) return;
+    var r = openSlot(i, true);
+    if (!r) { sfx('no'); buzz(20); toast('Te faltan gemas'); return; }
+    showChest(r, $('ciPic'));
+  };
+}
+
+/* ---------- huecos de cofre de la pantalla principal ---------- */
+function fmtDur(sec) {
+  sec = Math.ceil(sec);
+  var h = Math.floor(sec / 3600), m = Math.floor(sec % 3600 / 60), s = sec % 60;
+  if (h) return h + ' h' + (m ? ' ' + m + ' min' : '');
+  if (m) return m + ' min' + (s && m < 10 ? ' ' + s + ' s' : '');
+  return s + ' s';
+}
+function slotsInner() {
+  var busy = slotUnlocking();
+  return meta.slots.map(function (s, i) {
+    var st = slotState(s);
+    if (st === 'empty') return '<button class="slot empty" data-slot="' + i + '"><span>Hueco libre</span></button>';
+    var ch = CHESTS[s.type];
+    var lab = st === 'ready' ? '<b class="slot-go">¡Abrir!</b>'
+      : st === 'unlocking' ? '<b>' + fmtDur(slotLeft(s)) + '</b><small>💎 ' + skipCost(i) + '</small>'
+      : '<b>' + fmtDur(ch.time) + '</b><small>' + (busy ? 'En espera' : 'Desbloquear') + '</small>';
+    return '<button class="slot ' + st + '" data-slot="' + i + '" style="--cc:' + ch.color + '"><img src="' + chestPic(s.type, st === 'ready') + '" alt="">' + lab + '</button>';
+  }).join('');
+}
+function slotTap(i, btn) {
+  if (chestFxOn) return;
+  var s = meta.slots[i], st = slotState(s);
+  if (st === 'empty') { sfx('tap'); toast('Gana batallas para llenar tus cofres'); return; }
+  if (st === 'ready') { showChest(openSlot(i), btn.querySelector('img')); return; }
+  sfx('tap');
+  showChestInfo(s.type, i);
+}
+// cuenta atrás de los huecos (y de la ficha abierta de un cofre que se está desbloqueando)
+setInterval(function () {
+  var el = $('chestSlots');
+  if (el && !$('menu').hidden && !chestFxOn) {
+    var html = slotsInner();
+    if (html !== el._h) { el.innerHTML = html; el._h = html; }
+  }
+  var left = $('ciLeft');
+  if (left) { var s = meta.slots[+left.dataset.slot]; if (s) left.textContent = fmtDur(slotLeft(s)); }
+}, 1000);
 
 // lo que sale del cofre, en orden: el oro y luego las cartas de menor a mayor rareza
 function chestItems(r) {
@@ -690,7 +752,9 @@ function showBanner(title, sub, pic) {
 function showResult(res) {
   var title = res.mode === 'coop' ? (res.won ? '¡Gran defensa!' : 'Fin de la partida') : res.won ? '¡Victoria!' : 'Derrota';
   var stars = res.mode === 'campaign' && res.won ? '<div class="res-stars">' + '★★★'.slice(0, res.stars).padEnd(3, '☆') + '</div>' : '';
-  var chest = res.chestResult ? '<div class="res-chest">🎁 ' + CHESTS[res.chestResult.type].name + ': +' + res.chestResult.gold + ' 🪙 y ' + Object.keys(res.chestResult.cards).reduce(function (s, k) { return s + res.chestResult.cards[k]; }, 0) + ' cartas</div>' + chestNewHtml(res.chestResult) : '';
+  var chest = !res.chest ? '' : res.chestSlot >= 0
+    ? '<div class="res-chest"><img src="' + chestPic(res.chest) + '" alt=""><span><b>' + CHESTS[res.chest].name + '</b><small>Guardado en tus cofres · tarda ' + fmtDur(CHESTS[res.chest].time) + ' en abrirse</small></span></div>'
+    : '<div class="res-chest full"><img src="' + chestPic(res.chest) + '" alt=""><span><b>Tus cofres están llenos</b><small>Abre alguno para que quepan los próximos</small></span></div>';
   var unlock = res.unlocked ? '<div class="res-unlock"><img src="' + unitIcon(res.unlocked, 0, 96) + '" alt=""><b>¡Nueva tropa: ' + esc(UNITS[res.unlocked].name) + '!</b></div>' : '';
   openOverlay('<div class="modal-card result ' + (res.won ? 'win' : 'lose') + '"><div class="res-emoji">' + (res.won ? '🏆' : '💀') + '</div><h2>' + title + '</h2>' + stars +
     '<p>' + res.lines.map(esc).join('<br>') + '</p>' +

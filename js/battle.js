@@ -190,7 +190,7 @@ function endBattle(won) {
   }
   meta.gold += res.gold;
   meta.gems += res.gems;
-  if (res.chest) res.chestResult = openChest(res.chest);
+  if (res.chest) res.chestSlot = addChestSlot(res.chest);   // se guarda en los huecos de cofre
   saveMeta();
   res.kills = b.player.kills;
   res.damage = b.player.damage;

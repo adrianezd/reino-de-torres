@@ -51,6 +51,8 @@ La ficha de cada tropa muestra una mini partida con la tropa en acción.
 
 **🎟️ Códigos:** en el inicio se canjean códigos de regalo (oro, gemas o cofres), una vez cada uno. Se definen en `CODES` de `js/data.js`.
 
+**🎁 Huecos de cofre:** los cofres que ganas en batalla se guardan en 4 huecos de la pantalla principal. Se desbloquean de uno en uno (madera 5 min, plata 1 h, oro 3 h; `time` en `CHESTS`) o se abren ya pagando 1 gema por cada 6 minutos que falten. Con los 4 llenos, el cofre de la batalla se pierde.
+
 **♻️ Restablecer juego:** botón al final del inicio que, tras confirmarlo, borra todo el progreso (solo conserva el ajuste de sonido).
 
 ## Arte

@@ -18,6 +18,7 @@ function defaultMeta() {
     coopBest: 0,
     duelWins: 0, duelLosses: 0,
     freeChestDay: '',
+    slots: [null, null, null, null],   // cofres ganados: { type, unlockAt } (unlockAt: cuándo se abre; 0 si no se ha empezado)
     settings: { sound: true },
     seenTutorial: false
   };
@@ -36,6 +37,9 @@ function loadMeta() {
       m.deck.push(extra);
     }
     if (!COMMANDERS[m.commander]) m.commander = 'aria';
+    var slots = Array.isArray(m.slots) ? m.slots : [];
+    m.slots = [];
+    for (var i = 0; i < CHEST_SLOTS; i++) m.slots.push(slots[i] && CHESTS[slots[i].type] ? slots[i] : null);
     return m;
   } catch (e) { return defaultMeta(); }
 }
@@ -104,6 +108,44 @@ function openChest(type) {
   });
   saveMeta();
   return { type: type, gold: gold, gems: gems, cards: got, fresh: fresh };
+}
+
+/* ---------- huecos de cofre ----------
+   Los cofres ganados en batalla se guardan aquí. Se desbloquean de uno en uno
+   (tardan CHESTS[tipo].time) o se abren ya pagando gemas. */
+function slotState(s) {
+  if (!s) return 'empty';
+  if (!s.unlockAt) return 'locked';
+  return Date.now() >= s.unlockAt ? 'ready' : 'unlocking';
+}
+function slotLeft(s) { return s.unlockAt ? Math.max(0, (s.unlockAt - Date.now()) / 1000) : CHESTS[s.type].time; }
+function slotUnlocking() { return meta.slots.some(function (s) { return slotState(s) === 'unlocking'; }); }
+function skipCost(i) { return Math.max(1, Math.ceil(slotLeft(meta.slots[i]) / SKIP_SECONDS)); }
+// guarda un cofre en el primer hueco libre; -1 si están todos llenos
+function addChestSlot(type) {
+  var i = meta.slots.indexOf(null);
+  if (i === -1) return -1;
+  meta.slots[i] = { type: type, unlockAt: 0 };
+  saveMeta();
+  return i;
+}
+function startUnlock(i) {
+  var s = meta.slots[i];
+  if (slotState(s) !== 'locked' || slotUnlocking()) return false;
+  s.unlockAt = Date.now() + CHESTS[s.type].time * 1000;
+  saveMeta();
+  return true;
+}
+// abre el cofre del hueco si ya está listo, o pagando gemas (pay)
+function openSlot(i, pay) {
+  var s = meta.slots[i], st = slotState(s);
+  if (st === 'empty') return null;
+  if (st !== 'ready') {
+    if (!pay || meta.gems < skipCost(i)) return null;
+    meta.gems -= skipCost(i);
+  }
+  meta.slots[i] = null;
+  return openChest(s.type);
 }
 
 function todayKey() {

@@ -182,12 +182,15 @@ var BIOMES = {
 // rare / epic / legend: probabilidad por carta (puede salir cualquier tropa, aunque no la tengas;
 // las legendarias solo en el cofre de oro)
 // gems: gemas que trae el cofre · price: lo que cuesta en la tienda (en gemas)
+// time: segundos que tarda en desbloquearse en los huecos de la pantalla principal
 var CHESTS = {
-  madera: { name: 'Cofre de madera', gold: [40, 80],   gems: [0, 2],  cards: 6,  rare: 0.15, epic: 0.03, legend: 0,    color: '#a0663a', price: 15 },
-  plata:  { name: 'Cofre de plata',  gold: [90, 160],  gems: [1, 4],  cards: 12, rare: 0.3,  epic: 0.08, legend: 0,    color: '#c9d4e6', price: 40 },
-  oro:    { name: 'Cofre de oro',    gold: [200, 320], gems: [4, 10], cards: 24, rare: 0.4,  epic: 0.15, legend: 0.04, color: '#ffd166', price: 90 }
+  madera: { name: 'Cofre de madera', gold: [40, 80],   gems: [0, 2],  cards: 6,  rare: 0.15, epic: 0.03, legend: 0,    color: '#a0663a', price: 15, time: 300 },
+  plata:  { name: 'Cofre de plata',  gold: [90, 160],  gems: [1, 4],  cards: 12, rare: 0.3,  epic: 0.08, legend: 0,    color: '#c9d4e6', price: 40, time: 3600 },
+  oro:    { name: 'Cofre de oro',    gold: [200, 320], gems: [4, 10], cards: 24, rare: 0.4,  epic: 0.15, legend: 0.04, color: '#ffd166', price: 90, time: 10800 }
 };
 var CHEST_ORDER = ['madera', 'plata', 'oro'];
+var CHEST_SLOTS = 4;          // huecos de cofre de la pantalla principal
+var SKIP_SECONDS = 360;       // abrir ya: 1 gema por cada 6 minutos que falten
 
 /* Tienda: ofertas de cartas que cambian cada día (cada una se compra una vez)
    y oro a cambio de gemas. n: cartas por oferta · gold / gems: precio. */
