@@ -280,10 +280,11 @@ function resizeCanvas() {
   var gm = battle ? battle.player.geo : VECTOR_GEO;
   if (battle && battle.other) {
     var go = battle.other.geo;
-    var topH = h * 0.36;
+    // arriba, la cabecera del rival o aliado (RIVAL_HEAD_H) y su tablero
+    var topH = h * 0.38;
     var pw = go.image ? 0 : pad;
-    var s2 = Math.min((w - pw * 2) / go.W, (topH - 22) / go.H);
-    layout.other = { sc: s2, ox: (w - go.W * s2) / 2, oy: 18, g: go };
+    var s2 = Math.min((w - pw * 2) / go.W, (topH - RIVAL_HEAD_H - 6) / go.H);
+    layout.other = { sc: s2, ox: (w - go.W * s2) / 2, oy: RIVAL_HEAD_H + 4, g: go };
     var s1 = Math.min((w - pw * 2) / gm.W, (h - topH - pad - 6) / gm.H);
     layout.main = { sc: s1, ox: (w - gm.W * s1) / 2, oy: topH + (h - topH - gm.H * s1) / 2, g: gm };
   } else {
@@ -312,6 +313,65 @@ function fitFrame(L, g, w, h, top) {
   L.sc = s;
   L.ox = clamp(ox, 0, w - g.W * s);
   L.oy = clamp(oy, top, top + availH - g.H * s);
+}
+
+/* Cabecera del rival o aliado, como en el género: retrato del comandante
+   con su carga, nombre, vidas (duelo) y maná, y a la derecha las cartas de
+   su mazo con el nivel de carta abajo y la mejora de la partida arriba. */
+var RIVAL_HEAD_H = 40;
+function drawRivalHeader(b, L) {
+  var x0 = 6, x1 = layout.w - 6, hh = RIVAL_HEAD_H - 4, y0 = L.oy - hh - 3, cy = y0 + hh / 2;
+  ctx.save();
+  ctx.fillStyle = 'rgba(8,12,40,0.78)'; rrect(ctx, x0, y0, x1 - x0, hh, 10); ctx.fill();
+  ctx.strokeStyle = 'rgba(245,196,0,0.55)'; ctx.lineWidth = 1.5; ctx.stroke();
+  // comandante: lo que falta por cargar, oscuro; listo, con brillo de su color
+  var c = COMMANDERS[b.commander], pr = hh / 2 - 3, px = x0 + 5 + pr, pic = art('commanders/' + b.commander);
+  if (b.charge >= 1) glow(ctx, px, cy, pr * 1.7, c.color, 0.55 + Math.sin(performance.now() / 180) * 0.15);
+  ctx.save(); circle(ctx, px, cy, pr); ctx.clip();
+  ctx.fillStyle = '#16215a'; ctx.fillRect(px - pr, cy - pr, pr * 2, pr * 2);
+  if (pic) ctx.drawImage(pic, px - pr * 1.18, cy - pr * 1.18, pr * 2.36, pr * 2.36);
+  if (b.charge < 1) {
+    ctx.fillStyle = 'rgba(8,10,30,0.62)'; ctx.beginPath(); ctx.moveTo(px, cy);
+    ctx.arc(px, cy, pr, -Math.PI / 2 + b.charge * Math.PI * 2, Math.PI * 1.5); ctx.closePath(); ctx.fill();
+  }
+  ctx.restore();
+  ctx.lineWidth = 2.5; ctx.strokeStyle = b.charge >= 1 ? c.color : '#f5c400'; circle(ctx, px, cy, pr); ctx.stroke();
+  // nombre y, debajo, vidas y maná
+  var tx = px + pr + 7;
+  ctx.textAlign = 'left'; ctx.textBaseline = 'middle'; ctx.lineJoin = 'round';
+  ctx.font = '400 13px "Lilita One", Nunito, sans-serif';
+  ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(0,0,0,0.75)'; ctx.fillStyle = '#fff';
+  ctx.strokeText(b.name, tx, cy - 8); ctx.fillText(b.name, tx, cy - 8);
+  var lx = tx, ly = cy + 9, vi = art('ui/vida'), gi = art('icons/gota');
+  if (battle.mode === 'duel' && vi) {
+    for (var hi = 0; hi < b.lives.max; hi++) { ctx.globalAlpha = hi < b.lives.v ? 1 : 0.3; ctx.drawImage(vi, lx, ly - 6, 13, 12); lx += 12; }
+    ctx.globalAlpha = 1; lx += 6;
+  }
+  if (gi) { ctx.drawImage(gi, lx, ly - 7, 14, 14); lx += 15; }
+  ctx.font = '900 12px Nunito, sans-serif'; var mt = String(Math.floor(b.mana));
+  ctx.strokeText(mt, lx, ly); ctx.fillStyle = '#8ff3ff'; ctx.fillText(mt, lx, ly);
+  // mazo a la derecha
+  var n = b.deck.length, gap = 3, avail = x1 - 5 - Math.max(tx + 92, lx + ctx.measureText(mt).width + 10);
+  var cw = Math.max(18, Math.min(hh - 6, avail / n - gap)), ch = cw, ty = cy - ch / 2;
+  b.deck.forEach(function (id, k) {
+    var cx = x1 - 5 - (n - k) * (cw + gap) + gap, rc = RARITY[UNITS[id].rarity].color;
+    var bg = ctx.createLinearGradient(0, ty, 0, ty + ch); bg.addColorStop(0, shade(rc, -10)); bg.addColorStop(1, shade(rc, -60));
+    ctx.fillStyle = bg; rrect(ctx, cx, ty, cw, ch, 5); ctx.fill();
+    ctx.lineWidth = 1.5; ctx.strokeStyle = '#f5c400'; ctx.stroke();
+    var up = art('units/' + id);
+    if (up) ctx.drawImage(up, cx + 1, ty + 1, cw - 2, ch - 2);
+    // nivel de la carta (abajo) y mejora comprada en esta partida (arriba)
+    var lv = String(b.cardLv[id] || 1), bw = 13, bx = cx + cw / 2, by = ty + ch - 1;
+    ctx.fillStyle = '#f5c400'; rrect(ctx, bx - bw / 2 - 1, by - 7, bw + 2, 11, 4); ctx.fill();
+    ctx.lineWidth = 1.2; ctx.strokeStyle = '#3a2600'; ctx.stroke();
+    ctx.textAlign = 'center'; ctx.font = '400 10px "Lilita One", Nunito, sans-serif'; ctx.fillStyle = '#3a1d00'; ctx.fillText(lv, bx, by - 1.5);
+    var pw = (b.power[id] || 1) - 1;
+    if (pw > 0) {
+      ctx.fillStyle = '#3aa0ff'; circle(ctx, cx + 4, ty + 4, 6); ctx.fill(); ctx.strokeStyle = '#0d2a5a'; ctx.stroke();
+      ctx.fillStyle = '#fff'; ctx.font = '400 9px "Lilita One", Nunito, sans-serif'; ctx.fillText('+' + pw, cx + 4, ty + 4.5);
+    }
+  });
+  ctx.restore();
 }
 
 /* ---------- decorado alrededor de los tableros ---------- */
@@ -644,30 +704,7 @@ function drawBoard(b, L, now, isMain) {
     var du = b.cells[drag.from];
     drawUnit(ctx, du.id, drag.x, drag.y, 0.46 * Math.min(G.cw, G.ch) * sc, du.rank, now, { board: true });
   }
-  // cabecera del tablero rival/aliado
-  if (!isMain) {
-    // izquierda: espadas (rival) o escudo (aliado) y su nombre
-    var hy = L.oy - 9, isz = 16, lx = L.ox + 4;
-    ctx.font = '900 13px Nunito, sans-serif'; ctx.textBaseline = 'middle';
-    ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(0,0,0,0.6)'; ctx.fillStyle = '#fff';
-    var lic = art(battle.mode === 'duel' ? 'icons/espadas' : 'icons/escudo');
-    if (lic) { ctx.drawImage(lic, lx, hy - isz / 2, isz, isz); lx += isz + 3; }
-    ctx.textAlign = 'left'; ctx.strokeText(b.name, lx, hy); ctx.fillText(b.name, lx, hy);
-    // derecha: maná con la gota y, en el duelo, sus corazones
-    var rx = L.ox + G.W * sc - 4, mtxt = String(Math.floor(b.mana));
-    ctx.textAlign = 'right'; ctx.strokeText(mtxt, rx, hy); ctx.fillText(mtxt, rx, hy);
-    rx -= ctx.measureText(mtxt).width + 2;
-    var gi = art('icons/gota');
-    if (gi) { ctx.drawImage(gi, rx - isz, hy - isz / 2, isz, isz); rx -= isz + 8; }
-    var vi = art('ui/vida');
-    if (battle.mode === 'duel' && vi) {
-      for (var hi = b.lives.max - 1; hi >= 0; hi--) {
-        ctx.globalAlpha = hi < b.lives.v ? 1 : 0.3;
-        ctx.drawImage(vi, rx - 14, hy - 6.5, 14, 13); rx -= 13;
-      }
-      ctx.globalAlpha = 1;
-    }
-  }
+  if (!isMain) drawRivalHeader(b, L);
 }
 
 /* Portal de piedra con un remolino mágico dentro (tablero dibujado). */

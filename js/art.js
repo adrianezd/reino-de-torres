@@ -52,6 +52,7 @@ var IMG_LIST = {
   tiles: ['altar', 'fuente', 'atalaya'],
   boards: ['lava', 'lava2', 'arena', 'hielo', 'roca', 'veneno'],
   ui: ['boton', 'fondo', 'vida'],
+  commanders: ['aria', 'merlo', 'brann'],
   icons: ['estrella', 'gota', 'espadas', 'escudo']
 };
 var imgReadyCount = 0;
@@ -59,7 +60,7 @@ Object.keys(IMG_LIST).forEach(function (dir) {
   IMG_LIST[dir].forEach(function (id) {
     var im = new Image();
     im.onload = function () { im.ready = true; imgReadyCount++; _unitIconCache = {}; _enemyIconCache = {}; _tintCache = {}; if (window.onArtReady) window.onArtReady(); };
-    im.src = 'assets/' + dir + '/' + id + '.webp' + (dir === 'boards' ? '?v=4' : dir === 'tiles' ? '?v=2' : '');
+    im.src = 'assets/' + dir + '/' + id + '.webp' + (dir === 'boards' ? '?v=4' : dir === 'tiles' || dir === 'commanders' ? '?v=2' : '');
     IMG[dir + '/' + id] = im;
   });
 });
