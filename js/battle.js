@@ -538,6 +538,8 @@ function drawBoard(b, L, now, isMain) {
       ctx.beginPath(); ctx.moveTo(f.x1, f.y1);
       for (var s = 1; s < 5; s++) ctx.lineTo(f.x1 + (f.x2 - f.x1) * s / 5 + (Math.random() - 0.5) * 0.2, f.y1 + (f.y2 - f.y1) * s / 5 + (Math.random() - 0.5) * 0.2);
       ctx.lineTo(f.x2, f.y2); ctx.stroke(); ctx.globalAlpha = 1;
+    } else if (f.type === 'pic') {
+      drawPicFx(ctx, f);
     } else if (f.type === 'flash') {
       ctx.globalAlpha = (f.life / f.max) * 0.5; ctx.fillStyle = f.color; ctx.fillRect(0, 0, G.W, G.H); ctx.globalAlpha = 1;
     } else {
@@ -679,6 +681,21 @@ function drawTileIcon(type, x, y, r) {
 }
 function drawShot(s, now) {
   var x = s.x, y = s.y;
+  // proyectiles ilustrados: fuego y hielo miran hacia donde van, el frasco
+  // gira y la bomba da vueltas despacio
+  var el = FX_OF[s.kind];
+  if (el) {
+    var key = 'fx/' + el + '-bola', rot;
+    if (FX_TURNS[key]) {
+      var px = s.px != null ? s.px : s.sx, py = s.py != null ? s.py : s.sy;
+      rot = (Math.abs(x - px) + Math.abs(y - py) > 0.001) ? Math.atan2(y - py, x - px) : Math.atan2(s.target.y - s.sy, s.target.x - s.sx);
+    } else rot = now / (s.kind === 'bomb' ? 260 : 120);
+    s.px = x; s.py = y;
+    var size = s.kind === 'fire' ? 0.5 : s.kind === 'ice' ? 0.42 : s.kind === 'bomb' ? 0.34 : 0.32;
+    if (s.def && s.def.id === 'titan') size *= 1.3;
+    if (s.kind === 'fire') glow(ctx, x, y, 0.26, '#ff7a1a', 0.45);
+    if (drawFxPic(ctx, key, x, y, size, rot)) return;
+  }
   switch (s.kind) {
     case 'arrow': {
       var a = Math.atan2(s.target.y - s.sy, s.target.x - s.sx);

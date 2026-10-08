@@ -402,6 +402,7 @@ function startCardDemo(cv, id) {
     b.shots.forEach(function (s2) { drawShot(s2, t); });
     ctx = keep;
     b.fx.forEach(function (f) {
+      if (f.type === 'pic') { drawPicFx(dc, f); return; }
       var a = f.life / f.max;
       dc.globalAlpha = a; dc.strokeStyle = f.color; dc.lineWidth = 0.06;
       if (f.type === 'bolt') { dc.beginPath(); dc.moveTo(f.x1, f.y1); dc.lineTo(f.x2, f.y2); dc.stroke(); }

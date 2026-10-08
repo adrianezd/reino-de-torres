@@ -72,7 +72,8 @@ Object.keys(IMG_LIST).forEach(function (dir) {
 })(['webp', 'png', 'jpg', 'jpeg']);
 function art(key) { var im = IMG[key]; return im && im.ready ? im : null; }
 
-/* Poses del tablero: cuerpo recortado sin chapa, en reposo y disparando.
+/* Poses del tablero: cuerpo entero sin chapa, en reposo y disparando,
+   con el mismo encuadre (pies abajo en el centro) para que no salte.
    face: hacia dónde mira la pose de ataque (1 derecha, -1 izquierda). */
 var POSES = {
   lyra: { face: 1 }, brasa: { face: -1 }, rocco: { face: -1 }, sombra: { face: -1 },
@@ -85,10 +86,43 @@ Object.keys(POSES).forEach(function (id) {
   ['idle', 'attack'].forEach(function (pose) {
     var im = new Image();
     im.onload = function () { im.ready = true; };
-    im.src = 'assets/units/board/' + id + '-' + pose + '.webp';
+    im.src = 'assets/units/board/' + id + '-' + pose + '.webp' + (pose === 'idle' ? '?v=2' : '');
     IMG['pose/' + id + '-' + pose] = im;
   });
 });
+
+/* Efectos ilustrados (assets/fx/<elemento>-<parte>.webp) por tipo de
+   proyectil: destello al disparar, proyectil e impacto. El proyectil
+   de fuego y hielo y el destello de hielo y cañón miran a la derecha. */
+var FX_OF = { fire: 'fuego', ice: 'hielo', poison: 'veneno', bomb: 'canon' };
+['fuego', 'hielo', 'veneno', 'canon'].forEach(function (el) {
+  ['destello', 'bola', 'impacto'].forEach(function (part) {
+    var im = new Image();
+    im.onload = function () { im.ready = true; };
+    im.src = 'assets/fx/' + el + '-' + part + '.webp';
+    IMG['fx/' + el + '-' + part] = im;
+  });
+});
+var FX_TURNS = { 'fx/fuego-bola': true, 'fx/hielo-bola': true, 'fx/hielo-destello': true, 'fx/canon-destello': true };
+/* Dibuja un efecto centrado en (x, y) con el lado mayor = size. */
+function drawFxPic(c, key, x, y, size, rot) {
+  var im = art(key);
+  if (!im) return false;
+  var k = size / Math.max(im.naturalWidth, im.naturalHeight), w = im.naturalWidth * k, h = im.naturalHeight * k;
+  c.save(); c.translate(x, y);
+  if (rot) c.rotate(rot);
+  c.drawImage(im, -w / 2, -h / 2, w, h);
+  c.restore();
+  return true;
+}
+/* Efecto 'pic' de la lista fx: crece de golpe con rebote y se apaga en la segunda mitad. */
+function drawPicFx(c, f) {
+  var t = 1 - f.life / f.max, gk = Math.min(1, t * 4);
+  var pop = f.grow + (1 - f.grow) * (gk + Math.sin(gk * Math.PI) * 0.25);
+  c.globalAlpha = t < 0.5 ? 1 : (1 - t) * 2;
+  drawFxPic(c, f.key, f.x, f.y, f.size * pop, f.rot);
+  c.globalAlpha = 1;
+}
 
 /* Copia teñida de una imagen (para crear monstruos a partir de la gelatina). */
 var _tintCache = {};
@@ -149,7 +183,7 @@ function drawUnit(c, id, x, y, r, rank, now, opt) {
     } else {
       // respiración: se estira un poco hacia arriba
       if (!opt.still) c.scale(1, 1 + Math.sin(now / 520 + x * 0.05) * 0.025);
-      var si = r * 2.15;
+      var si = r * 2.35;
       c.drawImage(idle, -si / 2, -si, si, si);
     }
     c.restore();

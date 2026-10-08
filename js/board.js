@@ -321,6 +321,12 @@ Board.prototype.fire = function (i, u) {
     return true;
   }
   this.shots.push({ x: from.x, y: from.y, sx: from.x, sy: from.y, target: target, t: 0, dur: d.proj === 'bullet' ? 0.12 : 0.32, kind: d.proj, color: d.color, color2: d.color2, dmg: this.unitDamage(i), def: d, unit: u });
+  // destello ilustrado en la boca del arma
+  if (FX_OF[d.proj]) {
+    var mk = 'fx/' + FX_OF[d.proj] + '-destello';
+    this.fx.push({ type: 'pic', key: mk, x: from.x + Math.cos(u.aim) * 0.32, y: from.y - 0.12 + Math.sin(u.aim) * 0.32,
+      size: 0.46, rot: FX_TURNS[mk] ? u.aim : 0, grow: 0.5, life: 0.16, max: 0.16 });
+  }
   return true;
 };
 Board.prototype.nearestTo = function (p, exclude, maxD) {
@@ -345,7 +351,8 @@ Board.prototype.applyHit = function (e, dmg, d, u) {
     this.enemies.forEach(function (o) {
       if (o !== e && !o.dead && Math.hypot(o.x - e.x, o.y - e.y) <= r) this.hit(o, dmg * 0.6, d, d.proj);
     }, this);
-    this.addFx('boom', { x: e.x, y: e.y }, d.color2, r);
+    // con impacto ilustrado no hace falta el aro (el dibujo ya marca el área)
+    if (!FX_OF[d.proj]) this.addFx('boom', { x: e.x, y: e.y }, d.color2, r);
   }
   this.hit(e, dmg, d, d.proj);
 };
@@ -408,6 +415,11 @@ Board.prototype.update = function (dt) {
     s.x = s.sx + (tgt.x - s.sx) * f;
     s.y = s.sy + (tgt.y - s.sy) * f - Math.sin(f * Math.PI) * (s.kind === 'bomb' ? 0.8 : 0.15);
     if (f >= 1) {
+      if (FX_OF[s.kind]) {
+        // impacto ilustrado del tamaño del área de daño
+        var big = s.def.splash ? s.def.splash * 1.7 + 0.08 * s.unit.rank : 0.62;
+        this.fx.push({ type: 'pic', key: 'fx/' + FX_OF[s.kind] + '-impacto', x: tgt.x, y: tgt.y + 0.08, size: big, rot: 0, grow: 0.55, life: 0.42, max: 0.42 });
+      }
       if (!tgt.dead) this.applyHit(tgt, s.dmg, s.def, s.unit);
       this.shots.splice(k, 1);
     }
