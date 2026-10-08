@@ -9,7 +9,7 @@
 var COLS = 5, ROWS = 3, PATH_W = 0.9;
 var BOARD_W = COLS + PATH_W * 2;
 var BOARD_H = ROWS + PATH_W + 0.55;
-var ENTRY_Y = BOARD_H + 0.4;
+var ENTRY_Y = BOARD_H - 0.42; // portal y puerta, dentro del tablero
 // recorrido: sube por la izquierda, cruza arriba, baja por la derecha
 var WAYPOINTS = [
   { x: PATH_W / 2, y: ENTRY_Y },
