@@ -47,7 +47,7 @@ function star(c, x, y, r, pts) {
 /* ---------- imágenes de los diseños (assets/) ---------- */
 var IMG = {};
 var IMG_LIST = {
-  units: UNIT_ORDER,
+  units: UNIT_ORDER.filter(function (id) { return !UNITS[id].noArt; }),
   enemies: ['blob', 'ghost', 'brute', 'orco', 'rocoso', 'escarcha', 'gelido', 'coloso', 'coloso2', 'nigro', 'dragon'],
   tiles: ['altar', 'fuente', 'atalaya'],
   boards: ['lava', 'arena'],
@@ -421,6 +421,18 @@ function drawHead(c, id, u, r, bob, now) {
       c.beginPath(); c.moveTo(r * 0.42, r * 0.22); c.lineTo(r * 0.72, r * 0.22); c.lineTo(r * 0.72, r * 0.5); c.quadraticCurveTo(r * 0.57, r * 0.72, r * 0.42, r * 0.5); c.closePath();
       c.fillStyle = vgrad(c, r * 0.2, r * 0.7, '#4da3ff', '#1a4a9a'); c.fill(); ink(c, r * 0.03);
       star(c, r * 0.57, r * 0.42, r * 0.09, 4); c.fillStyle = '#ffd34d'; c.fill();
+      break;
+    }
+    default: {
+      // tropa aún sin dibujo propio: cara con corona dorada y orbe de su color
+      headBase(c, u, r, hy);
+      face(c, r, hy, { big: true });
+      c.beginPath(); c.moveTo(-r * 0.3, hy - r * 0.28);
+      for (i = 0; i < 5; i++) c.lineTo(-r * 0.3 + i * r * 0.15, hy - r * (i % 2 ? 0.46 : 0.62));
+      c.lineTo(r * 0.3, hy - r * 0.28); c.closePath();
+      c.fillStyle = vgrad(c, hy - r * 0.62, hy - r * 0.28, '#fff1a8', '#d4901a'); c.fill(); ink(c, r * 0.03);
+      glow(c, r * 0.55, r * 0.48, r * 0.24, u.color2, 0.85);
+      c.fillStyle = u.color2; circle(c, r * 0.55, r * 0.48, r * 0.1); c.fill();
       break;
     }
   }

@@ -85,8 +85,15 @@ function openChest(type) {
   }
   meta.gold += gold;
   Object.keys(got).forEach(function (id) { meta.cards[id].n += got[id]; });
+  // muy de vez en cuando, una legendaria que solo sale en cofres
+  var secret = null;
+  var hidden = UNIT_ORDER.filter(function (id) { return UNITS[id].chestOnly && !meta.cards[id]; });
+  if (hidden.length && Math.random() < ch.secret) {
+    secret = hidden[Math.floor(Math.random() * hidden.length)];
+    meta.cards[secret] = { lv: 1, n: 0 };
+  }
   saveMeta();
-  return { type: type, gold: gold, cards: got };
+  return { type: type, gold: gold, cards: got, secret: secret };
 }
 
 function todayKey() {

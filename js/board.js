@@ -246,7 +246,7 @@ Board.prototype.hit = function (e, dmg, unitDef, kind) {
   var crit = false;
   if (unitDef && unitDef.crit && Math.random() < unitDef.crit.chance) { dmg *= unitDef.crit.mult; crit = true; }
   if (unitDef && unitDef.bossMult && e.boss) dmg *= unitDef.bossMult;
-  dmg *= 1 - e.armor;
+  if (!(unitDef && unitDef.pierce)) dmg *= 1 - e.armor;
   e.hp -= dmg;
   this.damage += dmg;
   if (crit) this.addText(e.x, e.y - 0.5, '¡' + fmtNum(dmg) + '!', '#ff4f7b', true);

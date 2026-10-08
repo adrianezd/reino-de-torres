@@ -34,14 +34,14 @@ function startBattle(mode, opts) {
   };
   if (mode === 'duel') {
     var aiLv = opts.level == null ? 1 : opts.level;
-    var aiDeck = shuffleArr(UNIT_ORDER.slice()).filter(function (id) { return id !== 'melodia' || aiLv > 0; }).slice(0, 5);
+    var aiDeck = shuffleArr(AI_UNITS.slice()).filter(function (id) { return id !== 'melodia' || aiLv > 0; }).slice(0, 5);
     if (aiDeck.indexOf('doblon') === -1 && aiLv > 0) aiDeck[4] = 'doblon';
     var aiCard = {};
     var avg = Math.round(Object.keys(lv).reduce(function (s, k) { return s + lv[k]; }, 0) / Math.max(1, Object.keys(lv).length));
     UNIT_ORDER.forEach(function (id) { aiCard[id] = Math.max(1, avg + aiLv - 1); });
     battle.other = new Board({ name: pick(RIVAL_NAMES), ai: true, aiLevel: aiLv, deck: aiDeck, cardLv: aiCard, commander: pick(COMMANDER_ORDER), lives: { v: 3, max: 3 }, biome: biome, geo: geo });
   } else if (mode === 'coop') {
-    var allyDeck = shuffleArr(UNIT_ORDER.slice()).slice(0, 5);
+    var allyDeck = shuffleArr(AI_UNITS.slice()).slice(0, 5);
     var allyCard = {};
     UNIT_ORDER.forEach(function (id) { allyCard[id] = Math.max(1, (lv[id] || 1)); });
     battle.other = new Board({ name: pick(ALLY_NAMES), ai: true, aiLevel: 2, deck: allyDeck, cardLv: allyCard, commander: pick(COMMANDER_ORDER), lives: lives, biome: biome, geo: geo });

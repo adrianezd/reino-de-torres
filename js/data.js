@@ -16,7 +16,7 @@ var RARITY = {
    proj: tipo de proyectil (para el dibujo)
    efectos opcionales: slow, poison, splash, chain, crit, stun, bossMult,
    manaGen (no dispara: genera maná), buff (no dispara: acelera vecinos),
-   target: 'first' | 'strong'
+   pierce (ignora la armadura), target: 'first' | 'strong'
 */
 var UNITS = {
   lyra: {
@@ -90,9 +90,30 @@ var UNITS = {
     color: '#c9d4e6', color2: '#ffd34d', skin: '#f3cfae',
     dmg: 30, rate: 0.9, proj: 'holy', bossMult: 3, target: 'strong',
     desc: 'Golpes sagrados que hacen el triple de daño a los jefes.'
+  },
+  // legendarias que solo salen en cofres (chestOnly), aún sin ilustración (noArt)
+  fenix: {
+    element: 'fuego', name: 'Ígnea', title: 'Ave Fénix', role: 'Área ardiente', rarity: 'legendaria', chestOnly: true, noArt: true,
+    color: '#ff7a1a', color2: '#ffe066', skin: '#ffd2a6',
+    dmg: 36, rate: 0.75, proj: 'fire', splash: 0.7, poison: { dps: 18, dur: 4 }, target: 'first',
+    desc: 'Llamaradas que arrasan una zona y dejan a los enemigos ardiendo.'
+  },
+  aurora: {
+    element: 'arcano', name: 'Aurora', title: 'Archimaga', role: 'Tormenta', rarity: 'legendaria', chestOnly: true, noArt: true,
+    color: '#6a4bd8', color2: '#9ff3ff', skin: '#f3dcc8',
+    dmg: 22, rate: 0.9, proj: 'bolt', chain: 5, stun: { chance: 0.15, dur: 1 }, target: 'first',
+    desc: 'Rayos que saltan entre muchos enemigos y a veces los dejan aturdidos.'
+  },
+  titan: {
+    element: 'naturaleza', name: 'Titán', title: 'Gólem del Bosque', role: 'Rompe armaduras', rarity: 'legendaria', chestOnly: true, noArt: true,
+    color: '#5a7a3a', color2: '#c8e66a', skin: '#a8a090',
+    dmg: 88, rate: 0.45, proj: 'bomb', splash: 0.5, pierce: true, target: 'strong',
+    desc: 'Martillazos que ignoran la armadura y sacuden la zona. Va a por el más fuerte.'
   }
 };
-var UNIT_ORDER = ['lyra', 'brasa', 'nivea', 'doblon', 'rocco', 'volta', 'mirra', 'melodia', 'sombra', 'cronos', 'halcon', 'ulric'];
+var UNIT_ORDER = ['lyra', 'brasa', 'nivea', 'doblon', 'rocco', 'volta', 'mirra', 'melodia', 'sombra', 'cronos', 'halcon', 'ulric', 'fenix', 'aurora', 'titan'];
+// tropas que pueden usar los rivales y aliados de la máquina
+var AI_UNITS = UNIT_ORDER.filter(function (id) { return !UNITS[id].chestOnly; });
 var STARTER_UNITS = ['lyra', 'brasa', 'nivea', 'doblon', 'rocco'];
 
 // multiplicador de daño por rango (fusión): cada rango ~doble
@@ -158,10 +179,11 @@ var BIOMES = {
   cripta:   { grass: '#4a4470', grass2: '#423c66', path: '#6d628f', path2: '#615782', frame: '#c9a2ff', bg: '#1d1838' }
 };
 
+// secret: probabilidad por cofre de desbloquear una legendaria que solo sale en cofres
 var CHESTS = {
-  madera: { name: 'Cofre de madera', gold: [40, 80],   cards: 6,  rare: 0.15, epic: 0.03, legend: 0,     color: '#a0663a' },
-  plata:  { name: 'Cofre de plata',  gold: [90, 160],  cards: 12, rare: 0.3,  epic: 0.08, legend: 0.01,  color: '#c9d4e6' },
-  oro:    { name: 'Cofre de oro',    gold: [200, 320], cards: 24, rare: 0.4,  epic: 0.15, legend: 0.04,  color: '#ffd166' }
+  madera: { name: 'Cofre de madera', gold: [40, 80],   cards: 6,  rare: 0.15, epic: 0.03, legend: 0,     secret: 0.002, color: '#a0663a' },
+  plata:  { name: 'Cofre de plata',  gold: [90, 160],  cards: 12, rare: 0.3,  epic: 0.08, legend: 0.01,  secret: 0.006, color: '#c9d4e6' },
+  oro:    { name: 'Cofre de oro',    gold: [200, 320], cards: 24, rare: 0.4,  epic: 0.15, legend: 0.04,  secret: 0.02,  color: '#ffd166' }
 };
 
 /* Afinidad: cada tropa vecina (arriba/abajo/izquierda/derecha) del mismo

@@ -126,7 +126,7 @@ function backBar(title) { return '<div class="back-bar"><button class="back" dat
 function cardHtml(id, inDeck) {
   var u = UNITS[id], c = meta.cards[id];
   if (!c) {
-    return '<div class="ucard locked" style="--rc:' + RARITY[u.rarity].color + '"><img src="' + unitIcon(id, 0, 128) + '" alt=""><div class="ulv">🔒</div><small>' + esc(u.name) + '</small></div>';
+    return '<div class="ucard locked" style="--rc:' + RARITY[u.rarity].color + '"><img src="' + unitIcon(id, 0, 128) + '" alt=""><div class="ulv">' + (u.chestOnly ? '🎁' : '🔒') + '</div><small>' + esc(u.chestOnly ? 'Solo en cofres' : u.name) + '</small></div>';
   }
   var need = cardsNeeded(c.lv), pct = c.lv >= CARD_MAX ? 100 : Math.min(100, c.n / need * 100);
   var ready = canUpgradeCard(id);
@@ -188,13 +188,19 @@ function showCardModal(id) {
 function openOverlay(html) { var o = $('overlay'); o.innerHTML = html; o.hidden = false; }
 function closeOverlay() { $('overlay').hidden = true; $('overlay').innerHTML = ''; }
 
+/* Aviso de legendaria secreta desbloqueada en un cofre. */
+function secretHtml(r) {
+  if (!r.secret) return '';
+  var u = UNITS[r.secret];
+  return '<div class="res-unlock secret"><img src="' + unitIcon(r.secret, 0, 96) + '" alt=""><b>¡Legendaria secreta: ' + esc(u.name) + '!</b></div>';
+}
 function showChest(r) {
   sfx('chest');
   var ch = CHESTS[r.type];
   var cards = Object.keys(r.cards).map(function (id) {
     return '<div class="chest-card" style="--rc:' + RARITY[UNITS[id].rarity].color + '"><img src="' + unitIcon(id, 0, 96) + '" alt=""><b>×' + r.cards[id] + '</b><small>' + esc(UNITS[id].name) + '</small></div>';
   }).join('');
-  openOverlay('<div class="modal-card chest-modal"><div class="chest-ico" style="--cc:' + ch.color + '">🎁</div><h2>' + ch.name + '</h2><p class="gold-big">+' + r.gold + ' 🪙</p><div class="chest-cards">' + cards + '</div><button class="btn btn-green" id="chestOk">¡Genial!</button></div>');
+  openOverlay('<div class="modal-card chest-modal"><div class="chest-ico" style="--cc:' + ch.color + '">🎁</div><h2>' + ch.name + '</h2><p class="gold-big">+' + r.gold + ' 🪙</p>' + secretHtml(r) + '<div class="chest-cards">' + cards + '</div><button class="btn btn-green" id="chestOk">¡Genial!</button></div>');
   $('chestOk').onclick = function () { closeOverlay(); renderMenu(currentScreen === 'battle' ? 'home' : currentScreen); };
 }
 
@@ -280,7 +286,7 @@ function showBanner(title, sub, pic) {
 function showResult(res) {
   var title = res.mode === 'coop' ? (res.won ? '¡Gran defensa!' : 'Fin de la partida') : res.won ? '¡Victoria!' : 'Derrota';
   var stars = res.mode === 'campaign' && res.won ? '<div class="res-stars">' + '★★★'.slice(0, res.stars).padEnd(3, '☆') + '</div>' : '';
-  var chest = res.chestResult ? '<div class="res-chest">🎁 ' + CHESTS[res.chestResult.type].name + ': +' + res.chestResult.gold + ' 🪙 y ' + Object.keys(res.chestResult.cards).reduce(function (s, k) { return s + res.chestResult.cards[k]; }, 0) + ' cartas</div>' : '';
+  var chest = res.chestResult ? '<div class="res-chest">🎁 ' + CHESTS[res.chestResult.type].name + ': +' + res.chestResult.gold + ' 🪙 y ' + Object.keys(res.chestResult.cards).reduce(function (s, k) { return s + res.chestResult.cards[k]; }, 0) + ' cartas</div>' + secretHtml(res.chestResult) : '';
   var unlock = res.unlocked ? '<div class="res-unlock"><img src="' + unitIcon(res.unlocked, 0, 96) + '" alt=""><b>¡Nueva tropa: ' + esc(UNITS[res.unlocked].name) + '!</b></div>' : '';
   openOverlay('<div class="modal-card result ' + (res.won ? 'win' : 'lose') + '"><div class="res-emoji">' + (res.won ? '🏆' : '💀') + '</div><h2>' + title + '</h2>' + stars +
     '<p>' + res.lines.map(esc).join('<br>') + '</p>' +
