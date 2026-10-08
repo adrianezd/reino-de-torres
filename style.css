@@ -8,7 +8,8 @@
   --ink: #0e0c1c; --panel: #1d2a6e; --panel2: #24357f;
   --text: #ffffff; --muted: #b9c4f0;
 }
-* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+/* sin zoom al tocar dos veces ni al pellizcar: solo se puede desplazar */
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; touch-action: pan-x pan-y; }
 [hidden] { display: none !important; }
 html, body { margin: 0; height: 100%; overflow: hidden; }
 body {
@@ -19,7 +20,7 @@ body {
   user-select: none; -webkit-user-select: none;
 }
 h1, h2, h3, .btn, .mode-btn b, .summon-btn, .logo h1 { font-family: 'Lilita One', 'Nunito', sans-serif; font-weight: 400; letter-spacing: 0.02em; }
-button { font: inherit; color: inherit; cursor: pointer; touch-action: manipulation; }
+button { font: inherit; color: inherit; cursor: pointer; touch-action: pan-x pan-y; }
 
 /* ---------- menú ---------- */
 .menu {

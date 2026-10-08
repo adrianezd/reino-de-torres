@@ -980,6 +980,9 @@ function initGame() {
   $('bSpeed').onclick = function () { if (battle) { battle.speed = battle.speed === 1 ? 2 : battle.speed === 2 ? 3 : 1; updateHud(); } };
   $('bQuit').onclick = confirmQuit;
   $('overlay').addEventListener('click', function (e) { if (e.target === this && !(battle && !battle.ended && battle.paused === false)) { /* los modales se cierran con sus botones */ } });
+  // nada de zoom: ni pellizcando (Safari no hace caso al viewport), ni con doble toque, ni con Ctrl + rueda
+  ['gesturestart', 'gesturechange', 'dblclick'].forEach(function (ev) { document.addEventListener(ev, function (e) { e.preventDefault(); }, { passive: false }); });
+  document.addEventListener('wheel', function (e) { if (e.ctrlKey) e.preventDefault(); }, { passive: false });
   document.addEventListener('visibilitychange', function () { if (document.hidden && battle && !battle.ended && !battle.paused) confirmQuit(); });
   document.addEventListener('keydown', function (e) {
     if (!battle || currentScreen !== 'battle') return;
