@@ -91,21 +91,21 @@ var UNITS = {
     dmg: 30, rate: 0.9, proj: 'holy', bossMult: 3, target: 'strong',
     desc: 'Golpes sagrados que hacen el triple de daño a los jefes.'
   },
-  // legendarias que solo salen en cofres (chestOnly), aún sin ilustración (noArt)
+  // legendarias que solo salen en cofres (chestOnly); noArt: true para una tropa aún sin ilustración
   fenix: {
-    element: 'fuego', name: 'Ígnea', title: 'Ave Fénix', role: 'Área ardiente', rarity: 'legendaria', chestOnly: true, noArt: true,
+    element: 'fuego', name: 'Ígnea', title: 'Ave Fénix', role: 'Área ardiente', rarity: 'legendaria', chestOnly: true,
     color: '#ff7a1a', color2: '#ffe066', skin: '#ffd2a6',
     dmg: 36, rate: 0.75, proj: 'fire', splash: 0.7, poison: { dps: 18, dur: 4 }, target: 'first',
     desc: 'Llamaradas que arrasan una zona y dejan a los enemigos ardiendo.'
   },
   aurora: {
-    element: 'arcano', name: 'Aurora', title: 'Archimaga', role: 'Tormenta', rarity: 'legendaria', chestOnly: true, noArt: true,
+    element: 'arcano', name: 'Aurora', title: 'Archimaga', role: 'Tormenta', rarity: 'legendaria', chestOnly: true,
     color: '#6a4bd8', color2: '#9ff3ff', skin: '#f3dcc8',
     dmg: 22, rate: 0.9, proj: 'bolt', chain: 5, stun: { chance: 0.15, dur: 1 }, target: 'first',
     desc: 'Rayos que saltan entre muchos enemigos y a veces los dejan aturdidos.'
   },
   titan: {
-    element: 'naturaleza', name: 'Titán', title: 'Gólem del Bosque', role: 'Rompe armaduras', rarity: 'legendaria', chestOnly: true, noArt: true,
+    element: 'naturaleza', name: 'Titán', title: 'Gólem del Bosque', role: 'Rompe armaduras', rarity: 'legendaria', chestOnly: true,
     color: '#5a7a3a', color2: '#c8e66a', skin: '#a8a090',
     dmg: 88, rate: 0.45, proj: 'bomb', splash: 0.5, pierce: true, target: 'strong',
     desc: 'Martillazos que ignoran la armadura y sacuden la zona. Va a por el más fuerte.'

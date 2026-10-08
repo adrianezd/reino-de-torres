@@ -626,3 +626,108 @@ body {
 .ucard .ubar { margin-bottom: 7px; }
 .ucard.locked .ulv { margin-bottom: 7px; }
 .ucard.locked img { filter: brightness(0) opacity(0.4); }
+
+/* =========================================================
+   Ficha de tropa: marco dorado, rayos del color de la rareza,
+   cinta con el nombre, estadísticas en casillas y rasgos.
+   ========================================================= */
+.unit-card {
+  position: relative; overflow-x: hidden; padding: 12px 16px 16px;
+  background:
+    radial-gradient(110% 55% at 50% 0%, color-mix(in srgb, var(--rc) 45%, transparent), transparent 62%),
+    linear-gradient(180deg, #2f47a8, #1a2668 55%, #141c52);
+  border: 4px solid var(--gold-frame); border-radius: 26px;
+  box-shadow: 0 0 0 3px var(--gold-dark), 0 10px 0 var(--gold-dark), 0 18px 40px rgba(0,0,0,0.55), inset 0 0 0 3px rgba(255,255,255,0.08);
+}
+.uc-x {
+  position: absolute; top: 10px; right: 10px; z-index: 3; width: 34px; height: 34px; border-radius: 50%;
+  font: 400 1rem 'Lilita One', sans-serif; color: #fff; background: rgba(6,10,36,0.7); border: 2px solid rgba(245,196,0,0.7);
+}
+.uc-x:active { transform: scale(0.92); }
+.uc-hero { position: relative; display: grid; place-items: center; height: 176px; margin: 0 -16px; }
+.uc-rays {
+  position: absolute; left: 50%; top: 50%; width: 300px; height: 300px; margin: -150px 0 0 -150px; border-radius: 50%;
+  background: repeating-conic-gradient(color-mix(in srgb, var(--rc) 55%, transparent) 0 9deg, transparent 9deg 22.5deg);
+  -webkit-mask: radial-gradient(circle, #000 18%, transparent 68%); mask: radial-gradient(circle, #000 18%, transparent 68%);
+  animation: ucSpin 18s linear infinite; opacity: 0.8;
+}
+@keyframes ucSpin { to { transform: rotate(1turn); } }
+.uc-img {
+  position: relative; width: 168px; height: 168px;
+  filter: drop-shadow(0 6px 4px rgba(0,0,0,0.5)) drop-shadow(0 0 18px color-mix(in srgb, var(--rc) 70%, transparent));
+  animation: popIn 0.35s cubic-bezier(0.3, 1.6, 0.5, 1) 0.05s backwards, ucFloat 3s ease-in-out 0.4s infinite;
+}
+@keyframes ucFloat { 50% { transform: translateY(-5px); } }
+.uc-ribbon { position: relative; margin: -6px -30px 2px; padding: 4px 0 6px; z-index: 1; }
+.uc-ribbon::before, .uc-ribbon::after { content: ''; position: absolute; top: 9px; width: 34px; height: 100%; z-index: -2; background: color-mix(in srgb, var(--rc) 60%, #000); }
+.uc-ribbon::before { left: -6px; clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%, 34% 50%); }
+.uc-ribbon::after { right: -6px; clip-path: polygon(0 0, 100% 0, 66% 50%, 100% 100%, 0 100%); }
+.uc-ribbon h2 {
+  margin: 0; padding: 5px 0 7px; font-size: 2rem; line-height: 1; color: #fff;
+  -webkit-text-stroke: 1.5px var(--ink); text-shadow: 0 3px 0 var(--ink);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--rc) 55%, #fff), var(--rc) 55%, color-mix(in srgb, var(--rc) 70%, #000));
+  border-top: 3px solid color-mix(in srgb, var(--rc) 40%, #000); border-bottom: 3px solid color-mix(in srgb, var(--rc) 40%, #000);
+  box-shadow: inset 0 3px 0 rgba(255,255,255,0.45), inset 0 -4px 0 rgba(0,0,0,0.18), 0 4px 0 rgba(0,0,0,0.3);
+}
+.modal-card .uc-title { margin: 6px 0 4px; color: var(--muted); font-size: 0.95rem; }
+.uc-chips { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; margin-bottom: 8px; }
+.uc-chip {
+  padding: 3px 10px 4px; border-radius: 999px; font-size: 0.78rem; color: #fff;
+  background: rgba(6,10,36,0.6); border: 2px solid rgba(143,160,216,0.55);
+}
+.uc-chip.rar { color: var(--ink); background: linear-gradient(180deg, color-mix(in srgb, var(--rc) 50%, #fff), var(--rc)); border-color: var(--ink); }
+.uc-chip.el { border-color: var(--ec); background: color-mix(in srgb, var(--ec) 22%, rgba(6,10,36,0.7)); }
+.modal-card .uc-desc {
+  margin: 0 0 10px; padding: 9px 12px; border-radius: 14px; font-size: 0.92rem; line-height: 1.35;
+  background: rgba(6,10,36,0.45); border: 1px solid rgba(255,214,90,0.25);
+}
+.uc-desc em { color: #ffb020; font-style: normal; font-size: 0.85rem; }
+.pause-stats.uc-stats { grid-template-columns: repeat(3, 1fr); }
+.uc-traits { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; margin: 8px 0 4px; }
+.uc-trait {
+  display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px 4px 6px; border-radius: 999px;
+  background: linear-gradient(180deg, rgba(10,16,52,0.8), rgba(10,16,52,0.5)); border: 2px solid rgba(245,196,0,0.4);
+  animation: popIn 0.3s backwards;
+}
+.uc-trait i { font-style: normal; font-size: 1rem; }
+.uc-trait b { font-size: 0.8rem; }
+.uc-trait small { font-size: 0.72rem; color: var(--muted); }
+.uc-level {
+  display: flex; align-items: center; gap: 10px; margin-top: 10px; padding: 8px 10px; border-radius: 16px;
+  background: rgba(6,10,36,0.45); border: 1px solid rgba(255,214,90,0.25); text-align: left;
+}
+.uc-lvmedal {
+  flex-shrink: 0; width: 44px; height: 44px; display: grid; place-items: center; border-radius: 50%;
+  font: 400 1.35rem 'Lilita One', sans-serif; color: #3a1d00;
+  background: radial-gradient(circle at 35% 30%, #fff3b0, #f5c400 55%, #c98a00); border: 3px solid #3a2600; box-shadow: 0 3px 0 rgba(0,0,0,0.35);
+}
+.uc-lvbody { flex: 1; min-width: 0; }
+.uc-lvtop { display: flex; justify-content: space-between; align-items: baseline; gap: 6px; margin-bottom: 4px; }
+.uc-lvtop > b { font-family: 'Lilita One', sans-serif; font-weight: 400; font-size: 1.05rem; text-shadow: 0 2px 0 var(--ink); }
+.uc-gain { font-size: 0.8rem; color: var(--muted); white-space: nowrap; }
+.uc-gain b { color: #8dff7a; }
+.uc-level .ubar { width: 100%; margin: 0; }
+.uc-level .ubar.ok span { background: linear-gradient(180deg, #b6ff8a, #3fcf4a); }
+.modal-card .uc-why { margin: 4px 0 0; font-size: 0.8rem; color: #ffb3bc; }
+.modal-card .uc-indeck { margin: 10px 0 0; color: #8dff7a; font-size: 0.9rem; }
+.modal-card .uc-swap-t { margin: 12px 0 4px; color: var(--muted); font-size: 0.85rem; }
+.unit-card .swap-row button { border: 3px solid var(--rc); border-radius: 50%; padding: 2px; background: rgba(6,10,36,0.6); }
+.unit-card .swap-row button:active { transform: scale(0.92); }
+/* legendarias: borde con brillo que recorre el marco */
+.unit-card.rar-legendaria { animation: popIn 0.25s cubic-bezier(0.3, 1.5, 0.5, 1), legendGlow 2.2s ease-in-out 0.3s infinite; }
+@keyframes legendGlow { 50% { box-shadow: 0 0 0 3px var(--gold-dark), 0 10px 0 var(--gold-dark), 0 0 34px 8px rgba(255,176,32,0.55), inset 0 0 0 3px rgba(255,255,255,0.12); } }
+.unit-card.rar-legendaria .uc-rays { opacity: 1; animation-duration: 10s; }
+
+/* filtros por rareza de la colección */
+.rar-filters { display: flex; gap: 6px; overflow-x: auto; margin: 0 -2px 10px; padding: 2px 2px 4px; scrollbar-width: none; }
+.rar-filters::-webkit-scrollbar { display: none; }
+.rar-f {
+  flex-shrink: 0; display: flex; flex-direction: column; align-items: center; padding: 5px 12px 4px; border-radius: 14px;
+  font: 400 0.9rem 'Lilita One', sans-serif; color: #fff; text-shadow: 0 2px 0 var(--ink);
+  background: rgba(6,10,36,0.45); border: 2px solid color-mix(in srgb, var(--rc) 55%, transparent);
+}
+.rar-f small { font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 0.66rem; color: var(--muted); text-shadow: none; }
+.rar-f.on { color: var(--ink); text-shadow: none; background: linear-gradient(180deg, color-mix(in srgb, var(--rc) 45%, #fff), var(--rc)); border-color: var(--ink); box-shadow: 0 3px 0 var(--ink); }
+.rar-f.on small { color: color-mix(in srgb, var(--ink) 75%, transparent); }
+.rar-f:active { transform: translateY(2px); }
+.coll-empty { grid-column: 1 / -1; text-align: center; }

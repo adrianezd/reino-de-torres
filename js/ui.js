@@ -91,10 +91,12 @@ function renderMenu(name, arg) {
       }).join('') +
       '<p class="muted">Victorias ' + meta.duelWins + ' · Derrotas ' + meta.duelLosses + '</p>';
   } else if (name === 'collection') {
+    var collHtml = UNIT_ORDER.filter(function (id) { return meta.deck.indexOf(id) === -1 && (collFilter === 'all' || UNITS[id].rarity === collFilter); }).map(function (id) { return cardHtml(id, false); }).join('');
     html = backBar('Tropas y mazo') +
       '<p class="lead">Tu mazo (5 tropas). Toca una carta para verla, cambiarla o mejorarla.</p>' +
       '<div class="deck-slots">' + meta.deck.map(function (id) { return cardHtml(id, true); }).join('') + '</div>' +
-      '<h3>Colección</h3><div class="card-grid">' + UNIT_ORDER.filter(function (id) { return meta.deck.indexOf(id) === -1; }).map(function (id) { return cardHtml(id, false); }).join('') + '</div>' +
+      '<h3>Colección</h3>' + rarityFilters() +
+      '<div class="card-grid">' + (collHtml || '<p class="muted coll-empty">No hay más tropas de esta rareza fuera del mazo</p>') + '</div>' +
       '<div class="legend"><b>Afinidad:</b> ' + Object.keys(ELEMENTS).map(function (k) { return ELEMENTS[k].icon + ' ' + ELEMENTS[k].name; }).join(' · ') + '. Dos tropas del mismo elemento juntas se potencian.</div>';
   } else if (name === 'commanders') {
     html = backBar('Comandante') + '<p class="lead">Su habilidad se carga durante la partida. Pulsa su retrato para usarla.</p>' +
@@ -123,6 +125,17 @@ function modeBtn(go, icon, title, sub, cls) {
   return '<button class="mode-btn ' + cls + '" data-go="' + go + '"><span class="mode-ico">' + icon + '</span><span><b>' + title + '</b><small>' + sub + '</small></span><span class="mode-go">▶</span></button>';
 }
 function backBar(title) { return '<div class="back-bar"><button class="back" data-go="home">‹</button><h2>' + title + '</h2>' + '<span class="pill gold">🪙 ' + meta.gold + '</span></div>'; }
+/* Filtro por rareza de la colección: todas o una rareza, con cuántas tienes de cada. */
+var collFilter = 'all';
+function rarityFilters() {
+  var keys = ['all'].concat(Object.keys(RARITY));
+  return '<div class="rar-filters">' + keys.map(function (k) {
+    var ids = UNIT_ORDER.filter(function (id) { return k === 'all' || UNITS[id].rarity === k; });
+    var own = ids.filter(isUnlocked).length;
+    return '<button class="rar-f' + (collFilter === k ? ' on' : '') + '" data-rf="' + k + '" style="--rc:' + (k === 'all' ? '#ffd166' : RARITY[k].color) + '">' +
+      (k === 'all' ? 'Todas' : RARITY[k].name) + '<small>' + own + '/' + ids.length + '</small></button>';
+  }).join('') + '</div>';
+}
 function cardHtml(id, inDeck) {
   var u = UNITS[id], c = meta.cards[id];
   if (!c) {
@@ -161,24 +174,54 @@ function bindMenu() {
   m.querySelectorAll('[data-stage]').forEach(function (b) { b.onclick = function () { startBattle('campaign', { stage: +b.dataset.stage }); }; });
   m.querySelectorAll('[data-duel]').forEach(function (b) { b.onclick = function () { startBattle('duel', { level: +b.dataset.duel }); }; });
   m.querySelectorAll('[data-cmd]').forEach(function (b) { b.onclick = function () { meta.commander = b.dataset.cmd; saveMeta(); sfx('tap'); renderMenu('commanders'); }; });
+  m.querySelectorAll('[data-rf]').forEach(function (b) { b.onclick = function () { collFilter = b.dataset.rf; sfx('tap'); renderMenu('collection'); }; });
   m.querySelectorAll('[data-card]').forEach(function (b) { b.onclick = function () { sfx('tap'); showCardModal(b.dataset.card); }; });
   var sc = $('soundChk'); if (sc) sc.onchange = function () { meta.settings.sound = sc.checked; saveMeta(); };
 }
 
+/* Rasgos de una tropa como etiquetas (icono, nombre, valor). */
+function unitTraits(u) {
+  var t = [];
+  if (u.splash) t.push(['💥', 'Área', 'Zona ' + Math.round(u.splash * 100) + '%']);
+  if (u.poison) t.push([u.element === 'fuego' ? '🔥' : '☠️', u.element === 'fuego' ? 'Quema' : 'Veneno', u.poison.dps + '/s · ' + u.poison.dur + ' s']);
+  if (u.chain) t.push(['⚡', 'Cadena', u.chain + ' saltos']);
+  if (u.crit) t.push(['🗡️', 'Crítico', Math.round(u.crit.chance * 100) + '% ×' + u.crit.mult]);
+  if (u.stun) t.push(['⏳', 'Aturde', Math.round(u.stun.chance * 100) + '% · ' + u.stun.dur + ' s']);
+  if (u.slow) t.push(['❄️', 'Ralentiza', 'Hasta ' + Math.round(u.slow.max * 100) + '%']);
+  if (u.bossMult) t.push(['👑', 'Cazajefes', '×' + u.bossMult + ' a jefes']);
+  if (u.pierce) t.push(['🛡️', 'Perfora', 'Sin armadura']);
+  if (u.buff) t.push(['🎵', 'Ritmo', '+' + Math.round(u.buff.speed * 100) + '% vecinas']);
+  if (u.dmg) t.push(['🎯', 'Objetivo', u.target === 'strong' ? 'El más fuerte' : 'El primero']);
+  return t;
+}
 function showCardModal(id) {
   var u = UNITS[id], c = meta.cards[id], inDeck = meta.deck.indexOf(id) !== -1;
-  var stats = [];
-  if (u.dmg) stats.push('⚔️ Daño ' + Math.round(u.dmg * (1 + CARD_BONUS * (c.lv - 1))), '⏱️ ' + u.rate + ' disparos/s');
-  if (u.manaGen) stats.push('💧 +' + u.manaGen.amount + ' maná cada ' + u.manaGen.every + ' s');
-  if (u.buff) stats.push('🎵 +' + Math.round(u.buff.speed * 100) + '% velocidad a vecinas');
-  var need = cardsNeeded(c.lv), gold = cardUpgradeGold(c.lv);
-  var html = '<div class="modal-card" style="--rc:' + RARITY[u.rarity].color + '">' +
-    '<img class="mc-img" src="' + unitIcon(id, Math.min(7, c.lv), 180) + '" alt="">' +
-    '<h2>' + esc(u.name) + '</h2><p class="mc-title">' + esc(u.title) + ' · <span style="color:' + RARITY[u.rarity].color + '">' + RARITY[u.rarity].name + '</span> · ' + ELEMENTS[u.element].icon + ' ' + ELEMENTS[u.element].name + '</p>' +
-    '<p>' + esc(u.desc) + '</p><p class="mc-stats">' + stats.join(' · ') + '</p>' +
-    '<p class="mc-lv">Nivel ' + c.lv + (c.lv < CARD_MAX ? ' · Cartas ' + c.n + '/' + need : ' · Máximo') + '</p>' +
-    (c.lv < CARD_MAX ? '<button class="btn btn-green" id="mcUp" ' + (canUpgradeCard(id) ? '' : 'disabled') + '>⬆ Mejorar · ' + gold + ' 🪙</button>' : '') +
-    (inDeck ? '' : '<p class="muted">Elige qué tropa del mazo sustituye:</p><div class="swap-row">' + meta.deck.map(function (d) { return '<button data-swap="' + d + '"><img src="' + unitIcon(d, 0, 80) + '" alt=""></button>'; }).join('') + '</div>') +
+  var rar = RARITY[u.rarity], el = ELEMENTS[u.element];
+  var need = cardsNeeded(c.lv), gold = cardUpgradeGold(c.lv), maxed = c.lv >= CARD_MAX;
+  var dmgAt = function (lv) { return Math.round(u.dmg * (1 + CARD_BONUS * (lv - 1))); };
+  var stat = function (icon, val, label) { return '<div class="ps-stat"><i>' + icon + '</i><b>' + val + '</b><small>' + label + '</small></div>'; };
+  var stats = u.dmg
+    ? stat('⚔️', dmgAt(c.lv), 'Daño') + stat('⏱️', u.rate, 'Disparos/s') + stat('📈', Math.round(dmgAt(c.lv) * u.rate), 'Daño/s')
+    : u.manaGen
+      ? stat('💧', '+' + u.manaGen.amount, 'Maná') + stat('⏱️', u.manaGen.every + ' s', 'Cada') + stat('✨', '×rango', 'Fusión')
+      : stat('🎵', '+' + Math.round(u.buff.speed * 100) + '%', 'Velocidad') + stat('📍', '8', 'Vecinas') + stat('✨', '×rango', 'Fusión');
+  var traits = unitTraits(u).map(function (t) { return '<span class="uc-trait"><i>' + t[0] + '</i><b>' + t[1] + '</b><small>' + t[2] + '</small></span>'; }).join('');
+  var pct = maxed ? 100 : Math.min(100, c.n / need * 100);
+  var why = maxed ? '' : c.n < need ? (need - c.n === 1 ? 'Falta 1 carta' : 'Faltan ' + (need - c.n) + ' cartas') : meta.gold < gold ? 'Te faltan ' + (gold - meta.gold) + ' 🪙' : '';
+  var gain = !maxed && u.dmg ? '<span class="uc-gain">⚔️ ' + dmgAt(c.lv) + ' → <b>' + dmgAt(c.lv + 1) + '</b></span>' : '';
+  var html = '<div class="modal-card unit-card rar-' + u.rarity + '" style="--rc:' + rar.color + ';--ec:' + el.color + '">' +
+    '<button class="uc-x" id="mcX" aria-label="Cerrar">✕</button>' +
+    '<div class="uc-hero"><div class="uc-rays"></div><img class="uc-img" src="' + unitIcon(id, Math.min(7, c.lv), 220) + '" alt=""></div>' +
+    '<div class="uc-ribbon"><h2>' + esc(u.name) + '</h2></div>' +
+    '<p class="uc-title">' + esc(u.title) + '</p>' +
+    '<div class="uc-chips"><span class="uc-chip rar">' + (u.rarity === 'legendaria' ? '★ ' : '') + rar.name + '</span><span class="uc-chip el">' + el.icon + ' ' + el.name + '</span><span class="uc-chip">' + esc(u.role) + '</span></div>' +
+    '<p class="uc-desc">' + esc(u.desc) + (u.chestOnly ? '<br><em>🎁 Solo sale en cofres</em>' : '') + '</p>' +
+    '<div class="pause-stats uc-stats">' + stats + '</div>' +
+    (traits ? '<div class="uc-traits">' + traits + '</div>' : '') +
+    '<div class="uc-level"><span class="uc-lvmedal">' + c.lv + '</span><div class="uc-lvbody"><div class="uc-lvtop"><b>' + (maxed ? 'Nivel máximo' : 'Nivel ' + c.lv) + '</b>' + gain + '</div>' +
+    '<div class="ubar' + (canUpgradeCard(id) ? ' ok' : '') + '"><span style="width:' + pct + '%"></span><em>' + (maxed ? 'MÁX' : c.n + '/' + need) + '</em></div></div></div>' +
+    (maxed ? '' : '<button class="btn btn-green" id="mcUp" ' + (canUpgradeCard(id) ? '' : 'disabled') + '>⬆ Mejorar · ' + gold + ' 🪙</button>' + (why ? '<p class="uc-why">' + why + '</p>' : '')) +
+    (inDeck ? '<p class="uc-indeck">✔ En tu mazo</p>' : '<p class="uc-swap-t">Ponla en el mazo en lugar de</p><div class="swap-row">' + meta.deck.map(function (d) { return '<button data-swap="' + d + '" style="--rc:' + RARITY[UNITS[d].rarity].color + '"><img src="' + unitIcon(d, 0, 80) + '" alt="' + esc(UNITS[d].name) + '"></button>'; }).join('') + '</div>') +
     '<button class="btn btn-ghost" id="mcClose">Cerrar</button></div>';
   openOverlay(html);
   var up = $('mcUp');
@@ -187,6 +230,7 @@ function showCardModal(id) {
     b.onclick = function () { var k = meta.deck.indexOf(b.dataset.swap); meta.deck[k] = id; saveMeta(); closeOverlay(); sfx('merge'); renderMenu('collection'); };
   });
   $('mcClose').onclick = closeOverlay;
+  $('mcX').onclick = closeOverlay;
 }
 
 function openOverlay(html) { var o = $('overlay'); o.innerHTML = html; o.hidden = false; }
