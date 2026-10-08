@@ -291,9 +291,27 @@ function resizeCanvas() {
     var mg = gm.image ? 0 : pad, top = WAVE_INFO_H;
     var s = Math.min((w - mg * 2) / gm.W, (h - top - mg * 2 - 20) / gm.H);
     layout.main = { sc: s, ox: (w - gm.W * s) / 2, oy: top + (h - top - gm.H * s) / 2 + (gm.image ? 0 : 8), g: gm };
+    if (gm.image && gm.px.over && gm.px.frame) fitFrame(layout.main, gm, w, h, top);
     layout.other = null;
   }
   layout.w = w; layout.h = h;
+}
+
+/* Tableros «over»: el marco entero (px.frame) se ve completo y centrado si
+   cabe con las casillas como mucho un 15% más pequeñas que encajando solo la
+   zona de juego; si no (móvil estrecho), se queda la zona de juego encajada y
+   el marco se sale por los bordes. La zona de juego siempre queda dentro. */
+function fitFrame(L, g, w, h, top) {
+  var F = g.px, upx = F.cw / g.W, fr = F.frame;
+  var fx0 = (fr[0] - F.cx) / upx, fy0 = (fr[1] - F.cy) / upx, fw = (fr[2] - fr[0]) / upx, fh = (fr[3] - fr[1]) / upx;
+  var availH = h - top - 6;
+  var sFull = Math.min(w / fw, availH / fh);
+  var s = sFull >= L.sc * 0.85 ? sFull : L.sc;
+  var ox = w / 2 - (fx0 + fw / 2) * s, oy = top + availH / 2 - (fy0 + fh / 2) * s;
+  var clamp = function (v, a, b) { return a <= b ? Math.min(Math.max(v, a), b) : (a + b) / 2; };
+  L.sc = s;
+  L.ox = clamp(ox, 0, w - g.W * s);
+  L.oy = clamp(oy, top, top + availH - g.H * s);
 }
 
 /* ---------- decorado alrededor de los tableros ---------- */

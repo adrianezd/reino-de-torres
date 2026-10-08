@@ -53,21 +53,23 @@ var FIELDS = {
     way: [[59, 462], [59, 56], [650, 56], [650, 462]] },
   // lava en anillo (volteada de assets/tablero-lava-invertido.jpg): salen por
   // la boca de abajo, dan la vuelta entera al río y vuelven a la misma boca
-  lava2: { image: 'boards/lava2', iw: 1248, ih: 832, cx: 175, cy: 140, cw: 905, ch: 660, portal: true, over: true,
+  lava2: { image: 'boards/lava2', iw: 1248, ih: 832, cx: 175, cy: 140, cw: 905, ch: 660, portal: true, over: true, frame: [40, 0, 1208, 832],
     gx0: 322, gy0: 282, gx1: 928, gy1: 596,
     way: [[603, 770], [603, 660], [247, 660], [247, 214], [1006, 214], [1006, 660], [652, 660], [652, 770]] },
   // hielo, roca y veneno (sin fondo, de assets/tablero-*.jpg): camino en U
   // abierto por abajo.
   // over: el recorte (cx..ch) es solo la zona de juego, ajustada al camino,
-  // y es lo que se encaja en la pantalla; el resto de la ilustración se pinta
-  // alrededor y asoma más o menos según el móvil (ver drawBoard)
-  hielo: { image: 'boards/hielo', iw: 1024, ih: 572, cx: 195, cy: 62, cw: 635, ch: 470, portal: true, over: true,
+  // y el resto de la ilustración se pinta alrededor. frame: el marco entero
+  // en la imagen; si cabe sin achicar mucho las casillas se ve entero, y si
+  // no, se encaja la zona de juego y el marco se sale por los bordes
+  // (ver resizeCanvas y drawBoard)
+  hielo: { image: 'boards/hielo', iw: 1024, ih: 572, cx: 195, cy: 62, cw: 635, ch: 470, portal: true, over: true, frame: [107, 20, 917, 552],
     gx0: 333, gy0: 178, gx1: 690, gy1: 393,
     way: [[322, 505], [300, 445], [255, 385], [245, 300], [250, 215], [290, 150], [380, 118], [640, 118], [730, 150], [772, 215], [778, 300], [770, 385], [725, 445], [700, 505]] },
-  roca: { image: 'boards/roca', iw: 1024, ih: 572, cx: 188, cy: 70, cw: 650, ch: 420, portal: true, over: true,
+  roca: { image: 'boards/roca', iw: 1024, ih: 572, cx: 188, cy: 70, cw: 650, ch: 420, portal: true, over: true, frame: [168, 29, 852, 534],
     gx0: 323, gy0: 175, gx1: 700, gy1: 397,
     way: [[395, 452], [300, 440], [250, 390], [238, 290], [255, 185], [320, 130], [420, 113], [605, 113], [705, 130], [770, 185], [788, 290], [775, 390], [725, 440], [628, 452]] },
-  veneno: { image: 'boards/veneno', iw: 1024, ih: 572, cx: 262, cy: 105, cw: 502, ch: 412, portal: true, over: true,
+  veneno: { image: 'boards/veneno', iw: 1024, ih: 572, cx: 262, cy: 105, cw: 502, ch: 412, portal: true, over: true, frame: [176, 58, 848, 518],
     gx0: 362, gy0: 193, gx1: 660, gy1: 378,
     way: [[400, 500], [400, 440], [320, 390], [305, 300], [320, 190], [380, 148], [640, 148], [700, 190], [718, 300], [705, 390], [625, 440], [625, 500]] }
 };
