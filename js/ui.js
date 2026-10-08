@@ -126,13 +126,17 @@ function backBar(title) { return '<div class="back-bar"><button class="back" dat
 function cardHtml(id, inDeck) {
   var u = UNITS[id], c = meta.cards[id];
   if (!c) {
-    return '<div class="ucard locked" style="--rc:' + RARITY[u.rarity].color + '"><img src="' + unitIcon(id, 0, 128) + '" alt=""><div class="ulv">' + (u.chestOnly ? '🎁' : '🔒') + '</div><small>' + esc(u.chestOnly ? 'Solo en cofres' : u.name) + '</small></div>';
+    var from = CAMPAIGN.filter(function (st) { return st.unlock === id; })[0];
+    return '<div class="ucard locked" style="--rc:' + RARITY[u.rarity].color + '">' +
+      '<span class="uport"><img src="' + unitIcon(id, 0, 128) + '" alt=""><i class="ulock">' + (u.chestOnly ? '🎁' : '🔒') + '</i></span>' +
+      '<div class="ulv ulv-lock">' + (u.chestOnly ? 'Solo en cofres' : from ? 'Fase ' + from.id : 'Bloqueada') + '</div>' +
+      '<small>' + esc(u.chestOnly ? '???' : u.name) + '</small></div>';
   }
   var need = cardsNeeded(c.lv), pct = c.lv >= CARD_MAX ? 100 : Math.min(100, c.n / need * 100);
   var ready = canUpgradeCard(id);
   return '<button class="ucard ' + (ready ? 'ready' : '') + '" data-card="' + id + '" style="--rc:' + RARITY[u.rarity].color + '">' +
     '<span class="uel">' + ELEMENTS[u.element].icon + '</span>' +
-    '<img src="' + unitIcon(id, 0, 128) + '" alt="">' +
+    '<span class="uport"><img src="' + unitIcon(id, 0, 128) + '" alt=""></span>' +
     '<div class="ulv">Nv ' + c.lv + '</div>' +
     '<div class="ubar"><span style="width:' + pct + '%"></span><em>' + (c.lv >= CARD_MAX ? 'MÁX' : c.n + '/' + need) + '</em></div>' +
     '<small>' + esc(u.name) + '</small></button>';

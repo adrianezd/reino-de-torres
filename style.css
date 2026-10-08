@@ -520,3 +520,109 @@ body {
 .ucard .ubar em { font-family: 'Lilita One', sans-serif; font-weight: 400; font-size: 0.66rem; color: #fff; -webkit-text-stroke: 2.5px var(--ink); paint-order: stroke fill; }
 .ucard.locked small { filter: none; }
 .deck-slots .ucard small { padding: 1px 3px 2px; font-size: 0.72rem; letter-spacing: 0; -webkit-text-stroke-width: 2.5px; }
+
+/* =========================================================
+   Cartas de tropa (barra de la partida y menú de tropas):
+   marco dorado fino, fondo azul teñido con el color de la
+   tropa o de su rareza y textos en placas limpias.
+   ========================================================= */
+.dcard, .ucard, .deck-slots .ucard {
+  --gold-rim: linear-gradient(180deg, #fff1a8 0%, #f5c400 35%, #c98a00 70%, #8a5a00 100%);
+  border: 3px solid transparent; border-image: none; border-radius: 14px; filter: none;
+  box-shadow: 0 4px 0 #3a2600, 0 7px 12px rgba(0,0,0,0.35);
+  overflow: hidden;
+}
+/* barra de la partida */
+.deck-bar { gap: 6px; }
+.dcard {
+  aspect-ratio: auto; padding: 4px 0 0; justify-content: flex-start; gap: 0;
+  background:
+    radial-gradient(circle at 50% 38%, color-mix(in srgb, var(--rc) 55%, #2b3c8f) 0%, #1a2766 62%, #111a4a 100%) padding-box,
+    var(--gold-rim) border-box;
+}
+.dcard::after { display: none; }
+.dcard img { width: 76%; max-width: 64px; height: auto; aspect-ratio: 1; margin: 2px 0 3px; filter: drop-shadow(0 3px 2px rgba(0,0,0,0.45)); }
+.dlv {
+  top: 3px; left: 3px; width: 20px; height: 20px; z-index: 1;
+  background: radial-gradient(circle at 35% 30%, #fff3b0, #f5c400 55%, #c98a00); color: #3a1d00;
+  border: 2px solid #3a2600; font-size: 0.78rem; box-shadow: 0 2px 0 rgba(0,0,0,0.35);
+}
+.dcost {
+  position: static; transform: none; width: 100%; margin-top: auto; padding: 3px 0 4px; border: none; border-radius: 0;
+  background: linear-gradient(180deg, rgba(6,10,36,0.55), rgba(6,10,36,0.9)); border-top: 1px solid rgba(255,214,90,0.45);
+  font-family: 'Lilita One', 'Nunito', sans-serif; font-weight: 400; font-size: 0.82rem; line-height: 1; color: #8ff3ff;
+  -webkit-text-stroke: 2.5px var(--ink); paint-order: stroke fill; text-align: center; white-space: nowrap;
+}
+.dcost .mi { width: 0.75em; height: 0.95em; vertical-align: -0.12em; -webkit-text-stroke: 0; }
+.dcard.poor { filter: none; }
+.dcard.poor img { filter: grayscale(0.7) brightness(0.7) drop-shadow(0 3px 2px rgba(0,0,0,0.45)); }
+.dcard.poor .dcost { color: #ff9aa8; }
+.dcard:active { transform: translateY(3px); box-shadow: 0 1px 0 #3a2600, 0 3px 6px rgba(0,0,0,0.35); }
+
+/* menú de tropas */
+.deck-slots { gap: 8px; padding: 12px 10px; background: rgba(6,10,36,0.35); border: 1px solid rgba(255,214,90,0.25); border-radius: 18px; }
+.card-grid { gap: 10px; }
+.ucard, .deck-slots .ucard {
+  padding: 0; color: #fff; gap: 0;
+  background:
+    linear-gradient(var(--rc), var(--rc)) top / 100% 4px no-repeat padding-box,
+    radial-gradient(circle at 50% 32%, color-mix(in srgb, var(--rc) 45%, #2b3c8f) 0%, #1a2766 58%, #111a4a 100%) padding-box,
+    var(--gold-rim) border-box;
+}
+.uport { position: relative; display: block; width: 84%; margin-top: 9px; }
+.ucard img, .deck-slots .ucard img { display: block; width: 100%; max-width: none; height: auto; aspect-ratio: 1; filter: drop-shadow(0 4px 3px rgba(0,0,0,0.45)); }
+.uel {
+  top: 6px; right: 5px; z-index: 1; width: 22px; height: 22px; display: grid; place-items: center; font-size: 0.75rem;
+  background: rgba(6,10,36,0.75); border: 1.5px solid rgba(255,214,90,0.7); border-radius: 50%;
+}
+.ulv {
+  position: relative; z-index: 1; margin-top: -10px; padding: 1px 9px 2px; border-radius: 999px;
+  background: linear-gradient(180deg, #ffd166, #f08a24); border: 2px solid var(--ink); box-shadow: 0 2px 0 rgba(0,0,0,0.35);
+  font-size: 0.78rem; line-height: 1.1;
+}
+.ubar { width: 82%; height: 13px; margin-top: 5px; border-width: 2px; border-radius: 999px; background: #0b1238; }
+.ubar span { background: linear-gradient(180deg, #8fe3ff, #3aa0ff); border-radius: 999px; }
+.ubar em { line-height: 9px; font-size: 0.6rem; }
+.ucard.ready .ubar span { background: linear-gradient(180deg, #b6ff8a, #3fcf4a); }
+.ucard small, .deck-slots .ucard small {
+  display: block; width: 100%; max-width: 100%; margin-top: 7px; padding: 4px 4px 5px;
+  border: none; border-top: 1px solid rgba(255,214,90,0.45); border-radius: 0;
+  background: linear-gradient(180deg, rgba(6,10,36,0.5), rgba(6,10,36,0.88));
+  font-size: 0.76rem; letter-spacing: 0.01em; text-align: center; color: #fff;
+  -webkit-text-stroke: 2.5px var(--ink); text-shadow: none;
+}
+.deck-slots .ucard small { font-size: 0.7rem; padding: 3px 2px 4px; }
+.deck-slots .ulv { font-size: 0.7rem; padding: 0 7px 1px; }
+.deck-slots .uel { width: 18px; height: 18px; font-size: 0.62rem; top: 5px; right: 4px; }
+.ucard.ready { animation: cardGlow 1.2s ease-in-out infinite; }
+@keyframes cardGlow { 50% { box-shadow: 0 4px 0 #3a2600, 0 0 16px 4px rgba(255,209,102,0.85); } }
+/* bloqueadas: silueta oscura, candado y la fase que la desbloquea */
+.ucard.locked {
+  filter: none; box-shadow: 0 4px 0 #15182c, 0 7px 12px rgba(0,0,0,0.35);
+  background:
+    radial-gradient(circle at 50% 32%, #2a3360 0%, #161c3e 60%, #0e1230 100%) padding-box,
+    linear-gradient(180deg, #8e97b8, #4d5574 60%, #2c3150) border-box;
+}
+.ucard.locked img { filter: brightness(0) opacity(0.55); }
+.ulock {
+  position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); width: 40%; aspect-ratio: 1;
+  display: grid; place-items: center; font-style: normal; font-size: 1.15rem; border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #4a5280, #1c2248); border: 2px solid #8e97b8; box-shadow: 0 3px 0 rgba(0,0,0,0.45);
+}
+.ulv.ulv-lock { background: linear-gradient(180deg, #5b6386, #363d5e); color: #dfe5ff; font-size: 0.7rem; }
+.ucard.locked small { color: #b9c4f0; }
+
+/* «Seguir jugando» con el mismo botón naranja que «Invocar» */
+.btn.pause-resume {
+  background: none; border-style: solid; border-width: 12px 18px; padding: 2px 8px; min-height: 62px;
+  border-image: url('assets/ui/boton-invocar-2.webp') 27% 13% fill / 12px 18px stretch;
+  border-radius: 18px; color: #fff; font-size: 1.5rem; box-shadow: none;
+  text-shadow: 0 2px 0 #b35a00, 0 0 3px #b35a00; -webkit-text-stroke: 0;
+  filter: drop-shadow(0 4px 0 #8a4300);
+}
+.btn.pause-resume::after { display: none; }
+.btn.pause-resume:active { transform: translateY(3px); filter: drop-shadow(0 1px 0 #8a4300); box-shadow: none; }
+.ucard small, .deck-slots .ucard small { margin-top: auto; }
+.ucard .ubar { margin-bottom: 7px; }
+.ucard.locked .ulv { margin-bottom: 7px; }
+.ucard.locked img { filter: brightness(0) opacity(0.4); }
