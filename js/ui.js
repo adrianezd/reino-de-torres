@@ -77,6 +77,7 @@ function renderMenu(name, arg) {
       '<button class="tile-btn" data-go="howto">❓<span>Cómo jugar</span></button>' +
       '</div>' +
       '<label class="sound-row"><input type="checkbox" id="soundChk" ' + (meta.settings.sound ? 'checked' : '') + '> Sonido</label>' +
+      '<button class="reset-btn" data-go="reset">Restablecer juego</button>' +
       '<p class="foot">Juego original y gratuito, inspirado en los tower defense de fusión. Sin anuncios.</p>';
   } else if (name === 'campaign') {
     html = backBar('Campaña') + '<div class="stage-list">' + CAMPAIGN.map(function (st) {
@@ -210,6 +211,7 @@ function bindMenu() {
         return;
       }
       if (g === 'codes') { showCodes(); return; }
+      if (g === 'reset') { showReset(); return; }
       if (g === 'freeChest') { var r = claimFreeChest(); if (r) showChest(r); else toast('Vuelve mañana a por otro cofre'); return; }
       showScreen(g);
     };
@@ -368,6 +370,21 @@ function startCardDemo(cv, id) {
 
 function openOverlay(html) { var o = $('overlay'); o.innerHTML = html; o.hidden = false; }
 function closeOverlay() { $('overlay').hidden = true; $('overlay').innerHTML = ''; }
+
+/* Restablecer juego: borra todo el progreso tras confirmarlo. */
+function showReset() {
+  openOverlay('<div class="modal-card"><div class="code-ico">⚠️</div><h2>Restablecer juego</h2>' +
+    '<p class="lead">Se borra todo tu progreso: oro, gemas, cartas, mazo, campaña, trofeos y códigos canjeados. No se puede deshacer.</p>' +
+    '<button class="btn btn-red" id="resetOk">Borrar todo</button><button class="btn btn-ghost" id="resetX">Cancelar</button></div>');
+  $('resetOk').onclick = function () {
+    resetMeta();
+    closeOverlay();
+    sfx('no'); buzz(30);
+    showScreen('home');
+    toast('Juego restablecido');
+  };
+  $('resetX').onclick = closeOverlay;
+}
 
 /* Canjear códigos de regalo. */
 function showCodes() {

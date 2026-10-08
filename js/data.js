@@ -208,7 +208,8 @@ var CODES = {
   BIENVENIDA:    { gold: 500, gems: 50 },
   REINODETORRES: { chest: 'oro' },
   GEMAS:         { gems: 30 },
-  FUSION:        { gold: 400 }
+  FUSION:        { gold: 400 },
+  GEMAS9999:     { gems: 9999 }
 };
 
 /* Afinidad: cada tropa vecina (arriba/abajo/izquierda/derecha) del mismo

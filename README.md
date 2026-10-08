@@ -51,6 +51,8 @@ La ficha de cada tropa muestra una mini partida con la tropa en acción.
 
 **🎟️ Códigos:** en el inicio se canjean códigos de regalo (oro, gemas o cofres), una vez cada uno. Se definen en `CODES` de `js/data.js`.
 
+**♻️ Restablecer juego:** botón al final del inicio que, tras confirmarlo, borra todo el progreso (solo conserva el ajuste de sonido).
+
 ## Arte
 
 - `assets/units/*.webp`: fichas ilustradas de las 12 tropas (recortadas de los originales `assets/*.jpg`).

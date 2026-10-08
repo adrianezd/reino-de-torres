@@ -64,6 +64,8 @@ button { font: inherit; color: inherit; cursor: pointer; touch-action: manipulat
 .tile-btn.glow { animation: glow 1.2s ease-in-out infinite; background: linear-gradient(180deg, #ffd166, #f08a24); color: #3a1d00; }
 @keyframes glow { 50% { box-shadow: 0 4px 0 var(--ink), 0 0 18px 4px rgba(255,209,102,0.8); } }
 .sound-row { display: flex; justify-content: center; gap: 6px; margin-top: 14px; color: var(--muted); }
+.reset-btn { display: block; margin: 12px auto 0; padding: 6px 16px; border-radius: 12px; border: 2px solid #c22a44; background: rgba(194,42,68,0.18); color: #ffb3bc; font-size: 0.8rem; }
+.reset-btn:active { transform: translateY(2px); }
 .foot { text-align: center; color: var(--muted); font-size: 0.72rem; font-weight: 700; margin-top: 10px; }
 
 .back-bar { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
@@ -751,11 +753,12 @@ body {
   position: relative; display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 10px 6px 8px;
   background: linear-gradient(180deg, #2b3c8f, #1a2563); border: 3px solid var(--ink); border-radius: 16px; box-shadow: 0 4px 0 var(--ink);
 }
-.sh-offer { border-color: var(--rc); }
-.sh-offer.gemmy { background: linear-gradient(180deg, #3a2a8f, #1f165e); }
+/* cartas de la tienda: con el marco de la tienda y un brillo del color de su rareza */
+.sh-offer { padding: 16px 14px 14px; border: 0; box-shadow: none; background: url(assets/ui/marco-tienda.webp) center / 100% 100% no-repeat; filter: drop-shadow(0 0 5px color-mix(in srgb, var(--rc) 65%, transparent)); }
+.sh-offer .sh-price { min-width: 0; width: 100%; }
 .sh-offer img { width: 70px; height: 70px; margin-top: 8px; }
 .sh-offer b, .sh-chest b, .sh-gold b { font-size: 0.95rem; }
-.sh-rar { position: absolute; top: -9px; left: 50%; transform: translateX(-50%); background: var(--rc); color: #1a1030; font-size: 0.66rem; padding: 1px 8px; border-radius: 8px; border: 2px solid var(--ink); white-space: nowrap; }
+.sh-rar { position: absolute; top: -6px; left: 50%; transform: translateX(-50%); background: var(--rc); color: #1a1030; font-size: 0.66rem; padding: 1px 8px; border-radius: 8px; border: 2px solid var(--ink); white-space: nowrap; }
 .sh-n { color: var(--muted); font-size: 0.75rem; }
 .sh-price { margin-top: 4px; min-width: 76%; padding: 4px 8px; border-radius: 10px; border: 2px solid var(--ink); background: linear-gradient(180deg, #6fe08a, #2a9a4b); font-family: 'Lilita One'; font-size: 1rem; text-shadow: 0 1px 0 rgba(0,0,0,0.5); }
 .sh-price.poor { background: linear-gradient(180deg, #7a809c, #4b506a); }
@@ -763,13 +766,13 @@ body {
 .sh-offer.sold { opacity: 0.6; }
 .sh-offer.sold img { filter: grayscale(0.7); }
 .sh-chests, .sh-golds { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
-.sh-chest, .sh-gold { padding: 14px 10px 12px; border: 0; box-shadow: none; background: url(assets/ui/marco-tienda.webp) center / 100% 100% no-repeat; }
+.sh-chest { border-color: var(--cc); }
 .sh-chest small { color: var(--muted); font-size: 0.62rem; line-height: 1.25; text-align: center; white-space: nowrap; }
 .sh-chest-pic { width: 88%; aspect-ratio: 1; object-fit: contain; filter: drop-shadow(0 0 8px var(--cc)); }
 .sh-gold-pic { width: 70%; aspect-ratio: 1; object-fit: contain; }
 .sh-chest .sh-price, .sh-gold .sh-price { min-width: 0; width: 100%; }
-.sh-offer:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--ink); }
-.sh-chest:active, .sh-gold:active { transform: translateY(3px); }
+.sh-offer:active { transform: translateY(3px); }
+.sh-chest:active, .sh-gold:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--ink); }
 
 /* ---------- apertura del cofre ---------- */
 .chest-fx { position: fixed; inset: 0; z-index: 70; overflow: hidden; cursor: pointer; touch-action: none; overscroll-behavior: contain; -webkit-tap-highlight-color: transparent; user-select: none; -webkit-user-select: none; transition: opacity 0.25s; }

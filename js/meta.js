@@ -41,6 +41,13 @@ function loadMeta() {
 }
 var meta = loadMeta();
 function saveMeta() { try { localStorage.setItem(SAVE_KEY, JSON.stringify(meta)); } catch (e) {} }
+// empieza de cero (solo se conserva si el sonido está activado)
+function resetMeta() {
+  var sound = meta.settings.sound;
+  meta = defaultMeta();
+  meta.settings.sound = sound;
+  saveMeta();
+}
 
 function isUnlocked(id) { return !!meta.cards[id]; }
 function unlockUnit(id) {
