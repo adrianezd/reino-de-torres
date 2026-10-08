@@ -58,7 +58,7 @@ Object.keys(IMG_LIST).forEach(function (dir) {
   IMG_LIST[dir].forEach(function (id) {
     var im = new Image();
     im.onload = function () { im.ready = true; imgReadyCount++; _unitIconCache = {}; _tintCache = {}; if (window.onArtReady) window.onArtReady(); };
-    im.src = 'assets/' + dir + '/' + id + '.webp' + (dir === 'boards' ? '?v=2' : '');
+    im.src = 'assets/' + dir + '/' + id + '.webp' + (dir === 'boards' ? '?v=2' : dir === 'tiles' ? '?v=2' : '');
     IMG[dir + '/' + id] = im;
   });
 });
