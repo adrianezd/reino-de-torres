@@ -57,7 +57,7 @@ function showScreen(name) {
 // centro de cada aro del banner del mazo (assets/ui/banner-mazo.webp), en % del ancho
 var DECK_RINGS = [13.66, 31.83, 49.95, 68.06, 86.24];
 function topBar() {
-  return '<div class="res-bar"><span class="pill gold">🪙 ' + meta.gold + '</span><span class="pill gem">💎 ' + meta.gems + '</span><span class="pill trophy">🏆 ' + meta.trophies + '</span><span class="pill star">⭐ ' + totalStars() + '</span></div>';
+  return '<div class="res-bar"><span class="pill gold">🪙 <b>' + meta.gold + '</b></span><span class="pill gem">💎 <b>' + meta.gems + '</b></span><span class="pill trophy">🏆 <b>' + meta.trophies + '</b></span><span class="pill star">⭐ <b>' + totalStars() + '</b></span></div>';
 }
 function renderMenu(name, arg) {
   var m = $('menu');

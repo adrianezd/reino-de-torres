@@ -1059,3 +1059,28 @@ button.ucard.locked { cursor: pointer; }
   background: url(assets/ui/navbar.webp) center top / 100% 100% no-repeat;
   filter: drop-shadow(0 -4px 8px rgba(0,0,0,0.35));
 }
+
+/* Letras de cartel en la pantalla principal: Lilita One blanca o
+   amarilla clara, contorno marrón oscuro grueso y sombra por debajo,
+   para que los textos parezcan parte de las ilustraciones.
+   (el contorno va por detrás del relleno, así que se ve la mitad del grosor) */
+:root { --edge: #2b1606; }
+.logo h1, .logo p, .res-bar .pill b, .mode-btn b, .mode-btn small, .slot b, .slot small, .slot.empty span, .navbar span, .play-hero span {
+  font-family: 'Lilita One', 'Nunito', sans-serif; font-weight: 400; letter-spacing: 0.03em;
+  color: #fff; -webkit-text-stroke: 6px var(--edge); paint-order: stroke fill;
+  text-shadow: 0 3px 0 var(--edge), 0 5px 6px rgba(0,0,0,0.45);
+}
+.logo h1 { -webkit-text-stroke-width: 10px; text-shadow: 0 5px 0 var(--edge), 0 8px 10px rgba(0,0,0,0.5); }
+.logo p { color: #fff1b8; -webkit-text-stroke-width: 5px; text-shadow: 0 2px 0 var(--edge), 0 4px 5px rgba(0,0,0,0.4); }
+.res-bar .pill { color: #fff; font-size: 0.9rem; }
+.res-bar .pill.gold b { color: #ffe58a; }
+.res-bar .pill b { -webkit-text-stroke-width: 5px; }
+.mode-btn b, .m-campaign b { -webkit-text-stroke-width: 7px; text-shadow: 0 3px 0 var(--edge), 0 5px 6px rgba(0,0,0,0.45); }
+.mode-btn small, .m-campaign small { color: #fff1b8; -webkit-text-stroke-width: 4.5px; text-shadow: 0 2px 0 var(--edge); }
+.slot b { -webkit-text-stroke-width: 5px; }
+.slot.unlocking b { color: #c8ecff; }
+.slot-go { color: #ffe58a; -webkit-text-stroke-width: 6px !important; }
+.slot small, .slot.empty span { color: #fff1b8; -webkit-text-stroke-width: 4px; text-shadow: 0 2px 0 var(--edge); }
+.slot.empty span { color: rgba(255,241,184,0.75); }
+.navbar span { color: #fff1b8; -webkit-text-stroke-width: 4.5px; text-shadow: 0 2px 0 var(--edge); }
+.navbar button.on span { color: #fff; }
