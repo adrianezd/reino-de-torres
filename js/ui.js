@@ -47,7 +47,11 @@ var currentScreen = 'home';
 function showScreen(name) {
   $('menu').hidden = name === 'battle';
   $('battleScreen').hidden = name !== 'battle';
+  $('navbar').hidden = name === 'battle';
   currentScreen = name;
+  // pestaña activa de la barra de abajo
+  var tab = name === 'shop' ? 'shop' : name === 'collection' || name === 'commanders' ? 'collection' : 'home';
+  document.querySelectorAll('[data-tab]').forEach(function (b) { b.classList.toggle('on', b.dataset.tab === tab); });
   if (name !== 'battle') renderMenu(name);
 }
 function topBar() {
@@ -68,10 +72,8 @@ function renderMenu(name, arg) {
       modeBtn('coop', '🤝', '2 contra la máquina', 'Tú y un aliado vs oleadas · récord ' + meta.coopBest, 'm-coop') +
       '</div>' +
       '<div class="home-grid">' +
-      '<button class="tile-btn" data-go="collection">🃏<span>Tropas</span></button>' +
-      '<button class="tile-btn shop" data-go="shop">🛒<span>Tienda</span></button>' +
-      '<button class="tile-btn" data-go="commanders">👑<span>Comandante</span></button>' +
       '<button class="tile-btn ' + (free ? 'glow' : '') + '" data-go="freeChest">🎁<span>' + (free ? 'Cofre gratis' : 'Mañana más') + '</span></button>' +
+      '<button class="tile-btn code" data-go="codes">🎟️<span>Códigos</span></button>' +
       '<button class="tile-btn" data-go="howto">❓<span>Cómo jugar</span></button>' +
       '</div>' +
       '<label class="sound-row"><input type="checkbox" id="soundChk" ' + (meta.settings.sound ? 'checked' : '') + '> Sonido</label>' +
@@ -93,20 +95,20 @@ function renderMenu(name, arg) {
       '<p class="muted">Victorias ' + meta.duelWins + ' · Derrotas ' + meta.duelLosses + '</p>';
   } else if (name === 'collection') {
     var collHtml = UNIT_ORDER.filter(function (id) { return collFilter === 'all' || UNITS[id].rarity === collFilter; }).map(function (id) { return cardHtml(id, meta.deck.indexOf(id) !== -1, true); }).join('');
-    html = backBar('Tropas y mazo') +
+    html = backBar('Mazo', true) + deckTabs('collection') +
       '<p class="lead">Tu mazo (5 tropas). Toca una carta para verla, cambiarla o mejorarla.</p>' +
       '<div class="deck-slots">' + meta.deck.map(function (id) { return cardHtml(id, true); }).join('') + '</div>' +
       '<h3>Colección</h3>' + rarityFilters() +
       '<div class="card-grid">' + (collHtml || '<p class="muted coll-empty">No hay tropas de esta rareza</p>') + '</div>' +
       '<div class="legend"><b>Afinidad:</b> ' + Object.keys(ELEMENTS).map(function (k) { return ELEMENTS[k].icon + ' ' + ELEMENTS[k].name; }).join(' · ') + '. Dos tropas del mismo elemento juntas se potencian.</div>';
   } else if (name === 'commanders') {
-    html = backBar('Comandante') + '<p class="lead">Su habilidad se carga durante la partida. Pulsa su retrato para usarla.</p>' +
+    html = backBar('Mazo', true) + deckTabs('commanders') + '<p class="lead">Su habilidad se carga durante la partida. Pulsa su retrato para usarla.</p>' +
       COMMANDER_ORDER.map(function (k) {
         var c = COMMANDERS[k];
         return '<button class="big-choice cmd ' + (meta.commander === k ? 'sel' : '') + '" data-cmd="' + k + '" style="--cc:' + c.color + '"><span class="cmd-ico"><img src="' + c.pic + '" alt="' + esc(c.name) + '"></span><span><b>' + c.name + ' · ' + c.title + '</b><small>' + c.ability + ': ' + c.desc + ' (cada ' + c.cd + ' s)</small></span></button>';
       }).join('');
   } else if (name === 'shop') {
-    html = backBar('Tienda') + shopHtml();
+    html = backBar('Tienda', true) + shopHtml();
   } else if (name === 'howto') {
     html = backBar('Cómo jugar') + '<div class="howto">' +
       '<p><b>🎲 Invoca</b> tropas al azar de tu mazo. Cada invocación cuesta 10 💧 más que la anterior.</p>' +
@@ -155,7 +157,13 @@ function shopHtml() {
 function modeBtn(go, icon, title, sub, cls) {
   return '<button class="mode-btn ' + cls + '" data-go="' + go + '"><span class="mode-ico">' + icon + '</span><span><b>' + title + '</b><small>' + sub + '</small></span><span class="mode-go">▶</span></button>';
 }
-function backBar(title) { return '<div class="back-bar"><button class="back" data-go="home">‹</button><h2>' + title + '</h2>' + '<span class="pill gold">🪙 ' + meta.gold + '</span><span class="pill gem">💎 ' + meta.gems + '</span></div>'; }
+// Pestañas dentro de Mazo: tropas y comandante.
+function deckTabs(on) {
+  return '<div class="sub-tabs"><button data-go="collection" class="' + (on === 'collection' ? 'on' : '') + '">🃏 Tropas</button>' +
+    '<button data-go="commanders" class="' + (on === 'commanders' ? 'on' : '') + '">👑 Comandante</button></div>';
+}
+// tab: pantalla de la barra de abajo, sin botón de volver
+function backBar(title, tab) { return '<div class="back-bar">' + (tab ? '' : '<button class="back" data-go="home">‹</button>') + '<h2>' + title + '</h2>' + '<span class="pill gold">🪙 ' + meta.gold + '</span><span class="pill gem">💎 ' + meta.gems + '</span></div>'; }
 /* Filtro por rareza de la colección: todas o una rareza, con cuántas tienes de cada. */
 var collFilter = 'all';
 function rarityFilters() {
@@ -201,6 +209,7 @@ function bindMenu() {
         startBattle('campaign', { stage: next });
         return;
       }
+      if (g === 'codes') { showCodes(); return; }
       if (g === 'freeChest') { var r = claimFreeChest(); if (r) showChest(r); else toast('Vuelve mañana a por otro cofre'); return; }
       showScreen(g);
     };
@@ -355,6 +364,29 @@ function startCardDemo(cv, id) {
 
 function openOverlay(html) { var o = $('overlay'); o.innerHTML = html; o.hidden = false; }
 function closeOverlay() { $('overlay').hidden = true; $('overlay').innerHTML = ''; }
+
+/* Canjear códigos de regalo. */
+function showCodes() {
+  openOverlay('<div class="modal-card code-modal"><div class="code-ico">🎟️</div><h2>Códigos</h2>' +
+    '<p class="lead">Escribe un código de regalo para conseguir oro, gemas o cofres.</p>' +
+    '<input id="codeIn" class="code-in" type="text" maxlength="24" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="CÓDIGO">' +
+    '<p class="code-err" id="codeErr" hidden></p>' +
+    '<button class="btn btn-green" id="codeOk">Canjear</button><button class="btn btn-ghost" id="codeX">Cerrar</button></div>');
+  var inp = $('codeIn');
+  setTimeout(function () { try { inp.focus(); } catch (e) {} }, 50);
+  function go() {
+    var r = redeemCode(inp.value), err = $('codeErr');
+    if (r.error) { sfx('no'); buzz(20); err.textContent = r.error; err.hidden = false; return; }
+    var extra = [r.gold ? '+' + r.gold + ' 🪙' : '', r.gems ? '+' + r.gems + ' 💎' : ''].filter(Boolean).join(' · ');
+    if (r.chest) { showChest(r.chest); if (extra) toast('Además: ' + extra); return; }
+    sfx('chest');
+    openOverlay('<div class="modal-card chest-modal"><div class="chest-ico" style="--cc:#b48bff">🎟️</div><h2>¡Código canjeado!</h2><p class="gold-big">' + extra + '</p><button class="btn btn-green" id="chestOk">¡Genial!</button></div>');
+    $('chestOk').onclick = function () { closeOverlay(); renderMenu(currentScreen); };
+  }
+  $('codeOk').onclick = go;
+  inp.onkeydown = function (e) { if (e.key === 'Enter') go(); };
+  $('codeX').onclick = closeOverlay;
+}
 
 /* Aviso de legendaria secreta desbloqueada en un cofre. */
 function secretHtml(r) {
@@ -595,6 +627,12 @@ function initGame() {
     else if (e.key === 'q') $('cmdBtn').click();
     else if (e.key === 'Escape') confirmQuit();
     else if (e.key >= '1' && e.key <= '5') { var b = document.querySelectorAll('.dcard')[+e.key - 1]; if (b) b.click(); }
+  });
+  document.querySelectorAll('[data-tab]').forEach(function (b) {
+    b.onclick = function () {
+      if (b.dataset.tab === 'teams') { sfx('no'); toast('Equipos llegará pronto'); return; }
+      sfx('tap'); closeOverlay(); showScreen(b.dataset.tab);
+    };
   });
   showScreen('home');
   requestAnimationFrame(loop);

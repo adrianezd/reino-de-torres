@@ -10,6 +10,7 @@ function defaultMeta() {
   return {
     gold: 150, gems: 30, trophies: 0,
     shop: { day: '', bought: [] },   // ofertas compradas hoy
+    codes: [],                       // códigos ya canjeados
     cards: cards,
     deck: STARTER_UNITS.slice(),
     commander: 'aria',
@@ -167,4 +168,19 @@ function buyGold(i) {
   meta.gems -= p.gems; meta.gold += p.gold;
   saveMeta();
   return true;
+}
+
+/* ---------- códigos ---------- */
+function redeemCode(raw) {
+  var code = String(raw || '').toUpperCase().replace(/[^A-Z0-9Ñ]/g, '');
+  var c = CODES[code];
+  if (!code) return { error: 'Escribe un código' };
+  if (!c) return { error: 'Ese código no existe' };
+  if (meta.codes.indexOf(code) !== -1) return { error: 'Ya canjeaste ese código' };
+  meta.codes.push(code);
+  meta.gold += c.gold || 0;
+  meta.gems += c.gems || 0;
+  var chest = c.chest ? openChest(c.chest) : null;
+  saveMeta();
+  return { code: code, gold: c.gold || 0, gems: c.gems || 0, chest: chest };
 }

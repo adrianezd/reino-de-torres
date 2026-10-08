@@ -202,6 +202,15 @@ var SHOP_GOLD = [
   { gold: 3000, gems: 180 }
 ];
 
+/* Códigos de regalo: se canjean una vez cada uno (en mayúsculas, sin espacios).
+   gold / gems: cantidad · chest: tipo de cofre que se abre al canjearlo. */
+var CODES = {
+  BIENVENIDA:    { gold: 500, gems: 50 },
+  REINODETORRES: { chest: 'oro' },
+  GEMAS:         { gems: 30 },
+  FUSION:        { gold: 400 }
+};
+
 /* Afinidad: cada tropa vecina (arriba/abajo/izquierda/derecha) del mismo
    elemento da +AFFINITY_BONUS de daño. */
 var ELEMENTS = {

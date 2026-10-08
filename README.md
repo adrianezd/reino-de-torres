@@ -47,6 +47,10 @@ Oro, gemas, cartas con 10 niveles, cofres de madera, plata y oro, cofre gratis d
 
 La ficha de cada tropa muestra una mini partida con la tropa en acción.
 
+**Navegación:** barra de pestañas abajo con Tienda, Mazo (tropas y comandante), Jugar y Equipos (bloqueado, llegará pronto).
+
+**🎟️ Códigos:** en el inicio se canjean códigos de regalo (oro, gemas o cofres), una vez cada uno. Se definen en `CODES` de `js/data.js`.
+
 ## Arte
 
 - `assets/units/*.webp`: fichas ilustradas de las 12 tropas (recortadas de los originales `assets/*.jpg`).

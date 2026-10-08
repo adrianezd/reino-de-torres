@@ -15,10 +15,16 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Nunito:wght@700;800;900&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=16">
+<link rel="stylesheet" href="style.css?v=17">
 </head>
 <body>
   <div id="menu" class="menu"></div>
+  <nav id="navbar" class="navbar" aria-label="Secciones">
+    <button data-tab="shop"><i>🛒</i><span>Tienda</span></button>
+    <button data-tab="collection"><i>🃏</i><span>Mazo</span></button>
+    <button data-tab="home"><i>⚔️</i><span>Jugar</span></button>
+    <button data-tab="teams" class="locked"><i>🛡️</i><span>Equipos</span><b>🔒</b></button>
+  </nav>
 
   <div id="battleScreen" class="battle" hidden>
     <div class="b-top">
@@ -45,11 +51,11 @@
   <div id="overlay" class="overlay" hidden></div>
   <div id="toast" class="toast"></div>
 
-  <script src="js/data.js?v=15"></script>
+  <script src="js/data.js?v=16"></script>
   <script src="js/art.js?v=16"></script>
-  <script src="js/meta.js?v=14"></script>
+  <script src="js/meta.js?v=15"></script>
   <script src="js/board.js?v=15"></script>
   <script src="js/battle.js?v=15"></script>
-  <script src="js/ui.js?v=16"></script>
+  <script src="js/ui.js?v=17"></script>
 </body>
 </html>
