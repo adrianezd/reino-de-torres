@@ -58,7 +58,7 @@ Object.keys(IMG_LIST).forEach(function (dir) {
   IMG_LIST[dir].forEach(function (id) {
     var im = new Image();
     im.onload = function () { im.ready = true; imgReadyCount++; _unitIconCache = {}; _tintCache = {}; if (window.onArtReady) window.onArtReady(); };
-    im.src = 'assets/' + dir + '/' + id + '.webp' + (dir === 'boards' ? '?v=2' : dir === 'tiles' ? '?v=2' : '');
+    im.src = 'assets/' + dir + '/' + id + '.webp' + (dir === 'boards' ? '?v=3' : dir === 'tiles' ? '?v=2' : '');
     IMG[dir + '/' + id] = im;
   });
 });
@@ -74,7 +74,12 @@ function art(key) { var im = IMG[key]; return im && im.ready ? im : null; }
 
 /* Poses del tablero: cuerpo recortado sin chapa, en reposo y disparando.
    face: hacia dónde mira la pose de ataque (1 derecha, -1 izquierda). */
-var POSES = { lyra: { face: 1 }, brasa: { face: -1 }, rocco: { face: -1 }, sombra: { face: -1 } };
+var POSES = {
+  lyra: { face: 1 }, brasa: { face: -1 }, rocco: { face: -1 }, sombra: { face: -1 },
+  nivea: { face: -1 }, doblon: { face: 1 }, volta: { face: -1 }, mirra: { face: -1 },
+  melodia: { face: 1 }, cronos: { face: -1 }, halcon: { face: 1 }, ulric: { face: 1 },
+  fenix: { face: -1 }, aurora: { face: 1 }, titan: { face: 1 }
+};
 var ATK_POSE_TIME = 0.15;
 Object.keys(POSES).forEach(function (id) {
   ['idle', 'attack'].forEach(function (pose) {

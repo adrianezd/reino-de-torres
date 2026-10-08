@@ -180,11 +180,27 @@ var BIOMES = {
 };
 
 // secret: probabilidad por cofre de desbloquear una legendaria que solo sale en cofres
+// gems: gemas que trae el cofre · price: lo que cuesta en la tienda (en gemas)
 var CHESTS = {
-  madera: { name: 'Cofre de madera', gold: [40, 80],   cards: 6,  rare: 0.15, epic: 0.03, legend: 0,     secret: 0.002, color: '#a0663a' },
-  plata:  { name: 'Cofre de plata',  gold: [90, 160],  cards: 12, rare: 0.3,  epic: 0.08, legend: 0.01,  secret: 0.006, color: '#c9d4e6' },
-  oro:    { name: 'Cofre de oro',    gold: [200, 320], cards: 24, rare: 0.4,  epic: 0.15, legend: 0.04,  secret: 0.02,  color: '#ffd166' }
+  madera: { name: 'Cofre de madera', gold: [40, 80],   gems: [0, 2],  cards: 6,  rare: 0.15, epic: 0.03, legend: 0,     secret: 0.002, color: '#a0663a', price: 15 },
+  plata:  { name: 'Cofre de plata',  gold: [90, 160],  gems: [1, 4],  cards: 12, rare: 0.3,  epic: 0.08, legend: 0.01,  secret: 0.006, color: '#c9d4e6', price: 40 },
+  oro:    { name: 'Cofre de oro',    gold: [200, 320], gems: [4, 10], cards: 24, rare: 0.4,  epic: 0.15, legend: 0.04,  secret: 0.02,  color: '#ffd166', price: 90 }
 };
+var CHEST_ORDER = ['madera', 'plata', 'oro'];
+
+/* Tienda: ofertas de cartas que cambian cada día (cada una se compra una vez)
+   y oro a cambio de gemas. n: cartas por oferta · gold / gems: precio. */
+var SHOP_CARDS = {
+  comun:      { n: 10, gold: 120 },
+  rara:       { n: 5,  gold: 260 },
+  epica:      { n: 2,  gold: 520,  gems: 30 },
+  legendaria: { n: 1,  gold: 1400, gems: 90 }
+};
+var SHOP_GOLD = [
+  { gold: 300,  gems: 25 },
+  { gold: 1000, gems: 70 },
+  { gold: 3000, gems: 180 }
+];
 
 /* Afinidad: cada tropa vecina (arriba/abajo/izquierda/derecha) del mismo
    elemento da +AFFINITY_BONUS de daño. */

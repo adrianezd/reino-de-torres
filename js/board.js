@@ -41,15 +41,16 @@ var FIELDS = {
   prado: { image: 'board/tablero', iw: 1672, ih: 941, cx: 250, cy: 110, cw: 1180, ch: 831, fade: true,
     gx0: 477, gy0: 315, gx1: 1196, gy1: 690,
     way: [[805, 990], [805, 767], [322, 767], [322, 185], [1352, 185], [1352, 767], [866, 767], [866, 990]] },
-  // arena y lava: imágenes ya encajadas a la medida del prado (1180×831 y las
-  // casillas en el mismo sitio), así las casillas miden igual en los tres.
-  // Entrada y salida por abajo en el medio, como en el prado.
-  arena: { image: 'boards/arena', iw: 1180, ih: 831, cx: 0, cy: 0, cw: 1180, ch: 831, bg: 'fondo',
-    gx0: 227, gy0: 205, gx1: 946, gy1: 580,
-    way: [[558, 880], [558, 643], [148, 643], [148, 141], [1028, 141], [1028, 643], [622, 643], [622, 880]] },
-  lava: { image: 'boards/lava', iw: 1180, ih: 831, cx: 0, cy: 0, cw: 1180, ch: 831,
-    gx0: 227, gy0: 205, gx1: 946, gy1: 580,
-    way: [[560, 880], [560, 720], [42, 720], [42, 54], [1126, 54], [1126, 720], [620, 720], [620, 880]] }
+  // arena y lava: camino en U alrededor de las casillas. Los monstruos
+  // aparecen abajo a la izquierda, suben, cruzan por arriba y desaparecen
+  // abajo a la derecha (portal: aparecen y se van encogiendo).
+  arena: { image: 'boards/arena', iw: 1248, ih: 832, cx: 0, cy: 0, cw: 1248, ch: 832, bg: 'fondo', portal: true,
+    gx0: 272, gy0: 226, gx1: 970, gy1: 603,
+    way: [[198, 664], [198, 168], [1050, 168], [1050, 664]] },
+  // la lava va recortada alrededor del río de lava (710×560)
+  lava: { image: 'boards/lava', iw: 710, ih: 560, cx: 0, cy: 0, cw: 710, ch: 560, portal: true,
+    gx0: 166, gy0: 144, gx1: 552, gy1: 364,
+    way: [[59, 462], [59, 56], [650, 56], [650, 462]] }
 };
 var BIOME_FIELD = { prado: 'prado', bosque: 'prado', pantano: 'prado', hielo: 'arena', ruinas: 'arena', desierto: 'arena', volcan: 'lava', cripta: 'lava' };
 function fieldGeo(id) {
@@ -364,10 +365,16 @@ Board.prototype.update = function (dt) {
         u.gen = 0;
         var amt = Math.round(d.manaGen.amount * u.rank * (1 + 0.25 * ((this.power[u.id] || 1) - 1)));
         this.mana += amt;
+        u.atk = 0.5; // pose de ataque al repartir el maná
         var p = this.cc(i);
         this.addText(p.x, p.y - 0.5, '+' + amt + ' 💧', '#7dfcff');
       }
       continue;
+    }
+    if (d.buff) {
+      // la bardo toca: pose de ataque a ratos
+      u.gen += dt;
+      if (u.gen >= 2.4) { u.gen = 0; u.atk = 0.5; }
     }
     if (!d.dmg) continue;
     u.cd -= dt * d.rate * this.unitSpeed(i) * (1 + 0.06 * (u.rank - 1));

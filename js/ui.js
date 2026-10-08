@@ -51,7 +51,7 @@ function showScreen(name) {
   if (name !== 'battle') renderMenu(name);
 }
 function topBar() {
-  return '<div class="res-bar"><span class="pill gold">🪙 ' + meta.gold + '</span><span class="pill trophy">🏆 ' + meta.trophies + '</span><span class="pill star">⭐ ' + totalStars() + '</span></div>';
+  return '<div class="res-bar"><span class="pill gold">🪙 ' + meta.gold + '</span><span class="pill gem">💎 ' + meta.gems + '</span><span class="pill trophy">🏆 ' + meta.trophies + '</span><span class="pill star">⭐ ' + totalStars() + '</span></div>';
 }
 function renderMenu(name, arg) {
   var m = $('menu');
@@ -69,6 +69,7 @@ function renderMenu(name, arg) {
       '</div>' +
       '<div class="home-grid">' +
       '<button class="tile-btn" data-go="collection">🃏<span>Tropas</span></button>' +
+      '<button class="tile-btn shop" data-go="shop">🛒<span>Tienda</span></button>' +
       '<button class="tile-btn" data-go="commanders">👑<span>Comandante</span></button>' +
       '<button class="tile-btn ' + (free ? 'glow' : '') + '" data-go="freeChest">🎁<span>' + (free ? 'Cofre gratis' : 'Mañana más') + '</span></button>' +
       '<button class="tile-btn" data-go="howto">❓<span>Cómo jugar</span></button>' +
@@ -104,6 +105,8 @@ function renderMenu(name, arg) {
         var c = COMMANDERS[k];
         return '<button class="big-choice cmd ' + (meta.commander === k ? 'sel' : '') + '" data-cmd="' + k + '" style="--cc:' + c.color + '"><span class="cmd-ico"><img src="' + c.pic + '" alt="' + esc(c.name) + '"></span><span><b>' + c.name + ' · ' + c.title + '</b><small>' + c.ability + ': ' + c.desc + ' (cada ' + c.cd + ' s)</small></span></button>';
       }).join('');
+  } else if (name === 'shop') {
+    html = backBar('Tienda') + shopHtml();
   } else if (name === 'howto') {
     html = backBar('Cómo jugar') + '<div class="howto">' +
       '<p><b>🎲 Invoca</b> tropas al azar de tu mazo. Cada invocación cuesta 10 💧 más que la anterior.</p>' +
@@ -115,16 +118,44 @@ function renderMenu(name, arg) {
       '<p><b>👑 Comandante:</b> cuando su retrato esté cargado, tócalo para usar su habilidad.</p>' +
       '<p><b>🌑 Eventos:</b> algunas oleadas traen Eclipse, Lluvia de maná, Niebla, Horda o Calma.</p>' +
       '<p><b>💧 Maná:</b> se gana derrotando monstruos, con el Mercader Doblón y con la Fuente.</p>' +
+      '<p><b>💎 Gemas:</b> salen en los cofres, por cada estrella nueva de la campaña, al ganar duelos y en el cooperativo. Gástalas en la tienda.</p>' +
       '</div>';
   }
   m.innerHTML = html;
   m.scrollTop = 0;
   bindMenu();
 }
+/* Tienda: ofertas de cartas del día, cofres por gemas y oro por gemas. */
+function shopHtml() {
+  var now = new Date(), mid = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+  var left = Math.max(1, Math.ceil((mid - now) / 3600000));
+  var price = function (cur, v, poor) { return '<span class="sh-price' + (poor ? ' poor' : '') + '">' + (cur === 'gems' ? '💎' : '🪙') + ' ' + v + '</span>'; };
+  var offers = shopOffers().map(function (o) {
+    var u = UNITS[o.id], sold = shopBought(o.i), poor = (o.cur === 'gems' ? meta.gems : meta.gold) < o.price;
+    return '<button class="sh-offer' + (sold ? ' sold' : '') + (o.cur === 'gems' ? ' gemmy' : '') + '" data-offer="' + o.i + '" style="--rc:' + RARITY[u.rarity].color + '"' + (sold ? ' disabled' : '') + '>' +
+      '<span class="sh-rar">' + RARITY[u.rarity].name + '</span>' +
+      '<img src="' + unitIcon(o.id, 0, 112) + '" alt="">' +
+      '<b>' + esc(u.name) + '</b><span class="sh-n">×' + o.n + ' cartas</span>' +
+      (sold ? '<span class="sh-price sold">Comprada</span>' : price(o.cur, o.price, poor)) + '</button>';
+  }).join('');
+  var chests = CHEST_ORDER.map(function (k) {
+    var ch = CHESTS[k];
+    return '<button class="sh-chest" data-buychest="' + k + '" style="--cc:' + ch.color + '"><span class="sh-chest-ico">🎁</span><b>' + ch.name.replace('Cofre de ', '') + '</b>' +
+      '<small>' + ch.cards + ' cartas · ' + ch.gold[0] + ' a ' + ch.gold[1] + ' 🪙</small>' + price('gems', ch.price, meta.gems < ch.price) + '</button>';
+  }).join('');
+  var golds = SHOP_GOLD.map(function (p, i) {
+    return '<button class="sh-gold" data-buygold="' + i + '"><span class="sh-gold-ico">' + ['🪙', '💰', '👑'][i] + '</span><b>' + p.gold + ' 🪙</b>' + price('gems', p.gems, meta.gems < p.gems) + '</button>';
+  }).join('');
+  return '<div class="sh-head"><h3>Ofertas del día</h3><small>Cambian en ' + left + ' h</small></div>' +
+    '<div class="sh-offers">' + (offers || '<p class="muted">Desbloquea tropas para ver ofertas</p>') + '</div>' +
+    '<div class="sh-head"><h3>Cofres</h3><small>También dan gemas</small></div><div class="sh-chests">' + chests + '</div>' +
+    '<div class="sh-head"><h3>Oro</h3></div><div class="sh-golds">' + golds + '</div>' +
+    '<p class="muted">💎 Ganas gemas en los cofres, con cada estrella nueva de la campaña, al ganar duelos y en el cooperativo.</p>';
+}
 function modeBtn(go, icon, title, sub, cls) {
   return '<button class="mode-btn ' + cls + '" data-go="' + go + '"><span class="mode-ico">' + icon + '</span><span><b>' + title + '</b><small>' + sub + '</small></span><span class="mode-go">▶</span></button>';
 }
-function backBar(title) { return '<div class="back-bar"><button class="back" data-go="home">‹</button><h2>' + title + '</h2>' + '<span class="pill gold">🪙 ' + meta.gold + '</span></div>'; }
+function backBar(title) { return '<div class="back-bar"><button class="back" data-go="home">‹</button><h2>' + title + '</h2>' + '<span class="pill gold">🪙 ' + meta.gold + '</span><span class="pill gem">💎 ' + meta.gems + '</span></div>'; }
 /* Filtro por rareza de la colección: todas o una rareza, con cuántas tienes de cada. */
 var collFilter = 'all';
 function rarityFilters() {
@@ -179,6 +210,22 @@ function bindMenu() {
   m.querySelectorAll('[data-cmd]').forEach(function (b) { b.onclick = function () { meta.commander = b.dataset.cmd; saveMeta(); sfx('tap'); renderMenu('commanders'); }; });
   m.querySelectorAll('[data-rf]').forEach(function (b) { b.onclick = function () { collFilter = b.dataset.rf; sfx('tap'); renderMenu('collection'); }; });
   m.querySelectorAll('[data-card]').forEach(function (b) { b.onclick = function () { sfx('tap'); showCardModal(b.dataset.card); }; });
+  m.querySelectorAll('[data-offer]').forEach(function (b) {
+    b.onclick = function () {
+      var o = shopOffers()[+b.dataset.offer], r = buyOffer(+b.dataset.offer);
+      if (r === 'ok') { sfx('power'); buzz(20); toast('+' + o.n + ' cartas de ' + UNITS[o.id].name); renderMenu('shop'); }
+      else if (r === 'poor') { sfx('no'); toast(o.cur === 'gems' ? 'Te faltan gemas' : 'Te falta oro'); }
+    };
+  });
+  m.querySelectorAll('[data-buychest]').forEach(function (b) {
+    b.onclick = function () { var r = buyChest(b.dataset.buychest); if (r) showChest(r); else { sfx('no'); toast('Te faltan gemas'); } };
+  });
+  m.querySelectorAll('[data-buygold]').forEach(function (b) {
+    b.onclick = function () {
+      if (buyGold(+b.dataset.buygold)) { sfx('chest'); toast('+' + SHOP_GOLD[+b.dataset.buygold].gold + ' 🪙'); renderMenu('shop'); }
+      else { sfx('no'); toast('Te faltan gemas'); }
+    };
+  });
   var sc = $('soundChk'); if (sc) sc.onchange = function () { meta.settings.sound = sc.checked; saveMeta(); };
 }
 
@@ -219,6 +266,7 @@ function showCardModal(id) {
     '<p class="uc-title">' + esc(u.title) + '</p>' +
     '<div class="uc-chips"><span class="uc-chip rar">' + (u.rarity === 'legendaria' ? '★ ' : '') + rar.name + '</span><span class="uc-chip el">' + el.icon + ' ' + el.name + '</span><span class="uc-chip">' + esc(u.role) + '</span></div>' +
     '<p class="uc-desc">' + esc(u.desc) + (u.chestOnly ? '<br><em>🎁 Solo sale en cofres</em>' : '') + '</p>' +
+    '<div class="uc-demo"><canvas id="ucDemo" aria-label="' + esc(u.name) + ' en acción"></canvas><span>En acción</span></div>' +
     '<div class="pause-stats uc-stats">' + stats + '</div>' +
     (traits ? '<div class="uc-traits">' + traits + '</div>' : '') +
     '<div class="uc-level"><span class="uc-lvmedal">' + c.lv + '</span><div class="uc-lvbody"><div class="uc-lvtop"><b>' + (maxed ? 'Nivel máximo' : 'Nivel ' + c.lv) + '</b>' + gain + '</div>' +
@@ -227,6 +275,7 @@ function showCardModal(id) {
     (inDeck ? '<p class="uc-indeck">✔ En tu mazo</p>' : '<p class="uc-swap-t">Ponla en el mazo en lugar de</p><div class="swap-row">' + meta.deck.map(function (d) { return '<button data-swap="' + d + '" style="--rc:' + RARITY[UNITS[d].rarity].color + '"><img src="' + unitIcon(d, 0, 80) + '" alt="' + esc(UNITS[d].name) + '"></button>'; }).join('') + '</div>') +
     '<button class="btn btn-ghost" id="mcClose">Cerrar</button></div>';
   openOverlay(html);
+  startCardDemo($('ucDemo'), id);
   var up = $('mcUp');
   if (up) up.onclick = function () { if (upgradeCard(id)) { sfx('power'); toast(u.name + ' sube a nivel ' + meta.cards[id].lv); showCardModal(id); renderMenu('collection'); } };
   document.querySelectorAll('[data-swap]').forEach(function (b) {
@@ -234,6 +283,74 @@ function showCardModal(id) {
   });
   $('mcClose').onclick = closeOverlay;
   $('mcX').onclick = closeOverlay;
+}
+
+/* Mini partida en la ficha de una tropa: la tropa en su casilla disparando
+   a los monstruos que pasan por el camino (Melodía, con Lyra al lado). */
+function startCardDemo(cv, id) {
+  if (!cv) return;
+  var W = 6, H = 2.5, PY = 1.9;
+  var geo = makeGeo({ W: W, H: H, x0: 2.5, y0: 0.4, cw: 1, ch: 1, way: [{ x: -0.6, y: PY }, { x: W + 0.6, y: PY }] });
+  var deck = UNITS[id].buff ? [id, 'lyra'] : [id];
+  var lv = {}; deck.forEach(function (k) { lv[k] = meta.cards[k] ? meta.cards[k].lv : 1; });
+  var b = new Board({ name: 'demo', deck: deck, cardLv: lv, lives: { v: 999, max: 999 }, geo: geo, mana: 0 });
+  b.tiles = {};
+  b.cells[0] = { id: id, rank: 1, cd: 0.3, frozen: 0, anim: 0, gen: UNITS[id].manaGen ? UNITS[id].manaGen.every - 1.2 : 0 };
+  if (UNITS[id].buff) { b.cells[0].id = 'lyra'; b.cells[1] = { id: id, rank: 1, cd: 0, frozen: 0, anim: 0, gen: 1.5 }; }
+  // vida de los monstruos: unos cuantos golpes de la tropa
+  var dps = UNITS[b.cells[0].id].dmg ? b.unitDamage(0) * UNITS[b.cells[0].id].rate : 20;
+  var kinds = ['blob', 'orco', 'ghost', 'brute'], nk = 0, spawnT = 0, last = 0;
+  var dc = cv.getContext('2d');
+  function frame(t) {
+    if (!cv.isConnected) return;
+    var dt = last ? Math.min(0.05, (t - last) / 1000) : 0; last = t;
+    var r = window.devicePixelRatio || 1, cw = cv.clientWidth, chh = cv.clientHeight;
+    if (cv.width !== Math.round(cw * r)) { cv.width = Math.round(cw * r); cv.height = Math.round(chh * r); }
+    var sc = Math.min(cw / W, chh / H), ox = (cw - W * sc) / 2, oy = (chh - H * sc) / 2;
+    spawnT -= dt;
+    if (spawnT <= 0 && b.enemies.length < 6) {
+      spawnT = 1.3;
+      var k = kinds[nk++ % kinds.length];
+      b.spawn(k, Math.max(25, dps * 1.8 * ENEMIES[k].hp), { speedMult: 2.4 });
+    }
+    b.update(dt);
+    dc.setTransform(r, 0, 0, r, 0, 0);
+    var g = dc.createLinearGradient(0, 0, 0, chh); g.addColorStop(0, '#6fc322'); g.addColorStop(1, '#4f9a1c');
+    dc.fillStyle = g; dc.fillRect(0, 0, cw, chh);
+    dc.save(); dc.translate(ox, oy); dc.scale(sc, sc);
+    dc.fillStyle = '#c9a66b'; dc.fillRect(-1, PY - 0.42, W + 2, 0.84);
+    dc.fillStyle = '#e6c78c'; dc.fillRect(-1, PY - 0.36, W + 2, 0.72);
+    for (var i = 0; i < 2; i++) {
+      if (!b.cells[i]) continue;
+      var c = b.cc(i), u = b.cells[i];
+      dc.fillStyle = 'rgba(0,0,0,0.18)'; rrect(dc, c.x - 0.46, c.y - 0.46, 0.92, 0.92, 0.14); dc.fill();
+      drawUnit(dc, u.id, c.x, c.y - 0.02, 0.42 * (1 + u.anim * 0.25), u.rank, t, { board: true, atk: u.atk, aim: u.aim });
+    }
+    b.enemies.slice().sort(function (p, q) { return p.y - q.y; }).forEach(function (e) {
+      drawEnemy(dc, e, ENEMIES[e.kind].size * 0.82, t);
+    });
+    var keep = ctx; ctx = dc; // drawShot dibuja en el lienzo global
+    b.shots.forEach(function (s2) { drawShot(s2, t); });
+    ctx = keep;
+    b.fx.forEach(function (f) {
+      var a = f.life / f.max;
+      dc.globalAlpha = a; dc.strokeStyle = f.color; dc.lineWidth = 0.06;
+      if (f.type === 'bolt') { dc.beginPath(); dc.moveTo(f.x1, f.y1); dc.lineTo(f.x2, f.y2); dc.stroke(); }
+      else if (f.type !== 'flash') { circle(dc, f.x, f.y, (f.type === 'boom' ? f.r : 0.5) * (1.4 - a)); dc.stroke(); }
+      dc.globalAlpha = 1;
+    });
+    dc.restore();
+    dc.textAlign = 'center'; dc.textBaseline = 'middle';
+    b.texts.forEach(function (tx) {
+      dc.globalAlpha = Math.min(1, tx.life / tx.max * 1.6);
+      dc.font = '900 ' + Math.max(10, sc * (tx.big ? 0.3 : 0.24)) + 'px Nunito, sans-serif';
+      dc.lineWidth = 3; dc.strokeStyle = 'rgba(10,8,20,0.85)';
+      dc.strokeText(tx.text, ox + tx.x * sc, oy + tx.y * sc); dc.fillStyle = tx.color; dc.fillText(tx.text, ox + tx.x * sc, oy + tx.y * sc);
+    });
+    dc.globalAlpha = 1;
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
 }
 
 function openOverlay(html) { var o = $('overlay'); o.innerHTML = html; o.hidden = false; }
@@ -251,7 +368,7 @@ function showChest(r) {
   var cards = Object.keys(r.cards).map(function (id) {
     return '<div class="chest-card" style="--rc:' + RARITY[UNITS[id].rarity].color + '"><img src="' + unitIcon(id, 0, 96) + '" alt=""><b>×' + r.cards[id] + '</b><small>' + esc(UNITS[id].name) + '</small></div>';
   }).join('');
-  openOverlay('<div class="modal-card chest-modal"><div class="chest-ico" style="--cc:' + ch.color + '">🎁</div><h2>' + ch.name + '</h2><p class="gold-big">+' + r.gold + ' 🪙</p>' + secretHtml(r) + '<div class="chest-cards">' + cards + '</div><button class="btn btn-green" id="chestOk">¡Genial!</button></div>');
+  openOverlay('<div class="modal-card chest-modal"><div class="chest-ico" style="--cc:' + ch.color + '">🎁</div><h2>' + ch.name + '</h2><p class="gold-big">+' + r.gold + ' 🪙' + (r.gems ? ' · +' + r.gems + ' 💎' : '') + '</p>' + secretHtml(r) + '<div class="chest-cards">' + cards + '</div><button class="btn btn-green" id="chestOk">¡Genial!</button></div>');
   $('chestOk').onclick = function () { closeOverlay(); renderMenu(currentScreen === 'battle' ? 'home' : currentScreen); };
 }
 
@@ -341,7 +458,7 @@ function showResult(res) {
   var unlock = res.unlocked ? '<div class="res-unlock"><img src="' + unitIcon(res.unlocked, 0, 96) + '" alt=""><b>¡Nueva tropa: ' + esc(UNITS[res.unlocked].name) + '!</b></div>' : '';
   openOverlay('<div class="modal-card result ' + (res.won ? 'win' : 'lose') + '"><div class="res-emoji">' + (res.won ? '🏆' : '💀') + '</div><h2>' + title + '</h2>' + stars +
     '<p>' + res.lines.map(esc).join('<br>') + '</p>' +
-    '<p class="res-gold">+' + res.gold + ' 🪙' + (res.trophies ? ' · ' + (res.trophies > 0 ? '+' : '') + res.trophies + ' 🏆' : '') + '</p>' + chest + unlock +
+    '<p class="res-gold">+' + res.gold + ' 🪙' + (res.gems ? ' · +' + res.gems + ' 💎' : '') + (res.trophies ? ' · ' + (res.trophies > 0 ? '+' : '') + res.trophies + ' 🏆' : '') + '</p>' + chest + unlock +
     '<p class="muted">Bajas ' + res.kills + ' · Daño ' + fmtNum(res.damage) + '</p>' +
     '<button class="btn btn-green" id="resAgain">' + (res.mode === 'campaign' && res.won && battle.stage.id < 15 ? 'Siguiente fase ▶' : 'Otra vez') + '</button>' +
     '<button class="btn btn-ghost" id="resMenu">Menú</button></div>');

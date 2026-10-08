@@ -41,14 +41,19 @@ Tower defense de fusión para móvil y escritorio, gratis y sin anuncios. Invoca
 
 ## Progreso
 
-Oro, cartas con 10 niveles, cofres de madera, plata y oro, cofre gratis diario, mazo de 5 tropas, trofeos y estrellas. Todo se guarda en el navegador.
+Oro, gemas, cartas con 10 niveles, cofres de madera, plata y oro, cofre gratis diario, mazo de 5 tropas, trofeos y estrellas. Todo se guarda en el navegador.
+
+**🛒 Tienda:** ofertas de cartas que cambian cada día (por oro o, las épicas y legendarias, por gemas), cofres por gemas y oro a cambio de gemas. Las gemas salen en los cofres, por cada estrella nueva de la campaña, al ganar duelos y en el cooperativo.
+
+La ficha de cada tropa muestra una mini partida con la tropa en acción.
 
 ## Arte
 
 - `assets/units/*.webp`: fichas ilustradas de las 12 tropas (recortadas de los originales `assets/*.jpg`).
 - `assets/enemies/*.webp`: gelatina, espectro, ogro, orco, rocoso, gólem de escarcha y los jefes Señor Gélido, Coloso (con versión blindada), Nigromante y Dragón. El Diablillo y el Rey Gelatina salen de la gelatina teñida.
 - `assets/tiles/*.webp`: suelo de las casillas Altar, Fuente y Atalaya.
-- `assets/tablero.*`, `assets/boards/arena.webp` y `assets/boards/lava.webp`: tableros ilustrados de la campaña (prado, arena con marco de madera para hielo, ruinas y desierto, y lava para volcán y cripta).
+- `assets/tablero.*`, `assets/boards/arena.webp` y `assets/boards/lava.webp`: tableros ilustrados de la campaña (prado, arena con marco de madera para hielo, ruinas y desierto, y lava para volcán y cripta). En arena y lava los monstruos aparecen abajo a la izquierda, rodean las casillas en U y se van abajo a la derecha. Salen de `assets/tablero-arena.jpg` y `assets/tablero-lava.jpg`.
+- `assets/units/board/*-idle.webp` y `*-attack.webp`: las 15 tropas en el tablero sin chapa, en reposo (recortadas de su ficha) y atacando (de los originales `assets/*-attacking.*`).
 - `assets/commanders/*.webp`: retratos de Aria, Merlo y Brann.
 - `assets/events/*.webp`: medallones de los eventos de oleada (recortados de `assets/wave_events.jpg`).
 - `assets/ui/`: botón de jugar, botones verde y amarillo, corazón de vida, gota y frasco de maná, aro del comandante, marcos de carta, carta de la colección y fondo del menú.

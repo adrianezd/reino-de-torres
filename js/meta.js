@@ -8,7 +8,8 @@ function defaultMeta() {
   var cards = {};
   STARTER_UNITS.forEach(function (id) { cards[id] = { lv: 1, n: 0 }; });
   return {
-    gold: 150, trophies: 0,
+    gold: 150, gems: 30, trophies: 0,
+    shop: { day: '', bought: [] },   // ofertas compradas hoy
     cards: cards,
     deck: STARTER_UNITS.slice(),
     commander: 'aria',
@@ -70,6 +71,7 @@ function upgradeCard(id) {
 function openChest(type) {
   var ch = CHESTS[type];
   var gold = Math.round(ch.gold[0] + Math.random() * (ch.gold[1] - ch.gold[0]));
+  var gems = Math.round(ch.gems[0] + Math.random() * (ch.gems[1] - ch.gems[0]));
   var owned = Object.keys(meta.cards);
   var byRarity = { comun: [], rara: [], epica: [], legendaria: [] };
   owned.forEach(function (id) { byRarity[UNITS[id].rarity].push(id); });
@@ -84,6 +86,7 @@ function openChest(type) {
     got[id] = (got[id] || 0) + 1;
   }
   meta.gold += gold;
+  meta.gems += gems;
   Object.keys(got).forEach(function (id) { meta.cards[id].n += got[id]; });
   // muy de vez en cuando, una legendaria que solo sale en cofres
   var secret = null;
@@ -93,7 +96,7 @@ function openChest(type) {
     meta.cards[secret] = { lv: 1, n: 0 };
   }
   saveMeta();
-  return { type: type, gold: gold, cards: got, secret: secret };
+  return { type: type, gold: gold, gems: gems, cards: got, secret: secret };
 }
 
 function todayKey() {
@@ -110,3 +113,58 @@ function totalStars() {
   return Object.keys(meta.campaign).reduce(function (s, k) { return s + meta.campaign[k]; }, 0);
 }
 function stageUnlocked(n) { return n === 1 || (meta.campaign[n - 1] || 0) > 0; }
+
+/* ---------- tienda ---------- */
+// Ofertas del día: salen siempre igual durante el día (semilla = fecha).
+// Tres de cartas por oro y una de carta épica o legendaria por gemas.
+function shopOffers() {
+  var key = todayKey(), seed = 0;
+  for (var i = 0; i < key.length; i++) seed = (seed * 31 + key.charCodeAt(i)) % 233280;
+  var rnd = function () { seed = (seed * 9301 + 49297) % 233280; return seed / 233280; };
+  var owned = UNIT_ORDER.filter(function (id) { return meta.cards[id]; });
+  var of = function (r) { return owned.filter(function (id) { return UNITS[id].rarity === r; }); };
+  var pickFrom = function (list, taken) {
+    var free = list.filter(function (id) { return taken.indexOf(id) === -1; });
+    if (!free.length) free = list;
+    return free.length ? free[Math.floor(rnd() * free.length)] : null;
+  };
+  var out = [], taken = [];
+  var add = function (rarities, cur) {
+    for (var k = 0; k < rarities.length; k++) {
+      var id = pickFrom(of(rarities[k]), taken);
+      if (id) { taken.push(id); var p = SHOP_CARDS[rarities[k]]; out.push({ id: id, n: p.n, cur: cur, price: p[cur] }); return; }
+    }
+  };
+  add(['comun'], 'gold');
+  add([rnd() < 0.5 ? 'comun' : 'rara', 'comun'], 'gold');
+  add(['rara', 'comun'], 'gold');
+  add([rnd() < 0.25 ? 'legendaria' : 'epica', 'epica', 'legendaria'], 'gems');
+  out.forEach(function (o, i) { o.i = i; });
+  return out;
+}
+function shopBought(i) { return meta.shop.day === todayKey() && meta.shop.bought.indexOf(i) !== -1; }
+function buyOffer(i) {
+  var o = shopOffers()[i];
+  if (!o || shopBought(i)) return 'sold';
+  var have = o.cur === 'gems' ? meta.gems : meta.gold;
+  if (have < o.price) return 'poor';
+  if (o.cur === 'gems') meta.gems -= o.price; else meta.gold -= o.price;
+  if (meta.shop.day !== todayKey()) meta.shop = { day: todayKey(), bought: [] };
+  meta.shop.bought.push(i);
+  meta.cards[o.id].n += o.n;
+  saveMeta();
+  return 'ok';
+}
+function buyChest(type) {
+  var ch = CHESTS[type];
+  if (meta.gems < ch.price) return null;
+  meta.gems -= ch.price;
+  return openChest(type);
+}
+function buyGold(i) {
+  var p = SHOP_GOLD[i];
+  if (!p || meta.gems < p.gems) return false;
+  meta.gems -= p.gems; meta.gold += p.gold;
+  saveMeta();
+  return true;
+}

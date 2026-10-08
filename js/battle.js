@@ -147,7 +147,7 @@ function endBattle(won) {
   var b = battle;
   if (b.ended) return;
   b.ended = true;
-  var res = { won: won, mode: b.mode, lines: [], gold: 0, chest: null, stars: 0, trophies: 0 };
+  var res = { won: won, mode: b.mode, lines: [], gold: 0, gems: 0, chest: null, stars: 0, trophies: 0 };
   if (b.mode === 'campaign') {
     var st = b.stage;
     if (won) {
@@ -155,7 +155,8 @@ function endBattle(won) {
       res.stars = lives >= 5 ? 3 : lives >= 3 ? 2 : 1;
       var prev = meta.campaign[st.id] || 0;
       res.gold = st.gold + (res.stars > prev ? (res.stars - prev) * 30 : 0);
-      if (res.stars > prev) meta.campaign[st.id] = res.stars;
+      // gemas por cada estrella nueva
+      if (res.stars > prev) { res.gems = (res.stars - prev) * 5; meta.campaign[st.id] = res.stars; }
       if (st.unlock && unlockUnit(st.unlock)) res.unlocked = st.unlock;
       res.chest = res.stars === 3 ? 'oro' : res.stars === 2 ? 'plata' : 'madera';
       res.lines.push('Has defendido ' + st.name + '.');
@@ -167,6 +168,7 @@ function endBattle(won) {
     if (won) {
       res.trophies = 25 + (b.opts.level || 1) * 5;
       res.gold = 60 + b.opts.level * 40;
+      res.gems = 2 + b.opts.level * 2;
       res.chest = b.opts.level >= 2 ? 'oro' : 'plata';
       meta.duelWins++;
       res.lines.push(b.other.name + ' no pudo con tu defensa.');
@@ -179,6 +181,7 @@ function endBattle(won) {
     meta.trophies = Math.max(0, meta.trophies + res.trophies);
   } else {
     res.gold = 20 + b.wave * 12;
+    res.gems = Math.floor(b.wave / 5);
     res.chest = b.wave >= 20 ? 'oro' : b.wave >= 10 ? 'plata' : 'madera';
     if (b.wave > meta.coopBest) { meta.coopBest = b.wave; res.lines.push('¡Nuevo récord!'); }
     res.lines.push('Aguantasteis hasta la oleada ' + b.wave + '.');
@@ -186,6 +189,7 @@ function endBattle(won) {
     res.won = b.wave >= 10;
   }
   meta.gold += res.gold;
+  meta.gems += res.gems;
   if (res.chest) res.chestResult = openChest(res.chest);
   saveMeta();
   res.kills = b.player.kills;
@@ -458,7 +462,9 @@ function drawBoard(b, L, now, isMain) {
   ens.forEach(function (e) {
     var d = e.boss ? BOSSES[e.kind] : ENEMIES[e.kind];
     // en el tablero dibujado salen del portal: aparecen creciendo
-    var grow = G.image ? 1 : Math.min(1, 0.25 + e.d / 0.5);
+    // (en arena y lava, además, se van encogiendo al final de la U)
+    var grow = G.image && !G.px.portal ? 1 : Math.min(1, 0.25 + e.d / 0.5);
+    if (G.image && G.px.portal) grow = Math.min(grow, 0.25 + (G.len - e.d) / 0.5);
     if (grow < 1) ctx.globalAlpha = grow;
     drawEnemy(ctx, e, (e.boss ? 0.42 : d.size) * (G.image ? 0.82 : 1) * grow, now);
     ctx.globalAlpha = 1;
