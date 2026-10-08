@@ -317,7 +317,7 @@ function fitFrame(L, g, w, h, top) {
 
 /* Cabecera del rival o aliado, como en el género: retrato del comandante
    con su carga, nombre, vidas (duelo) y maná, y a la derecha las cartas de
-   su mazo con el nivel de carta abajo y la mejora de la partida arriba. */
+   su mazo con su nivel en la partida. */
 var RIVAL_HEAD_H = 40;
 function drawRivalHeader(b, L) {
   var x0 = 6, x1 = layout.w - 6, hh = RIVAL_HEAD_H - 4, y0 = L.oy - hh - 3, cy = y0 + hh / 2;
@@ -360,16 +360,11 @@ function drawRivalHeader(b, L) {
     ctx.lineWidth = 1.5; ctx.strokeStyle = '#f5c400'; ctx.stroke();
     var up = art('units/' + id);
     if (up) ctx.drawImage(up, cx + 1, ty + 1, cw - 2, ch - 2);
-    // nivel de la carta (abajo) y mejora comprada en esta partida (arriba)
-    var lv = String(b.cardLv[id] || 1), bw = 13, bx = cx + cw / 2, by = ty + ch - 1;
+    // nivel de la tropa en esta partida (empieza en 1 y sube con sus mejoras), como en tu barra
+    var lv = String(b.power[id] || 1), bw = 13, bx = cx + cw / 2, by = ty + ch - 1;
     ctx.fillStyle = '#f5c400'; rrect(ctx, bx - bw / 2 - 1, by - 7, bw + 2, 11, 4); ctx.fill();
     ctx.lineWidth = 1.2; ctx.strokeStyle = '#3a2600'; ctx.stroke();
     ctx.textAlign = 'center'; ctx.font = '400 10px "Lilita One", Nunito, sans-serif'; ctx.fillStyle = '#3a1d00'; ctx.fillText(lv, bx, by - 1.5);
-    var pw = (b.power[id] || 1) - 1;
-    if (pw > 0) {
-      ctx.fillStyle = '#3aa0ff'; circle(ctx, cx + 4, ty + 4, 6); ctx.fill(); ctx.strokeStyle = '#0d2a5a'; ctx.stroke();
-      ctx.fillStyle = '#fff'; ctx.font = '400 9px "Lilita One", Nunito, sans-serif'; ctx.fillText('+' + pw, cx + 4, ty + 4.5);
-    }
   });
   ctx.restore();
 }
