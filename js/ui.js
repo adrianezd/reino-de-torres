@@ -4,6 +4,15 @@
    ========================================================= */
 function $(id) { return document.getElementById(id); }
 function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+/* Iconos ilustrados (assets/icons) en lugar de los emojis del sistema: se
+   cambian en todo el HTML de menús, modales, avisos y marcador. */
+var ICON_FILES = { '🪙': 'icons/moneda', '💎': 'icons/gema', '🏆': 'icons/trofeo', '⭐': 'icons/estrella', '👑': 'icons/corona', '🔒': 'icons/candado',
+  '⏱': 'icons/reloj', '⏳': 'icons/reloj', '🎟': 'icons/ticket', '❓': 'icons/pergamino', '⚔': 'icons/espadas', '💧': 'icons/gota', '🎁': 'chests/madera' };
+var ICON_RE = /(🪙|💎|🏆|⭐|👑|🔒|⏱|⏳|🎟|❓|⚔|💧|🎁)️?/g;
+// etiqueta propia con la imagen de fondo: así no le afectan las reglas de
+// «img», «span» o «i» de los sitios donde cae (precios, huecos, cartas…)
+function ico(name) { return '<x-ico style="background-image:url(assets/' + name + '.webp)"></x-ico>'; }
+function icons(html) { return String(html).replace(ICON_RE, function (m, e) { return ico(ICON_FILES[e]); }); }
 
 /* ---------- sonido sintetizado ---------- */
 var audioCtx = null;
@@ -38,7 +47,7 @@ function sfx(k) {
 }
 function buzz(ms) { if (navigator.vibrate) try { navigator.vibrate(ms); } catch (e) {} }
 function toast(msg) {
-  var t = $('toast'); t.textContent = msg; t.classList.add('show');
+  var t = $('toast'); t.innerHTML = icons(esc(msg)); t.classList.add('show');
   clearTimeout(toast._h); toast._h = setTimeout(function () { t.classList.remove('show'); }, 1700);
 }
 
@@ -72,9 +81,9 @@ function renderMenu(name, arg) {
       '<button class="play-hero" data-go="playNext" aria-label="Jugar la siguiente fase de la campaña"><img src="assets/ui/boton-jugar.webp" alt=""></button>' +
       '<div class="slots" id="chestSlots">' + slotsInner() + '</div>' +
       '<div class="mode-list">' +
-      modeBtn('campaign', '🗺️', 'Campaña', '15 fases con jefes · ' + totalStars() + '/45 ⭐', 'm-campaign') +
+      modeBtn('campaign', ico('icons/estrella'), 'Campaña', '15 fases con jefes · ' + totalStars() + '/45 ⭐', 'm-campaign') +
       modeBtn('duelPick', '⚔️', 'Duelo 1 contra 1', 'Aguanta más que tu rival', 'm-duel') +
-      modeBtn('coop', '🤝', '2 contra la máquina', 'Tú y un aliado vs oleadas · récord ' + meta.coopBest, 'm-coop') +
+      modeBtn('coop', ico('icons/escudo'), '2 contra la máquina', 'Tú y un aliado vs oleadas · récord ' + meta.coopBest, 'm-coop') +
       '</div>' +
       '<div class="home-grid">' +
       '<button class="tile-btn ' + (free ? 'glow' : '') + '" data-go="freeChest">🎁<span>' + (free ? 'Cofre gratis' : 'Mañana más') + '</span></button>' +
@@ -129,7 +138,7 @@ function renderMenu(name, arg) {
       '<p><b>💎 Gemas:</b> salen en los cofres, por cada estrella nueva de la campaña, al ganar duelos y en el cooperativo. Gástalas en la tienda.</p>' +
       '</div>';
   }
-  m.innerHTML = html;
+  m.innerHTML = icons(html);
   m.scrollTop = 0;
   bindMenu();
 }
@@ -169,7 +178,7 @@ function modeBtn(go, icon, title, sub, cls) {
 }
 // Pestañas dentro de Mazo: tropas y comandante.
 function deckTabs(on) {
-  return '<div class="sub-tabs"><button data-go="collection" class="' + (on === 'collection' ? 'on' : '') + '">🃏 Tropas</button>' +
+  return '<div class="sub-tabs"><button data-go="collection" class="' + (on === 'collection' ? 'on' : '') + '">Tropas</button>' +
     '<button data-go="commanders" class="' + (on === 'commanders' ? 'on' : '') + '">👑 Comandante</button></div>';
 }
 // tab: pantalla de la barra de abajo, sin botón de volver
@@ -423,7 +432,7 @@ function startCardDemo(cv, id) {
   requestAnimationFrame(frame);
 }
 
-function openOverlay(html) { var o = $('overlay'); o.innerHTML = html; o.hidden = false; }
+function openOverlay(html) { var o = $('overlay'); o.innerHTML = icons(html); o.hidden = false; }
 function closeOverlay() { $('overlay').hidden = true; $('overlay').innerHTML = ''; }
 
 /* Restablecer juego: borra todo el progreso tras confirmarlo. */
@@ -565,7 +574,7 @@ setInterval(function () {
   var el = $('chestSlots');
   if (el && !$('menu').hidden && !chestFxOn) {
     var html = slotsInner();
-    if (html !== el._h) { el.innerHTML = html; el._h = html; }
+    if (html !== el._h) { el.innerHTML = icons(html); el._h = html; }
   }
   var left = $('ciLeft');
   if (left) { var s = meta.slots[+left.dataset.slot]; if (s) left.textContent = fmtDur(slotLeft(s)); }
@@ -688,7 +697,7 @@ function chestItemIn(fx, it, x, y, tx, ty) {
   var el = document.createElement('div');
   if (!it.id) {
     el.className = 'cfx-card cfx-gold';
-    el.innerHTML = '<span class="cfx-rar">Oro</span><img src="assets/chests/oro-monedas.webp" alt=""><b>+' + it.gold + ' 🪙</b>' + (it.gems ? '<small>+' + it.gems + ' 💎</small>' : '');
+    el.innerHTML = icons('<span class="cfx-rar">Oro</span><img src="assets/chests/oro-monedas.webp" alt=""><b>+' + it.gold + ' 🪙</b>' + (it.gems ? '<small>+' + it.gems + ' 💎</small>' : ''));
   } else {
     var u = UNITS[it.id], rar = RARITY[u.rarity], c = meta.cards[it.id];
     var max = c.lv >= CARD_MAX, need = cardsNeeded(c.lv), pct = max ? 100 : Math.min(100, c.n / need * 100);
@@ -749,8 +758,8 @@ function buildBattleHud() {
 }
 var _hud = {};
 function setTxt(id, v) { if (_hud[id] === v) return; _hud[id] = v; var e = $(id); if (e) e.textContent = v; }
-function setHtml(id, v) { if (_hud[id] === v) return; _hud[id] = v; var e = $(id); if (e) e.innerHTML = v; }
-var MANA_ICO = '<img class="mi" src="assets/ui/mana.webp" alt="maná">';
+function setHtml(id, v) { if (_hud[id] === v) return; _hud[id] = v; var e = $(id); if (e) e.innerHTML = icons(v); }
+var MANA_ICO = '<img class="mi" src="assets/icons/gota.webp" alt="maná">';
 function heartsHtml(l) {
   var s = '';
   for (var i = 0; i < l.max; i++) s += '<img class="heart' + (i < l.v ? '' : ' lost') + '" src="assets/ui/vida.webp" alt="">';
@@ -787,7 +796,7 @@ function updateHud(force) {
 /* Consejo del tutorial: abajo (junto a los botones) o arriba (sobre el tablero). */
 function showCoach(html, where) {
   var el = $('coach');
-  if (el._h !== html) { el.innerHTML = html; el._h = html; }
+  if (el._h !== html) { el.innerHTML = icons(html); el._h = html; }
   el.className = 'coach ' + where;
   el.hidden = false;
 }
@@ -827,13 +836,13 @@ function refreshUnitInfo() {
   if (d.buff) bits.push('🎵 +' + Math.round(b.player.buffSpeed(u) * 100) + '% vel. a vecinas');
   if (aff) bits.push(ELEMENTS[d.element].icon + ' Afinidad +' + Math.round(aff * AFFINITY_BONUS * 100) + '%');
   if (b.player.tiles[i]) bits.push(TILES[b.player.tiles[i]].icon + ' ' + TILES[b.player.tiles[i]].name);
-  box.innerHTML = '<img src="' + unitIcon(u.id, u.rank, 72) + '" alt=""><div><b>' + esc(d.name) + ' · Rango ' + u.rank + '</b><small>' + esc(d.role) + ' · ' + bits.join(' · ') + '</small><small class="hint">Toca otra igual para fusionar o una casilla vacía para moverla</small></div>';
+  box.innerHTML = icons('<img src="' + unitIcon(u.id, u.rank, 72) + '" alt=""><div><b>' + esc(d.name) + ' · Rango ' + u.rank + '</b><small>' + esc(d.role) + ' · ' + bits.join(' · ') + '</small><small class="hint">Toca otra igual para fusionar o una casilla vacía para moverla</small></div>');
   box.hidden = false;
 }
 var bannerTimer = null;
 function showBanner(title, sub, pic) {
   var el = $('banner');
-  el.innerHTML = (pic ? '<img class="banner-pic" src="' + pic + '" alt="">' : '') + '<b>' + esc(title) + '</b>' + (sub ? '<small>' + esc(sub) + '</small>' : '');
+  el.innerHTML = (pic ? '<img class="banner-pic" src="' + pic + '" alt="">' : '') + '<b>' + icons(esc(title)) + '</b>' + (sub ? '<small>' + icons(esc(sub)) + '</small>' : '');
   el.classList.remove('show'); void el.offsetWidth; el.classList.add('show');
 }
 

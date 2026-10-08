@@ -21,7 +21,13 @@ function startBattle(mode, opts) {
   var lives = mode === 'campaign' ? { v: 5, max: 5 } : mode === 'duel' ? { v: 3, max: 3 } : { v: 6, max: 6 };
   // tablero ilustrado si está disponible: la campaña usa el de su bioma y
   // el duelo y el cooperativo, el del bosque (con dos tableros a la vez)
-  var fg = FIELD_GEOS[BIOME_FIELD[biome] || 'prado'];
+  var fid = BIOME_FIELD[biome] || 'prado';
+  if (Array.isArray(fid)) {
+    // al azar entre los que ya han cargado
+    var ready = fid.filter(function (k) { return art(FIELD_GEOS[k].image); });
+    fid = ready.length ? pick(ready) : fid[0];
+  }
+  var fg = FIELD_GEOS[fid];
   var geo = mode === 'campaign' && art(fg.image) ? fg : art('board/tablero') ? FIELD_GEO : VECTOR_GEO;
   var player = new Board({ name: 'Tú', deck: deck, cardLv: lv, commander: meta.commander, lives: lives, biome: biome, geo: geo, mana: stage ? stage.mana : 100 });
   battle = {

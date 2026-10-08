@@ -50,7 +50,7 @@ var IMG_LIST = {
   units: UNIT_ORDER.filter(function (id) { return !UNITS[id].noArt; }),
   enemies: ['blob', 'ghost', 'brute', 'orco', 'rocoso', 'escarcha', 'gelido', 'coloso', 'coloso2', 'nigro', 'dragon'],
   tiles: ['altar', 'fuente', 'atalaya'],
-  boards: ['lava', 'arena'],
+  boards: ['lava', 'lava2', 'arena'],
   ui: ['boton', 'fondo']
 };
 var imgReadyCount = 0;

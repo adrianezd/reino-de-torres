@@ -1098,3 +1098,23 @@ button.ucard.locked { cursor: pointer; }
   -webkit-text-stroke: 7px var(--edge); paint-order: stroke fill; text-shadow: 0 3px 0 var(--edge), 0 5px 6px rgba(0,0,0,0.45);
 }
 @media (max-height: 760px) { .logo h1 img { width: min(170px, 46%); } }
+
+/* =========================================================
+   Iconos ilustrados (assets/icons) en lugar de emojis. Van en una
+   etiqueta propia con la imagen de fondo (ver ico() en ui.js).
+   ========================================================= */
+x-ico {
+  display: inline-block; flex-shrink: 0; width: 1.3em; height: 1.3em; margin: 0 0.06em; vertical-align: -0.3em;
+  background-position: center; background-size: contain; background-repeat: no-repeat;
+  filter: drop-shadow(0 1px 0 rgba(0,0,0,0.35));
+}
+.res-bar .pill x-ico { width: 1.75em; height: 1.75em; margin: -0.45em 0.12em -0.45em -0.55em; vertical-align: -0.55em; }
+.back-bar .pill x-ico { width: 1.45em; height: 1.45em; margin: -0.3em 0.08em -0.3em -0.3em; vertical-align: -0.42em; }
+.navbar i x-ico { width: 1.45em; height: 1.45em; margin: 0; vertical-align: 0; }
+.navbar b x-ico { width: 1.4em; height: 1.4em; }
+.tile-btn x-ico { width: 1.4em; height: 1.4em; margin: 0; }
+.mode-btn .mode-ico x-ico { width: 118%; height: 118%; margin: 0; filter: drop-shadow(0 2px 0 rgba(0,0,0,0.35)); }
+.res-emoji x-ico { width: 1.5em; height: 1.5em; }
+.code-ico x-ico, .chest-ico x-ico { width: 1.4em; height: 1.4em; }
+.ulock x-ico { width: 1.15em; height: 1.15em; margin: 0; vertical-align: -0.2em; }
+.sh-price x-ico, .btn x-ico { width: 1.4em; height: 1.4em; vertical-align: -0.38em; }

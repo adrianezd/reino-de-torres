@@ -50,9 +50,15 @@ var FIELDS = {
   // la lava va recortada alrededor del río de lava (710×560)
   lava: { image: 'boards/lava', iw: 710, ih: 560, cx: 0, cy: 0, cw: 710, ch: 560, portal: true,
     gx0: 166, gy0: 144, gx1: 552, gy1: 364,
-    way: [[59, 462], [59, 56], [650, 56], [650, 462]] }
+    way: [[59, 462], [59, 56], [650, 56], [650, 462]] },
+  // lava en anillo (volteada de assets/tablero-lava-invertido.jpg): salen por
+  // la boca de abajo, dan la vuelta entera al río y vuelven a la misma boca
+  lava2: { image: 'boards/lava2', iw: 1248, ih: 832, cx: 30, cy: 0, cw: 1188, ch: 832, portal: true,
+    gx0: 322, gy0: 282, gx1: 928, gy1: 596,
+    way: [[603, 770], [603, 660], [247, 660], [247, 214], [1006, 214], [1006, 660], [652, 660], [652, 770]] }
 };
-var BIOME_FIELD = { prado: 'prado', bosque: 'prado', pantano: 'prado', hielo: 'arena', ruinas: 'arena', desierto: 'arena', volcan: 'lava', cripta: 'lava' };
+// con varios tableros para un bioma se elige uno al azar en cada partida
+var BIOME_FIELD = { prado: 'prado', bosque: 'prado', pantano: 'prado', hielo: 'arena', ruinas: 'arena', desierto: 'arena', volcan: ['lava', 'lava2'], cripta: ['lava', 'lava2'] };
 function fieldGeo(id) {
   var f = FIELDS[id], cell = (f.gx1 - f.gx0) / COLS;
   var P = function (q) { return { x: (q[0] - f.cx) / cell, y: (q[1] - f.cy) / cell }; };
