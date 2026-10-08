@@ -798,14 +798,71 @@ body {
 @keyframes cfxSpin { to { transform: rotate(1turn); } }
 .cfx-coin { position: absolute; z-index: 2; width: 26px; pointer-events: none; }
 .cfx-card {
-  position: absolute; left: 0; top: 0; z-index: 3; width: 150px; padding: 16px 10px 10px; display: flex; flex-direction: column; align-items: center; gap: 2px;
-  background: linear-gradient(180deg, #2b3c8f, #182260); border: 4px solid var(--rc); border-radius: 18px;
-  box-shadow: 0 6px 0 var(--ink), 0 0 34px 8px color-mix(in srgb, var(--rc) 60%, transparent);
+  position: absolute; left: 0; top: 0; z-index: 3; width: 168px; padding: 18px 12px 12px; display: flex; flex-direction: column; align-items: center; gap: 2px;
+  background: linear-gradient(180deg, #2b3c8f, #182260); border: 4px solid var(--rc, var(--gold)); border-radius: 18px;
+  box-shadow: 0 6px 0 var(--ink), 0 0 34px 8px color-mix(in srgb, var(--rc, var(--gold)) 55%, transparent);
 }
-.cfx-card img { width: 112px; height: 112px; }
-.cfx-card b { font-size: 1.15rem; text-shadow: 0 2px 0 var(--ink); }
-.cfx-card small { color: var(--gold); font-family: 'Lilita One'; font-size: 1.1rem; }
-.cfx-rar { position: absolute; top: -12px; background: var(--rc); color: #1a1030; font-size: 0.75rem; padding: 1px 10px; border-radius: 9px; border: 2px solid var(--ink); white-space: nowrap; }
+.cfx-card img { width: 112px; height: 112px; object-fit: contain; }
+.cfx-card b { font-size: 1.15rem; text-shadow: 0 2px 0 var(--ink); white-space: nowrap; }
+.cfx-card small { color: var(--gold); font-family: 'Lilita One'; font-size: 1.25rem; text-shadow: 0 2px 0 var(--ink); }
+.cfx-card.r-epica, .cfx-card.r-legendaria { box-shadow: 0 6px 0 var(--ink), 0 0 50px 14px color-mix(in srgb, var(--rc) 65%, transparent); }
+.cfx-card.r-legendaria, .cfx-card.secret { background: linear-gradient(180deg, #4a3a9f, #241a6a); }
+.cfx-gold { --rc: #ffd166; }
+.cfx-gold img { width: 100px; height: 100px; }
+.cfx-gold b { font-family: 'Lilita One'; font-weight: 400; font-size: 1.6rem; color: var(--gold); }
+.cfx-rar { position: absolute; top: -13px; background: var(--rc, var(--gold)); color: #1a1030; font-size: 0.78rem; padding: 1px 10px; border-radius: 9px; border: 2px solid var(--ink); white-space: nowrap; }
+.cfx-bar { position: relative; width: 100%; height: 16px; margin-top: 6px; border-radius: 8px; background: rgba(0,0,0,0.45); border: 2px solid var(--ink); overflow: hidden; }
+.cfx-bar span { position: absolute; left: 0; top: 0; bottom: 0; background: linear-gradient(90deg, #3aa0ff, #6fd2ff); }
+.cfx-bar.full span { background: linear-gradient(90deg, #4caa12, #c4f74a); }
+.cfx-bar em { position: relative; display: block; text-align: center; font-style: normal; font-size: 0.68rem; line-height: 12px; font-weight: 900; text-shadow: 0 1px 0 var(--ink); }
+.cfx-chest.opened.bump { animation: cfxPop 0.3s cubic-bezier(0.3, 1.6, 0.5, 1); }
+.cfx-flash { position: absolute; inset: 0; z-index: 4; background: #fff; pointer-events: none; }
+/* contador de lo que queda en el cofre, en su esquina */
+.cfx-left { position: absolute; z-index: 2; transform: translate(-50%, -50%); min-width: 54px; padding: 4px 8px 3px; text-align: center; border-radius: 14px; background: linear-gradient(180deg, #ff6a7d, #c22a44); border: 3px solid #fff; box-shadow: 0 0 0 2px var(--ink), 0 4px 0 var(--ink); opacity: 0; }
+.cfx-left b { display: block; font-family: 'Lilita One'; font-weight: 400; font-size: 1.5rem; line-height: 1; text-shadow: 0 2px 0 var(--ink); }
+.cfx-left small { display: block; font-size: 0.62rem; font-weight: 900; line-height: 1.1; }
+.cfx-left.tick { opacity: 1; animation: cfxTick 0.3s cubic-bezier(0.3, 1.6, 0.5, 1); }
+.cfx-left.none { opacity: 0; }
+@keyframes cfxTick { from { transform: translate(-50%, -50%) scale(1.4); } }
+.cfx-hint { position: absolute; left: 0; right: 0; bottom: calc(18px + env(safe-area-inset-bottom)); margin: 0; text-align: center; font-weight: 900; color: #fff; text-shadow: 0 2px 0 var(--ink); animation: cfxHint 1.2s ease-in-out infinite; }
+@keyframes cfxHint { 50% { opacity: 0.45; } }
+.cfx-skip { position: absolute; z-index: 5; top: calc(12px + env(safe-area-inset-top)); right: 12px; padding: 6px 14px; border-radius: 12px; border: 2px solid rgba(255,255,255,0.5); background: rgba(0,0,0,0.35); color: #fff; font-size: 0.85rem; opacity: 0; transition: opacity 0.3s; }
+.chest-fx.open .cfx-skip { opacity: 1; }
+/* botón de los cofres: dorado, sin el reflejo ovalado de los demás */
+.btn.chest-ok {
+  display: flex; align-items: center; justify-content: center; gap: 10px; padding: 12px 14px 14px; border-radius: 16px;
+  background: linear-gradient(180deg, #ffe680 0%, #ffc61a 50%, #f59a00 100%); border: 3px solid #fff6c4;
+  box-shadow: 0 0 0 3px var(--gold-dark), 0 6px 0 3px var(--gold-dark), inset 0 -5px 0 rgba(160,80,0,0.35);
+  color: #fff; font-family: 'Lilita One'; font-weight: 400; font-size: 1.45rem; letter-spacing: 0.5px; text-shadow: 0 2px 0 #8a4b00, 0 0 3px #8a4b00;
+}
+.btn.chest-ok::after { left: 6px; right: 6px; top: 3px; height: 40%; border-radius: 12px 12px 6px 6px; background: linear-gradient(180deg, rgba(255,255,255,0.5), rgba(255,255,255,0)); }
+.btn.chest-ok:active { transform: translateY(4px); box-shadow: 0 0 0 3px var(--gold-dark), 0 2px 0 3px var(--gold-dark), inset 0 -5px 0 rgba(160,80,0,0.35); }
+.btn.chest-ok span { font-size: 1rem; padding: 2px 10px; border-radius: 10px; background: rgba(90,40,0,0.35); text-shadow: 0 1px 0 #5a2a00; }
+.btn.chest-ok.poor { filter: grayscale(0.85) brightness(0.85); }
+.chest-modal .btn.chest-ok, .chest-info .btn.chest-ok { margin-top: 14px; }
+/* resumen del cofre: compacto y con el botón siempre a la vista en el móvil */
+.chest-modal { padding-bottom: 0; }
+.chest-modal .chest-pic { height: 118px; }
+.chest-modal .chest-pic-img { width: 112px; height: 112px; }
+.chest-modal .chest-pic-rays { width: 240px; height: 240px; margin: -120px 0 0 -120px; }
+.chest-modal .chest-cards { gap: 6px; margin: 8px 0 0; }
+.chest-modal .chest-card { width: 66px; padding: 3px; }
+.chest-modal .chest-card img { width: 48px; height: 48px; }
+.chest-modal .btn.chest-ok { position: sticky; bottom: 0; margin: 12px 0 16px; }
+.chest-modal::after { content: ''; display: block; height: 1px; }
+/* ficha del cofre */
+.chest-pic.closed .chest-pic-rays { opacity: 0.35; }
+.ci-loot { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; margin: 8px 0 4px; }
+.ci-loot span { display: flex; flex-direction: column; align-items: center; padding: 6px 4px; border-radius: 12px; background: rgba(0,0,0,0.28); border: 2px solid var(--ink); font-size: 0.72rem; color: var(--muted); font-weight: 800; }
+.ci-loot b { font-family: 'Lilita One'; font-weight: 400; font-size: 1.05rem; color: #fff; white-space: nowrap; }
+.ci-t { margin: 12px 0 6px; font-family: 'Lilita One'; font-weight: 400; font-size: 1.05rem; text-align: left; }
+.ci-row { display: flex; align-items: center; gap: 10px; padding: 6px 10px; margin-top: 5px; border-radius: 12px; background: rgba(0,0,0,0.25); text-align: left; }
+.ci-row i { flex: none; width: 14px; height: 14px; border-radius: 50%; background: var(--rc); border: 2px solid var(--ink); box-shadow: 0 0 8px var(--rc); }
+.ci-row span { flex: 1; display: flex; flex-direction: column; }
+.ci-row b { font-size: 0.95rem; color: var(--rc); text-shadow: 0 1px 0 var(--ink); }
+.ci-row small { font-size: 0.68rem; color: var(--muted); }
+.ci-row em { font-style: normal; font-family: 'Lilita One'; font-size: 1.1rem; white-space: nowrap; }
+.modal-card .ci-note { margin: 8px 0 0; font-size: 0.72rem; color: var(--muted); }
 .chest-pic { position: relative; height: 150px; margin: -6px -16px 0; overflow: hidden; display: grid; place-items: center; }
 .chest-pic-rays { position: absolute; left: 50%; top: 50%; width: 290px; height: 290px; margin: -145px 0 0 -145px; opacity: 0.75; animation: cfxSpin 12s linear infinite; }
 .chest-pic-img { position: relative; width: 140px; height: 140px; object-fit: contain; animation: popIn 0.4s, bob 2s 0.4s ease-in-out infinite; }
@@ -849,3 +906,8 @@ body {
 }
 .code-in:focus { border-color: #b48bff; box-shadow: 0 0 0 3px rgba(180,139,255,0.35); }
 .code-err { color: #ff8a9a; margin: 8px 0 0; font-size: 0.9rem; }
+@media (max-height: 680px) {
+  .chest-info .chest-pic { height: 112px; }
+  .chest-info .chest-pic-img { width: 104px; height: 104px; }
+  .chest-info .ci-row { padding: 4px 10px; }
+}

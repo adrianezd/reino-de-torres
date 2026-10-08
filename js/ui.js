@@ -231,8 +231,8 @@ function bindMenu() {
   m.querySelectorAll('[data-buychest]').forEach(function (b) {
     b.onclick = function () {
       if (chestFxOn) return;
-      var r = buyChest(b.dataset.buychest);
-      if (r) showChest(r, b.querySelector('.sh-chest-pic')); else { sfx('no'); toast('Te faltan gemas'); }
+      sfx('tap');
+      showChestInfo(b.dataset.buychest);
     };
   });
   m.querySelectorAll('[data-buygold]').forEach(function (b) {
@@ -415,21 +415,60 @@ function secretHtml(r) {
   var u = UNITS[r.secret];
   return '<div class="res-unlock secret"><img src="' + unitIcon(r.secret, 0, 96) + '" alt=""><b>¡Legendaria secreta: ' + esc(u.name) + '!</b></div>';
 }
-/* ---------- apertura del cofre ----------
-   Anticipación (el cofre cerrado crece un 20 % y tiembla 0,3 s), cambia al
-   abierto con el destello girando detrás, vuelan monedas y la mejor carta sale
-   del cofre hacia el centro de la pantalla. Tocar la pantalla lo salta. */
+/* ---------- cofres: ficha, apertura y reparto ----------
+   Ficha: qué trae y la probabilidad de cada rareza; hay que darle a Abrir.
+   Apertura: el cofre cerrado crece un 20 % y tiembla 0,3 s, se abre con el
+   destello girando detrás y sube al centro de arriba. Reparto: primero el oro
+   y luego las cartas una a una (de común a legendaria), con las que quedan en
+   el cofre. Al final, el resumen. */
 function chestPic(type, open) { return 'assets/chests/' + type + (open ? '-abierto' : '') + '.webp'; }
 var chestFxOn = false;
 var RARITY_RANK = ['comun', 'rara', 'epica', 'legendaria'];
-function bestChestCard(r) {
-  if (r.secret) return { id: r.secret, n: 1 };
-  var ids = Object.keys(r.cards).sort(function (a, b) {
-    return RARITY_RANK.indexOf(UNITS[b].rarity) - RARITY_RANK.indexOf(UNITS[a].rarity) || r.cards[b] - r.cards[a];
-  });
-  return ids.length ? { id: ids[0], n: r.cards[ids[0]] } : null;
+
+// probabilidad de que el cofre traiga al menos una carta con esa probabilidad por carta
+function chestOdds(p, n) {
+  var v = (1 - Math.pow(1 - p, n)) * 100;
+  if (v <= 0) return 'No sale';
+  if (v >= 99.5) return 'Casi segura';
+  return (v < 1 ? v.toFixed(1) : v < 10 ? v.toFixed(1).replace('.0', '') : Math.round(v)).toString().replace('.', ',') + ' %';
 }
-// from: imagen del cofre en la tienda; sin ella, el cofre sale en el centro
+function showChestInfo(k) {
+  var ch = CHESTS[k], poor = meta.gems < ch.price;
+  var secretsLeft = UNIT_ORDER.some(function (id) { return UNITS[id].chestOnly && !meta.cards[id]; });
+  var row = function (color, name, sub, odds) {
+    return '<div class="ci-row" style="--rc:' + color + '"><i></i><span><b>' + name + '</b>' + (sub ? '<small>' + sub + '</small>' : '') + '</span><em>' + odds + '</em></div>';
+  };
+  openOverlay('<div class="modal-card chest-info" style="--cc:' + ch.color + '">' +
+    '<div class="chest-pic closed"><img class="chest-pic-rays" src="assets/chests/destello.webp" alt=""><img class="chest-pic-img" id="ciPic" src="' + chestPic(k) + '" alt=""></div>' +
+    '<h2>' + ch.name + '</h2>' +
+    '<div class="ci-loot"><span><b>' + ch.cards + '</b>cartas</span><span><b>' + ch.gold[0] + ' a ' + ch.gold[1] + '</b>🪙 oro</span><span><b>' + ch.gems[0] + ' a ' + ch.gems[1] + '</b>💎 gemas</span></div>' +
+    '<h3 class="ci-t">Probabilidad por cofre</h3>' +
+    row(RARITY.rara.color, 'Rara', '', chestOdds(ch.rare, ch.cards)) +
+    row(RARITY.epica.color, 'Épica', '', chestOdds(ch.epic, ch.cards)) +
+    row(RARITY.legendaria.color, 'Legendaria', '', chestOdds(ch.legend, ch.cards)) +
+    row('#ff5ad1', 'Legendaria secreta', 'Solo sale en cofres', secretsLeft ? chestOdds(ch.secret, 1) : 'Ya las tienes') +
+    '<p class="ci-note">Salen cartas de las tropas que ya tienes, salvo la secreta.</p>' +
+    '<button class="btn chest-ok' + (poor ? ' poor' : '') + '" id="ciOpen">Abrir<span>💎 ' + ch.price + '</span></button>' +
+    '<button class="btn btn-ghost" id="ciX">Cerrar</button></div>');
+  $('ciOpen').onclick = function () {
+    if (chestFxOn) return;
+    var r = buyChest(k);
+    if (!r) { sfx('no'); buzz(20); toast('Te faltan gemas'); return; }
+    showChest(r, $('ciPic'));
+  };
+  $('ciX').onclick = closeOverlay;
+}
+
+// lo que sale del cofre, en orden: el oro y luego las cartas de menor a mayor rareza
+function chestItems(r) {
+  var items = [{ gold: r.gold, gems: r.gems }];
+  Object.keys(r.cards).sort(function (a, b) {
+    return RARITY_RANK.indexOf(UNITS[a].rarity) - RARITY_RANK.indexOf(UNITS[b].rarity) || r.cards[a] - r.cards[b];
+  }).forEach(function (id) { items.push({ id: id, n: r.cards[id] }); });
+  if (r.secret) items.push({ id: r.secret, n: 1, secret: true });
+  return items;
+}
+// from: imagen del cofre de la que sale (ficha del cofre); sin ella, sale en el centro
 function showChest(r, from) {
   if (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) { sfx('chest'); chestResult(r); return; }
   chestFxOn = true;
@@ -437,21 +476,23 @@ function showChest(r, from) {
   var rect = from && from.getBoundingClientRect();
   if (rect && !rect.width) rect = null;
   var vw = window.innerWidth, vh = window.innerHeight;
-  // al abrirse sube al centro de la parte de arriba (en el móvil, desde la tarjeta
-  // de la esquina se saldría de la pantalla) y la carta baja al centro
-  var size2 = Math.min(vw * 0.42, 170), cx2 = vw / 2, cy2 = Math.max(vh * 0.27, size2 * 0.75);
+  // abierto, el cofre se queda en el centro de arriba y las cartas salen al centro
+  var size2 = Math.min(vw * 0.42, 170), cx2 = vw / 2, cy2 = Math.max(vh * 0.25, size2 * 0.75);
   var size = rect ? rect.width : size2, cx = rect ? rect.left + rect.width / 2 : cx2, cy = rect ? rect.top + rect.height / 2 : cy2;
-  var cardY = Math.min(vh - 125, cy2 + size2 * 0.62 + 115);
+  var cardY = Math.min(vh - 150, cy2 + size2 * 0.62 + 125);
   var fx = document.createElement('div');
   fx.className = 'chest-fx';
   fx.style.setProperty('--cc', CHESTS[r.type].color);
   fx.innerHTML = '<div class="cfx-dim"></div>' +
     '<div class="cfx-at" style="left:' + cx + 'px;top:' + cy + 'px;width:' + size + 'px">' +
     '<div class="cfx-rays"><img src="assets/chests/destello.webp" alt=""></div>' +
-    '<img class="cfx-chest shake" src="' + chestPic(r.type) + '" alt=""></div>';
+    '<img class="cfx-chest shake" src="' + chestPic(r.type) + '" alt=""></div>' +
+    '<div class="cfx-left" style="left:' + (cx2 + size2 * 0.5) + 'px;top:' + (cy2 + size2 * 0.38) + 'px"><b></b><small>quedan</small></div>' +
+    '<button class="cfx-skip">Saltar</button><p class="cfx-hint"></p>';
   document.body.appendChild(fx);
   if (from) from.style.visibility = 'hidden';
-  var chest = fx.querySelector('.cfx-chest'), spot = fx.querySelector('.cfx-at'), timers = [], done = false;
+  var chest = fx.querySelector('.cfx-chest'), spot = fx.querySelector('.cfx-at'), left = fx.querySelector('.cfx-left'), hint = fx.querySelector('.cfx-hint');
+  var items = chestItems(r), idx = -1, cur = null, lockUntil = Infinity, timers = [], done = false;
   function at(ms, fn) { timers.push(setTimeout(fn, ms)); }
   function finish() {
     if (done) return;
@@ -463,9 +504,24 @@ function showChest(r, from) {
     chestFxOn = false;
     chestResult(r);
   }
-  // el toque que compra no puede saltarse la animación nada más empezar
-  var t0 = Date.now();
-  fx.onclick = function () { if (Date.now() - t0 > 450) finish(); };
+  function next() {
+    if (done) return;
+    if (cur) chestItemOut(cur, vw, cardY);
+    idx++;
+    if (idx >= items.length) { finish(); return; }
+    var it = items[idx], rest = items.length - idx - 1;
+    cur = chestItemIn(fx, it, cx2, cy2, vw / 2, cardY);
+    if (!it.id) chestCoins(fx, cx2, cy2 - size2 * 0.12, size2);
+    else chestBump(chest, fx, it);
+    left.querySelector('b').textContent = rest;
+    left.querySelector('small').textContent = rest === 1 ? 'queda' : 'quedan';
+    left.classList.toggle('none', !rest);
+    left.classList.remove('tick'); void left.offsetWidth; left.classList.add('tick');
+    hint.textContent = rest ? 'Toca para la siguiente' : 'Toca para terminar';
+    lockUntil = Date.now() + 380;
+  }
+  fx.onclick = function () { if (Date.now() >= lockUntil) next(); };
+  fx.querySelector('.cfx-skip').onclick = function (e) { e.stopPropagation(); finish(); };
   sfx('tap'); buzz(15);
   at(300, function () {
     chest.src = open.src;
@@ -475,15 +531,25 @@ function showChest(r, from) {
     spot.style.transform = 'translate(-50%, -50%) translate(' + (cx2 - cx) + 'px,' + (cy2 - cy) + 'px) scale(' + size2 / size + ')';
     sfx('chest'); buzz(35);
   });
-  at(rect ? 560 : 340, function () { chestCoins(fx, cx2, cy2 - size2 * 0.12, size2); });
-  var best = bestChestCard(r);
-  if (best) at(rect ? 640 : 460, function () { chestCardOut(fx, best, cx2, cy2, vw / 2, cardY); });
-  at(best ? 2000 : 1400, finish);
+  at(rect ? 620 : 460, next);
+}
+// sonido y sacudida del cofre según la rareza; destello blanco con las legendarias
+function chestBump(chest, fx, it) {
+  var rar = it.secret ? 'legendaria' : UNITS[it.id].rarity;
+  sfx({ comun: 'tap', rara: 'merge', epica: 'power', legendaria: 'win' }[rar]);
+  if (rar === 'epica' || rar === 'legendaria') buzz(rar === 'legendaria' ? 60 : 30);
+  chest.classList.remove('bump'); void chest.offsetWidth; chest.classList.add('bump');
+  if (rar === 'legendaria') {
+    var f = document.createElement('div');
+    f.className = 'cfx-flash';
+    fx.appendChild(f);
+    f.animate([{ opacity: 0.85 }, { opacity: 0 }], { duration: 450, easing: 'ease-out', fill: 'both' }).onfinish = function () { f.remove(); };
+  }
 }
 // monedas: salen disparadas del cofre y vuelan al contador de oro (o caen si no se ve)
 function chestCoins(fx, x, y, size) {
   var pill = document.querySelector('.menu .pill.gold'), pr = pill && pill.getBoundingClientRect();
-  var toPill = pr && pr.width && pr.bottom > 0 && pr.top < window.innerHeight;
+  var toPill = pr && pr.width && pr.bottom > 0 && pr.top < window.innerHeight && !$('overlay').innerHTML;
   for (var i = 0; i < 16; i++) {
     var c = document.createElement('img');
     c.className = 'cfx-coin';
@@ -502,30 +568,47 @@ function chestCoins(fx, x, y, size) {
       { transform: tf(bx, by, 1, spin * 0.5), opacity: 1, offset: 0.38, easing: 'cubic-bezier(0.5, 0, 0.75, 0.4)' },
       { transform: tf(ex, ey, 0.55, spin), opacity: toPill ? 1 : 0, offset: 0.96 },
       { transform: tf(ex, ey, 0.4, spin), opacity: 0 }
-    ], { duration: 1000 + Math.random() * 350, delay: i * 28, easing: 'cubic-bezier(0.2, 0.8, 0.4, 1)', fill: 'both' });
+    ], { duration: 1000 + Math.random() * 350, delay: i * 28, easing: 'cubic-bezier(0.2, 0.8, 0.4, 1)', fill: 'both' }).onfinish = c.remove.bind(c);
   }
 }
-// la mejor carta del cofre sale de dentro y crece hasta el centro de la pantalla
-function chestCardOut(fx, best, x, y, tx, ty) {
-  var u = UNITS[best.id], rar = RARITY[u.rarity];
+var cfxTf = function (tx, ty, s, rot) { return 'translate(' + tx + 'px,' + ty + 'px) translate(-50%,-50%) scale(' + s + ') rotate(' + rot + 'deg)'; };
+// una carta (o el oro) sale de dentro del cofre y crece hasta el centro
+function chestItemIn(fx, it, x, y, tx, ty) {
   var el = document.createElement('div');
-  el.className = 'cfx-card';
-  el.style.setProperty('--rc', rar.color);
-  el.innerHTML = '<span class="cfx-rar">' + rar.name + '</span><img src="' + unitIcon(best.id, 0, 160) + '" alt=""><b>' + esc(u.name) + '</b><small>×' + best.n + '</small>';
+  if (!it.id) {
+    el.className = 'cfx-card cfx-gold';
+    el.innerHTML = '<span class="cfx-rar">Oro</span><img src="assets/chests/oro-monedas.webp" alt=""><b>+' + it.gold + ' 🪙</b>' + (it.gems ? '<small>+' + it.gems + ' 💎</small>' : '');
+  } else {
+    var u = UNITS[it.id], rar = RARITY[u.rarity], c = meta.cards[it.id];
+    var max = c.lv >= CARD_MAX, need = cardsNeeded(c.lv), pct = max ? 100 : Math.min(100, c.n / need * 100);
+    el.className = 'cfx-card r-' + u.rarity + (it.secret ? ' secret' : '');
+    el.style.setProperty('--rc', it.secret ? '#ff5ad1' : rar.color);
+    el.innerHTML = '<span class="cfx-rar">' + (it.secret ? '¡Nueva! Secreta' : rar.name) + '</span>' +
+      '<img src="' + unitIcon(it.id, 0, 160) + '" alt=""><b>' + esc(u.name) + '</b><small>×' + it.n + '</small>' +
+      '<div class="cfx-bar' + (!max && c.n >= need ? ' full' : '') + '"><span style="width:' + pct + '%"></span><em>' + (max ? 'MÁX' : 'Nv ' + c.lv + ' · ' + c.n + '/' + need) + '</em></div>';
+  }
   fx.appendChild(el);
-  var tf = function (tx, ty, s, rot) { return 'translate(' + tx + 'px,' + ty + 'px) translate(-50%,-50%) scale(' + s + ') rotate(' + rot + 'deg)'; };
   el.animate([
-    { transform: tf(x, y, 0.12, -14), opacity: 0 },
-    { transform: tf(x + (tx - x) * 0.3, y - 30, 0.45, -8), opacity: 1, offset: 0.3 },
-    { transform: tf(tx, ty, 1, 0), opacity: 1 }
-  ], { duration: 700, easing: 'cubic-bezier(0.25, 1.25, 0.45, 1)', fill: 'both' });
+    { transform: cfxTf(x, y, 0.12, -14), opacity: 0 },
+    { transform: cfxTf(x + (tx - x) * 0.3, y - 30, 0.45, -8), opacity: 1, offset: 0.3 },
+    { transform: cfxTf(tx, ty, 1, 0), opacity: 1 }
+  ], { duration: 520, easing: 'cubic-bezier(0.25, 1.25, 0.45, 1)', fill: 'both' });
+  return el;
+}
+// la carta anterior se aparta a un lado y desaparece
+function chestItemOut(el, vw, ty) {
+  el.style.pointerEvents = 'none';
+  el.animate([
+    { transform: cfxTf(vw / 2, ty, 1, 0), opacity: 1 },
+    { transform: cfxTf(vw / 2 - Math.min(vw * 0.6, 260), ty - 40, 0.55, -18), opacity: 0 }
+  ], { duration: 300, easing: 'cubic-bezier(0.5, 0, 0.8, 0.5)', fill: 'both' }).onfinish = function () { el.remove(); };
 }
 function chestResult(r) {
   var ch = CHESTS[r.type];
-  var cards = Object.keys(r.cards).map(function (id) {
-    return '<div class="chest-card" style="--rc:' + RARITY[UNITS[id].rarity].color + '"><img src="' + unitIcon(id, 0, 96) + '" alt=""><b>×' + r.cards[id] + '</b><small>' + esc(UNITS[id].name) + '</small></div>';
+  var cards = chestItems(r).slice(1).filter(function (it) { return !it.secret; }).reverse().map(function (it) {
+    return '<div class="chest-card" style="--rc:' + RARITY[UNITS[it.id].rarity].color + '"><img src="' + unitIcon(it.id, 0, 96) + '" alt=""><b>×' + it.n + '</b><small>' + esc(UNITS[it.id].name) + '</small></div>';
   }).join('');
-  openOverlay('<div class="modal-card chest-modal"><div class="chest-pic"><img class="chest-pic-rays" src="assets/chests/destello.webp" alt=""><img class="chest-pic-img" src="' + chestPic(r.type, true) + '" alt=""></div><h2>' + ch.name + '</h2><p class="gold-big">+' + r.gold + ' 🪙' + (r.gems ? ' · +' + r.gems + ' 💎' : '') + '</p>' + secretHtml(r) + '<div class="chest-cards">' + cards + '</div><button class="btn btn-green" id="chestOk">¡Genial!</button></div>');
+  openOverlay('<div class="modal-card chest-modal"><div class="chest-pic"><img class="chest-pic-rays" src="assets/chests/destello.webp" alt=""><img class="chest-pic-img" src="' + chestPic(r.type, true) + '" alt=""></div><h2>' + ch.name + '</h2><p class="gold-big">+' + r.gold + ' 🪙' + (r.gems ? ' · +' + r.gems + ' 💎' : '') + '</p>' + secretHtml(r) + '<div class="chest-cards">' + cards + '</div><button class="btn chest-ok" id="chestOk">¡Genial!</button></div>');
   $('chestOk').onclick = function () { closeOverlay(); renderMenu(currentScreen === 'battle' ? 'home' : currentScreen); };
 }
 
