@@ -721,7 +721,8 @@ function drawBoard(b, L, now, isMain) {
     var p = toS(e.x, e.y - (e.boss ? 0.92 : ENEMIES[e.kind].size + 0.16));
     // el número da un saltito al recibir un golpe
     var fs = Math.max(9, sc * (e.boss ? 0.3 : 0.22)) * (1 + 0.3 * (e.hitT > 0 ? e.hitT / HIT_TIME : 0));
-    drawOutlinedText(ctx, fmtNum(Math.max(0, e.hp)), p.x, p.y, fs, e.boss ? '#ffd166' : '#ffffff');
+    // hacia arriba: con 0,4 de vida pone 1, no 0
+    drawOutlinedText(ctx, fmtNum(Math.ceil(Math.max(0, e.hp))), p.x, p.y, fs, e.boss ? '#ffd166' : '#ffffff');
   });
   if (isMain || sc > 30) {
     b.texts.forEach(function (t) {

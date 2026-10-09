@@ -246,6 +246,8 @@ function outlined(im) {
   cv.padX = p / cv.sw; cv.padY = p / cv.sh;
   return (im._outl = cv);
 }
+// tinte azul de un monstruo ralentizado: de 0,2 (poco) a 0,5 (casi parado)
+function frostAlpha(e) { return 0.2 + 0.3 * Math.min(1, e.slowPct / 0.6); }
 // dibuja im en el rectángulo (x, y, w, h) con el contorno por fuera
 function drawOutlined(c, im, x, y, w, h, flash) {
   var o = outlined(im), mx = o.padX * w, my = o.padY * h;
@@ -785,10 +787,11 @@ function drawEnemyPic(c, e, r, now, pic) {
   if (hk) { c.translate(0, r * 0.95); c.scale(1 + 0.14 * hk, 1 - 0.14 * hk); c.translate(0, -r * 0.95); }
   c.rotate(Math.sin(now / 200 + e.seed) * 0.05);
   c.drawImage(pic, -W / 2, r * 0.95 - H - step + float, W, H);
+  // ralentizado: se tiñe de azul hielo, más cuanto más frenado va
+  if (e.slowPct > 0) { c.globalAlpha = frostAlpha(e); c.drawImage(silhouette(pic, '#8fe3ff'), -W / 2, r * 0.95 - H - step + float, W, H); }
   if (hk) { c.globalAlpha = 0.85 * hk; c.drawImage(silhouette(pic, '#ffffff'), -W / 2, r * 0.95 - H - step + float, W, H); }
   c.globalAlpha = 1;
   c.restore();
-  if (e.slowPct > 0) { c.strokeStyle = 'rgba(160,225,255,0.85)'; c.lineWidth = r * 0.1; circle(c, e.x, e.y, r * 1.1); c.stroke(); }
   drawStatus(c, e, r, now);
   if (e.shield > 0) { c.strokeStyle = 'rgba(120,220,255,0.8)'; c.lineWidth = r * 0.12; circle(c, e.x, e.y, r * 1.35); c.stroke(); }
 }
@@ -837,6 +840,7 @@ function drawEnemy(c, e, r, now) {
 
   if (look.alpha) c.globalAlpha = look.alpha;
   c.drawImage(body, -S / 2, top, S, S);
+  if (e.slowPct > 0) { c.globalAlpha = frostAlpha(e); c.drawImage(silhouette(body, '#8fe3ff'), -S / 2, top, S, S); }
   if (e.hitT > 0) { c.globalAlpha = 0.85 * e.hitT / HIT_TIME; c.drawImage(silhouette(body, '#ffffff'), -S / 2, top, S, S); }
   c.globalAlpha = 1;
 
@@ -883,7 +887,6 @@ function drawEnemy(c, e, r, now) {
   }
   c.restore();
 
-  if (e.slowPct > 0) { c.strokeStyle = 'rgba(160,225,255,0.85)'; c.lineWidth = r * 0.1; circle(c, e.x, e.y, r * 1.1); c.stroke(); }
   drawStatus(c, e, r, now);
   if (e.shield > 0) { c.strokeStyle = 'rgba(200,210,230,0.95)'; c.lineWidth = r * 0.14; circle(c, e.x, e.y, r * 1.3); c.stroke(); }
 }
