@@ -1394,3 +1394,32 @@ x-ico.off { filter: grayscale(1) brightness(0.45); opacity: 0.75; }
 .sh-price { position: relative; box-shadow: 0 4px 0 #1d6b23, inset 0 -4px 0 rgba(0,0,0,0.18), inset 0 2px 0 rgba(255,255,255,0.55); }
 .sh-price.poor { box-shadow: 0 4px 0 #4b5263, inset 0 -4px 0 rgba(0,0,0,0.18), inset 0 2px 0 rgba(255,255,255,0.35); }
 .sh-price.sold { box-shadow: none; }
+
+/* Mazo: ordenar la colección por rareza o por tipo (elemento) */
+.coll-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 14px 0 8px; }
+.coll-head h3 { margin: 0; }
+.sort-sw { display: flex; align-items: center; gap: 4px; padding: 3px; background: rgba(0,0,0,0.3); border: 2px solid var(--ink); border-radius: 12px; }
+.sort-sw small { padding: 0 4px 0 6px; color: var(--muted); font-size: 0.7rem; font-weight: 800; }
+.sort-sw button { padding: 4px 10px; border: 0; border-radius: 9px; background: none; color: var(--muted); font: 400 0.85rem 'Lilita One', sans-serif; }
+.sort-sw button.on { background: linear-gradient(180deg, #ffd166, #f08a24); color: #3a1d00; box-shadow: 0 2px 0 var(--ink); }
+.sort-sw button:active { transform: translateY(2px); }
+.el-filters .rar-f { flex-direction: column; }
+.ef-ico x-ico { width: 1.25em; height: 1.25em; margin: 0 3px 0 0; vertical-align: -0.28em; }
+.el-head {
+  display: flex; align-items: center; gap: 6px; margin: 14px 0 8px; padding: 6px 12px; border-radius: 12px;
+  font: 400 1.05rem 'Lilita One', sans-serif; color: #fff; text-shadow: 0 2px 0 var(--ink);
+  background: linear-gradient(90deg, color-mix(in srgb, var(--ec) 45%, transparent), transparent 80%);
+  border-left: 4px solid var(--ec);
+}
+.el-head .ef-ico x-ico { width: 1.5em; height: 1.5em; }
+.el-head small { margin-left: auto; font: 800 0.72rem 'Nunito', sans-serif; color: var(--muted); text-shadow: none; }
+
+/* Novedades (js/version.js) */
+.patch-notes { max-height: 82vh; overflow-y: auto; text-align: left; }
+.patch-notes h2, .patch-notes .code-ico { text-align: center; }
+.pn-ver { margin: 0 0 8px; text-align: center; color: #ffe58a; font: 400 0.95rem 'Lilita One', sans-serif; }
+.pn-list { margin: 0 0 12px; padding-left: 20px; font-size: 0.86rem; line-height: 1.35; }
+.pn-list li { margin-bottom: 6px; }
+.pn-old { margin: 4px 0 10px; padding: 8px 10px; border-radius: 12px; background: rgba(0,0,0,0.25); font-size: 0.8rem; }
+.pn-old p { margin: 0 0 4px; }
+.pn-old b { color: #ffe58a; margin-right: 4px; }

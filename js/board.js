@@ -136,7 +136,6 @@ function Board(opts) {
   this.leaked = 0;
   this.event = null;
   this.shake = 0;
-  this.tileSeed = Math.floor(Math.random() * 10000); // variante de las losas de cada casilla
   this.orbs = [];                        // gotas de maná camino del contador
 }
 function shuffleArr(a) {
@@ -165,9 +164,30 @@ Board.prototype.affinity = function (i) {
   neighbors(i).forEach(function (j) { var v = this.cells[j]; if (v && UNITS[v.id].element === el) n++; }, this);
   return n;
 };
+/* Bonos por dónde está la tropa (cartas con rasgo de posición):
+   twin: por cada vecina igual · mixed: por cada vecina de otra tropa ·
+   edge: si está en el anillo de fuera del tablero. Se suman. */
+function isEdgeCell(i) { var c = i % COLS, r = Math.floor(i / COLS); return c === 0 || c === COLS - 1 || r === 0 || r === ROWS - 1; }
+Board.prototype.posBonus = function (i) {
+  var u = this.cells[i];
+  if (!u) return 0;
+  var d = UNITS[u.id], b = 0;
+  if (d.twin || d.mixed) neighbors(i).forEach(function (j) {
+    var v = this.cells[j];
+    if (v) b += v.id === u.id ? (d.twin || 0) : (d.mixed || 0);
+  }, this);
+  if (d.edge && isEdgeCell(i)) b += d.edge;
+  return b;
+};
+// lo bien que queda una tropa en la casilla i (para que la máquina la coloque)
+Board.prototype.placeScore = function (i) {
+  var u = this.cells[i];
+  if (UNITS[u.id].buff) return neighbors(i).filter(function (j) { var v = this.cells[j]; return v && UNITS[v.id].dmg; }, this).length;
+  return this.posBonus(i);
+};
 Board.prototype.unitDamage = function (i) {
   var u = this.cells[i], d = UNITS[u.id];
-  var m = RANK_MULT[u.rank] * this.unitPower(u.id) * (1 + AFFINITY_BONUS * this.affinity(i));
+  var m = RANK_MULT[u.rank] * this.unitPower(u.id) * (1 + AFFINITY_BONUS * this.affinity(i)) * (1 + this.posBonus(i));
   if (this.tiles[i] === 'altar') m *= 1 + TILES.altar.dmg;
   return (d.dmg || 0) * m;
 };
@@ -191,12 +211,25 @@ Board.prototype.summon = function () {
   if (this.mana < this.summonCost) return 'mana';
   var free = this.freeCells();
   if (!free.length) return 'full';
-  var i = pick(free);
+  var i = pick(free), id = pick(this.deck), d = UNITS[id];
   this.mana -= this.summonCost;
   this.summonCost += 10;
   this.summons++;
   // cae desde arriba; el anillo y el polvo salen al tocar suelo (landFx)
-  this.cells[i] = { id: pick(this.deck), rank: 1, cd: Math.random(), frozen: 0, anim: 0, gen: 0, drop: 1 };
+  this.cells[i] = { id: id, rank: 1, cd: Math.random(), frozen: 0, anim: 0, gen: 0, drop: 1 };
+  if (this.isAI && (d.twin || d.mixed || d.edge || d.buff)) {
+    // la máquina coloca las cartas de posición donde más rinden (y las de
+    // apoyo, donde tengan más tropas que ataquen alrededor)
+    var best = i, bv = this.placeScore(i);
+    free.forEach(function (j) {
+      if (j === i) return;
+      this.cells[j] = this.cells[i]; this.cells[i] = null;
+      var v = this.placeScore(j);
+      this.cells[i] = this.cells[j]; this.cells[j] = null;
+      if (v > bv) { bv = v; best = j; }
+    }, this);
+    if (best !== i) { this.cells[best] = this.cells[i]; this.cells[i] = null; }
+  }
   return 'ok';
 };
 Board.prototype.canMerge = function (a, b) {
@@ -388,12 +421,21 @@ Board.prototype.nearestTo = function (p, exclude, maxD) {
   return best;
 };
 Board.prototype.applyHit = function (e, dmg, d, u) {
-  var mult = RANK_MULT[u.rank] * this.unitPower(u.id);
+  // el bono de posición también cuenta para el veneno y la quemadura
+  var at = this.cells.indexOf(u);
+  var mult = RANK_MULT[u.rank] * this.unitPower(u.id) * (1 + (at >= 0 ? this.posBonus(at) : 0));
   if (d.slow) {
     e.slowPct = Math.min(d.slow.max + 0.03 * (u.rank - 1), e.slowPct + d.slow.pct * (1 - (e.boss ? 0 : ENEMIES[e.kind].slowRes || 0)));
     e.slowT = d.slow.dur;
   }
-  if (d.poison) { e.poison += d.poison.dps * mult * 0.35; e.poisonT = d.poison.dur; e.poisonBy = d.id; }
+  if (d.poison) {
+    e.poison += d.poison.dps * mult * 0.35; e.poisonT = d.poison.dur; e.poisonBy = d.id;
+    // nube tóxica: salpica a los de alrededor con algo menos de veneno
+    if (d.poison.area) this.enemies.forEach(function (o) {
+      if (o === e || o.dead || Math.hypot(o.x - e.x, o.y - e.y) > d.poison.area) return;
+      o.poison += d.poison.dps * mult * 0.35 * 0.6; o.poisonT = d.poison.dur; o.poisonBy = d.id;
+    });
+  }
   if (d.stun && Math.random() < d.stun.chance) {
     e.stun = Math.max(e.stun, d.stun.dur);
     e.stunIce = d.element === 'hielo'; // congelado (cubo de hielo) o aturdido (remolino)

@@ -170,6 +170,7 @@ function updateBattle(dt) {
   var b = battle;
   if (!b || b.ended || b.paused) return;
   b.time += dt;
+  if (b.moveCd > 0) b.moveCd = Math.max(0, b.moveCd - dt / (b.speed || 1));
   if (b.tutorial) updateCoach(dt);
   if (b.gap > 0) {
     // en el tutorial, la primera oleada espera a que invoques dos tropas
@@ -736,10 +737,24 @@ function drawBoard(b, L, now, isMain) {
   if (isMain && drag && drag.moved && b.cells[drag.from]) {
     var du = b.cells[drag.from];
     drawUnit(ctx, du.id, drag.x, drag.y, 0.46 * Math.min(G.cw, G.ch) * sc, du.rank, now, { board: true });
+    // aún no se puede recolocar: reloj con lo que falta (fusionar sí se puede)
+    if (battle.moveCd > 0) drawMoveTimer(drag.x + sc * 0.32, drag.y - sc * 0.42, Math.max(11, sc * 0.17), battle.moveCd / MOVE_COOLDOWN);
   }
   if (!isMain) drawRivalHeader(b, L);
 }
 
+/* Reloj de la espera para recolocar: disco oscuro con la parte que falta
+   en dorado y los segundos en medio. */
+function drawMoveTimer(x, y, r, left) {
+  ctx.save();
+  circle(ctx, x, y, r); ctx.fillStyle = 'rgba(14,12,28,0.85)'; ctx.fill();
+  ctx.beginPath(); ctx.moveTo(x, y); ctx.arc(x, y, r * 0.86, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * left); ctx.closePath();
+  ctx.fillStyle = 'rgba(255,209,102,0.85)'; ctx.fill();
+  circle(ctx, x, y, r); ctx.strokeStyle = '#ffd166'; ctx.lineWidth = 2; ctx.stroke();
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  drawOutlinedText(ctx, String(Math.ceil(left * MOVE_COOLDOWN)), x, y + 1, r * 1.1, '#ffffff');
+  ctx.restore();
+}
 /* Portal de piedra con un remolino mágico dentro (tablero dibujado). */
 function drawPortal(x, y, now, col) {
   var R = 0.36, t = now / 1000;
@@ -798,15 +813,11 @@ function drawTileFloor(type, cc, G, i, now) {
   var w = s * 0.96, h = w * pic.naturalHeight / pic.naturalWidth;
   ctx.drawImage(pic, cc.x - w / 2, cc.y - h / 2, w, h);
 }
-/* Losa de piedra de una casilla normal: la variante sale de la semilla de
-   la partida, así no cambia entre fotogramas. En los biomas verdes alguna
-   lleva musgo. */
-var STONES = ['piedra-1', 'piedra-1', 'piedra-2', 'piedra-3'], MOSSY = ['musgo-1', 'musgo-2', 'musgo-3'];
+/* Losa de piedra de una casilla normal: siempre las mismas 15, en franjas
+   por columnas: 9 lisas (columnas 1, 3 y 5) y 6 agrietadas (2 y 4). */
+var STONE_COLS = ['piedra-1', 'piedra-2', 'piedra-1', 'piedra-2', 'piedra-1'];
 function drawStoneTile(b, i, cc, G) {
-  var h = Math.abs(Math.sin((i + 1) * 12.9898 + (b.tileSeed || 0) * 78.233) * 43758.5453) % 1;
-  var grassy = ['prado', 'bosque', 'pantano'].indexOf(b.biome) !== -1;
-  var name = grassy && h < 0.3 ? MOSSY[Math.floor(h / 0.3 * MOSSY.length)] : STONES[Math.floor(h * 997) % STONES.length];
-  var pic = art('tiles/' + name);
+  var pic = art('tiles/' + STONE_COLS[i % COLS]);
   if (!pic) return false;
   var s = Math.min(G.cw, G.ch) * 0.97;
   ctx.fillStyle = 'rgba(10,12,30,0.3)';
@@ -962,17 +973,29 @@ function dropUnit(from, to, start) {
   if (to < 0 || to === from) return;
   if (b.canMerge(from, to)) { b.merge(from, to, start); sfx('merge'); buzz(25); }
   else if (!b.cells[to]) { moveUnit(from, to); }
-  else { // intercambiar posiciones
+  else if (canReposition()) { // intercambiar posiciones
     var t = b.cells[to]; b.cells[to] = b.cells[from]; b.cells[from] = t;
     b.cells[to].anim = 0.4; b.cells[from].anim = 0.4; sfx('tap');
+    battle.moveCd = MOVE_COOLDOWN;
   }
   refreshUnitInfo();
 }
 // Novedad frente a otros juegos del género: las tropas se pueden recolocar
-// para aprovechar casillas especiales y afinidades.
+// para aprovechar casillas especiales y afinidades, pero solo una vez cada
+// MOVE_COOLDOWN segundos (fusionar no cuenta). Corre en tiempo real: a x2
+// no se acorta, y en pausa se para.
+var MOVE_COOLDOWN = 5;
+function canReposition() {
+  if (!(battle.moveCd > 0)) return true;
+  sfx('no');
+  toast('⏱ Podrás mover otra tropa en ' + Math.ceil(battle.moveCd) + ' s');
+  return false;
+}
 function moveUnit(from, to) {
   var b = battle.player;
+  if (!canReposition()) return;
   b.cells[to] = b.cells[from]; b.cells[from] = null;
   b.cells[to].anim = 0.4;
+  battle.moveCd = MOVE_COOLDOWN;
   sfx('tap');
 }

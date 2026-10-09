@@ -20,7 +20,8 @@ function defaultMeta() {
     freeChestDay: '',
     slots: [null, null, null, null],   // cofres ganados: { type, unlockAt } (unlockAt: cuándo se abre; 0 si no se ha empezado)
     settings: { sound: true },
-    seenTutorial: false
+    seenTutorial: false,
+    lastSeenVersion: ''   // última versión cuyas novedades se han visto (js/version.js)
   };
 }
 function loadMeta() {

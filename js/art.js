@@ -49,7 +49,7 @@ var IMG = {};
 var IMG_LIST = {
   units: UNIT_ORDER.filter(function (id) { return !UNITS[id].noArt; }),
   enemies: ['blob', 'ghost', 'brute', 'orco', 'rocoso', 'escarcha', 'gelido', 'coloso', 'coloso2', 'nigro', 'dragon'],
-  tiles: ['altar', 'fuente', 'atalaya', 'piedra-1', 'piedra-2', 'piedra-3', 'musgo-1', 'musgo-2', 'musgo-3'],
+  tiles: ['altar', 'fuente', 'atalaya', 'piedra-1', 'piedra-2'],
   boards: ['lava2', 'hielo', 'roca', 'veneno'],
   ui: ['boton', 'fondo', 'vida'],
   commanders: ['aria', 'merlo', 'brann'],
@@ -310,7 +310,8 @@ function drawUnit(c, id, x, y, r, rank, now, opt) {
 
   // en el tablero: cuerpo recortado sin chapa, con pose de reposo y de ataque
   var idle = opt.board && art('pose/' + id + '-idle');
-  var hit = idle && atk && art('pose/' + id + '-attack');
+  // las que solo potencian (Melodía) tocan sin parar: siempre en pose de ataque
+  var hit = idle && (atk || u.buff) && art('pose/' + id + '-attack');
   if (idle) {
     var foot = r * 0.9;
     c.fillStyle = 'rgba(0,0,0,0.35)'; c.beginPath(); c.ellipse(0, foot, r * 0.7, r * 0.2, 0, 0, Math.PI * 2); c.fill();
@@ -330,6 +331,8 @@ function drawUnit(c, id, x, y, r, rank, now, opt) {
     if (hit) {
       // la pose de ataque mira hacia el enemigo
       if (opt.aim != null && Math.cos(opt.aim) * POSES[id].face < 0) c.scale(-1, 1);
+      // al compás: se balancea un poco mientras toca
+      if (u.buff && !opt.still) c.rotate(Math.sin(now / 300 + x * 0.05) * 0.05);
       var sa = r * 2.35;
       drawOutlined(c, hit, -sa / 2, -sa, sa, sa, opt.flash);
     } else {

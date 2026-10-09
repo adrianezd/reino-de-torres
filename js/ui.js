@@ -121,12 +121,11 @@ function renderMenu(name, arg) {
       }).join('') +
       '<p class="muted">Victorias ' + meta.duelWins + ' · Derrotas ' + meta.duelLosses + '</p>';
   } else if (name === 'collection') {
-    var collHtml = UNIT_ORDER.filter(function (id) { return collFilter === 'all' || UNITS[id].rarity === collFilter; }).map(function (id) { return cardHtml(id, meta.deck.indexOf(id) !== -1, true); }).join('');
     html = backBar('Mazo', true) + deckTabs('collection') +
       '<p class="lead">Tu mazo (5 tropas). Toca una carta para verla, cambiarla o mejorarla.</p>' +
       '<div class="deck-slots">' + meta.deck.map(function (id) { return cardHtml(id, true); }).join('') + '</div>' +
-      '<h3>Colección</h3>' + rarityFilters() +
-      '<div class="card-grid">' + (collHtml || '<p class="muted coll-empty">No hay tropas de esta rareza</p>') + '</div>' +
+      '<div class="coll-head"><h3>Colección</h3>' + sortSwitch() + '</div>' +
+      (collSort === 'tipo' ? elementFilters() : rarityFilters()) + collectionGrid() +
       '<div class="legend"><b>Afinidad:</b> ' + Object.keys(ELEMENTS).map(function (k) { return ELEMENTS[k].icon + ' ' + ELEMENTS[k].name; }).join(' · ') + '. Dos tropas del mismo elemento juntas se potencian.</div>';
   } else if (name === 'commanders') {
     // tarjetas con el comandante de cuerpo entero; en los medallones de abajo
@@ -212,6 +211,38 @@ function rarityFilters() {
       (k === 'all' ? 'Todas' : RARITY[k].name) + '<small>' + own + '/' + ids.length + '</small></button>';
   }).join('') + '</div>';
 }
+/* Orden de la colección: por rareza (con su filtro) o por tipo, es decir,
+   por elemento, cada uno con su símbolo y agrupado bajo su cabecera. */
+var collSort = 'rareza', collEl = 'all';
+var RARITY_ORDER = Object.keys(RARITY);
+function sortSwitch() {
+  return '<div class="sort-sw"><small>Ordenar</small>' + [['rareza', 'Rareza'], ['tipo', 'Tipo']].map(function (s) {
+    return '<button class="' + (collSort === s[0] ? 'on' : '') + '" data-sort="' + s[0] + '">' + s[1] + '</button>';
+  }).join('') + '</div>';
+}
+function elementFilters() {
+  var keys = ['all'].concat(Object.keys(ELEMENTS));
+  return '<div class="rar-filters el-filters">' + keys.map(function (k) {
+    var ids = UNIT_ORDER.filter(function (id) { return k === 'all' || UNITS[id].element === k; });
+    return '<button class="rar-f' + (collEl === k ? ' on' : '') + '" data-ef="' + k + '" style="--rc:' + (k === 'all' ? '#ffd166' : ELEMENTS[k].color) + '">' +
+      (k === 'all' ? 'Todos' : '<span class="ef-ico">' + ELEMENTS[k].icon + '</span>' + ELEMENTS[k].name) +
+      '<small>' + ids.filter(isUnlocked).length + '/' + ids.length + '</small></button>';
+  }).join('') + '</div>';
+}
+function collectionGrid() {
+  var card = function (id) { return cardHtml(id, meta.deck.indexOf(id) !== -1, true); };
+  if (collSort !== 'tipo') {
+    var ids = UNIT_ORDER.filter(function (id) { return collFilter === 'all' || UNITS[id].rarity === collFilter; });
+    return '<div class="card-grid">' + (ids.map(card).join('') || '<p class="muted coll-empty">No hay tropas de esta rareza</p>') + '</div>';
+  }
+  // por tipo: dentro de cada elemento, de común a legendaria
+  var byRar = function (a, b) { return RARITY_ORDER.indexOf(UNITS[a].rarity) - RARITY_ORDER.indexOf(UNITS[b].rarity) || UNIT_ORDER.indexOf(a) - UNIT_ORDER.indexOf(b); };
+  return Object.keys(ELEMENTS).filter(function (k) { return collEl === 'all' || collEl === k; }).map(function (k) {
+    var ids = UNIT_ORDER.filter(function (id) { return UNITS[id].element === k; }).sort(byRar);
+    return '<h4 class="el-head" style="--ec:' + ELEMENTS[k].color + '"><span class="ef-ico">' + ELEMENTS[k].icon + '</span>' + ELEMENTS[k].name + '<small>' + ids.filter(isUnlocked).length + '/' + ids.length + '</small></h4>' +
+      '<div class="card-grid">' + ids.map(card).join('') + '</div>';
+  }).join('');
+}
 // inColl: carta de la colección, que marca las que ya están en el mazo
 function cardHtml(id, inDeck, inColl) {
   var u = UNITS[id], c = meta.cards[id];
@@ -250,6 +281,8 @@ function bindMenu() {
   m.querySelectorAll('[data-duel]').forEach(function (b) { b.onclick = function () { startBattle('duel', { level: +b.dataset.duel }); }; });
   m.querySelectorAll('[data-cmd]').forEach(function (b) { b.onclick = function () { meta.commander = b.dataset.cmd; saveMeta(); sfx('tap'); renderMenu('commanders'); }; });
   m.querySelectorAll('[data-rf]').forEach(function (b) { b.onclick = function () { collFilter = b.dataset.rf; sfx('tap'); renderMenu('collection'); }; });
+  m.querySelectorAll('[data-ef]').forEach(function (b) { b.onclick = function () { collEl = b.dataset.ef; sfx('tap'); renderMenu('collection'); }; });
+  m.querySelectorAll('[data-sort]').forEach(function (b) { b.onclick = function () { collSort = b.dataset.sort; sfx('tap'); renderMenu('collection'); }; });
   m.querySelectorAll('[data-card]').forEach(function (b) { b.onclick = function () { sfx('tap'); showCardModal(b.dataset.card); }; });
   m.querySelectorAll('[data-offer]').forEach(function (b) {
     b.onclick = function () {
@@ -289,6 +322,9 @@ function unitTraits(u) {
   if (u.pierce) t.push(['🛡️', 'Perfora', 'Sin armadura']);
   if (u.bounty) t.push(['💧', 'Botín', '+' + u.bounty + ' maná por baja']);
   if (u.buff) t.push(['🎵', 'Ritmo', '+' + Math.round(u.buff.speed * 100) + '% vecinas']);
+  if (u.twin) t.push(['📍', 'Gemelas', '+' + Math.round(u.twin * 100) + '% por cada igual al lado']);
+  if (u.mixed) t.push(['📍', 'Variedad', '+' + Math.round(u.mixed * 100) + '% por cada vecina distinta']);
+  if (u.edge) t.push(['📍', 'Borde', '+' + Math.round(u.edge * 100) + '% en las casillas de fuera']);
   if (u.dmg) t.push(['🎯', 'Objetivo', u.target === 'strong' ? 'El más fuerte' : 'El primero']);
   return t;
 }
@@ -490,12 +526,28 @@ function closeOverlay() { $('overlay').hidden = true; $('overlay').innerHTML = '
 function showOptions() {
   openOverlay('<div class="modal-card options"><div class="code-ico">⚙️</div><h2>Opciones</h2>' +
     '<label class="sound-row"><input type="checkbox" id="soundChk" ' + (meta.settings.sound ? 'checked' : '') + '> Sonido</label>' +
+    '<button class="btn btn-ghost" id="optNews">Novedades</button>' +
     '<button class="btn btn-red" id="optReset">Restablecer juego</button>' +
     '<button class="btn btn-ghost" id="optX">Cerrar</button>' +
-    '<p class="foot">Juego original y gratuito, inspirado en los tower defense de fusión. Sin anuncios.</p></div>');
+    '<p class="foot">Versión ' + APP_VERSION + '. Juego original y gratuito, inspirado en los tower defense de fusión. Sin anuncios.</p></div>');
   var sc = $('soundChk'); sc.onchange = function () { meta.settings.sound = sc.checked; saveMeta(); };
+  $('optNews').onclick = function () { showPatchNotes(); };
   $('optReset').onclick = showReset;
   $('optX').onclick = closeOverlay;
+}
+/* Novedades de la versión (js/version.js): la última con detalle y las
+   anteriores, plegadas, con una línea cada una. Sale sola al entrar con
+   una versión nueva. */
+function showPatchNotes(older) {
+  var last = APP_PATCH_NOTES[0], rest = APP_PATCH_NOTES.slice(1);
+  openOverlay('<div class="modal-card patch-notes"><div class="code-ico">📣</div><h2>Novedades</h2>' +
+    '<p class="pn-ver">Versión ' + esc(last.version) + ' · ' + esc(last.summary) + '</p>' +
+    '<ul class="pn-list">' + last.items.map(function (t) { return '<li>' + esc(t) + '</li>'; }).join('') + '</ul>' +
+    (rest.length ? '<button class="btn btn-ghost" id="pnOld">' + (older ? 'Ocultar' : 'Ver') + ' versiones anteriores</button>' +
+      (older ? '<div class="pn-old">' + rest.map(function (n) { return '<p><b>' + esc(n.version) + '</b> ' + esc(n.summary) + '</p>'; }).join('') + '</div>' : '') : '') +
+    '<button class="btn btn-green" id="pnOk">Aceptar</button></div>');
+  if ($('pnOld')) $('pnOld').onclick = function () { sfx('tap'); showPatchNotes(!older); };
+  $('pnOk').onclick = function () { meta.lastSeenVersion = APP_VERSION; saveMeta(); sfx('tap'); closeOverlay(); };
 }
 function showReset() {
   openOverlay('<div class="modal-card"><div class="code-ico">⚠️</div><h2>Restablecer juego</h2>' +
@@ -1087,6 +1139,8 @@ function initGame() {
     };
   });
   showScreen('home');
+  // versión nueva desde la última visita: enseña las novedades
+  if (meta.lastSeenVersion !== APP_VERSION) showPatchNotes();
   requestAnimationFrame(loop);
 }
 document.addEventListener('DOMContentLoaded', initGame);

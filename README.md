@@ -36,7 +36,8 @@ Además, legendarias que solo salen en el cofre de oro (Ígnea, Aurora y Titán)
 - **Próxima oleada**: con un solo tablero, una franja arriba dice cuántos monstruos quedan y qué trae la siguiente oleada (monstruos, jefe y evento).
 - **Daño por tropa** al terminar cada partida, para saber qué mejorar.
 - **Fusión dirigida**: dos tropas iguales del mismo rango se convierten en esa misma tropa con un rango más (no en una al azar).
-- **Recolocar tropas**: arrástralas a otra casilla o intercámbialas.
+- **Recolocar tropas**: arrástralas a otra casilla o intercámbialas, una vez cada 5 segundos (`MOVE_COOLDOWN` en `js/battle.js`; fusionar no cuenta).
+- **Rasgos de posición**: Nívea pega más con otra Nívea al lado (`twin`), Mirra y Cronos con vecinas distintas (`mixed`) y Halcón en las casillas de fuera (`edge`).
 - **Casillas especiales** que cambian cada partida: Altar (+daño), Fuente (maná) y Atalaya (+velocidad).
 - **Afinidad elemental**: cada vecina del mismo elemento suma +12% de daño.
 - **Comandantes** con habilidad que se carga: Aria (Ventisca), Merlo (Marea de maná) y Brann (Meteoro).

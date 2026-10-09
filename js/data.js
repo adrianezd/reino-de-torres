@@ -25,7 +25,7 @@ var UNITS = {
   lyra: {
     element: 'naturaleza', name: 'Lyra', title: 'Arquera del Bosque', role: 'Daño', rarity: 'comun',
     color: '#3fbf6a', color2: '#b8f27a', skin: '#ffd9b8',
-    dmg: 18, rate: 1.6, proj: 'arrow', target: 'first',
+    dmg: 24, rate: 1.6, proj: 'arrow', target: 'first',
     desc: 'Dispara flechas muy rápido al primer enemigo de la fila.'
   },
   brasa: {
@@ -37,13 +37,13 @@ var UNITS = {
   nivea: {
     element: 'hielo', name: 'Nívea', title: 'Hechicera de Escarcha', role: 'Ralentiza', rarity: 'comun',
     color: '#58c9ff', color2: '#e6f8ff', skin: '#e9f1ff',
-    dmg: 9, rate: 1.0, proj: 'ice', slow: { pct: 0.12, max: 0.5, dur: 2.5 }, target: 'first',
-    desc: 'Cada golpe congela un poco al enemigo: hasta un 50% más lento.'
+    dmg: 22, rate: 1.0, proj: 'ice', slow: { pct: 0.12, max: 0.5, dur: 2.5 }, twin: 0.6, target: 'first',
+    desc: 'Cada golpe congela un poco al enemigo: hasta un 50% más lento. Pega mucho más con otra Nívea al lado.'
   },
   doblon: {
     element: 'metal', name: 'Doblón', title: 'Mercader', role: 'Maná', rarity: 'comun',
     color: '#f2b632', color2: '#fff1a8', skin: '#f6c89c',
-    manaGen: { every: 6, amount: 8 },
+    manaGen: { every: 6, amount: 10 },
     desc: 'No ataca. Cada pocos segundos te da maná (más cuanto más rango).'
   },
   rocco: {
@@ -61,50 +61,50 @@ var UNITS = {
   mirra: {
     element: 'naturaleza', name: 'Mirra', title: 'Alquimista', role: 'Veneno', rarity: 'rara',
     color: '#5fdc4a', color2: '#d4ff7a', skin: '#e8d7c0',
-    dmg: 6, rate: 1.0, proj: 'poison', poison: { dps: 14, dur: 4 }, target: 'first',
-    desc: 'Envenena: el daño se acumula y sigue haciendo efecto.'
+    dmg: 6, rate: 1.0, proj: 'poison', poison: { dps: 22, dur: 4, area: 0.55 }, mixed: 0.25, target: 'first',
+    desc: 'Su frasco estalla en una nube tóxica que envenena también a los de alrededor. Cuantas más tropas distintas tenga al lado, más fuerte es la mezcla.'
   },
   melodia: {
     element: 'arcano', name: 'Melodía', title: 'Bardo', role: 'Apoyo', rarity: 'rara',
     color: '#ff6fb5', color2: '#ffd1ea', skin: '#ffdcc6',
-    buff: { speed: 0.12 },
+    buff: { speed: 0.2 },
     desc: 'No ataca. Sus canciones aceleran a las tropas de alrededor.'
   },
   sombra: {
     element: 'arcano', name: 'Sombra', title: 'Asesina', role: 'Crítico', rarity: 'epica',
     color: '#5b3a9e', color2: '#ff4f7b', skin: '#d9c3e8',
-    dmg: 22, rate: 1.2, proj: 'shadow', crit: { chance: 0.25, mult: 3 }, target: 'first',
-    desc: 'Puñales rápidos con un 25% de golpe crítico triple.'
+    dmg: 26, rate: 1.2, proj: 'shadow', crit: { chance: 0.3, mult: 3 }, target: 'first',
+    desc: 'Puñales rápidos con un 30% de golpe crítico triple.'
   },
   cronos: {
     element: 'metal', name: 'Cronos', title: 'Relojero', role: 'Aturde', rarity: 'epica',
     color: '#2bb5a8', color2: '#ffe6a3', skin: '#f2d2b0',
-    dmg: 14, rate: 0.9, proj: 'gear', stun: { chance: 0.18, dur: 1.2 }, target: 'first',
-    desc: 'Sus engranajes pueden detener el tiempo de un enemigo.'
+    dmg: 34, rate: 0.9, proj: 'gear', stun: { chance: 0.26, dur: 1.2 }, mixed: 0.25, target: 'first',
+    desc: 'Sus engranajes pueden detener el tiempo de un enemigo. Cada vecina distinta le da cuerda y pega más.'
   },
   halcon: {
     element: 'metal', name: 'Halcón', title: 'Francotirador', role: 'Daño único', rarity: 'epica',
     color: '#2f4c8f', color2: '#ffd166', skin: '#f1c9a5',
-    dmg: 120, rate: 0.32, proj: 'bullet', target: 'strong',
-    desc: 'Lento pero demoledor. Siempre apunta al enemigo con más vida.'
+    dmg: 130, rate: 0.32, proj: 'bullet', edge: 0.6, target: 'strong',
+    desc: 'Lento pero demoledor. Siempre apunta al enemigo con más vida y en las casillas de fuera tiene mejor tiro.'
   },
   ulric: {
     element: 'hielo', name: 'Ulric', title: 'Paladín', role: 'Mata jefes', rarity: 'legendaria',
     color: '#c9d4e6', color2: '#ffd34d', skin: '#f3cfae',
-    dmg: 30, rate: 0.9, proj: 'holy', bossMult: 3, target: 'strong',
-    desc: 'Golpes sagrados que hacen el triple de daño a los jefes.'
+    dmg: 66, rate: 0.95, proj: 'holy', bossMult: 4, target: 'strong',
+    desc: 'Golpes sagrados que hacen el cuádruple de daño a los jefes.'
   },
   // legendarias que solo salen en el cofre de oro (chestOnly); noArt: true para una tropa aún sin ilustración
   fenix: {
     element: 'fuego', name: 'Ígnea', title: 'Ave Fénix', role: 'Área ardiente', rarity: 'legendaria', chestOnly: true,
     color: '#ff7a1a', color2: '#ffe066', skin: '#ffd2a6',
-    dmg: 36, rate: 0.75, proj: 'fire', splash: 0.7, poison: { dps: 18, dur: 4 }, target: 'first',
+    dmg: 48, rate: 0.75, proj: 'fire', splash: 0.7, poison: { dps: 20, dur: 4 }, target: 'first',
     desc: 'Llamaradas que arrasan una zona y dejan a los enemigos ardiendo.'
   },
   aurora: {
     element: 'arcano', name: 'Aurora', title: 'Archimaga', role: 'Tormenta', rarity: 'legendaria', chestOnly: true,
     color: '#6a4bd8', color2: '#9ff3ff', skin: '#f3dcc8',
-    dmg: 22, rate: 0.9, proj: 'bolt', chain: 5, stun: { chance: 0.15, dur: 1 }, target: 'first',
+    dmg: 22, rate: 0.9, proj: 'bolt', chain: 4, stun: { chance: 0.15, dur: 1 }, target: 'first',
     desc: 'Rayos que saltan entre muchos enemigos y a veces los dejan aturdidos.'
   },
   titan: {
