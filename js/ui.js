@@ -201,7 +201,7 @@ function deckTabs(on) {
     '<button data-go="commanders" class="' + (on === 'commanders' ? 'on' : '') + '">👑 Comandante</button></div>';
 }
 // tab: pantalla de la barra de abajo, sin botón de volver
-function backBar(title, tab) { return '<div class="back-bar">' + (tab ? '' : '<button class="back" data-go="home">‹</button>') + '<h2>' + title + '</h2>' + '<span class="pill gold">🪙 ' + meta.gold + '</span><span class="pill gem">💎 ' + meta.gems + '</span></div>'; }
+function backBar(title, tab) { return '<div class="back-bar">' + (tab ? '' : '<button class="back" data-go="home">‹</button>') + '<h2>' + title + '</h2>' + '<span class="pill gold">🪙 <b>' + meta.gold + '</b></span><span class="pill gem">💎 <b>' + meta.gems + '</b></span></div>'; }
 /* Filtro por rareza de la colección: todas o una rareza, con cuántas tienes de cada. */
 var collFilter = 'all';
 function rarityFilters() {

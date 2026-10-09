@@ -1520,3 +1520,34 @@ x-ico.off { filter: grayscale(1) brightness(0.45); opacity: 0.75; }
 .cb-slot { color: color-mix(in srgb, var(--cc) 55%, #fff); }
 .cmd-banner img { filter: drop-shadow(0 3px 0 rgba(0,0,0,0.45)) drop-shadow(0 0 10px color-mix(in srgb, var(--cc) 70%, transparent)); }
 .stage { overflow: visible; }
+
+/* Pestañas (Tropas / Comandante) y Ordenar: carril oscuro con borde dorado y
+   la pestaña activa como botón naranja 2.5D; textos con contorno */
+.sub-tabs, .sort-sw {
+  background: linear-gradient(180deg, #121a44, #1c2760); border: 3px solid #e0b400;
+  box-shadow: 0 0 0 2px var(--gold-dark), inset 0 3px 6px rgba(0,0,0,0.55), 0 4px 0 var(--gold-dark);
+}
+.sub-tabs button, .sort-sw button {
+  position: relative; font-family: 'Lilita One', 'Nunito', sans-serif; font-weight: 400; letter-spacing: 0.02em;
+  color: #c9d4ff; -webkit-text-stroke: 4px var(--ink); paint-order: stroke fill; text-shadow: 0 2px 0 var(--ink);
+}
+.sub-tabs button { font-size: 1.1rem; }
+.sub-tabs button.on, .sort-sw button.on {
+  color: #fff; border: 2px solid var(--ink);
+  background: linear-gradient(180deg, #ffd35a 0%, #ffa22e 55%, #e0700f 100%);
+  box-shadow: inset 0 2px 0 rgba(255,255,255,0.6), inset 0 -4px 0 rgba(0,0,0,0.2), 0 3px 0 #8a4300;
+}
+.sub-tabs button.on::before, .sort-sw button.on::before {
+  content: ''; position: absolute; left: 8%; right: 8%; top: 8%; height: 38%; pointer-events: none;
+  border-radius: 999px 999px 40% 40%; background: linear-gradient(180deg, rgba(255,255,255,0.5), rgba(255,255,255,0.05));
+}
+.sub-tabs button:active, .sort-sw button:active { transform: translateY(2px); }
+.sort-sw small { font-family: 'Lilita One', sans-serif; font-weight: 400; color: #c9d4ff; -webkit-text-stroke: 3px var(--ink); paint-order: stroke fill; }
+
+/* cifras de oro y gemas de las barras de arriba, como en el inicio */
+.back-bar .pill b {
+  font-family: 'Lilita One', 'Nunito', sans-serif; font-weight: 400; letter-spacing: 0.03em; color: #fff;
+  -webkit-text-stroke: 4px var(--edge); paint-order: stroke fill; text-shadow: 0 2px 0 var(--edge);
+}
+.back-bar .pill.gold b { color: #ffe58a; }
+.back-bar .pill.gem b { color: #bff4ff; }

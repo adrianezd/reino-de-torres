@@ -7,8 +7,16 @@
    La ventana sale sola al entrar con una versión nueva (meta.lastSeenVersion)
    y también desde Opciones.
    ========================================================= */
-var APP_VERSION = '1.6.0';
+var APP_VERSION = '1.6.1';
 var APP_PATCH_NOTES = [
+  {
+    version: '1.6.1',
+    summary: 'Pestañas del Mazo con el estilo del juego',
+    items: [
+      'Las pestañas Tropas y Comandante y el selector Ordenar tienen ahora marco dorado y botón con brillo, como el resto del juego.',
+      'El oro y las gemas de arriba usan la misma letra con contorno que la pantalla de inicio.'
+    ]
+  },
   {
     version: '1.6.0',
     summary: '15 fases nuevas, tropas solo en cofres y cofre gratis cada 3 horas',
