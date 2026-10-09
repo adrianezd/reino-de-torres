@@ -7,8 +7,16 @@
    La ventana sale sola al entrar con una versión nueva (meta.lastSeenVersion)
    y también desde Opciones.
    ========================================================= */
-var APP_VERSION = '1.6.1';
+var APP_VERSION = '1.6.2';
 var APP_PATCH_NOTES = [
+  {
+    version: '1.6.2',
+    summary: 'Monstruos ralentizados en azul hielo',
+    items: [
+      'Los monstruos que frenan Nívea y Bóreas ya no llevan un aro: se tiñen de azul hielo, más cuanto más frenados van.',
+      'La vida de los monstruos ya no marca 0 cuando aún les queda un poco.'
+    ]
+  },
   {
     version: '1.6.1',
     summary: 'Pestañas del Mazo con el estilo del juego',
