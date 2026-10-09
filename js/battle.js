@@ -611,6 +611,8 @@ function drawBoard(b, L, now, isMain) {
     }
   });
 
+  drawCellAuras(b, G, now);
+
   // tropas
   var sel = isMain ? battle.selected : null;
   var drag = isMain ? battle.drag : null;
@@ -744,6 +746,55 @@ function drawBoard(b, L, now, isMain) {
   if (!isMain) drawRivalHeader(b, L);
 }
 
+/* Aura de cada tropa en su casilla (assets/cells/<id>), debajo de todas las
+   fichas para que ninguna tape a una vecina.
+    - las de posición y apoyo solo salen cuando cumplen su condición:
+      Nívea con otra Nívea al lado (un aura doble entre las dos), Mirra y
+      Cronos con vecinas distintas, Halcón en el borde, Melodía con tropas
+      que atacan alrededor; Doblón, al dar maná.
+    - el resto, suave siempre y se enciende al disparar.
+   Las de remolino giran despacio; las altas (Doblón, Ulric) se apoyan en los pies. */
+var AURA_SPIN = { lyra: 1, brasa: -1, rocco: 0.5, volta: 1.4, melodia: 0.4, sombra: -1.2, cronos: 0.35, fenix: 1, aurora: 1.3, boreas: -1 };
+var AURA_TALL = { doblon: true, ulric: true };
+function drawCellAuras(b, G, now) {
+  var s = Math.min(G.cw, G.ch);
+  for (var i = 0; i < b.cells.length; i++) {
+    var u = b.cells[i];
+    if (!u || u.drop > SUMMON_LAND) continue;
+    var pic = art('cells/' + u.id), d = UNITS[u.id];
+    if (!pic) continue;
+    var c = b.cc(i), pulse = 0.5 + 0.5 * Math.sin(now / 420 + i), a, k = 1;
+    if (d.twin) {
+      // aura doble entre cada pareja de Nívea (una vez por pareja)
+      neighbors(i).forEach(function (j) {
+        var v = b.cells[j];
+        if (j < i || !v || v.id !== u.id) return;
+        var c2 = b.cc(j), w = s * 1.9, h = w * pic.naturalHeight / pic.naturalWidth;
+        ctx.save(); ctx.globalAlpha = 0.75 + pulse * 0.2;
+        ctx.translate((c.x + c2.x) / 2, (c.y + c2.y) / 2 + s * 0.08);
+        if (Math.abs(c2.y - c.y) > Math.abs(c2.x - c.x)) ctx.rotate(Math.PI / 2);
+        ctx.drawImage(pic, -w / 2, -h / 2, w, h);
+        ctx.restore();
+      });
+      continue;
+    }
+    if (d.mixed || d.edge) { if (!(b.posBonus(i) > 0)) continue; a = 0.7 + pulse * 0.25; }
+    else if (d.buff) { if (!(b.placeScore(i) > 0)) continue; a = 0.65 + pulse * 0.25; }
+    else if (d.manaGen) { if (!(u.atk > 0)) continue; a = Math.min(1, u.atk / 0.25); k = 1.1 - 0.2 * (u.atk / 0.5); }
+    else { a = 0.4 + 0.5 * (u.recoil || 0); k = 1 + 0.12 * (u.recoil || 0); }
+    if (u.frozen > 0) a *= 0.4;
+    var w2 = s * 0.95 * k, h2 = w2 * pic.naturalHeight / pic.naturalWidth;
+    if (h2 > s * 1.1 * k) { h2 = s * 1.1 * k; w2 = h2 * pic.naturalWidth / pic.naturalHeight; }
+    ctx.save();
+    ctx.globalAlpha = a;
+    // los remolinos, sobre el suelo y girando; las altas, de pie sobre los pies
+    var cy = AURA_TALL[u.id] ? c.y + s * 0.42 - h2 / 2 : c.y + s * 0.06;
+    ctx.translate(c.x, cy);
+    if (AURA_SPIN[u.id]) ctx.rotate(now / 1000 * 0.6 * AURA_SPIN[u.id]);
+    ctx.drawImage(pic, -w2 / 2, -h2 / 2, w2, h2);
+    ctx.restore();
+  }
+}
 /* Reloj de la espera para recolocar: disco oscuro con la parte que falta
    en dorado y los segundos en medio. */
 function drawMoveTimer(x, y, r, left) {
@@ -977,7 +1028,7 @@ function dropUnit(from, to, start) {
   else if (!b.cells[to]) { moveUnit(from, to); }
   else if (canReposition()) { // intercambiar posiciones
     var t = b.cells[to]; b.cells[to] = b.cells[from]; b.cells[from] = t;
-    b.cells[to].anim = 0.4; b.cells[from].anim = 0.4; sfx('tap');
+    b.cells[to].anim = 0.4; b.cells[from].anim = 0.4; sfx('tap'); moveFx(b, from, to);
     battle.moveCd = MOVE_COOLDOWN;
   }
   refreshUnitInfo();
@@ -993,11 +1044,18 @@ function canReposition() {
   toast('⏱ Podrás mover otra tropa en ' + Math.ceil(battle.moveCd) + ' s');
   return false;
 }
+// dos estelas cruzadas entre la casilla de salida y la de llegada (assets/fx/mover)
+function moveFx(b, from, to) {
+  var a = b.cc(from), c = b.cc(to), dist = Math.hypot(c.x - a.x, c.y - a.y);
+  if (!art('fx/mover')) return;
+  b.fx.push({ type: 'pic', key: 'fx/mover', x: (a.x + c.x) / 2, y: (a.y + c.y) / 2, size: Math.max(1, dist * 0.85), rot: Math.atan2(c.y - a.y, c.x - a.x), grow: 0.5, life: 0.45, max: 0.45 });
+}
 function moveUnit(from, to) {
   var b = battle.player;
   if (!canReposition()) return;
   b.cells[to] = b.cells[from]; b.cells[from] = null;
   b.cells[to].anim = 0.4;
+  moveFx(b, from, to);
   battle.moveCd = MOVE_COOLDOWN;
   sfx('tap');
 }

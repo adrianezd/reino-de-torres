@@ -254,7 +254,9 @@ Board.prototype.merge = function (from, to, start) {
 // la tropa invocada toca suelo: anillo de su color y polvo a los pies
 Board.prototype.landFx = function (i, u) {
   var p = this.cc(i);
-  this.addFx('ring', p, UNITS[u.id].color);
+  // círculo mágico con humo y destello (assets/fx/invocar)
+  if (art('fx/invocar')) this.fx.push({ type: 'pic', key: 'fx/invocar', x: p.x, y: p.y - 0.06, size: 1.05, rot: 0, grow: 0.5, life: 0.5, max: 0.5 });
+  else this.addFx('ring', p, UNITS[u.id].color);
   for (var n = 0; n < 6; n++) {
     var sd = n % 2 ? 1 : -1;
     this.fx.push({ type: 'part', x: p.x + sd * 0.15, y: p.y + 0.36, vx: sd * (0.6 + Math.random() * 0.8), vy: -0.4 - Math.random() * 0.6, r: 0.04 + Math.random() * 0.03, color: '#e9dcc0', life: 0.35, max: 0.35 });
@@ -263,7 +265,11 @@ Board.prototype.landFx = function (i, u) {
 // llega la tropa que se funde: estallido dorado y el rango nuevo
 Board.prototype.mergeArriveFx = function (i, u) {
   var p = this.cc(i);
-  this.addFx('burst', p, '#ffd166');
+  // burbuja dorada con flechas hacia arriba (assets/fx/fusion); Doblón, con
+  // su propio remolino de monedas (assets/fx/fusion-doblon)
+  var fk = u.id === 'doblon' && art('fx/fusion-doblon') ? 'fx/fusion-doblon' : 'fx/fusion';
+  if (art(fk)) this.fx.push({ type: 'pic', key: fk, x: p.x, y: p.y - (fk === 'fx/fusion' ? 0.12 : 0), size: fk === 'fx/fusion' ? 1.15 : 1.05, rot: 0, grow: 0.45, life: 0.55, max: 0.55 });
+  else this.addFx('burst', p, '#ffd166');
   this.addText(p.x, p.y - 0.45, 'Rango ' + u.rank, '#ffd166', true);
 };
 Board.prototype.powerUp = function (id) {

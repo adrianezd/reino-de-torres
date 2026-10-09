@@ -54,7 +54,8 @@ var IMG_LIST = {
   ui: ['boton', 'fondo', 'vida'],
   commanders: ['aria', 'merlo', 'brann'],
   icons: ['estrella', 'gota', 'espadas', 'escudo'],
-  chests: ['moneda'] // proyectil de Midas
+  chests: ['moneda'], // proyectil de Midas
+  cells: UNIT_ORDER.slice() // aura de cada tropa en su casilla (assets/cells)
 };
 var imgReadyCount = 0;
 Object.keys(IMG_LIST).forEach(function (dir) {
@@ -106,7 +107,7 @@ var FX_OF = { fire: 'fuego', ice: 'hielo', poison: 'veneno', bomb: 'canon', arro
     IMG['fx/' + el + '-' + part] = im;
   });
 });
-['ventisca', 'marea', 'meteoro', 'crater', 'boreas-ventisca', 'midas-critico', 'muerte-puf'].forEach(function (k) {
+['ventisca', 'marea', 'meteoro', 'crater', 'boreas-ventisca', 'midas-critico', 'muerte-puf', 'invocar', 'fusion', 'fusion-doblon', 'mover'].forEach(function (k) {
   var im = new Image();
   im.onload = function () { im.ready = true; };
   im.src = 'assets/fx/' + k + '.webp';

@@ -7,8 +7,18 @@
    La ventana sale sola al entrar con una versión nueva (meta.lastSeenVersion)
    y también desde Opciones.
    ========================================================= */
-var APP_VERSION = '1.3.1';
+var APP_VERSION = '1.4.0';
 var APP_PATCH_NOTES = [
+  {
+    version: '1.4.0',
+    summary: 'Auras en las casillas y efectos nuevos al invocar, fusionar y mover',
+    items: [
+      'Cada tropa tiene su aura en la casilla, que se enciende cuando dispara.',
+      'Las tropas con condición enseñan su aura solo cuando la cumplen: dos Nívea juntas comparten un aura doble, Halcón saca su mira en las casillas de fuera, Mirra y Cronos brillan con vecinas distintas y Melodía con tropas alrededor.',
+      'Doblón suelta una fuente de monedas al darte maná y tiene su propio remolino de oro al fusionarse.',
+      'Efectos nuevos al invocar (círculo mágico), al fusionar (burbuja dorada) y al recolocar tropas (estelas cruzadas).'
+    ]
+  },
   {
     version: '1.3.1',
     summary: 'El tablero es siempre el mismo en todos los mapas',
