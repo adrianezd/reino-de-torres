@@ -232,7 +232,7 @@ Board.prototype.useCommander = function () {
   this.cmds++;
   var cmd = this.commander;
   if (cmd === 'aria') {
-    this.enemies.forEach(function (e) { e.stun = Math.max(e.stun, 3); });
+    this.enemies.forEach(function (e) { e.stun = Math.max(e.stun, 3); e.stunIce = true; });
     this.addFx('flash', { x: this.geo.W / 2, y: this.geo.H / 2 }, '#bfefff');
     this.addSweep('fx/ventisca');
   } else if (cmd === 'merlo') {
@@ -262,7 +262,7 @@ Board.prototype.spawn = function (kind, hp, opt) {
     id: ++ENEMY_SEQ, kind: kind, boss: boss, seed: Math.random() * 10,
     hp: hp, maxHp: hp, d: opt.d || 0, x: 0, y: 0,
     speed: (this.geo.len / BASE_CROSS_TIME) * d.speed * (opt.speedMult || 1),
-    slowPct: 0, slowT: 0, poison: 0, poisonT: 0, stun: 0, shield: 0, abilityT: 3, dead: false,
+    slowPct: 0, slowT: 0, poison: 0, poisonT: 0, stun: 0, shield: 0, abilityT: 3, dead: false, critT: 0, breakT: 0,
     armor: d.armor || 0, dodge: d.dodge || 0
   };
   var p = this.pos(e.d); e.x = p.x; e.y = p.y;
@@ -283,6 +283,8 @@ Board.prototype.hit = function (e, dmg, unitDef, kind) {
   e.hp -= dmg;
   this.damage += dmg;
   if (crit) this.addText(e.x, e.y - 0.5, '¡' + fmtNum(dmg) + '!', '#ff4f7b', true);
+  if (crit && !unitDef.critPic) e.critT = 0.55;
+  if (unitDef && unitDef.pierce && e.armor > 0) e.breakT = 0.55;
   if (crit && unitDef.critPic) this.fx.push({ type: 'pic', key: unitDef.critPic, x: e.x, y: e.y - 0.3, size: 0.75, rot: 0, grow: 0.4, life: 0.55, max: 0.55 });
   if (e.hp <= 0) {
     if (unitDef && unitDef.bounty) { this.mana += unitDef.bounty; this.addText(e.x, e.y - 0.25, '+' + unitDef.bounty + ' 💧', '#ffd166'); }
@@ -367,6 +369,7 @@ Board.prototype.applyHit = function (e, dmg, d, u) {
   if (d.poison) { e.poison += d.poison.dps * mult * 0.35; e.poisonT = d.poison.dur; e.poisonBy = d.id; }
   if (d.stun && Math.random() < d.stun.chance) {
     e.stun = Math.max(e.stun, d.stun.dur);
+    e.stunIce = d.element === 'hielo'; // congelado (cubo de hielo) o aturdido (remolino)
     if (d.stunPic) this.fx.push({ type: 'pic', key: d.stunPic, x: e.x, y: e.y, size: 0.8, rot: 0, grow: 0.4, life: 0.6, max: 0.6 });
   }
   if (d.splash) {
@@ -470,6 +473,8 @@ Board.prototype.update = function (dt) {
     }
     if (e.slowT > 0) { e.slowT -= dt; if (e.slowT <= 0) e.slowPct = 0; }
     if (e.shield > 0) e.shield -= dt;
+    if (e.critT > 0) e.critT -= dt;
+    if (e.breakT > 0) e.breakT -= dt;
     if (e.stun > 0) { e.stun -= dt; }
     else e.d += e.speed * evSpeed * (1 - e.slowPct) * dt;
     var p2 = this.pos(e.d); e.x = p2.x; e.y = p2.y;

@@ -301,7 +301,35 @@ function unitSources(id) {
   else out.push('🎁 Puede salir en los cofres y en las ofertas de la tienda');
   return out;
 }
-function showCardModal(id) {
+// Pestañas de la ficha de tropa: primero el vídeo (mini partida) y luego las stats.
+function ucTabs(id, statsHtml, tab) {
+  var u = UNITS[id], on = tab === 'stats' ? 'stats' : 'video';
+  return '<div class="uc-tabs"><button data-uct="video" class="' + (on === 'video' ? 'on' : '') + '">Vídeo</button><button data-uct="stats" class="' + (on === 'stats' ? 'on' : '') + '">Stats</button></div>' +
+    '<div class="uc-pane" data-ucp="video"' + (on === 'video' ? '' : ' hidden') + '><div class="uc-demo"><canvas id="ucDemo" aria-label="' + esc(u.name) + ' en acción"></canvas><span>En acción</span></div></div>' +
+    '<div class="uc-pane" data-ucp="stats"' + (on === 'stats' ? '' : ' hidden') + '>' + statsHtml + '</div>';
+}
+function bindUcTabs() {
+  document.querySelectorAll('[data-uct]').forEach(function (b) {
+    b.onclick = function () {
+      sfx('tap');
+      document.querySelectorAll('[data-uct]').forEach(function (o) { o.classList.toggle('on', o === b); });
+      document.querySelectorAll('[data-ucp]').forEach(function (p) { p.hidden = p.dataset.ucp !== b.dataset.uct; });
+    };
+  });
+}
+// Lo que gana una tropa al subir su carta de nivel lv a lv + 1: [icono, nombre, antes, después]
+function cardGainRows(u, lv) {
+  var m = function (l) { return 1 + CARD_BONUS * (l - 1); }, rows = [];
+  if (u.dmg) {
+    rows.push(['⚔️', 'Daño', Math.round(u.dmg * m(lv)), Math.round(u.dmg * m(lv + 1))]);
+    rows.push(['📈', 'Daño/s', Math.round(u.dmg * m(lv) * u.rate), Math.round(u.dmg * m(lv + 1) * u.rate)]);
+  }
+  if (u.poison) rows.push([u.element === 'fuego' ? '🔥' : '☠️', u.element === 'fuego' ? 'Quema/s' : 'Veneno/s', Math.round(u.poison.dps * m(lv)), Math.round(u.poison.dps * m(lv + 1))]);
+  if (u.manaGen) rows.push(['💧', 'Maná', Math.round(u.manaGen.amount * m(lv)), Math.round(u.manaGen.amount * m(lv + 1))]);
+  if (u.buff) rows.push(['🎵', 'Velocidad %', Math.round(u.buff.speed * m(lv) * 100), Math.round(u.buff.speed * m(lv + 1) * 100)]);
+  return rows;
+}
+function showCardModal(id, tab) {
   if (!meta.cards[id]) { showLockedCard(id); return; }
   var u = UNITS[id], c = meta.cards[id], inDeck = meta.deck.indexOf(id) !== -1;
   var rar = RARITY[u.rarity], el = ELEMENTS[u.element];
@@ -323,18 +351,29 @@ function showCardModal(id) {
     '<p class="uc-title">' + esc(u.title) + '</p>' +
     '<div class="uc-chips"><span class="uc-chip rar">' + (u.rarity === 'legendaria' || u.rarity === 'mitica' ? '★ ' : '') + rar.name + '</span><span class="uc-chip el">' + el.icon + ' ' + el.name + '</span><span class="uc-chip">' + esc(u.role) + '</span></div>' +
     '<p class="uc-desc">' + esc(u.desc) + (u.chestOnly ? '<br><em>🎁 Solo sale en el cofre de oro</em>' : '') + '</p>' +
-    '<div class="uc-demo"><canvas id="ucDemo" aria-label="' + esc(u.name) + ' en acción"></canvas><span>En acción</span></div>' +
-    '<div class="pause-stats uc-stats">' + stats + '</div>' +
-    (traits ? '<div class="uc-traits">' + traits + '</div>' : '') +
+    ucTabs(id, '<div class="pause-stats uc-stats">' + stats + '</div>' + (traits ? '<div class="uc-traits">' + traits + '</div>' : ''), tab) +
     '<div class="uc-level"><span class="uc-lvmedal">' + c.lv + '</span><div class="uc-lvbody"><div class="uc-lvtop"><b>' + (maxed ? 'Nivel máximo' : 'Nivel ' + c.lv) + '</b>' + gain + '</div>' +
     '<div class="ubar' + (canUpgradeCard(id) ? ' ok' : '') + '"><span style="width:' + pct + '%"></span><em>' + (maxed ? 'MÁX' : c.n + '/' + need) + '</em></div></div></div>' +
-    (maxed ? '' : '<button class="btn btn-green" id="mcUp" ' + (canUpgradeCard(id) ? '' : 'disabled') + '>⬆ Mejorar · ' + gold + ' 🪙</button>' + (why ? '<p class="uc-why">' + why + '</p>' : '')) +
+    // mejorar en dos toques: el primero enseña lo que gana, el segundo lo confirma
+    (maxed ? '' : '<div class="uc-preview" id="mcPrev" hidden><b>Nivel ' + c.lv + ' → ' + (c.lv + 1) + '</b>' +
+      cardGainRows(u, c.lv).map(function (r) { return '<div class="ucp-row"><i>' + r[0] + '</i><span>' + r[1] + '</span><em>' + r[2] + ' → <b>' + r[3] + '</b></em><small>+' + (r[3] - r[2]) + '</small></div>'; }).join('') + '</div>' +
+      '<button class="btn btn-green" id="mcUp" ' + (canUpgradeCard(id) ? '' : 'disabled') + '>⬆ Mejorar · ' + gold + ' 🪙</button>' + (why ? '<p class="uc-why">' + why + '</p>' : '')) +
     (inDeck ? '<p class="uc-indeck">✔ En tu mazo</p>' : '<p class="uc-swap-t">Ponla en el mazo en lugar de</p><div class="swap-row">' + meta.deck.map(function (d) { return '<button data-swap="' + d + '" style="--rc:' + RARITY[UNITS[d].rarity].color + '"><img src="' + unitIcon(d, 0, 80) + '" alt="' + esc(UNITS[d].name) + '"></button>'; }).join('') + '</div>') +
     '<button class="btn btn-ghost" id="mcClose">Cerrar</button></div>';
   openOverlay(html);
   startCardDemo($('ucDemo'), id);
+  bindUcTabs();
   var up = $('mcUp');
-  if (up) up.onclick = function () { if (upgradeCard(id)) { sfx('power'); toast(u.name + ' sube a nivel ' + meta.cards[id].lv); showCardModal(id); renderMenu('collection'); } };
+  if (up) up.onclick = function () {
+    var prev = $('mcPrev');
+    if (prev.hidden) {
+      prev.hidden = false; sfx('tap');
+      up.innerHTML = icons('✔ Confirmar · ' + gold + ' 🪙');
+      prev.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+      return;
+    }
+    if (upgradeCard(id)) { sfx('power'); toast(u.name + ' sube a nivel ' + meta.cards[id].lv); showCardModal(id, 'stats'); renderMenu('collection'); }
+  };
   document.querySelectorAll('[data-swap]').forEach(function (b) {
     b.onclick = function () { var k = meta.deck.indexOf(b.dataset.swap); meta.deck[k] = id; saveMeta(); closeOverlay(); sfx('merge'); renderMenu('collection'); };
   });
@@ -364,12 +403,11 @@ function showLockedCard(id) {
     '<p class="uc-title">' + esc(u.title) + '</p>' +
     '<div class="uc-chips"><span class="uc-chip rar">' + (u.rarity === 'legendaria' || u.rarity === 'mitica' ? '★ ' : '') + rar.name + '</span><span class="uc-chip el">' + el.icon + ' ' + el.name + '</span><span class="uc-chip">' + esc(u.role) + '</span></div>' +
     '<p class="uc-desc">' + esc(u.desc) + '</p>' +
-    '<div class="uc-demo"><canvas id="ucDemo" aria-label="' + esc(u.name) + ' en acción"></canvas><span>En acción</span></div>' +
-    '<div class="pause-stats uc-stats">' + unitStatsHtml(u, 1) + '</div>' +
-    (traits ? '<div class="uc-traits">' + traits + '</div>' : '') +
+    ucTabs(id, '<div class="pause-stats uc-stats">' + unitStatsHtml(u, 1) + '</div>' + (traits ? '<div class="uc-traits">' + traits + '</div>' : '')) +
     '<div class="uc-get"><b>🔒 Aún no la tienes</b>' + unitSources(id).map(function (t) { return '<small>' + esc(t) + '</small>'; }).join('') + '</div>' +
     '<button class="btn btn-ghost" id="mcClose">Cerrar</button></div>');
   startCardDemo($('ucDemo'), id);
+  bindUcTabs();
   $('mcClose').onclick = closeOverlay;
   $('mcX').onclick = closeOverlay;
 }

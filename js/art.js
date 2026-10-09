@@ -113,7 +113,35 @@ var FX_OF = { fire: 'fuego', ice: 'hielo', poison: 'veneno', bomb: 'canon' };
   IMG['fx/' + k] = im;
 });
 var FX_TURNS = { 'fx/fuego-bola': true, 'fx/hielo-bola': true, 'fx/hielo-destello': true, 'fx/canon-destello': true };
-/* Aturdido: dos estrellas que giran sobre la cabeza. */
+/* Estados sobre la cabeza del monstruo (assets/fx/estado-*.webp): congelado
+   o aturdido, quemado o envenenado, y un momento el crítico y la armadura
+   rota. Si son varios, van en fila. */
+['helado', 'armadura', 'quemado', 'veneno', 'critico', 'aturdido'].forEach(function (k) {
+  var im = new Image();
+  im.onload = function () { im.ready = true; };
+  im.src = 'assets/fx/estado-' + k + '.webp';
+  IMG['fx/estado-' + k] = im;
+});
+function drawStatus(c, e, r, now) {
+  var list = [];
+  if (e.stun > 0) list.push(e.stunIce ? 'helado' : 'aturdido');
+  if (e.poison > 0) list.push(e.poisonBy && UNITS[e.poisonBy] && UNITS[e.poisonBy].element === 'fuego' ? 'quemado' : 'veneno');
+  if (e.breakT > 0) list.push('armadura');
+  if (e.critT > 0) list.push('critico');
+  if (!list.length) return;
+  // encima del número de vida (ver drawBoard en battle.js), en unidades del tablero
+  var s = e.boss ? 0.52 : 0.42, gap = s * 0.85, x0 = e.x - (list.length - 1) * gap / 2;
+  var y = e.y - (e.boss ? 0.92 : ENEMIES[e.kind].size + 0.16) - 0.14 - s / 2;
+  list.forEach(function (k, i) {
+    var x = x0 + i * gap, bob = Math.sin(now / 220 + i) * r * 0.05;
+    if (k === 'aturdido' && !art('fx/estado-aturdido')) { drawStun(c, x, y, r, now); return; }
+    var pop = k === 'critico' ? 1 + Math.max(0, e.critT - 0.35) * 2.5 : k === 'armadura' ? 1 + Math.max(0, e.breakT - 0.35) * 2.5 : 1;
+    if (!drawFxPic(c, 'fx/estado-' + k, x, y + bob, s * pop, k === 'aturdido' ? Math.sin(now / 300) * 0.15 : 0) && k === 'veneno') {
+      c.fillStyle = 'rgba(120,255,90,0.85)'; circle(c, x, y, r * 0.18); c.fill();
+    }
+  });
+}
+/* Aturdido sin imagen: dos estrellas que giran sobre la cabeza. */
 function drawStun(c, x, y, r, now) {
   var im = art('icons/estrella');
   if (!im) { c.fillStyle = '#ffe6a3'; c.font = 'bold ' + (r * 0.9).toFixed(3) + 'px sans-serif'; c.textAlign = 'center'; c.fillText('✦', x, y); return; }
@@ -604,8 +632,7 @@ function drawEnemyVector(c, e, r, now) {
   c.restore();
 
   if (e.slowPct > 0) { c.strokeStyle = 'rgba(160,225,255,0.85)'; c.lineWidth = r * 0.1; circle(c, e.x, e.y, r * 1.05); c.stroke(); }
-  if (e.poison > 0) { c.fillStyle = 'rgba(120,255,90,0.85)'; circle(c, e.x + r * 0.7, e.y - r * 0.6, r * 0.18); c.fill(); }
-  if (e.stun > 0) drawStun(c, e.x, e.y - r * 1.2, r, now);
+  drawStatus(c, e, r, now);
   if (e.shield > 0) { c.strokeStyle = 'rgba(200,210,230,0.95)'; c.lineWidth = r * 0.14; circle(c, e.x, e.y, r * 1.25); c.stroke(); }
 }
 
@@ -644,8 +671,7 @@ function drawEnemyPic(c, e, r, now, pic) {
   c.globalAlpha = 1;
   c.restore();
   if (e.slowPct > 0) { c.strokeStyle = 'rgba(160,225,255,0.85)'; c.lineWidth = r * 0.1; circle(c, e.x, e.y, r * 1.1); c.stroke(); }
-  if (e.poison > 0) { c.fillStyle = 'rgba(120,255,90,0.9)'; circle(c, e.x + r * 0.75, e.y - r * 0.7, r * 0.18); c.fill(); }
-  if (e.stun > 0) drawStun(c, e.x, e.y - r * 1.35, r, now);
+  drawStatus(c, e, r, now);
   if (e.shield > 0) { c.strokeStyle = 'rgba(120,220,255,0.8)'; c.lineWidth = r * 0.12; circle(c, e.x, e.y, r * 1.35); c.stroke(); }
 }
 function drawEnemy(c, e, r, now) {
@@ -738,8 +764,7 @@ function drawEnemy(c, e, r, now) {
   c.restore();
 
   if (e.slowPct > 0) { c.strokeStyle = 'rgba(160,225,255,0.85)'; c.lineWidth = r * 0.1; circle(c, e.x, e.y, r * 1.1); c.stroke(); }
-  if (e.poison > 0) { c.fillStyle = 'rgba(120,255,90,0.9)'; circle(c, e.x + r * 0.75, e.y - r * 0.7, r * 0.18); c.fill(); }
-  if (e.stun > 0) drawStun(c, e.x, e.y - r * 1.35, r, now);
+  drawStatus(c, e, r, now);
   if (e.shield > 0) { c.strokeStyle = 'rgba(200,210,230,0.95)'; c.lineWidth = r * 0.14; circle(c, e.x, e.y, r * 1.3); c.stroke(); }
 }
 

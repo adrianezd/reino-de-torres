@@ -233,6 +233,10 @@ var CODES = {
   BIENVENIDA:    { gold: 500, gems: 50 },
   REINODETORRES: { chest: 'oro' },
   GEMAS:         { gems: 30 },
+  GEMAS100:      { gems: 100 },
+  DIAMANTES:     { gems: 250 },
+  TESOROREAL:    { gems: 500 },
+  MITICO:        { gems: 150 },
   FUSION:        { gold: 400 }
 };
 
