@@ -17,7 +17,7 @@ function defaultMeta() {
     campaign: {},          // fase -> estrellas
     coopBest: 0,
     duelWins: 0, duelLosses: 0,
-    freeChestDay: '',
+    freeChestAt: 0,         // cuándo está listo el siguiente cofre gratis (ms)
     slots: [null, null, null, null],   // cofres ganados: { type, unlockAt } (unlockAt: cuándo se abre; 0 si no se ha empezado)
     settings: { sound: true },
     seenTutorial: false,
@@ -155,10 +155,13 @@ function todayKey() {
   var d = new Date();
   return d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate();
 }
-function freeChestReady() { return meta.freeChestDay !== todayKey(); }
+// cofre gratis: uno cada FREE_CHEST_EVERY segundos (meta.freeChestAt: cuándo está listo el siguiente)
+var FREE_CHEST_EVERY = 3 * 3600;
+function freeChestLeft() { return Math.max(0, ((meta.freeChestAt || 0) - Date.now()) / 1000); }
+function freeChestReady() { return freeChestLeft() <= 0; }
 function claimFreeChest() {
   if (!freeChestReady()) return null;
-  meta.freeChestDay = todayKey();
+  meta.freeChestAt = Date.now() + FREE_CHEST_EVERY * 1000;
   return openChest('plata');
 }
 function totalStars() {

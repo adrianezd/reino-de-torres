@@ -86,7 +86,7 @@ function renderMenu(name, arg) {
     html = topBar() +
       // título con los atajos a los lados, como las ofertas del género
       '<div class="home-top">' +
-      '<div class="side-col">' + side('freeChest', 'chests/madera', free ? 'Gratis' : 'Mañana', free ? 'glow' : '') + side('codes', 'icons/ticket', 'Códigos') + '</div>' +
+      '<div class="side-col">' + side('freeChest', 'chests/madera', freeChestLabel(), free ? 'glow' : '') + side('codes', 'icons/ticket', 'Códigos') + '</div>' +
       '<div class="logo"><h1><img src="assets/ui/titulo.webp" alt="Reino de Torres"></h1></div>' +
       '<div class="side-col">' + side('howto', 'icons/pergamino', 'Ayuda') + side('options', 'icons/engranaje', 'Opciones') + '</div>' +
       '</div>' +
@@ -100,7 +100,7 @@ function renderMenu(name, arg) {
       '<div class="play-row">' +
       '<button class="play-side" data-go="duelPick"><img src="assets/ui/boton-duelo.webp" alt=""><span>1 contra 1</span></button>' +
       '<div class="play-mid"><button class="play-hero" data-go="campaign" aria-label="Campaña"><img src="assets/ui/boton-jugar.webp" alt=""></button>' +
-      '<button class="play-camp" data-go="campaign">Campaña <small>' + totalStars() + '/45 ⭐</small></button></div>' +
+      '<button class="play-camp" data-go="campaign">Campaña <small>' + totalStars() + '/' + CAMPAIGN.length * 3 + ' ⭐</small></button></div>' +
       '<button class="play-side" data-go="coop"><img src="assets/ui/boton-coop.webp" alt=""><span>2 contra IA</span></button>' +
       '</div>' +
       // huecos de cofre abajo del todo, debajo de los botones de jugar
@@ -112,7 +112,7 @@ function renderMenu(name, arg) {
       var open = stageUnlocked(st.id), stars = meta.campaign[st.id] || 0;
       return '<button class="stage ' + (open ? '' : 'locked') + (nextSt === st ? ' next' : '') + '" style="--zc:' + (ZONE_COLOR[st.biome] || '#ffd166') + '" ' + (open ? 'data-stage="' + st.id + '"' : 'disabled') + '>' +
         '<span class="stage-n">' + st.id + '</span>' +
-        '<span class="stage-t"><b>' + esc(st.name) + '</b><small>' + st.waves + ' oleadas · Jefe: ' + esc(BOSSES[st.boss].name) + (st.unlock && !isUnlocked(st.unlock) ? ' · 🎁 ' + esc(UNITS[st.unlock].name) : '') + '</small></span>' +
+        '<span class="stage-t"><b>' + esc(st.name) + '</b><small>' + st.waves + ' oleadas · Jefe: ' + esc(BOSSES[st.boss].name) + '</small></span>' +
         '<span class="stage-s">' + (open ? starRow(stars) : '🔒') + '</span></button>';
     }).join('') + '</div>';
   } else if (name === 'duelPick') {
@@ -235,14 +235,16 @@ function elementFilters() {
 }
 function collectionGrid() {
   var card = function (id) { return cardHtml(id, meta.deck.indexOf(id) !== -1, true); };
+  // las que tienes primero; las no encontradas, debajo (sin cambiar el orden dentro de cada grupo)
+  var ownedFirst = function (ids) { return ids.filter(isUnlocked).concat(ids.filter(function (id) { return !isUnlocked(id); })); };
   if (collSort !== 'tipo') {
-    var ids = UNIT_ORDER.filter(function (id) { return collFilter === 'all' || UNITS[id].rarity === collFilter; });
+    var ids = ownedFirst(UNIT_ORDER.filter(function (id) { return collFilter === 'all' || UNITS[id].rarity === collFilter; }));
     return '<div class="card-grid">' + (ids.map(card).join('') || '<p class="muted coll-empty">No hay tropas de esta rareza</p>') + '</div>';
   }
   // por tipo: dentro de cada elemento, de común a legendaria
   var byRar = function (a, b) { return RARITY_ORDER.indexOf(UNITS[a].rarity) - RARITY_ORDER.indexOf(UNITS[b].rarity) || UNIT_ORDER.indexOf(a) - UNIT_ORDER.indexOf(b); };
   return Object.keys(ELEMENTS).filter(function (k) { return collEl === 'all' || collEl === k; }).map(function (k) {
-    var ids = UNIT_ORDER.filter(function (id) { return UNITS[id].element === k; }).sort(byRar);
+    var ids = ownedFirst(UNIT_ORDER.filter(function (id) { return UNITS[id].element === k; }).sort(byRar));
     return '<h4 class="el-head" style="--ec:' + ELEMENTS[k].color + '"><span class="ef-ico">' + ELEMENTS[k].icon + '</span>' + ELEMENTS[k].name + '<small>' + ids.filter(isUnlocked).length + '/' + ids.length + '</small></h4>' +
       '<div class="card-grid">' + ids.map(card).join('') + '</div>';
   }).join('');
@@ -251,11 +253,11 @@ function collectionGrid() {
 function cardHtml(id, inDeck, inColl) {
   var u = UNITS[id], c = meta.cards[id];
   if (!c) {
-    var from = CAMPAIGN.filter(function (st) { return st.unlock === id; })[0];
+    // aún no la tienes: solo sale en cofres (y en la tienda)
     return '<button class="ucard locked" data-card="' + id + '" style="--rc:' + RARITY[u.rarity].color + '">' +
       '<span class="uel">' + ELEMENTS[u.element].icon + '</span>' +
-      '<span class="uport"><img src="' + unitIcon(id, 0, 128) + '" alt=""><i class="ulock">' + (u.chestOnly ? '🎁' : '🔒') + '</i></span>' +
-      '<div class="ulv ulv-lock">' + (u.chestOnly ? 'Cofre de oro' : from ? 'Fase ' + from.id : 'Bloqueada') + '</div>' +
+      '<span class="uport"><img src="' + unitIcon(id, 0, 128) + '" alt=""><i class="ulock">🔒</i></span>' +
+      '<div class="ulv ulv-lock">No encontrado</div>' +
       '<small>' + esc(u.name) + '</small></button>';
   }
   var need = cardsNeeded(c.lv), pct = c.lv >= CARD_MAX ? 100 : Math.min(100, c.n / need * 100);
@@ -277,7 +279,7 @@ function bindMenu() {
       if (g === 'coop') { startBattle('coop'); return; }
       if (g === 'codes') { showCodes(); return; }
       if (g === 'options') { showOptions(); return; }
-      if (g === 'freeChest') { var r = claimFreeChest(); if (r) showChest(r); else toast('Vuelve mañana a por otro cofre'); return; }
+      if (g === 'freeChest') { var r = claimFreeChest(); if (r) showChest(r); else toast('⏱ Otro cofre gratis en ' + fmtDur(freeChestLeft())); return; }
       showScreen(g);
     };
   });
@@ -335,8 +337,6 @@ function unitTraits(u) {
 // Cómo se consigue una tropa que aún no tienes.
 function unitSources(id) {
   var u = UNITS[id], out = [];
-  var from = CAMPAIGN.filter(function (st) { return st.unlock === id; })[0];
-  if (from) out.push('🗺️ Supera la fase ' + from.id + ' de la campaña, ' + from.name);
   if (u.chestOnly) out.push('🎁 Solo sale en el cofre de oro');
   else if (u.rarity === 'legendaria') out.push('🎁 También puede salir en el cofre de oro');
   else out.push('🎁 Puede salir en los cofres y en las ofertas de la tienda');
@@ -687,8 +687,22 @@ function slotTap(i, btn) {
   sfx('tap');
   showChestInfo(s.type, i);
 }
+// etiqueta del cofre gratis: «Gratis» o lo que falta, corto para que quepa bajo el icono
+function freeChestLabel() {
+  var s = Math.ceil(freeChestLeft());
+  if (!s) return 'Gratis';
+  var h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60), pad = function (n) { return (n < 10 ? '0' : '') + n; };
+  return h ? h + 'h ' + pad(m) + 'm' : m + 'm ' + pad(s % 60) + 's';
+}
 // cuenta atrás de los huecos (y de la ficha abierta de un cofre que se está desbloqueando)
 setInterval(function () {
+  // cofre gratis: cuenta atrás y brillo cuando está listo
+  var fc = document.querySelector('[data-go="freeChest"]');
+  if (fc && !$('menu').hidden) {
+    var fl = fc.querySelector('span'), lbl = freeChestLabel();
+    if (fl && fl.textContent !== lbl) fl.textContent = lbl;
+    fc.classList.toggle('glow', freeChestReady());
+  }
   var el = $('chestSlots');
   if (el && !$('menu').hidden && !chestFxOn) {
     var html = slotsInner();

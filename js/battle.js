@@ -216,7 +216,6 @@ function endBattle(won, draw) {
       res.gold = st.gold + (res.stars > prev ? (res.stars - prev) * 30 : 0);
       // gemas por cada estrella nueva
       if (res.stars > prev) { res.gems = (res.stars - prev) * 5; meta.campaign[st.id] = res.stars; }
-      if (st.unlock && unlockUnit(st.unlock)) res.unlocked = st.unlock;
       res.chest = res.stars === 3 ? 'oro' : res.stars === 2 ? 'plata' : 'madera';
       res.lines.push('Has defendido ' + st.name + '.');
     } else {

@@ -7,8 +7,18 @@
    La ventana sale sola al entrar con una versión nueva (meta.lastSeenVersion)
    y también desde Opciones.
    ========================================================= */
-var APP_VERSION = '1.5.0';
+var APP_VERSION = '1.6.0';
 var APP_PATCH_NOTES = [
+  {
+    version: '1.6.0',
+    summary: '15 fases nuevas, tropas solo en cofres y cofre gratis cada 3 horas',
+    items: [
+      'La campaña llega a 30 fases con 15 zonas nuevas, de Lagos Cristalinos a la Corona del Caos.',
+      'La campaña ya no regala tropas: las tropas nuevas salen solo en los cofres y en la tienda.',
+      'Cofre gratis cada 3 horas en vez de uno al día, con la cuenta atrás en el inicio.',
+      'En el Mazo, las tropas que aún no tienes dicen «No encontrado» y salen debajo de las tuyas.'
+    ]
+  },
   {
     version: '1.5.0',
     summary: 'Campaña en placas, rangos y afinidades a la vista',

@@ -164,26 +164,31 @@ var BOSSES = {
 };
 var BOSS_ORDER = ['rey', 'gelido', 'coloso', 'nigro', 'dragon'];
 
-/* Campaña: 15 fases. hp: dureza de los monstruos (se alcanza del todo en la
+/* Campaña: 30 fases. hp: dureza de los monstruos (se alcanza del todo en la
    última oleada; la primera llega más suave, ver hpScale) · waves: oleadas
-   (la última con jefe) · mana: maná con el que empiezas. */
+   (la última con jefe; 9 como mucho) · mana: maná con el que empiezas.
+   No da tropas: las tropas nuevas solo salen en los cofres (y la tienda). */
 var CAMPAIGN = [];
 (function () {
   var names = ['Prado Verde', 'Colinas Suaves', 'Bosque Susurrante', 'Río Helado', 'Paso del Ogro',
     'Pantano Tóxico', 'Ruinas Antiguas', 'Desierto Rojo', 'Cañón del Eco', 'Picos Nevados',
-    'Volcán Dormido', 'Torre Maldita', 'Cripta Profunda', 'Ciudadela Oscura', 'Trono del Caos'];
-  var unlocks = { 2: 'volta', 3: 'mirra', 4: 'melodia', 6: 'sombra', 8: 'cronos', 10: 'halcon', 12: 'ulric' };
-  for (var i = 0; i < 15; i++) {
+    'Volcán Dormido', 'Torre Maldita', 'Cripta Profunda', 'Ciudadela Oscura', 'Trono del Caos',
+    'Lagos Cristalinos', 'Bosque Sombrío', 'Minas Olvidadas', 'Dunas Ardientes', 'Glaciar Eterno',
+    'Ciénaga Maldita', 'Templo Hundido', 'Fortaleza de Hierro', 'Cumbres de Ceniza', 'Abismo Helado',
+    'Jardín de Espinas', 'Catacumbas Reales', 'Puerto Fantasma', 'Cráter del Dragón', 'Corona del Caos'];
+  var biomes = ['prado', 'prado', 'bosque', 'hielo', 'prado', 'pantano', 'ruinas', 'desierto', 'desierto', 'hielo', 'volcan', 'ruinas', 'cripta', 'cripta', 'volcan',
+    'hielo', 'bosque', 'ruinas', 'desierto', 'hielo', 'pantano', 'ruinas', 'ruinas', 'volcan', 'hielo', 'bosque', 'cripta', 'cripta', 'volcan', 'volcan'];
+  for (var i = 0; i < names.length; i++) {
     CAMPAIGN.push({
       id: i + 1,
       name: names[i],
-      waves: 3 + Math.floor(i / 3),
-      hp: 1.2 + i * 0.38 - Math.max(0, i - 7) * 0.06,
+      waves: Math.min(9, 3 + Math.floor(i / 3)),
+      // a partir de la fase 16 la dureza sube más despacio
+      hp: 1.2 + Math.min(i, 14) * 0.38 - Math.max(0, Math.min(i, 14) - 7) * 0.06 + Math.max(0, i - 14) * 0.18,
       mana: 100 + i * 10,
       boss: BOSS_ORDER[i % BOSS_ORDER.length],
-      unlock: unlocks[i + 1] || null,
       gold: 60 + i * 25,
-      biome: ['prado', 'prado', 'bosque', 'hielo', 'prado', 'pantano', 'ruinas', 'desierto', 'desierto', 'hielo', 'volcan', 'ruinas', 'cripta', 'cripta', 'volcan'][i]
+      biome: biomes[i]
     });
   }
 })();

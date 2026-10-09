@@ -6,7 +6,7 @@ Tower defense de fusión para móvil y escritorio, gratis y sin anuncios. Invoca
 
 ## Modos
 
-- **🗺️ Campaña**: 15 fases con jefe final, estrellas según las vidas que conserves y tropas nuevas que se desbloquean. Cada fase empieza con algo más de maná y su dureza llega poco a poco: la primera oleada viene al 55 % y la última al 100 %. La primera partida trae un tutorial paso a paso (invocar, fusionar, mejorar y comandante), y los monstruos esperan a que tengas dos tropas.
+- **🗺️ Campaña**: 30 fases con jefe final y estrellas según las vidas que conserves. No da tropas: las tropas nuevas solo salen en cofres y en la tienda. Cada fase empieza con algo más de maná y su dureza llega poco a poco: la primera oleada viene al 55 % y la última al 100 %. La primera partida trae un tutorial paso a paso (invocar, fusionar, mejorar y comandante), y los monstruos esperan a que tengas dos tropas.
 - **⚔️ Duelo 1 contra 1**: tú y un rival (IA fácil, normal o difícil) recibís los mismos monstruos. Gana quien aguante más; si caéis a la vez es empate. El rival fácil lleva cartas 2 niveles por debajo de las tuyas y el difícil, 2 por encima (`DUEL_CARD_OFFSET` en `js/battle.js`). Da trofeos.
 - **🤝 2 contra la máquina**: tú y un aliado (IA) compartís vidas contra oleadas infinitas. Récord de oleadas.
 
@@ -46,7 +46,7 @@ Además, legendarias que solo salen en el cofre de oro (Ígnea, Aurora y Titán)
 
 ## Progreso
 
-Oro, gemas, cartas con 10 niveles, cofres de madera, plata y oro, cofre gratis diario, mazo de 5 tropas, trofeos y estrellas. Todo se guarda en el navegador.
+Oro, gemas, cartas con 10 niveles, cofres de madera, plata y oro, cofre gratis cada 3 horas (`FREE_CHEST_EVERY` en `js/meta.js`), mazo de 5 tropas, trofeos y estrellas. Todo se guarda en el navegador.
 
 **🛒 Tienda:** ofertas de cartas que cambian cada día (por oro o, las épicas y legendarias, por gemas). Se guardan al abrir la tienda, así que no cambian aunque desbloquees tropas, y pueden ser de tropas que aún no tienes (marcadas «Nueva»; la compra la desbloquea), salvo las legendarias. También hay cofres por gemas y oro a cambio de gemas. Las gemas salen en los cofres, por cada estrella nueva de la campaña, al ganar duelos y en el cooperativo. Al tocar un cofre se ve su ficha (qué trae y la probabilidad de rara, épica y legendaria; puede tocar cualquier tropa aunque no la tengas y las legendarias solo salen en el de oro) y hay que darle a Abrir. Al abrirlo sale primero el oro y luego las cartas una a una, con un contador de las que quedan; «Saltar» va directo al resumen.
 
