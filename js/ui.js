@@ -332,6 +332,8 @@ function unitTraits(u) {
   if (u.twin) t.push(['📍', 'Gemelas', '+' + Math.round(u.twin * 100) + '% por cada igual al lado']);
   if (u.mixed) t.push(['📍', 'Variedad', '+' + Math.round(u.mixed * 100) + '% por cada vecina distinta']);
   if (u.edge) t.push(['📍', 'Borde', '+' + Math.round(u.edge * 100) + '% en las casillas de fuera']);
+  if (u.lone) t.push(['📍', 'Solitaria', '+' + Math.round(u.lone * 100) + '% sin tropas al lado']);
+  if (u.execute) t.push(['💀', 'Remate', 'Bajo el ' + Math.round(u.execute * 100) + '% cae al instante']);
   if (u.dmg) t.push(['🎯', 'Objetivo', u.target === 'strong' ? 'El más fuerte' : 'El primero']);
   return t;
 }

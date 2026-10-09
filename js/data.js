@@ -72,6 +72,12 @@ var UNITS = {
     buff: { speed: 0.2 },
     desc: 'No ataca. Sus canciones aceleran a las tropas de alrededor.'
   },
+  kaia: {
+    element: 'naturaleza', name: 'Kaia', title: 'Exploradora', role: 'Solitaria', rarity: 'rara',
+    color: '#7a9a3a', color2: '#e8f28a', skin: '#f0c9a0',
+    dmg: 40, rate: 1.2, proj: 'arrow', lone: 0.8, target: 'first',
+    desc: 'Caza mejor sola: si no tiene ninguna tropa al lado, pega muchísimo más.'
+  },
   sombra: {
     element: 'arcano', name: 'Sombra', title: 'Asesina', role: 'Crítico', rarity: 'epica',
     color: '#5b3a9e', color2: '#ff4f7b', skin: '#d9c3e8',
@@ -127,9 +133,15 @@ var UNITS = {
     color: '#f2b632', color2: '#fff6c2', skin: '#f6c89c',
     dmg: 64, rate: 0.7, proj: 'coin', crit: { chance: 0.25, mult: 3 }, critPic: 'fx/midas-critico', pierce: true, bounty: 4, target: 'strong',
     desc: 'Monedas de oro que atraviesan la armadura y pueden ser críticas. Cada baja suya te da maná extra.'
+  },
+  seren: {
+    element: 'arcano', name: 'Seren', title: 'Guardiana Astral', role: 'Ejecuta', rarity: 'mitica', chestOnly: true,
+    color: '#7b6bff', color2: '#e6e1ff', skin: '#efe2ff',
+    dmg: 58, rate: 0.9, proj: 'holy', execute: 0.25, target: 'first',
+    desc: 'Estrellas que rematan: cualquier monstruo que no sea jefe y baje del 25% de vida cae al instante.'
   }
 };
-var UNIT_ORDER = ['lyra', 'brasa', 'nivea', 'doblon', 'rocco', 'volta', 'mirra', 'melodia', 'sombra', 'cronos', 'halcon', 'ulric', 'fenix', 'aurora', 'titan', 'boreas', 'midas'];
+var UNIT_ORDER = ['lyra', 'brasa', 'nivea', 'doblon', 'rocco', 'volta', 'mirra', 'melodia', 'kaia', 'sombra', 'cronos', 'halcon', 'ulric', 'fenix', 'aurora', 'titan', 'boreas', 'midas', 'seren'];
 UNIT_ORDER.forEach(function (id) { UNITS[id].id = id; });
 // tropas que pueden usar los rivales y aliados de la máquina
 var AI_UNITS = UNIT_ORDER.filter(function (id) { return !UNITS[id].chestOnly; });

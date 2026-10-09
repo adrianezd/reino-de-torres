@@ -7,8 +7,17 @@
    La ventana sale sola al entrar con una versión nueva (meta.lastSeenVersion)
    y también desde Opciones.
    ========================================================= */
-var APP_VERSION = '1.6.6';
+var APP_VERSION = '1.7.0';
 var APP_PATCH_NOTES = [
+  {
+    version: '1.7.0',
+    summary: 'Dos cartas nuevas: Kaia (rara) y Seren (mítica)',
+    items: [
+      'Kaia, Exploradora (rara, naturaleza): caza mejor sola; sin ninguna tropa al lado pega mucho más.',
+      'Seren, Guardiana Astral (mítica, arcano): remata al instante a los monstruos que no sean jefe cuando bajan del 25% de vida. Solo sale en el cofre de oro.',
+      'Las dos llegan con su ilustración, sus poses de ataque y su aura en la casilla; la de Kaia solo sale cuando está sola.'
+    ]
+  },
   {
     version: '1.6.6',
     summary: 'Las míticas, antes que las legendarias',

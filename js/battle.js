@@ -803,7 +803,7 @@ function drawCellAuras(b, G, now) {
       });
       continue;
     }
-    if (d.mixed || d.edge) { if (!(b.posBonus(i) > 0)) continue; a = 0.7 + pulse * 0.25; }
+    if (d.mixed || d.edge || d.lone) { if (!(b.posBonus(i) > 0)) continue; a = 0.7 + pulse * 0.25; }
     else if (d.buff) { if (!(b.placeScore(i) > 0)) continue; a = 0.65 + pulse * 0.25; }
     else if (d.manaGen) { if (!(u.atk > 0)) continue; a = Math.min(1, u.atk / 0.25); k = 1.1 - 0.2 * (u.atk / 0.5); }
     else { a = 0.4 + 0.5 * (u.recoil || 0); k = 1 + 0.12 * (u.recoil || 0); }

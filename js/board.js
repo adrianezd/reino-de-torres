@@ -177,6 +177,8 @@ Board.prototype.posBonus = function (i) {
     if (v) b += v.id === u.id ? (d.twin || 0) : (d.mixed || 0);
   }, this);
   if (d.edge && isEdgeCell(i)) b += d.edge;
+  // lone: sin ninguna tropa al lado
+  if (d.lone && !neighbors(i).some(function (j) { return this.cells[j]; }, this)) b += d.lone;
   return b;
 };
 // lo bien que queda una tropa en la casilla i (para que la máquina la coloque)
@@ -217,7 +219,7 @@ Board.prototype.summon = function () {
   this.summons++;
   // cae desde arriba; el anillo y el polvo salen al tocar suelo (landFx)
   this.cells[i] = { id: id, rank: 1, cd: Math.random(), frozen: 0, anim: 0, gen: 0, drop: 1 };
-  if (this.isAI && (d.twin || d.mixed || d.edge || d.buff)) {
+  if (this.isAI && (d.twin || d.mixed || d.edge || d.lone || d.buff)) {
     // la máquina coloca las cartas de posición donde más rinden (y las de
     // apoyo, donde tengan más tropas que ataquen alrededor)
     var best = i, bv = this.placeScore(i);
@@ -348,6 +350,12 @@ Board.prototype.hit = function (e, dmg, unitDef, kind) {
   if (crit && !unitDef.critPic) e.critT = 0.55;
   if (unitDef && unitDef.pierce && e.armor > 0) e.breakT = 0.55;
   if (crit && unitDef.critPic) this.fx.push({ type: 'pic', key: unitDef.critPic, x: e.x, y: e.y - 0.3, size: 0.75, rot: 0, grow: 0.4, life: 0.55, max: 0.55 });
+  // remate (Seren): un monstruo que no sea jefe y quede por debajo del umbral cae al instante
+  if (unitDef && unitDef.execute && !e.boss && e.hp > 0 && e.hp <= e.maxHp * unitDef.execute) {
+    this.dmgBy[src] += e.hp;
+    e.hp = 0;
+    this.addText(e.x, e.y - 0.5, '¡Remate!', '#c9b8ff', true);
+  }
   if (e.hp <= 0) {
     if (unitDef && unitDef.bounty) { this.mana += unitDef.bounty; this.addText(e.x, e.y - 0.25, '+' + unitDef.bounty + ' 💧', '#ffd166'); }
     this.kill(e);

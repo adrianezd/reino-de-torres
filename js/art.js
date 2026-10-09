@@ -55,7 +55,7 @@ var IMG_LIST = {
   commanders: ['aria', 'merlo', 'brann'],
   icons: ['estrella', 'gota', 'espadas', 'escudo'],
   chests: ['moneda'], // proyectil de Midas
-  cells: UNIT_ORDER.slice() // aura de cada tropa en su casilla (assets/cells)
+  cells: UNIT_ORDER.filter(function (id) { return !UNITS[id].noArt; }) // aura de cada tropa en su casilla (assets/cells)
 };
 var imgReadyCount = 0;
 Object.keys(IMG_LIST).forEach(function (dir) {
@@ -83,7 +83,8 @@ var POSES = {
   lyra: { face: 1 }, brasa: { face: -1 }, rocco: { face: -1 }, sombra: { face: -1 },
   nivea: { face: -1 }, doblon: { face: 1 }, volta: { face: -1 }, mirra: { face: -1 },
   melodia: { face: 1 }, cronos: { face: -1 }, halcon: { face: 1 }, ulric: { face: 1 },
-  fenix: { face: -1 }, aurora: { face: 1 }, titan: { face: 1 }, boreas: { face: 1 }, midas: { face: 1 }
+  fenix: { face: -1 }, aurora: { face: 1 }, titan: { face: 1 }, boreas: { face: 1 }, midas: { face: 1 },
+  kaia: { face: 1 }, seren: { face: 1 }
 };
 var ATK_POSE_TIME = 0.15;
 Object.keys(POSES).forEach(function (id) {
