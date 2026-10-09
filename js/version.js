@@ -7,8 +7,15 @@
    La ventana sale sola al entrar con una versión nueva (meta.lastSeenVersion)
    y también desde Opciones.
    ========================================================= */
-var APP_VERSION = '1.6.4';
+var APP_VERSION = '1.6.5';
 var APP_PATCH_NOTES = [
+  {
+    version: '1.6.5',
+    summary: 'Las míticas, después de las legendarias',
+    items: [
+      'En la colección, el filtro Mítica y las cartas míticas van ahora después de las legendarias.'
+    ]
+  },
   {
     version: '1.6.4',
     summary: 'Monedas alineadas, botón Mejorar nuevo y Siguiente fase hasta la 30',

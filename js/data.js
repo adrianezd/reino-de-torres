@@ -3,12 +3,13 @@
    DATOS: tropas, enemigos, jefes, campaña y cofres
    ========================================================= */
 
+// el orden de las claves es el que se ve en la colección (filtros y orden por tipo): la mítica, la última
 var RARITY = {
   comun:      { name: 'Común',      color: '#9fb3c8' },
   rara:       { name: 'Rara',       color: '#4da3ff' },
   epica:      { name: 'Épica',      color: '#b26bff' },
-  mitica:     { name: 'Mítica',     color: '#ff3b6b' },
-  legendaria: { name: 'Legendaria', color: '#ffb020' }
+  legendaria: { name: 'Legendaria', color: '#ffb020' },
+  mitica:     { name: 'Mítica',     color: '#ff3b6b' }
 };
 
 /*
