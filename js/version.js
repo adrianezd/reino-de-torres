@@ -7,8 +7,16 @@
    La ventana sale sola al entrar con una versión nueva (meta.lastSeenVersion)
    y también desde Opciones.
    ========================================================= */
-var APP_VERSION = '1.6.2';
+var APP_VERSION = '1.6.3';
 var APP_PATCH_NOTES = [
+  {
+    version: '1.6.3',
+    summary: 'Sello de escarcha bajo los monstruos ralentizados',
+    items: [
+      'Los monstruos frenados por Nívea o Bóreas llevan a los pies un sello de escarcha animado, más intenso cuanto más frenados van.',
+      'La vida de un monstruo vivo marca siempre al menos 1.'
+    ]
+  },
   {
     version: '1.6.2',
     summary: 'Monstruos ralentizados en azul hielo',

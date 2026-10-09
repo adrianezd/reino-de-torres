@@ -107,7 +107,7 @@ var FX_OF = { fire: 'fuego', ice: 'hielo', poison: 'veneno', bomb: 'canon', arro
     IMG['fx/' + el + '-' + part] = im;
   });
 });
-['ventisca', 'marea', 'meteoro', 'crater', 'boreas-ventisca', 'midas-critico', 'muerte-puf', 'invocar', 'fusion', 'fusion-doblon', 'mover'].forEach(function (k) {
+['ventisca', 'marea', 'meteoro', 'crater', 'boreas-ventisca', 'midas-critico', 'muerte-puf', 'invocar', 'fusion', 'fusion-doblon', 'mover', 'ralentizado-1', 'ralentizado-2', 'ralentizado-3', 'ralentizado-4', 'ralentizado-5'].forEach(function (k) {
   var im = new Image();
   im.onload = function () { im.ready = true; };
   im.src = 'assets/fx/' + k + '.webp';
@@ -246,8 +246,23 @@ function outlined(im) {
   cv.padX = p / cv.sw; cv.padY = p / cv.sh;
   return (im._outl = cv);
 }
-// tinte azul de un monstruo ralentizado: de 0,2 (poco) a 0,5 (casi parado)
-function frostAlpha(e) { return 0.2 + 0.3 * Math.min(1, e.slowPct / 0.6); }
+// tinte azul de un monstruo ralentizado: de 0,12 (poco) a 0,32 (casi parado);
+// el aviso principal es el sello de escarcha de los pies (drawFrostSeal)
+function frostAlpha(e) { return 0.12 + 0.2 * Math.min(1, e.slowPct / 0.6); }
+/* Sello de escarcha animado bajo un monstruo ralentizado (assets/fx/
+   ralentizado-1…5): aplastado para que quede en el suelo, gira despacio y
+   se ve más cuanto más frenado va. footY: altura de los pies (ya trasladado). */
+function drawFrostSeal(c, e, r, now, footY) {
+  if (!(e.slowPct > 0)) return;
+  var im = art('fx/ralentizado-' + (1 + Math.floor(now / 110 + e.seed * 7) % 5));
+  if (!im) return;
+  var s = r * 2.5;
+  c.save();
+  c.globalAlpha = 0.5 + 0.45 * Math.min(1, e.slowPct / 0.6);
+  c.translate(0, footY); c.scale(1, 0.42); c.rotate(now / 1800 + e.seed);
+  c.drawImage(im, -s / 2, -s / 2, s, s);
+  c.restore();
+}
 // dibuja im en el rectángulo (x, y, w, h) con el contorno por fuera
 function drawOutlined(c, im, x, y, w, h, flash) {
   var o = outlined(im), mx = o.padX * w, my = o.padY * h;
@@ -782,6 +797,7 @@ function drawEnemyPic(c, e, r, now, pic) {
   c.translate(e.x + (e.kbx || 0), e.y + (e.kby || 0));
   c.fillStyle = 'rgba(0,0,0,0.28)'; c.beginPath(); c.ellipse(0, r * 0.82, r * 0.85, r * 0.22, 0, 0, Math.PI * 2); c.fill();
   if (e.boss) glow(c, 0, 0, r * 1.7, d.color, 0.4);
+  drawFrostSeal(c, e, r, now, r * 0.82);
   if (e.kind === 'ghost') c.globalAlpha = 0.85;
   // al recibir un golpe se aplasta desde los pies
   if (hk) { c.translate(0, r * 0.95); c.scale(1 + 0.14 * hk, 1 - 0.14 * hk); c.translate(0, -r * 0.95); }
@@ -811,6 +827,7 @@ function drawEnemy(c, e, r, now) {
   c.translate(e.x + (e.kbx || 0), e.y + (e.kby || 0) + float);
   c.fillStyle = 'rgba(0,0,0,0.28)'; c.beginPath(); c.ellipse(0, r * 0.82 - float, r * 0.85, r * 0.22, 0, 0, Math.PI * 2); c.fill();
   if (e.boss) glow(c, 0, 0, r * 1.7, col, 0.4);
+  drawFrostSeal(c, e, r, now, r * 0.82 - float);
   c.scale((1 + 0.14 * hk) / squash, squash * (1 - 0.14 * hk));
   var top = -S * 0.56; // parte superior de la imagen
   var Y = function (f) { return top + f * S; }; // fracción vertical de la imagen
