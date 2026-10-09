@@ -292,6 +292,19 @@ function mergePose(pop) {
 
 var RANK_RIMS = ['#9fb3c8', '#9fb3c8', '#c9d4e6', '#ffd166', '#ffb020', '#c77dff', '#ff5fd2', '#ff3b5c'];
 
+// disco de rango: gris, verde, azul, morado, naranja, rojo y dorado
+var RANK_DISC = ['#9fb3c8', '#9fb3c8', '#5fdc4a', '#4da3ff', '#b26bff', '#ffb020', '#ff4f5e', '#ffe066'];
+function drawRankDisc(c, rank, foot, r) {
+  var col = RANK_DISC[rank] || RANK_DISC[1];
+  c.save();
+  c.beginPath(); c.ellipse(0, foot, r * 0.8, r * 0.25, 0, 0, Math.PI * 2);
+  var g = c.createLinearGradient(0, foot - r * 0.25, 0, foot + r * 0.25);
+  g.addColorStop(0, shade(col, 45)); g.addColorStop(1, shade(col, -35));
+  c.globalAlpha *= 0.9; c.fillStyle = g; c.fill();
+  c.lineWidth = r * 0.05; c.strokeStyle = '#1a1430'; c.stroke();
+  c.restore();
+}
+
 /* ---------- ficha de tropa ---------- */
 function drawUnit(c, id, x, y, r, rank, now, opt) {
   var u = UNITS[id];
@@ -302,7 +315,7 @@ function drawUnit(c, id, x, y, r, rank, now, opt) {
   var bob = opt.still ? 0 : Math.sin(now / 420 + x * 0.05) * r * 0.025;
 
   // aura de rango alto
-  if (rank >= 5) glow(c, 0, 0, r * 1.35, RANK_RIMS[rank], 0.45 + Math.sin(now / 300) * 0.12);
+  if (rank >= 5) glow(c, 0, 0, r * 1.35, (opt.board ? RANK_DISC[rank] : RANK_RIMS[rank]), 0.45 + Math.sin(now / 300) * 0.12);
 
   // efecto muelle al disparar: un 10% más grande hacia arriba
   // (en el tablero lo sustituye el rebote elástico de opt.recoil)
@@ -316,8 +329,10 @@ function drawUnit(c, id, x, y, r, rank, now, opt) {
   if (idle) {
     var foot = r * 0.9;
     c.fillStyle = 'rgba(0,0,0,0.35)'; c.beginPath(); c.ellipse(0, foot, r * 0.7, r * 0.2, 0, 0, Math.PI * 2); c.fill();
+    // disco de rango bajo los pies: el color dice el rango de un vistazo
+    if (!opt.noRank) drawRankDisc(c, rank, foot, r);
     if (rank >= 4) {
-      c.lineWidth = r * 0.07; c.strokeStyle = alpha(RANK_RIMS[rank], 0.75 + Math.sin(now / 250) * 0.2);
+      c.lineWidth = r * 0.07; c.strokeStyle = alpha(RANK_DISC[rank], 0.75 + Math.sin(now / 250) * 0.2);
       c.beginPath(); c.ellipse(0, foot, r * 0.8, r * 0.26, 0, 0, Math.PI * 2); c.stroke();
     }
     c.save();

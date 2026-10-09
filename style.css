@@ -1454,3 +1454,69 @@ x-ico.off { filter: grayscale(1) brightness(0.45); opacity: 0.75; }
   .b-top .heart { margin-right: -6px; }
   .wv-w { display: none; }
 }
+
+/* =========================================================
+   Dirección de arte (docs/auditoria-direccion-arte.txt)
+   ========================================================= */
+
+/* 1. Campaña: placas de madera y pizarra (el mismo marco que la tienda)
+   con una franja del color de su zona; la siguiente por jugar late */
+.stage-list { gap: 10px; }
+.stage {
+  min-height: 78px; padding: 0 10px 0 6px; gap: 12px; border-radius: 0; background: none; box-shadow: none;
+  border: 18px solid transparent; border-image: url(assets/ui/tarjeta-tienda.webp) 21% fill / 18px stretch;
+  filter: drop-shadow(0 4px 0 rgba(10,12,40,0.45));
+}
+.stage::before { content: ''; position: absolute; left: -8px; top: -6px; bottom: -6px; width: 7px; border-radius: 4px; background: var(--zc); box-shadow: 0 0 8px var(--zc); }
+.stage::after { display: none; }
+.stage-n {
+  flex-shrink: 0; width: 44px; height: 48px; border: 3px solid var(--ink); border-radius: 10px 10px 50% 50% / 10px 10px 45% 45%;
+  background: linear-gradient(180deg, #fff1a8, #f5c400 45%, #b8860b); color: #3a1d00; font-size: 1.35rem;
+  box-shadow: inset 0 2px 0 rgba(255,255,255,0.6), 0 3px 0 rgba(0,0,0,0.4);
+}
+.stage-t b { font-family: 'Lilita One', sans-serif; font-weight: 400; font-size: 1.12rem; color: #fff; -webkit-text-stroke: 5px var(--ink); paint-order: stroke fill; text-shadow: 0 2px 0 var(--ink); }
+.stage-t small { color: #cfd8ff; }
+.stage.next { animation: stageNext 1.4s ease-in-out infinite; }
+@keyframes stageNext { 50% { filter: drop-shadow(0 4px 0 rgba(10,12,40,0.45)) drop-shadow(0 0 10px var(--zc)); transform: scale(1.015); } }
+.stage.locked { opacity: 1; filter: grayscale(0.85) brightness(0.65) drop-shadow(0 4px 0 rgba(10,12,40,0.45)); }
+.stage.locked .stage-n { background: linear-gradient(180deg, #c9ced8, #7d8494 55%, #4b5263); color: #20242e; }
+.stage:not(.locked):active { transform: translateY(3px); filter: drop-shadow(0 1px 0 rgba(10,12,40,0.45)); }
+
+/* 1. Inicio: el botón de campaña manda (más ancho que duelo y cooperativo) */
+.play-row { grid-template-columns: 1fr 1.9fr 1fr; }
+.play-row .play-hero { max-width: 220px; }
+.play-side img { max-width: 92px; }
+
+/* 1. Botón secundario con la misma receta 2.5D: cara en degradado, filo de luz, canto y hundido igual al canto */
+.btn-ghost { background: linear-gradient(180deg, #4a63c8, #263a8f); box-shadow: 0 0 0 3px var(--ink), 0 6px 0 var(--ink), inset 0 2px 0 rgba(255,255,255,0.35), inset 0 -5px 0 rgba(0,0,0,0.25); }
+.btn-ghost:active { transform: translateY(5px); box-shadow: 0 0 0 3px var(--ink), 0 1px 0 var(--ink), inset 0 2px 0 rgba(255,255,255,0.3); }
+
+/* 2. Regla de texto: títulos, etiquetas y cifras con contorno de tinta por fuera
+   (paint-order) y sombra; los párrafos siguen en Nunito sin contorno */
+.back-bar h2, .sh-head h3, .coll-head h3, .modal-card h2, .menu > h3 {
+  font-family: 'Lilita One', 'Nunito', sans-serif; font-weight: 400; color: #fff;
+  -webkit-text-stroke: 6px var(--ink); paint-order: stroke fill; text-shadow: 0 3px 0 var(--ink), 0 5px 6px rgba(0,0,0,0.35);
+}
+.pill b { -webkit-text-stroke: 4px var(--ink); paint-order: stroke fill; }
+
+/* 3. Cartas de la colección con el marco y el fondo de su rareza (los mismos que la tienda) */
+.ucard.r-comun { --rbg: url(assets/ui/tienda-comun.webp); }
+.ucard.r-rara { --rbg: url(assets/ui/tienda-rara.webp); }
+.ucard.r-epica { --rbg: url(assets/ui/tienda-epica.webp); }
+.ucard.r-mitica { --rbg: url(assets/ui/tienda-mitica.webp); }
+.ucard.r-legendaria { --rbg: url(assets/ui/tienda-legendaria.webp); }
+.ucard[class*="r-"]:not(.locked) {
+  border-color: transparent; box-shadow: 0 4px 0 rgba(10,12,40,0.5);
+  background: var(--rbg) center / 100% 100% no-repeat border-box;
+}
+.ucard[class*="r-"]:not(.locked) small { background: linear-gradient(180deg, rgba(6,10,36,0.35), rgba(6,10,36,0.8)); border-top-color: transparent; }
+
+/* 7. Estandarte del comandante teñido con su color */
+.cmd-banner::before {
+  content: ''; position: absolute; inset: 8% 2% 8% 2%; pointer-events: none; border-radius: 8px;
+  background: linear-gradient(90deg, transparent 18%, color-mix(in srgb, var(--cc) 55%, transparent) 55%, color-mix(in srgb, var(--cc) 30%, transparent));
+  mix-blend-mode: soft-light;
+}
+.cb-slot { color: color-mix(in srgb, var(--cc) 55%, #fff); }
+.cmd-banner img { filter: drop-shadow(0 3px 0 rgba(0,0,0,0.45)) drop-shadow(0 0 10px color-mix(in srgb, var(--cc) 70%, transparent)); }
+.stage { overflow: visible; }

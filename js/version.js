@@ -7,8 +7,20 @@
    La ventana sale sola al entrar con una versión nueva (meta.lastSeenVersion)
    y también desde Opciones.
    ========================================================= */
-var APP_VERSION = '1.4.3';
+var APP_VERSION = '1.5.0';
 var APP_PATCH_NOTES = [
+  {
+    version: '1.5.0',
+    summary: 'Campaña en placas, rangos y afinidades a la vista',
+    items: [
+      'Campaña: cada fase es una placa de madera con el color de su zona y la siguiente por jugar late.',
+      'Cada tropa lleva bajo los pies un disco del color de su rango: gris, verde, azul, morado, naranja, rojo y dorado.',
+      'Las tropas vecinas del mismo elemento se unen con un lazo de luz de su color: así ves qué afinidades están activas.',
+      'Las cartas de la colección llevan el marco y el fondo de su rareza.',
+      'El estandarte del inicio se tiñe con el color de tu comandante y el botón de campaña es más grande.',
+      'Títulos y cifras con el mismo contorno en todas las pantallas.'
+    ]
+  },
   {
     version: '1.4.3',
     summary: 'Las actualizaciones llegan al momento',

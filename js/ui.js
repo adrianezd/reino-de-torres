@@ -93,7 +93,7 @@ function renderMenu(name, arg) {
       // mazo: banner del comandante (figura a la izquierda, nombre en el hueco)
       // y debajo las cinco tropas, cada retrato en un aro del banner
       '<div class="deck-panel">' +
-      '<button class="cmd-banner" data-go="commanders"><img src="assets/commanders/' + meta.commander + '-cuerpo.webp" alt=""><span class="cb-txt"><small>Habilidad</small><b>' + esc(cmd.ability) + '</b></span><span class="cb-slot">' + esc(cmd.name) + '</span></button>' +
+      '<button class="cmd-banner" data-go="commanders" style="--cc:' + cmd.color + '"><img src="assets/commanders/' + meta.commander + '-cuerpo.webp" alt=""><span class="cb-txt"><small>Habilidad</small><b>' + esc(cmd.ability) + '</b></span><span class="cb-slot">' + esc(cmd.name) + '</span></button>' +
       '<button class="deck-preview" data-go="collection" aria-label="Mazo actual">' + meta.deck.map(function (id, i) { return '<img src="' + unitIcon(id, 0, 96) + '" alt="' + esc(UNITS[id].name) + '" style="left:' + DECK_RINGS[i] + '%">'; }).join('') + '</button>' +
       '</div>' +
       // tres botones de jugar: duelo, campaña (lista de fases) y cooperativo
@@ -106,9 +106,11 @@ function renderMenu(name, arg) {
       // huecos de cofre abajo del todo, debajo de los botones de jugar
       '<div class="slots" id="chestSlots">' + slotsInner() + '</div>';
   } else if (name === 'campaign') {
+    // placas de madera con el color de su zona; la siguiente por jugar late
+    var nextSt = CAMPAIGN.filter(function (st) { return stageUnlocked(st.id) && !meta.campaign[st.id]; })[0];
     html = backBar('Campaña') + '<div class="stage-list">' + CAMPAIGN.map(function (st) {
       var open = stageUnlocked(st.id), stars = meta.campaign[st.id] || 0;
-      return '<button class="stage ' + (open ? '' : 'locked') + '" ' + (open ? 'data-stage="' + st.id + '"' : 'disabled') + '>' +
+      return '<button class="stage ' + (open ? '' : 'locked') + (nextSt === st ? ' next' : '') + '" style="--zc:' + (ZONE_COLOR[st.biome] || '#ffd166') + '" ' + (open ? 'data-stage="' + st.id + '"' : 'disabled') + '>' +
         '<span class="stage-n">' + st.id + '</span>' +
         '<span class="stage-t"><b>' + esc(st.name) + '</b><small>' + st.waves + ' oleadas · Jefe: ' + esc(BOSSES[st.boss].name) + (st.unlock && !isUnlocked(st.unlock) ? ' · 🎁 ' + esc(UNITS[st.unlock].name) : '') + '</small></span>' +
         '<span class="stage-s">' + (open ? starRow(stars) : '🔒') + '</span></button>';
@@ -211,6 +213,8 @@ function rarityFilters() {
       (k === 'all' ? 'Todas' : RARITY[k].name) + '<small>' + own + '/' + ids.length + '</small></button>';
   }).join('') + '</div>';
 }
+// color de cada zona de la campaña (franja de su placa)
+var ZONE_COLOR = { prado: '#7fd84a', bosque: '#3fbf6a', hielo: '#7fd6ff', pantano: '#a8e04a', ruinas: '#d8c08a', desierto: '#ffb347', volcan: '#ff6a2a', cripta: '#b98cff' };
 /* Orden de la colección: por rareza (con su filtro) o por tipo, es decir,
    por elemento, cada uno con su símbolo y agrupado bajo su cabecera. */
 var collSort = 'rareza', collEl = 'all';
@@ -256,7 +260,7 @@ function cardHtml(id, inDeck, inColl) {
   }
   var need = cardsNeeded(c.lv), pct = c.lv >= CARD_MAX ? 100 : Math.min(100, c.n / need * 100);
   var ready = canUpgradeCard(id);
-  return '<button class="ucard ' + (ready ? 'ready' : '') + '" data-card="' + id + '" style="--rc:' + RARITY[u.rarity].color + '">' +
+  return '<button class="ucard r-' + u.rarity + (ready ? ' ready' : '') + '" data-card="' + id + '" style="--rc:' + RARITY[u.rarity].color + '">' +
     '<span class="uel">' + ELEMENTS[u.element].icon + '</span>' +
     (inColl && inDeck ? '<span class="udeck">Mazo</span>' : '') +
     '<span class="uport"><img src="' + unitIcon(id, 0, 128) + '" alt=""></span>' +

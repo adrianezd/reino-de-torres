@@ -340,17 +340,15 @@ function drawRivalHeader(b, L) {
   // nombre y, debajo, vidas y maná
   var tx = px + pr + 7;
   ctx.textAlign = 'left'; ctx.textBaseline = 'middle'; ctx.lineJoin = 'round';
-  ctx.font = '400 13px "Lilita One", Nunito, sans-serif';
-  ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(0,0,0,0.75)'; ctx.fillStyle = '#fff';
-  ctx.strokeText(b.name, tx, cy - 8); ctx.fillText(b.name, tx, cy - 8);
+  drawOutlinedText(ctx, b.name, tx, cy - 8, 13, '#ffffff');
   var lx = tx, ly = cy + 9, vi = art('ui/vida'), gi = art('icons/gota');
   if (battle.mode === 'duel' && vi) {
     for (var hi = 0; hi < b.lives.max; hi++) { ctx.globalAlpha = hi < b.lives.v ? 1 : 0.3; ctx.drawImage(vi, lx, ly - 6, 13, 12); lx += 12; }
     ctx.globalAlpha = 1; lx += 6;
   }
   if (gi) { ctx.drawImage(gi, lx, ly - 7, 14, 14); lx += 15; }
-  ctx.font = '900 12px Nunito, sans-serif'; var mt = String(Math.floor(b.mana));
-  ctx.strokeText(mt, lx, ly); ctx.fillStyle = '#8ff3ff'; ctx.fillText(mt, lx, ly);
+  var mt = String(Math.floor(b.mana));
+  drawOutlinedText(ctx, mt, lx, ly, 12, '#8ff3ff');
   // mazo a la derecha
   var n = b.deck.length, gap = 3, avail = x1 - 5 - Math.max(tx + 92, lx + ctx.measureText(mt).width + 10);
   var cw = Math.max(18, Math.min(hh - 6, avail / n - gap)), ch = cw, ty = cy - ch / 2;
@@ -754,10 +752,37 @@ function drawBoard(b, L, now, isMain) {
       que atacan alrededor; Doblón, al dar maná.
     - el resto, suave siempre y se enciende al disparar.
    Las de remolino giran despacio; las altas (Doblón, Ulric) se apoyan en los pies. */
+/* Afinidad (+AFFINITY_BONUS por vecina del mismo elemento): un lazo de luz
+   del color del elemento entre las dos casillas, a ras de suelo, con una
+   chispa que lo recorre. Así se ve qué tropas se están potenciando. */
+function drawAffinityLinks(b, s, now) {
+  ctx.save();
+  ctx.lineCap = 'round';
+  for (var i = 0; i < b.cells.length; i++) {
+    var u = b.cells[i];
+    if (!u || u.drop > SUMMON_LAND) continue;
+    var el = UNITS[u.id].element;
+    neighbors(i).forEach(function (j) {
+      var v = b.cells[j];
+      if (j < i || !v || v.drop > SUMMON_LAND || UNITS[v.id].element !== el) return;
+      var a = b.cc(i), c = b.cc(j), col = ELEMENTS[el].color, fy = s * 0.3;
+      var pulse = 0.5 + 0.5 * Math.sin(now / 350 + i + j);
+      ctx.globalAlpha = 0.35 + pulse * 0.25; ctx.strokeStyle = col; ctx.lineWidth = s * 0.11;
+      ctx.beginPath(); ctx.moveTo(a.x, a.y + fy); ctx.lineTo(c.x, c.y + fy); ctx.stroke();
+      ctx.globalAlpha = 0.55 + pulse * 0.3; ctx.strokeStyle = '#ffffff'; ctx.lineWidth = s * 0.03;
+      ctx.beginPath(); ctx.moveTo(a.x, a.y + fy); ctx.lineTo(c.x, c.y + fy); ctx.stroke();
+      // chispa que va y viene por el lazo
+      var t = 0.5 + 0.5 * Math.sin(now / 600 + i);
+      glow(ctx, a.x + (c.x - a.x) * t, a.y + fy + (c.y - a.y) * t, s * 0.12, col, 0.9);
+    });
+  }
+  ctx.restore();
+}
 var AURA_SPIN = { lyra: 1, brasa: -1, rocco: 0.5, volta: 1.4, melodia: 0.4, sombra: -1.2, cronos: 0.35, fenix: 1, aurora: 1.3, boreas: -1 };
 var AURA_TALL = { doblon: true, ulric: true };
 function drawCellAuras(b, G, now) {
   var s = Math.min(G.cw, G.ch);
+  drawAffinityLinks(b, s, now);
   for (var i = 0; i < b.cells.length; i++) {
     var u = b.cells[i];
     if (!u || u.drop > SUMMON_LAND) continue;
