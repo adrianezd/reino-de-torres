@@ -7,8 +7,8 @@ var RARITY = {
   comun:      { name: 'Común',      color: '#9fb3c8' },
   rara:       { name: 'Rara',       color: '#4da3ff' },
   epica:      { name: 'Épica',      color: '#b26bff' },
-  legendaria: { name: 'Legendaria', color: '#ffb020' },
-  mitica:     { name: 'Mítica',     color: '#ff3b6b' }
+  mitica:     { name: 'Mítica',     color: '#ff3b6b' },
+  legendaria: { name: 'Legendaria', color: '#ffb020' }
 };
 
 /*
@@ -113,7 +113,7 @@ var UNITS = {
     dmg: 88, rate: 0.45, proj: 'bomb', splash: 0.5, pierce: true, target: 'strong',
     desc: 'Martillazos que ignoran la armadura y sacuden la zona. Va a por el más fuerte.'
   },
-  // míticas: solo en el cofre de oro, más raras que las legendarias
+  // míticas: solo en el cofre de oro; entre la épica y la legendaria
   boreas: {
     element: 'hielo', name: 'Bóreas', title: 'Dragón del Invierno', role: 'Ventisca', rarity: 'mitica', chestOnly: true,
     color: '#3fb8ff', color2: '#e6f8ff', skin: '#dff4ff',
@@ -200,13 +200,13 @@ var BIOMES = {
 };
 
 // rare / epic / legend: probabilidad por carta (puede salir cualquier tropa, aunque no la tengas;
-// las legendarias y las míticas (myth) solo en el cofre de oro)
+// las míticas (myth) y las legendarias, la más rara, solo en el cofre de oro)
 // gems: gemas que trae el cofre · price: lo que cuesta en la tienda (en gemas)
 // time: segundos que tarda en desbloquearse en los huecos de la pantalla principal
 var CHESTS = {
   madera: { name: 'Cofre de madera', gold: [40, 80],   gems: [0, 2],  cards: 6,  rare: 0.15, epic: 0.03, legend: 0,    myth: 0,     color: '#a0663a', price: 15, time: 300 },
   plata:  { name: 'Cofre de plata',  gold: [90, 160],  gems: [1, 4],  cards: 12, rare: 0.3,  epic: 0.08, legend: 0,    myth: 0,     color: '#c9d4e6', price: 40, time: 3600 },
-  oro:    { name: 'Cofre de oro',    gold: [200, 320], gems: [4, 10], cards: 24, rare: 0.4,  epic: 0.15, legend: 0.04, myth: 0.008, color: '#ffd166', price: 90, time: 10800 }
+  oro:    { name: 'Cofre de oro',    gold: [200, 320], gems: [4, 10], cards: 24, rare: 0.4,  epic: 0.15, legend: 0.012, myth: 0.04, color: '#ffd166', price: 90, time: 10800 }
 };
 var CHEST_ORDER = ['madera', 'plata', 'oro'];
 var CHEST_SLOTS = 4;          // huecos de cofre de la pantalla principal
@@ -218,8 +218,8 @@ var SHOP_CARDS = {
   comun:      { n: 10, gold: 120 },
   rara:       { n: 5,  gold: 260 },
   epica:      { n: 2,  gold: 520,  gems: 30 },
-  legendaria: { n: 1,  gold: 1400, gems: 90 },
-  mitica:     { n: 1,  gold: 4000, gems: 220 }
+  mitica:     { n: 1,  gold: 1400, gems: 90 },
+  legendaria: { n: 1,  gold: 3000, gems: 160 }
 };
 var SHOP_GOLD = [
   { gold: 300,  gems: 25 },

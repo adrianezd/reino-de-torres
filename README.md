@@ -29,7 +29,7 @@ Tower defense de fusión para móvil y escritorio, gratis y sin anuncios. Invoca
 | Halcón, francotirador | Daño único enorme | ⚙️ |
 | Ulric, paladín | Mata jefes | ❄️ |
 
-Además, legendarias que solo salen en el cofre de oro (Ígnea, Aurora y Titán) y dos **míticas**, aún más raras (0,8 % por carta en el cofre de oro): **Bóreas**, dragón del invierno (❄️, área que frena muchísimo y a veces congela, con su remolino de hielo sobre el enemigo) y **Midas**, rey dorado (⚙️, lanza monedas que perforan, críticos con el medallón «Critical» y +4 de maná por cada baja suya, `bounty`). Su arte sale de `assets/boreas_*` y `assets/midas_*`. En la tienda solo salen las míticas que ya tienes.
+Además, legendarias que solo salen en el cofre de oro (Ígnea, Aurora y Titán) y dos **míticas**, entre la épica y la legendaria (Común < Rara < Épica < Mítica < Legendaria; en el cofre de oro, 4 % por carta la mítica y 1,2 % la legendaria): **Bóreas**, dragón del invierno (❄️, área que frena muchísimo y a veces congela, con su remolino de hielo sobre el enemigo) y **Midas**, rey dorado (⚙️, lanza monedas que perforan, críticos con el medallón «Critical» y +4 de maná por cada baja suya, `bounty`). Su arte sale de `assets/boreas_*` y `assets/midas_*`. En la tienda solo salen las míticas que ya tienes.
 
 ## Lo que lo hace distinto
 

@@ -509,7 +509,7 @@ function chestNewHtml(r) {
    el cofre. Al final, el resumen. */
 function chestPic(type, open) { return 'assets/chests/' + type + (open ? '-abierto' : '') + '.webp'; }
 var chestFxOn = false;
-var RARITY_RANK = ['comun', 'rara', 'epica', 'legendaria', 'mitica'];
+var RARITY_RANK = ['comun', 'rara', 'epica', 'mitica', 'legendaria'];
 
 // probabilidad de que el cofre traiga al menos una carta con esa probabilidad por carta
 function chestOdds(p, n) {
@@ -530,8 +530,8 @@ function showChestInfo(k, slot) {
     '<h3 class="ci-t">Probabilidad por cofre</h3>' +
     row(RARITY.rara.color, 'Rara', '', chestOdds(ch.rare, ch.cards)) +
     row(RARITY.epica.color, 'Épica', '', chestOdds(ch.epic, ch.cards)) +
-    row(RARITY.legendaria.color, 'Legendaria', ch.legend ? '' : 'Solo en el cofre de oro', chestOdds(ch.legend, ch.cards)) +
     row(RARITY.mitica.color, 'Mítica', ch.myth ? '' : 'Solo en el cofre de oro', chestOdds(ch.myth || 0, ch.cards)) +
+    row(RARITY.legendaria.color, 'Legendaria', ch.legend ? '' : 'Solo en el cofre de oro', chestOdds(ch.legend, ch.cards)) +
     '<p class="ci-note">Puede tocarte cualquier tropa, aunque aún no la tengas.</p>' +
     (inSlot ? slotButtons(slot) : '<button class="btn chest-ok' + (poor ? ' poor' : '') + '" id="ciOpen">Abrir<span>💎 ' + ch.price + '</span></button>') +
     '<button class="btn btn-ghost" id="ciX">Cerrar</button></div>');
@@ -681,7 +681,7 @@ function showChest(r, from) {
 function chestBump(chest, fx, it) {
   var rar = UNITS[it.id].rarity, top = rar === 'legendaria' || rar === 'mitica';
   sfx({ comun: 'tap', rara: 'merge', epica: 'power', legendaria: 'win', mitica: 'win' }[rar]);
-  if (rar === 'epica' || top) buzz(rar === 'mitica' ? 90 : top ? 60 : 30);
+  if (rar === 'epica' || top) buzz(rar === 'legendaria' ? 90 : top ? 60 : 30);
   chest.classList.remove('bump'); void chest.offsetWidth; chest.classList.add('bump');
   if (top) {
     var f = document.createElement('div');

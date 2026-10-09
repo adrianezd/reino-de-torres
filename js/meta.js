@@ -81,13 +81,13 @@ function upgradeCard(id) {
 
 /* Cofre: oro + cartas de cualquier tropa según rareza, la tengas o no (la
    primera carta de una tropa nueva la desbloquea). Las legendarias solo salen
-   en el cofre que tiene legend > 0 (el de oro), y las míticas, en el que
-   tiene myth > 0 (también el de oro). */
+   en el cofre que tiene legend > 0 (el de oro), y las míticas, algo menos
+   raras, en el que tiene myth > 0 (también el de oro). */
 function openChest(type) {
   var ch = CHESTS[type];
   var gold = Math.round(ch.gold[0] + Math.random() * (ch.gold[1] - ch.gold[0]));
   var gems = Math.round(ch.gems[0] + Math.random() * (ch.gems[1] - ch.gems[0]));
-  var byRarity = { comun: [], rara: [], epica: [], legendaria: [], mitica: [] };
+  var byRarity = { comun: [], rara: [], epica: [], mitica: [], legendaria: [] };
   UNIT_ORDER.forEach(function (id) { byRarity[UNITS[id].rarity].push(id); });
   var got = {};
   for (var i = 0; i < ch.cards; i++) {
@@ -200,7 +200,7 @@ function makeShopOffers(key) {
   add([rnd() < 0.5 ? 'comun' : 'rara', 'comun'], 'gold');
   add(['rara', 'comun'], 'gold');
   var g = rnd();
-  add([g < 0.08 ? 'mitica' : g < 0.33 ? 'legendaria' : 'epica', 'epica', 'legendaria'], 'gems');
+  add([g < 0.08 ? 'legendaria' : g < 0.33 ? 'mitica' : 'epica', 'epica', 'mitica'], 'gems');
   out.forEach(function (o, i) { o.i = i; });
   return out;
 }

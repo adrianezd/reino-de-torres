@@ -208,7 +208,6 @@ button { font: inherit; color: inherit; cursor: pointer; touch-action: pan-x pan
 }
 .summon-btn small { font-family: 'Nunito'; font-weight: 900; font-size: 0.8rem; }
 .summon-btn:active { transform: translateY(3px); box-shadow: 0 2px 0 var(--ink); }
-.summon-btn.poor { filter: grayscale(0.8) brightness(0.75); }
 .deck-bar { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
 .dcard { position: relative; display: flex; flex-direction: column; align-items: center; padding: 3px 2px 2px; border-radius: 12px; border: 3px solid var(--ink); background: linear-gradient(180deg, color-mix(in srgb, var(--rc) 45%, #1d2c78), #16215a); box-shadow: 0 3px 0 var(--ink); }
 .dcard img { width: 44px; height: 44px; }
@@ -291,7 +290,6 @@ body {
 }
 .summon-btn::after { display: none; }
 .summon-btn:active { transform: translateY(3px); box-shadow: none; filter: drop-shadow(0 1px 0 var(--gold-dark)); }
-.summon-btn.poor { filter: grayscale(0.8) brightness(0.75); }
 .dcard {
   border: none; box-shadow: none; border-radius: 10px; padding: 6px 4px 8px;
   background: url('assets/ui/marco-carta.webp') center / 100% 100% no-repeat, radial-gradient(circle at 50% 40%, color-mix(in srgb, var(--rc) 55%, #1d2c78), #16215a 75%) center / 86% 86% no-repeat;
@@ -1270,11 +1268,16 @@ x-ico.off { filter: grayscale(1) brightness(0.45); opacity: 0.75; }
 }
 .cmd-btn.ready + .cmd-rays { opacity: 1; animation: cmdRays 5s linear infinite; }
 @keyframes cmdRays { to { transform: translate(-50%, -50%) rotate(360deg); } }
+/* solo transform y opacidad: animar filtros aquí hacía que Safari no
+   repintara el botón de invocar de al lado */
 .cmd-btn.ready { animation: cmdReady 0.9s ease-in-out infinite; }
-@keyframes cmdReady {
-  0%, 100% { transform: scale(1); filter: drop-shadow(0 0 6px var(--cc)) drop-shadow(0 0 2px #fff); }
-  50% { transform: scale(1.1); filter: drop-shadow(0 0 18px var(--cc)) drop-shadow(0 0 8px #fff); }
+@keyframes cmdReady { 50% { transform: scale(1.1); } }
+.cmd-wrap::before {
+  content: ''; position: absolute; left: 50%; top: 50%; width: 130%; height: 130%; z-index: 0; pointer-events: none; border-radius: 50%;
+  background: radial-gradient(circle, #fff 0%, var(--cc) 35%, transparent 70%); opacity: 0; transform: translate(-50%, -50%);
 }
+.cmd-wrap:has(.cmd-btn.ready)::before { animation: cmdGlow 0.9s ease-in-out infinite; }
+@keyframes cmdGlow { 0%, 100% { opacity: 0.55; transform: translate(-50%, -50%) scale(0.95); } 50% { opacity: 1; transform: translate(-50%, -50%) scale(1.2); } }
 .cmd-btn.ready::after {
   content: ''; position: absolute; inset: 4%; border-radius: 50%; pointer-events: none;
   border: 3px solid var(--cc); box-shadow: 0 0 10px var(--cc);
@@ -1282,3 +1285,8 @@ x-ico.off { filter: grayscale(1) brightness(0.45); opacity: 0.75; }
 }
 @keyframes cmdWave { from { transform: scale(0.9); opacity: 0.95; } to { transform: scale(1.6); opacity: 0; } }
 .summon-btn.full small { color: #fff1b8; }
+
+/* sin maná: la misma pieza en gris (cambiar la imagen en vez de un filtro;
+   en Safari el filtro a veces se quedaba puesto con maná de sobra) */
+.summon-btn.poor { border-image-source: url('assets/ui/boton-invocar-gris.webp'); text-shadow: 0 2px 0 #3a3c4a, 0 0 3px #3a3c4a; }
+.summon-btn.poor small { text-shadow: 0 1px 0 #3a3c4a, 0 0 2px #3a3c4a; }
