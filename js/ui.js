@@ -88,7 +88,7 @@ function renderMenu(name, arg) {
       '<div class="home-top">' +
       '<div class="side-col">' + side('freeChest', 'chests/madera', free ? 'Gratis' : 'Mañana', free ? 'glow' : '') + side('codes', 'icons/ticket', 'Códigos') + '</div>' +
       '<div class="logo"><h1><img src="assets/ui/titulo.webp" alt="Reino de Torres"></h1></div>' +
-      '<div class="side-col">' + side('howto', 'icons/pergamino', 'Ayuda') + side('collection', 'icons/espadas', 'Tropas') + '</div>' +
+      '<div class="side-col">' + side('howto', 'icons/pergamino', 'Ayuda') + side('options', 'icons/engranaje', 'Opciones') + '</div>' +
       '</div>' +
       '<div class="slots" id="chestSlots">' + slotsInner() + '</div>' +
       // mazo: banner del comandante (figura a la izquierda, nombre en el hueco)
@@ -97,16 +97,13 @@ function renderMenu(name, arg) {
       '<button class="cmd-banner" data-go="commanders"><img src="assets/commanders/' + meta.commander + '-cuerpo.webp" alt=""><span class="cb-txt"><small>Habilidad</small><b>' + esc(cmd.ability) + '</b></span><span class="cb-slot">' + esc(cmd.name) + '</span></button>' +
       '<button class="deck-preview" data-go="collection" aria-label="Mazo actual">' + meta.deck.map(function (id, i) { return '<img src="' + unitIcon(id, 0, 96) + '" alt="' + esc(UNITS[id].name) + '" style="left:' + DECK_RINGS[i] + '%">'; }).join('') + '</button>' +
       '</div>' +
-      // tres botones de jugar: duelo, campaña (la siguiente fase) y cooperativo
+      // tres botones de jugar: duelo, campaña (lista de fases) y cooperativo
       '<div class="play-row">' +
       '<button class="play-side" data-go="duelPick"><img src="assets/ui/boton-duelo.webp" alt=""><span>1 contra 1</span></button>' +
-      '<div class="play-mid"><button class="play-hero" data-go="playNext" aria-label="Jugar la siguiente fase de la campaña"><img src="assets/ui/boton-jugar.webp" alt=""></button>' +
+      '<div class="play-mid"><button class="play-hero" data-go="campaign" aria-label="Campaña"><img src="assets/ui/boton-jugar.webp" alt=""></button>' +
       '<button class="play-camp" data-go="campaign">Campaña <small>' + totalStars() + '/45 ⭐</small></button></div>' +
       '<button class="play-side" data-go="coop"><img src="assets/ui/boton-coop.webp" alt=""><span>2 contra IA</span></button>' +
-      '</div>' +
-      '<label class="sound-row"><input type="checkbox" id="soundChk" ' + (meta.settings.sound ? 'checked' : '') + '> Sonido</label>' +
-      '<button class="reset-btn" data-go="reset">Restablecer juego</button>' +
-      '<p class="foot">Juego original y gratuito, inspirado en los tower defense de fusión. Sin anuncios.</p>';
+      '</div>';
   } else if (name === 'campaign') {
     html = backBar('Campaña') + '<div class="stage-list">' + CAMPAIGN.map(function (st) {
       var open = stageUnlocked(st.id), stars = meta.campaign[st.id] || 0;
@@ -242,14 +239,8 @@ function bindMenu() {
       sfx('tap');
       var g = b.dataset.go;
       if (g === 'coop') { startBattle('coop'); return; }
-      if (g === 'playNext') {
-        var next = 1;
-        while (next < CAMPAIGN.length && (meta.campaign[next] || 0) > 0) next++;
-        startBattle('campaign', { stage: next });
-        return;
-      }
       if (g === 'codes') { showCodes(); return; }
-      if (g === 'reset') { showReset(); return; }
+      if (g === 'options') { showOptions(); return; }
       if (g === 'freeChest') { var r = claimFreeChest(); if (r) showChest(r); else toast('Vuelve mañana a por otro cofre'); return; }
       showScreen(g);
     };
@@ -282,7 +273,6 @@ function bindMenu() {
   });
   var cs = $('chestSlots');
   if (cs) cs.onclick = function (e) { var b = e.target.closest('[data-slot]'); if (b) slotTap(+b.dataset.slot, b); };
-  var sc = $('soundChk'); if (sc) sc.onchange = function () { meta.settings.sound = sc.checked; saveMeta(); };
 }
 
 /* Rasgos de una tropa como etiquetas (icono, nombre, valor). */
@@ -457,6 +447,17 @@ function openOverlay(html) { var o = $('overlay'); o.innerHTML = icons(html); o.
 function closeOverlay() { $('overlay').hidden = true; $('overlay').innerHTML = ''; }
 
 /* Restablecer juego: borra todo el progreso tras confirmarlo. */
+// Opciones: sonido y restablecer el juego
+function showOptions() {
+  openOverlay('<div class="modal-card options"><div class="code-ico">⚙️</div><h2>Opciones</h2>' +
+    '<label class="sound-row"><input type="checkbox" id="soundChk" ' + (meta.settings.sound ? 'checked' : '') + '> Sonido</label>' +
+    '<button class="btn btn-red" id="optReset">Restablecer juego</button>' +
+    '<button class="btn btn-ghost" id="optX">Cerrar</button>' +
+    '<p class="foot">Juego original y gratuito, inspirado en los tower defense de fusión. Sin anuncios.</p></div>');
+  var sc = $('soundChk'); sc.onchange = function () { meta.settings.sound = sc.checked; saveMeta(); };
+  $('optReset').onclick = showReset;
+  $('optX').onclick = closeOverlay;
+}
 function showReset() {
   openOverlay('<div class="modal-card"><div class="code-ico">⚠️</div><h2>Restablecer juego</h2>' +
     '<p class="lead">Se borra todo tu progreso: oro, gemas, cartas, mazo, campaña, trofeos y códigos canjeados. No se puede deshacer.</p>' +
@@ -772,7 +773,7 @@ function buildBattleHud() {
     };
   });
   var c = COMMANDERS[b.player.commander];
-  $('cmdBtn').style.setProperty('--cc', c.color);
+  $('cmdBtn').parentNode.style.setProperty('--cc', c.color); // el aro y sus rayos
   $('cmdIco').innerHTML = '<img src="' + c.pic + '" alt="' + esc(c.name) + '"><i>' + c.icon + '</i>';
   $('cmdBtn').title = c.ability + ': ' + c.desc;
   $('unitInfo').hidden = true;
@@ -794,8 +795,11 @@ function updateHud(force) {
   if (force) _hud = {};
   var p = b.player;
   setTxt('bMana', Math.floor(p.mana));
-  setHtml('summonCost', p.summonCost + ' ' + MANA_ICO);
-  $('summonBtn').classList.toggle('poor', p.mana < p.summonCost || !p.freeCells().length);
+  // gris solo si falta maná; con el tablero lleno se queda en color y lo dice
+  var full = !p.freeCells().length;
+  $('summonBtn').classList.toggle('poor', p.mana < p.summonCost);
+  $('summonBtn').classList.toggle('full', full);
+  setHtml('summonCost', full ? 'Tablero lleno' : p.summonCost + ' ' + MANA_ICO);
   setTxt('bWave', b.wave ? 'Oleada ' + b.wave + (b.maxWaves !== Infinity ? '/' + b.maxWaves : '') : 'Preparando…');
   setHtml('bEvent', b.event ? '<img src="' + b.event.pic + '" alt="">' + esc(b.event.name) : '');
   $('bEvent').hidden = !b.event;

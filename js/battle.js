@@ -636,7 +636,7 @@ function drawBoard(b, L, now, isMain) {
   ens.forEach(function (e) {
     var d = e.boss ? BOSSES[e.kind] : ENEMIES[e.kind];
     // en el tablero dibujado salen del portal: aparecen creciendo
-    // (en arena y lava, además, se van encogiendo al final de la U)
+    // (en los tableros con portal, además, se van encogiendo al final del camino)
     var grow = G.image && !G.px.portal ? 1 : Math.min(1, 0.25 + e.d / 0.5);
     if (G.image && G.px.portal) grow = Math.min(grow, 0.25 + (G.len - e.d) / 0.5);
     if (grow < 1) ctx.globalAlpha = grow;
@@ -827,6 +827,7 @@ function drawShot(s, now) {
     case 'shadow': ctx.save(); ctx.translate(x, y); ctx.rotate(now / 50); ctx.fillStyle = '#ff4f7b'; star(ctx, 0, 0, 0.1, 4); ctx.fill(); ctx.restore(); break;
     case 'gear': ctx.save(); ctx.translate(x, y); ctx.rotate(now / 80); ctx.fillStyle = '#ffe6a3'; star(ctx, 0, 0, 0.1, 8); ctx.fill(); ctx.restore(); break;
     case 'bullet': ctx.strokeStyle = '#ffd166'; ctx.lineWidth = 0.05; ctx.beginPath(); ctx.moveTo(s.sx + (x - s.sx) * 0.7, s.sy + (y - s.sy) * 0.7); ctx.lineTo(x, y); ctx.stroke(); break;
+    case 'coin': glow(ctx, x, y, 0.18, '#ffd34d', 0.7); if (!drawFxPic(ctx, 'chests/moneda', x, y, 0.28, now / 90)) { ctx.fillStyle = '#ffd34d'; circle(ctx, x, y, 0.09); ctx.fill(); } break;
     case 'holy': glow(ctx, x, y, 0.2, '#ffd34d', 0.9); ctx.fillStyle = '#ffffff'; star(ctx, x, y, 0.08, 4); ctx.fill(); break;
     default: ctx.fillStyle = s.color2; circle(ctx, x, y, 0.07); ctx.fill();
   }

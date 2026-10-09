@@ -18,6 +18,7 @@ var RARITY = {
    efectos opcionales: slow, poison, splash, chain, crit, stun, bossMult,
    manaGen (no dispara: genera maná), buff (no dispara: acelera vecinos),
    pierce (ignora la armadura), bounty (maná extra por cada baja suya),
+   stunPic / critPic (dibujo que salta sobre el enemigo al aturdirlo o con un crítico),
    target: 'first' | 'strong'
 */
 var UNITS = {
@@ -114,15 +115,15 @@ var UNITS = {
   },
   // míticas: solo en el cofre de oro, más raras que las legendarias
   boreas: {
-    element: 'hielo', name: 'Bóreas', title: 'Dragón del Invierno', role: 'Ventisca', rarity: 'mitica', chestOnly: true, noArt: true,
+    element: 'hielo', name: 'Bóreas', title: 'Dragón del Invierno', role: 'Ventisca', rarity: 'mitica', chestOnly: true,
     color: '#3fb8ff', color2: '#e6f8ff', skin: '#dff4ff',
-    dmg: 34, rate: 0.85, proj: 'ice', splash: 0.65, slow: { pct: 0.2, max: 0.6, dur: 3 }, stun: { chance: 0.12, dur: 1.4 }, target: 'first',
+    dmg: 34, rate: 0.85, proj: 'ice', splash: 0.65, slow: { pct: 0.2, max: 0.6, dur: 3 }, stun: { chance: 0.12, dur: 1.4 }, stunPic: 'fx/boreas-ventisca', target: 'first',
     desc: 'Aliento helado que golpea una zona, frena muchísimo y a veces congela del todo.'
   },
   midas: {
-    element: 'metal', name: 'Midas', title: 'Rey Dorado', role: 'Oro y daño', rarity: 'mitica', chestOnly: true, noArt: true,
+    element: 'metal', name: 'Midas', title: 'Rey Dorado', role: 'Oro y daño', rarity: 'mitica', chestOnly: true,
     color: '#f2b632', color2: '#fff6c2', skin: '#f6c89c',
-    dmg: 64, rate: 0.7, proj: 'holy', crit: { chance: 0.25, mult: 3 }, pierce: true, bounty: 4, target: 'strong',
+    dmg: 64, rate: 0.7, proj: 'coin', crit: { chance: 0.25, mult: 3 }, critPic: 'fx/midas-critico', pierce: true, bounty: 4, target: 'strong',
     desc: 'Monedas de oro que atraviesan la armadura y pueden ser críticas. Cada baja suya te da maná extra.'
   }
 };

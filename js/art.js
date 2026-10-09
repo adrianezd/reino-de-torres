@@ -50,10 +50,11 @@ var IMG_LIST = {
   units: UNIT_ORDER.filter(function (id) { return !UNITS[id].noArt; }),
   enemies: ['blob', 'ghost', 'brute', 'orco', 'rocoso', 'escarcha', 'gelido', 'coloso', 'coloso2', 'nigro', 'dragon'],
   tiles: ['altar', 'fuente', 'atalaya'],
-  boards: ['lava2', 'arena', 'hielo', 'roca', 'veneno'],
+  boards: ['lava2', 'hielo', 'roca', 'veneno'],
   ui: ['boton', 'fondo', 'vida'],
   commanders: ['aria', 'merlo', 'brann'],
-  icons: ['estrella', 'gota', 'espadas', 'escudo']
+  icons: ['estrella', 'gota', 'espadas', 'escudo'],
+  chests: ['moneda'] // proyectil de Midas
 };
 var imgReadyCount = 0;
 Object.keys(IMG_LIST).forEach(function (dir) {
@@ -81,7 +82,7 @@ var POSES = {
   lyra: { face: 1 }, brasa: { face: -1 }, rocco: { face: -1 }, sombra: { face: -1 },
   nivea: { face: -1 }, doblon: { face: 1 }, volta: { face: -1 }, mirra: { face: -1 },
   melodia: { face: 1 }, cronos: { face: -1 }, halcon: { face: 1 }, ulric: { face: 1 },
-  fenix: { face: -1 }, aurora: { face: 1 }, titan: { face: 1 }
+  fenix: { face: -1 }, aurora: { face: 1 }, titan: { face: 1 }, boreas: { face: 1 }, midas: { face: 1 }
 };
 var ATK_POSE_TIME = 0.15;
 Object.keys(POSES).forEach(function (id) {
@@ -105,7 +106,7 @@ var FX_OF = { fire: 'fuego', ice: 'hielo', poison: 'veneno', bomb: 'canon' };
     IMG['fx/' + el + '-' + part] = im;
   });
 });
-['ventisca', 'marea', 'meteoro', 'crater'].forEach(function (k) {
+['ventisca', 'marea', 'meteoro', 'crater', 'boreas-ventisca', 'midas-critico'].forEach(function (k) {
   var im = new Image();
   im.onload = function () { im.ready = true; };
   im.src = 'assets/fx/' + k + '.webp';
@@ -538,39 +539,6 @@ function drawHead(c, id, u, r, bob, now) {
       c.beginPath(); c.moveTo(r * 0.42, r * 0.22); c.lineTo(r * 0.72, r * 0.22); c.lineTo(r * 0.72, r * 0.5); c.quadraticCurveTo(r * 0.57, r * 0.72, r * 0.42, r * 0.5); c.closePath();
       c.fillStyle = vgrad(c, r * 0.2, r * 0.7, '#4da3ff', '#1a4a9a'); c.fill(); ink(c, r * 0.03);
       star(c, r * 0.57, r * 0.42, r * 0.09, 4); c.fillStyle = '#ffd34d'; c.fill();
-      break;
-    }
-    case 'boreas': {
-      // dragón de hielo: cuernos de escarcha, cresta y ojos brillantes
-      [-1, 1].forEach(function (sd) {
-        c.beginPath(); c.moveTo(sd * r * 0.16, hy - r * 0.3); c.quadraticCurveTo(sd * r * 0.5, hy - r * 0.55, sd * r * 0.42, hy - r * 0.9);
-        c.quadraticCurveTo(sd * r * 0.32, hy - r * 0.55, sd * r * 0.3, hy - r * 0.22); c.closePath();
-        c.fillStyle = vgrad(c, hy - r * 0.9, hy - r * 0.2, '#ffffff', '#7fd6ff'); c.fill(); ink(c, r * 0.03);
-      });
-      headBase(c, u, r, hy);
-      c.fillStyle = '#3fb8ff';
-      for (i = 0; i < 3; i++) { c.beginPath(); c.moveTo(-r * 0.07, hy - r * (0.3 - i * 0.02)); c.lineTo(0, hy - r * (0.5 + i * 0.08)); c.lineTo(r * 0.07, hy - r * (0.3 - i * 0.02)); c.closePath(); c.fill(); ink(c, r * 0.02); }
-      face(c, r, hy, { big: true, eyeColor: '#1e8fd6', brows: '#2a6a9a', noBlush: true });
-      glow(c, 0, hy, r * 0.5, '#9feaff', 0.25 + Math.sin(now / 300) * 0.1);
-      // copo en la mano
-      c.save(); c.translate(r * 0.55, r * 0.45 + bob); c.strokeStyle = '#e6f8ff'; c.lineWidth = r * 0.04;
-      for (i = 0; i < 3; i++) { c.rotate(Math.PI / 3); c.beginPath(); c.moveTo(-r * 0.13, 0); c.lineTo(r * 0.13, 0); c.stroke(); }
-      c.restore();
-      break;
-    }
-    case 'midas': {
-      // rey dorado: corona alta con gemas, barba y una moneda en la mano
-      headBase(c, u, r, hy);
-      c.beginPath(); c.moveTo(-r * 0.3, hy + r * 0.12); c.quadraticCurveTo(0, hy + r * 0.55, r * 0.3, hy + r * 0.12); c.quadraticCurveTo(0, hy + r * 0.3, -r * 0.3, hy + r * 0.12);
-      c.fillStyle = vgrad(c, hy + r * 0.1, hy + r * 0.5, '#fff1a8', '#d4901a'); c.fill(); ink(c, r * 0.025);
-      face(c, r, hy - r * 0.02, { big: true, eyeColor: '#8a5a00', brows: '#b07a10', noMouth: true });
-      c.beginPath(); c.moveTo(-r * 0.34, hy - r * 0.24);
-      for (i = 0; i < 7; i++) c.lineTo(-r * 0.34 + i * r * 0.1133, hy - r * (i % 2 ? 0.5 : 0.78));
-      c.lineTo(r * 0.34, hy - r * 0.24); c.closePath();
-      c.fillStyle = vgrad(c, hy - r * 0.78, hy - r * 0.24, '#fff6c2', '#e0a01a'); c.fill(); ink(c, r * 0.03);
-      ['#ff3b6b', '#4da3ff', '#ff3b6b'].forEach(function (col, k) { c.fillStyle = col; circle(c, (k - 1) * r * 0.2, hy - r * 0.36, r * 0.045); c.fill(); });
-      c.fillStyle = vgrad(c, r * 0.32, r * 0.6, '#fff1a8', '#d4901a'); circle(c, r * 0.58, r * 0.46 + bob, r * 0.14); c.fill(); ink(c, r * 0.025);
-      c.strokeStyle = '#b07a10'; c.lineWidth = r * 0.025; circle(c, r * 0.58, r * 0.46 + bob, r * 0.08); c.stroke();
       break;
     }
     default: {

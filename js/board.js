@@ -41,12 +41,6 @@ var FIELDS = {
   prado: { image: 'board/tablero', iw: 1672, ih: 941, cx: 250, cy: 110, cw: 1180, ch: 831, fade: true,
     gx0: 477, gy0: 315, gx1: 1196, gy1: 690,
     way: [[805, 990], [805, 767], [322, 767], [322, 185], [1352, 185], [1352, 767], [866, 767], [866, 990]] },
-  // arena: camino en U alrededor de las casillas. Los monstruos
-  // aparecen abajo a la izquierda, suben, cruzan por arriba y desaparecen
-  // abajo a la derecha (portal: aparecen y se van encogiendo).
-  arena: { image: 'boards/arena', iw: 1248, ih: 832, cx: 0, cy: 0, cw: 1248, ch: 832, bg: 'fondo', portal: true,
-    gx0: 272, gy0: 226, gx1: 970, gy1: 603,
-    way: [[198, 664], [198, 168], [1050, 168], [1050, 664]] },
   // lava, el único de volcán y cripta: anillo (volteado de assets/tablero-lava-invertido.jpg): salen por
   // la boca de abajo, dan la vuelta entera al río y vuelven a la misma boca
   lava2: { image: 'boards/lava2', iw: 1248, ih: 832, cx: 175, cy: 140, cw: 905, ch: 660, portal: true, over: true, frame: [40, 0, 1208, 832],
@@ -70,7 +64,7 @@ var FIELDS = {
     way: [[400, 500], [400, 440], [320, 390], [305, 300], [320, 190], [380, 148], [640, 148], [700, 190], [718, 300], [705, 390], [625, 440], [625, 500]] }
 };
 // con varios tableros para un bioma se elige uno al azar en cada partida
-var BIOME_FIELD = { prado: 'prado', bosque: 'prado', pantano: ['prado', 'veneno'], hielo: ['arena', 'hielo'], ruinas: ['arena', 'roca'], desierto: 'arena', volcan: 'lava2', cripta: 'lava2' };
+var BIOME_FIELD = { prado: 'prado', bosque: 'prado', pantano: ['prado', 'veneno'], hielo: 'hielo', ruinas: 'roca', desierto: 'roca', volcan: 'lava2', cripta: 'lava2' };
 function fieldGeo(id) {
   var f = FIELDS[id], cell = (f.gx1 - f.gx0) / COLS;
   var P = function (q) { return { x: (q[0] - f.cx) / cell, y: (q[1] - f.cy) / cell }; };
@@ -289,6 +283,7 @@ Board.prototype.hit = function (e, dmg, unitDef, kind) {
   e.hp -= dmg;
   this.damage += dmg;
   if (crit) this.addText(e.x, e.y - 0.5, '¡' + fmtNum(dmg) + '!', '#ff4f7b', true);
+  if (crit && unitDef.critPic) this.fx.push({ type: 'pic', key: unitDef.critPic, x: e.x, y: e.y - 0.3, size: 0.75, rot: 0, grow: 0.4, life: 0.55, max: 0.55 });
   if (e.hp <= 0) {
     if (unitDef && unitDef.bounty) { this.mana += unitDef.bounty; this.addText(e.x, e.y - 0.25, '+' + unitDef.bounty + ' 💧', '#ffd166'); }
     this.kill(e);
@@ -370,7 +365,10 @@ Board.prototype.applyHit = function (e, dmg, d, u) {
     e.slowT = d.slow.dur;
   }
   if (d.poison) { e.poison += d.poison.dps * mult * 0.35; e.poisonT = d.poison.dur; e.poisonBy = d.id; }
-  if (d.stun && Math.random() < d.stun.chance) { e.stun = Math.max(e.stun, d.stun.dur); }
+  if (d.stun && Math.random() < d.stun.chance) {
+    e.stun = Math.max(e.stun, d.stun.dur);
+    if (d.stunPic) this.fx.push({ type: 'pic', key: d.stunPic, x: e.x, y: e.y, size: 0.8, rot: 0, grow: 0.4, life: 0.6, max: 0.6 });
+  }
   if (d.splash) {
     var r = d.splash + 0.06 * u.rank;
     this.enemies.forEach(function (o) {
