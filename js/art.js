@@ -49,7 +49,7 @@ var IMG = {};
 var IMG_LIST = {
   units: UNIT_ORDER.filter(function (id) { return !UNITS[id].noArt; }),
   enemies: ['blob', 'ghost', 'brute', 'orco', 'rocoso', 'escarcha', 'gelido', 'coloso', 'coloso2', 'nigro', 'dragon'],
-  tiles: ['altar', 'fuente', 'atalaya'],
+  tiles: ['altar', 'fuente', 'atalaya', 'piedra-1', 'piedra-2', 'piedra-3', 'musgo-1', 'musgo-2', 'musgo-3'],
   boards: ['lava2', 'hielo', 'roca', 'veneno'],
   ui: ['boton', 'fondo', 'vida'],
   commanders: ['aria', 'merlo', 'brann'],
@@ -97,8 +97,8 @@ Object.keys(POSES).forEach(function (id) {
 /* Efectos ilustrados (assets/fx/<elemento>-<parte>.webp) por tipo de
    proyectil: destello al disparar, proyectil e impacto. El proyectil
    de fuego y hielo y el destello de hielo y cañón miran a la derecha. */
-var FX_OF = { fire: 'fuego', ice: 'hielo', poison: 'veneno', bomb: 'canon' };
-['fuego', 'hielo', 'veneno', 'canon'].forEach(function (el) {
+var FX_OF = { fire: 'fuego', ice: 'hielo', poison: 'veneno', bomb: 'canon', arrow: 'flecha', shadow: 'sombra', gear: 'engranaje', bullet: 'bala', holy: 'luz' };
+['fuego', 'hielo', 'veneno', 'canon', 'flecha', 'sombra', 'engranaje', 'bala', 'luz', 'rayo'].forEach(function (el) {
   ['destello', 'bola', 'impacto'].forEach(function (part) {
     var im = new Image();
     im.onload = function () { im.ready = true; };
@@ -106,13 +106,16 @@ var FX_OF = { fire: 'fuego', ice: 'hielo', poison: 'veneno', bomb: 'canon' };
     IMG['fx/' + el + '-' + part] = im;
   });
 });
-['ventisca', 'marea', 'meteoro', 'crater', 'boreas-ventisca', 'midas-critico'].forEach(function (k) {
+['ventisca', 'marea', 'meteoro', 'crater', 'boreas-ventisca', 'midas-critico', 'muerte-puf'].forEach(function (k) {
   var im = new Image();
   im.onload = function () { im.ready = true; };
   im.src = 'assets/fx/' + k + '.webp';
   IMG['fx/' + k] = im;
 });
-var FX_TURNS = { 'fx/fuego-bola': true, 'fx/hielo-bola': true, 'fx/hielo-destello': true, 'fx/canon-destello': true };
+var FX_TURNS = { 'fx/fuego-bola': true, 'fx/hielo-bola': true, 'fx/hielo-destello': true, 'fx/canon-destello': true,
+  'fx/flecha-bola': true, 'fx/flecha-destello': true, 'fx/sombra-bola': true, 'fx/bala-bola': true, 'fx/bala-destello': true, 'fx/engranaje-destello': true };
+// proyectiles que no giran sobre sí mismos (la cruz de luz va derecha)
+var FX_STILL = { 'fx/luz-bola': true };
 /* Estados sobre la cabeza del monstruo (assets/fx/estado-*.webp): congelado
    o aturdido, quemado o envenenado, y un momento el crítico y la armadura
    rota. Si son varios, van en fila. */
@@ -156,10 +159,20 @@ function drawStun(c, x, y, r, now) {
 function drawFloatText(c, text, x, y, fs, color) {
   var gota = / 💧$/.test(text) && art('icons/gota');
   if (gota) text = text.replace(/ 💧$/, '');
+  c.font = '400 ' + fs + 'px "Lilita One", Nunito, sans-serif';
   var sz = fs * 1.25, off = gota ? sz * 0.55 : 0, w = c.measureText(text).width;
-  c.lineWidth = 3; c.strokeStyle = 'rgba(10,8,20,0.85)';
-  c.strokeText(text, x - off, y); c.fillStyle = color; c.fillText(text, x - off, y);
+  drawOutlinedText(c, text, x - off, y, fs, color);
   if (gota) c.drawImage(gota, x - off + w / 2 + 1, y - sz / 2, sz, sz);
+}
+/* Texto del juego: Lilita One con contorno grueso redondeado y sombra
+   debajo, el mismo acabado que los títulos de la interfaz. */
+function drawOutlinedText(c, text, x, y, fs, color) {
+  c.font = '400 ' + fs + 'px "Lilita One", Nunito, sans-serif';
+  c.lineJoin = 'round'; c.miterLimit = 2;
+  c.lineWidth = Math.max(3, fs * 0.28); c.strokeStyle = '#1a1430';
+  c.fillStyle = 'rgba(0,0,0,0.35)'; c.fillText(text, x, y + fs * 0.12);
+  c.strokeText(text, x, y);
+  c.fillStyle = color; c.fillText(text, x, y);
 }
 /* Dibuja un efecto centrado en (x, y) con el lado mayor = size. */
 function drawFxPic(c, key, x, y, size, rot) {
@@ -202,6 +215,53 @@ function tinted(key, color, strength) {
   return cv;
 }
 
+/* Silueta de un solo color (destello al recibir un golpe) y versión con
+   contorno oscuro (tropas del tablero, que al reducirlas pierden el suyo).
+   Se hacen una vez, a 256 px como mucho, y se guardan en la propia imagen. */
+var SPRITE_MAX = 256, OUTLINE_PX = 7, HIT_TIME = 0.1;
+function spriteCanvas(im, pad) {
+  var w = im.naturalWidth || im.width, h = im.naturalHeight || im.height;
+  var k = Math.min(1, SPRITE_MAX / Math.max(w, h));
+  var cv = document.createElement('canvas');
+  cv.sw = Math.round(w * k); cv.sh = Math.round(h * k);
+  cv.width = cv.sw + pad * 2; cv.height = cv.sh + pad * 2;
+  return cv;
+}
+function silhouette(im, color) {
+  var key = '_sil' + color;
+  if (im[key]) return im[key];
+  var cv = spriteCanvas(im, 0), c = cv.getContext('2d');
+  c.drawImage(im, 0, 0, cv.sw, cv.sh);
+  c.globalCompositeOperation = 'source-in';
+  c.fillStyle = color; c.fillRect(0, 0, cv.width, cv.height);
+  return (im[key] = cv);
+}
+function outlined(im) {
+  if (im._outl) return im._outl;
+  var p = OUTLINE_PX, cv = spriteCanvas(im, p), c = cv.getContext('2d'), sil = silhouette(im, '#1a1430');
+  // la silueta oscura desplazada en 8 direcciones y el dibujo encima
+  for (var a = 0; a < 8; a++) c.drawImage(sil, p + Math.cos(a * Math.PI / 4) * p, p + Math.sin(a * Math.PI / 4) * p);
+  c.drawImage(im, p, p, cv.sw, cv.sh);
+  cv.padX = p / cv.sw; cv.padY = p / cv.sh;
+  return (im._outl = cv);
+}
+// dibuja im en el rectángulo (x, y, w, h) con el contorno por fuera
+function drawOutlined(c, im, x, y, w, h) {
+  var o = outlined(im), mx = o.padX * w, my = o.padY * h;
+  c.drawImage(o, x - mx, y - my, w + mx * 2, h + my * 2);
+}
+
+/* Rebote elástico al disparar (recoil va de 1 a 0): aplasta, estira y se
+   asienta, conservando el volumen. Los cañones y el francotirador pegan
+   más fuerte y dan más culatazo; los magos casi no retroceden. */
+var JELLY_AMP = { bomb: 0.22, bullet: 0.22 };
+var KICK = { bomb: 2, bullet: 2, arrow: 1, coin: 1, shadow: 1, gear: 0.6 };
+function jellyScale(recoil, amp) {
+  var t = 1 - recoil;
+  var k = Math.sin(t * Math.PI * 2.5) * Math.pow(recoil, 1.4) * amp;
+  return { sx: 1 + k, sy: 1 - k };
+}
+
 var RANK_RIMS = ['#9fb3c8', '#9fb3c8', '#c9d4e6', '#ffd166', '#ffb020', '#c77dff', '#ff5fd2', '#ff3b5c'];
 
 /* ---------- ficha de tropa ---------- */
@@ -217,8 +277,9 @@ function drawUnit(c, id, x, y, r, rank, now, opt) {
   if (rank >= 5) glow(c, 0, 0, r * 1.35, RANK_RIMS[rank], 0.45 + Math.sin(now / 300) * 0.12);
 
   // efecto muelle al disparar: un 10% más grande hacia arriba
+  // (en el tablero lo sustituye el rebote elástico de opt.recoil)
   var atk = opt.atk > 0;
-  if (atk) { c.translate(0, r * 0.9); c.scale(1.1, 1.1); c.translate(0, -r * 0.9); }
+  if (atk && opt.recoil == null) { c.translate(0, r * 0.9); c.scale(1.1, 1.1); c.translate(0, -r * 0.9); }
 
   // en el tablero: cuerpo recortado sin chapa, con pose de reposo y de ataque
   var idle = opt.board && art('pose/' + id + '-idle');
@@ -232,16 +293,23 @@ function drawUnit(c, id, x, y, r, rank, now, opt) {
     }
     c.save();
     c.translate(0, foot);
+    if (opt.recoil > 0) {
+      // culatazo hacia atrás respecto al disparo y rebote desde los pies
+      var kick = (KICK[u.proj] || 0.4) * opt.recoil;
+      if (opt.aim != null) c.translate(-Math.cos(opt.aim) * r * 0.1 * kick, -Math.sin(opt.aim) * r * 0.05 * kick);
+      var jl = jellyScale(opt.recoil, JELLY_AMP[u.proj] || 0.16);
+      c.scale(jl.sx, jl.sy);
+    }
     if (hit) {
       // la pose de ataque mira hacia el enemigo
       if (opt.aim != null && Math.cos(opt.aim) * POSES[id].face < 0) c.scale(-1, 1);
       var sa = r * 2.35;
-      c.drawImage(hit, -sa / 2, -sa, sa, sa);
+      drawOutlined(c, hit, -sa / 2, -sa, sa, sa);
     } else {
       // respiración: se estira un poco hacia arriba
       if (!opt.still) c.scale(1, 1 + Math.sin(now / 520 + x * 0.05) * 0.025);
       var si = r * 2.35;
-      c.drawImage(idle, -si / 2, -si, si, si);
+      drawOutlined(c, idle, -si / 2, -si, si, si);
     }
     c.restore();
     if (!opt.noRank) drawRankStars(c, rank, r);
@@ -661,13 +729,17 @@ function drawEnemyPic(c, e, r, now, pic) {
   var W = H * pic.naturalWidth / pic.naturalHeight;
   var float = e.kind === 'ghost' ? Math.sin(now / 300 + e.seed) * r * 0.15 : 0;
   var step = Math.abs(Math.sin(now / 160 + e.seed)) * r * 0.08;
+  var hk = e.hitT > 0 ? e.hitT / HIT_TIME : 0;
   c.save();
-  c.translate(e.x, e.y);
+  c.translate(e.x + (e.kbx || 0), e.y + (e.kby || 0));
   c.fillStyle = 'rgba(0,0,0,0.28)'; c.beginPath(); c.ellipse(0, r * 0.82, r * 0.85, r * 0.22, 0, 0, Math.PI * 2); c.fill();
   if (e.boss) glow(c, 0, 0, r * 1.7, d.color, 0.4);
   if (e.kind === 'ghost') c.globalAlpha = 0.85;
+  // al recibir un golpe se aplasta desde los pies
+  if (hk) { c.translate(0, r * 0.95); c.scale(1 + 0.14 * hk, 1 - 0.14 * hk); c.translate(0, -r * 0.95); }
   c.rotate(Math.sin(now / 200 + e.seed) * 0.05);
   c.drawImage(pic, -W / 2, r * 0.95 - H - step + float, W, H);
+  if (hk) { c.globalAlpha = 0.85 * hk; c.drawImage(silhouette(pic, '#ffffff'), -W / 2, r * 0.95 - H - step + float, W, H); }
   c.globalAlpha = 1;
   c.restore();
   if (e.slowPct > 0) { c.strokeStyle = 'rgba(160,225,255,0.85)'; c.lineWidth = r * 0.1; circle(c, e.x, e.y, r * 1.1); c.stroke(); }
@@ -685,11 +757,12 @@ function drawEnemy(c, e, r, now) {
   var S = r * 2.5 * look.scale;
   var squash = 1 + Math.sin(now / 140 + e.seed) * 0.05;
   var float = e.kind === 'ghost' ? Math.sin(now / 300 + e.seed) * r * 0.15 : 0;
+  var hk = e.hitT > 0 ? e.hitT / HIT_TIME : 0;
   c.save();
-  c.translate(e.x, e.y + float);
+  c.translate(e.x + (e.kbx || 0), e.y + (e.kby || 0) + float);
   c.fillStyle = 'rgba(0,0,0,0.28)'; c.beginPath(); c.ellipse(0, r * 0.82 - float, r * 0.85, r * 0.22, 0, 0, Math.PI * 2); c.fill();
   if (e.boss) glow(c, 0, 0, r * 1.7, col, 0.4);
-  c.scale(1 / squash, squash);
+  c.scale((1 + 0.14 * hk) / squash, squash * (1 - 0.14 * hk));
   var top = -S * 0.56; // parte superior de la imagen
   var Y = function (f) { return top + f * S; }; // fracción vertical de la imagen
   var X = function (f) { return (f - 0.5) * S; };
@@ -718,6 +791,7 @@ function drawEnemy(c, e, r, now) {
 
   if (look.alpha) c.globalAlpha = look.alpha;
   c.drawImage(body, -S / 2, top, S, S);
+  if (e.hitT > 0) { c.globalAlpha = 0.85 * e.hitT / HIT_TIME; c.drawImage(silhouette(body, '#ffffff'), -S / 2, top, S, S); }
   c.globalAlpha = 1;
 
   // delante del cuerpo

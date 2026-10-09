@@ -566,8 +566,8 @@ function drawBoard(b, L, now, isMain) {
     }
     for (var ti = 0; ti < COLS * ROWS; ti++) {
       var tt = b.tiles[ti];
-      if (!tt) continue;
-      drawTileFloor(tt, b.cc(ti), G, ti, now);
+      if (!tt) drawStoneTile(b, ti, b.cc(ti), G);
+      else drawTileFloor(tt, b.cc(ti), G, ti, now);
     }
   } else {
   // marco
@@ -589,6 +589,7 @@ function drawBoard(b, L, now, isMain) {
     rrect(ctx, c.x - 0.47, c.y - 0.47, 0.94, 0.94, 0.14);
     ctx.fillStyle = (i + Math.floor(i / COLS)) % 2 ? bio.grass : bio.grass2; ctx.fill();
     if (b.tiles[i]) drawTileFloor(b.tiles[i], c, b.geo, i, now);
+    else drawStoneTile(b, i, c, b.geo);
   }
   // franja inferior bajo el tablero
   ctx.fillStyle = shade(bio.frame, -10);
@@ -626,7 +627,7 @@ function drawBoard(b, L, now, isMain) {
       rrect(ctx, cc2.x - G.cw * 0.47, cc2.y - G.ch * 0.47, G.cw * 0.94, G.ch * 0.94, 0.14); ctx.stroke();
     }
     var r = 0.42 * Math.min(G.cw, G.ch) * (1 + u.anim * 0.25);
-    drawUnit(ctx, u.id, cc2.x, cc2.y - 0.02, r, u.rank, now, { frozen: u.frozen > 0, board: true, atk: u.atk, aim: u.aim });
+    drawUnit(ctx, u.id, cc2.x, cc2.y - 0.02, r, u.rank, now, { frozen: u.frozen > 0, board: true, atk: u.atk, aim: u.aim, recoil: u.recoil || 0 });
     if (b.tiles[i]) drawTileIcon(b.tiles[i], cc2.x + G.cw * 0.33, cc2.y - G.ch * 0.33, 0.13);
     ctx.globalAlpha = 1;
   }
@@ -649,7 +650,18 @@ function drawBoard(b, L, now, isMain) {
   b.fx.forEach(function (f) {
     var t = 1 - f.life / f.max;
     if (f.type === 'bolt') {
-      ctx.strokeStyle = f.color; ctx.lineWidth = 0.06; ctx.globalAlpha = f.life / f.max;
+      // rayo ilustrado estirado entre los dos puntos (se voltea al azar para
+      // que chisporrotee) y un trazo quebrado encima
+      var bim = art('fx/rayo-bola');
+      ctx.globalAlpha = f.life / f.max;
+      if (bim) {
+        var bl = Math.hypot(f.x2 - f.x1, f.y2 - f.y1), bh = 0.42;
+        ctx.save(); ctx.translate((f.x1 + f.x2) / 2, (f.y1 + f.y2) / 2); ctx.rotate(Math.atan2(f.y2 - f.y1, f.x2 - f.x1));
+        if (Math.random() < 0.5) ctx.scale(1, -1);
+        ctx.drawImage(bim, -bl / 2, -bh / 2, bl, bh);
+        ctx.restore();
+      }
+      ctx.strokeStyle = f.color; ctx.lineWidth = 0.06;
       ctx.beginPath(); ctx.moveTo(f.x1, f.y1);
       for (var s = 1; s < 5; s++) ctx.lineTo(f.x1 + (f.x2 - f.x1) * s / 5 + (Math.random() - 0.5) * 0.2, f.y1 + (f.y2 - f.y1) * s / 5 + (Math.random() - 0.5) * 0.2);
       ctx.lineTo(f.x2, f.y2); ctx.stroke(); ctx.globalAlpha = 1;
@@ -667,6 +679,13 @@ function drawBoard(b, L, now, isMain) {
         var q = 1 - f.life / METEOR_FALL;
         drawFxPic(ctx, f.key, f.x - 1.9 * (1 - q), f.y - 0.25 - 2.6 * (1 - q), f.size, 0);
       }
+    } else if (f.type === 'part') {
+      // trocito del monstruo que sale volando y encoge
+      var pk = f.life / f.max;
+      ctx.globalAlpha = Math.min(1, pk * 2);
+      ctx.fillStyle = f.color; circle(ctx, f.x, f.y, f.r * (0.4 + pk * 0.6)); ctx.fill();
+      ctx.strokeStyle = 'rgba(26,20,48,0.8)'; ctx.lineWidth = 0.015; ctx.stroke();
+      ctx.globalAlpha = 1;
     } else if (f.type === 'flash') {
       ctx.globalAlpha = (f.life / f.max) * 0.5; ctx.fillStyle = f.color; ctx.fillRect(0, 0, G.W, G.H); ctx.globalAlpha = 1;
     } else {
@@ -685,18 +704,15 @@ function drawBoard(b, L, now, isMain) {
   b.enemies.forEach(function (e) {
     if (dual && pic && e.y > G.H + 0.1) return; // aún fuera del mapa
     var p = toS(e.x, e.y - (e.boss ? 0.92 : ENEMIES[e.kind].size + 0.16));
-    var fs = Math.max(9, sc * (e.boss ? 0.3 : 0.22));
-    ctx.font = '900 ' + fs + 'px Nunito, sans-serif';
-    ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(10,8,20,0.9)';
-    var txt = fmtNum(Math.max(0, e.hp));
-    ctx.strokeText(txt, p.x, p.y); ctx.fillStyle = e.boss ? '#ffd166' : '#ffffff'; ctx.fillText(txt, p.x, p.y);
+    // el número da un saltito al recibir un golpe
+    var fs = Math.max(9, sc * (e.boss ? 0.3 : 0.22)) * (1 + 0.3 * (e.hitT > 0 ? e.hitT / HIT_TIME : 0));
+    drawOutlinedText(ctx, fmtNum(Math.max(0, e.hp)), p.x, p.y, fs, e.boss ? '#ffd166' : '#ffffff');
   });
   if (isMain || sc > 30) {
     b.texts.forEach(function (t) {
       var p = toS(t.x, t.y);
       ctx.globalAlpha = Math.min(1, t.life / t.max * 1.6);
       var fs = Math.max(10, sc * (t.big ? 0.3 : 0.22));
-      ctx.font = '900 ' + fs + 'px Nunito, sans-serif';
       drawFloatText(ctx, t.text, p.x, p.y, fs, t.color);
     });
     ctx.globalAlpha = 1;
@@ -767,6 +783,22 @@ function drawTileFloor(type, cc, G, i, now) {
   var w = s * 0.96, h = w * pic.naturalHeight / pic.naturalWidth;
   ctx.drawImage(pic, cc.x - w / 2, cc.y - h / 2, w, h);
 }
+/* Losa de piedra de una casilla normal: la variante sale de la semilla de
+   la partida, así no cambia entre fotogramas. En los biomas verdes alguna
+   lleva musgo. */
+var STONES = ['piedra-1', 'piedra-1', 'piedra-2', 'piedra-3'], MOSSY = ['musgo-1', 'musgo-2', 'musgo-3'];
+function drawStoneTile(b, i, cc, G) {
+  var h = Math.abs(Math.sin((i + 1) * 12.9898 + (b.tileSeed || 0) * 78.233) * 43758.5453) % 1;
+  var grassy = ['prado', 'bosque', 'pantano'].indexOf(b.biome) !== -1;
+  var name = grassy && h < 0.3 ? MOSSY[Math.floor(h / 0.3 * MOSSY.length)] : STONES[Math.floor(h * 997) % STONES.length];
+  var pic = art('tiles/' + name);
+  if (!pic) return false;
+  var s = Math.min(G.cw, G.ch) * 0.97;
+  ctx.fillStyle = 'rgba(10,12,30,0.3)';
+  rrect(ctx, cc.x - s / 2 + 0.02, cc.y - s / 2 + 0.05, s, s, 0.08); ctx.fill();
+  ctx.drawImage(pic, cc.x - s / 2, cc.y - s / 2, s, s);
+  return true;
+}
 function drawTileIcon(type, x, y, r) {
   var t = TILES[type];
   var pic = art('tiles/' + type);
@@ -795,6 +827,8 @@ function drawTileIcon(type, x, y, r) {
     ctx.beginPath(); ctx.moveTo(x + r * 0.5, y - r * 0.5); ctx.lineTo(x + r * 0.05, y - r * 0.4); ctx.lineTo(x + r * 0.4, y - r * 0.05); ctx.closePath(); ctx.fill();
   }
 }
+// lado mayor de cada proyectil ilustrado, en casillas
+var SHOT_SIZE = { fire: 0.5, ice: 0.42, bomb: 0.34, arrow: 0.5, shadow: 0.42, gear: 0.3, bullet: 0.55, holy: 0.32 };
 function drawShot(s, now) {
   var x = s.x, y = s.y;
   // proyectiles ilustrados: fuego y hielo miran hacia donde van, el frasco
@@ -805,11 +839,13 @@ function drawShot(s, now) {
     if (FX_TURNS[key]) {
       var px = s.px != null ? s.px : s.sx, py = s.py != null ? s.py : s.sy;
       rot = (Math.abs(x - px) + Math.abs(y - py) > 0.001) ? Math.atan2(y - py, x - px) : Math.atan2(s.target.y - s.sy, s.target.x - s.sx);
-    } else rot = now / (s.kind === 'bomb' ? 260 : 120);
+    } else rot = FX_STILL[key] ? 0 : now / (s.kind === 'bomb' ? 260 : 120);
     s.px = x; s.py = y;
-    var size = s.kind === 'fire' ? 0.5 : s.kind === 'ice' ? 0.42 : s.kind === 'bomb' ? 0.34 : 0.32;
+    var size = SHOT_SIZE[s.kind] || 0.32;
     if (s.def && s.def.id === 'titan') size *= 1.3;
     if (s.kind === 'fire') glow(ctx, x, y, 0.26, '#ff7a1a', 0.45);
+    if (s.kind === 'holy') glow(ctx, x, y, 0.24, '#ffd34d', 0.5);
+    if (s.kind === 'shadow') glow(ctx, x, y, 0.2, '#b026ff', 0.4);
     if (drawFxPic(ctx, key, x, y, size, rot)) return;
   }
   switch (s.kind) {

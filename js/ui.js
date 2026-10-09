@@ -167,7 +167,7 @@ function shopHtml() {
   var price = function (cur, v, poor) { return '<span class="sh-price' + (poor ? ' poor' : '') + '">' + (cur === 'gems' ? '💎' : '🪙') + ' ' + v + '</span>'; };
   var offers = shopOffers().map(function (o) {
     var u = UNITS[o.id], sold = shopBought(o.i), poor = (o.cur === 'gems' ? meta.gems : meta.gold) < o.price;
-    return '<button class="sh-offer' + (sold ? ' sold' : '') + (o.cur === 'gems' ? ' gemmy' : '') + '" data-offer="' + o.i + '" style="--rc:' + RARITY[u.rarity].color + '"' + (sold ? ' disabled' : '') + '>' +
+    return '<button class="sh-offer r-' + u.rarity + (sold ? ' sold' : '') + (o.cur === 'gems' ? ' gemmy' : '') + '" data-offer="' + o.i + '" style="--rc:' + RARITY[u.rarity].color + '"' + (sold ? ' disabled' : '') + '>' +
       '<span class="sh-rar">' + RARITY[u.rarity].name + '</span>' +
       (!sold && !meta.cards[o.id] ? '<span class="sh-new">Nueva</span>' : '') +
       '<img src="' + unitIcon(o.id, 0, 112) + '" alt="">' +
@@ -451,7 +451,7 @@ function startCardDemo(cv, id) {
       if (!b.cells[i]) continue;
       var c = b.cc(i), u = b.cells[i];
       dc.fillStyle = 'rgba(0,0,0,0.18)'; rrect(dc, c.x - 0.46, c.y - 0.46, 0.92, 0.92, 0.14); dc.fill();
-      drawUnit(dc, u.id, c.x, c.y - 0.02, 0.42 * (1 + u.anim * 0.25), u.rank, t, { board: true, atk: u.atk, aim: u.aim });
+      drawUnit(dc, u.id, c.x, c.y - 0.02, 0.42 * (1 + u.anim * 0.25), u.rank, t, { board: true, atk: u.atk, aim: u.aim, recoil: u.recoil || 0 });
     }
     b.enemies.slice().sort(function (p, q) { return p.y - q.y; }).forEach(function (e) {
       drawEnemy(dc, e, ENEMIES[e.kind].size * 0.82, t);

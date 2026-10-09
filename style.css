@@ -1307,3 +1307,88 @@ x-ico.off { filter: grayscale(1) brightness(0.45); opacity: 0.75; }
 .ucp-row em { font-style: normal; color: #dfe6ff; white-space: nowrap; }
 .ucp-row em b { color: #8dff7a; }
 .ucp-row small { text-align: right; font-weight: 900; color: #8dff7a; }
+
+/* =========================================================
+   Pulido visual (docs/informe-ui-ux.md)
+   ========================================================= */
+/* tres acabados de texto: grande, etiqueta y número */
+.t-hero, .t-label, .t-num {
+  font-family: 'Lilita One', 'Nunito', sans-serif; font-weight: 400; color: #fff;
+  paint-order: stroke fill;
+}
+.t-hero { letter-spacing: 0.02em; -webkit-text-stroke: 7px var(--edge); text-shadow: 0 4px 0 var(--edge), 0 6px 8px rgba(0,0,0,0.35); }
+.t-label, .t-num { -webkit-text-stroke: 5px var(--edge); text-shadow: 0 2px 0 var(--edge); }
+.t-num { font-variant-numeric: tabular-nums; }
+
+/* botón de jugar: late con «scale» (así el «transform» de :active sigue
+   hundiéndolo) y un brillo lo cruza cada pocos segundos, recortado a la
+   forma del dibujo */
+@keyframes playPulse { 0%, 100% { scale: 1; } 50% { scale: 1.04; } }
+.play-hero { position: relative; }
+.play-hero::after {
+  content: ''; position: absolute; inset: 0; pointer-events: none;
+  background: linear-gradient(105deg, transparent 40%, rgba(255,255,255,0.6) 50%, transparent 60%) no-repeat;
+  background-size: 250% 100%; background-position: 150% 0;
+  -webkit-mask: url(assets/ui/boton-jugar.webp) center / 100% 100% no-repeat;
+  mask: url(assets/ui/boton-jugar.webp) center / 100% 100% no-repeat;
+  animation: playShine 3.5s ease-in-out infinite;
+}
+@keyframes playShine { 0%, 65% { background-position: 150% 0; } 100% { background-position: -50% 0; } }
+@media (prefers-reduced-motion: reduce) { .play-hero, .play-hero::after { animation: none; } }
+
+/* hueco de cofre vacío: silueta apagada de un cofre en la piedra */
+.slot.empty::before {
+  content: ''; position: absolute; left: 24%; right: 24%; top: 18%; bottom: 30%; pointer-events: none;
+  background: url(assets/chests/madera.webp) center / contain no-repeat;
+  filter: grayscale(1) brightness(0.35); opacity: 0.45;
+}
+.slot.empty span { position: relative; }
+
+/* la comandante ya no pisa el primer hueco de cofre */
+.deck-panel { margin-top: 40px; }
+/* texto de ayuda legible sobre el azul */
+.lead { color: rgba(255,255,255,0.85); }
+
+/* ofertas de la tienda: marco y fondo del color de su rareza
+   (assets/ui/tienda-<rareza>.webp), cortado en nueve para que los
+   adornos de las esquinas no se deformen */
+.sh-offer[class*=" r-"] {
+  border-image-slice: 17% 21% fill; border-image-width: 46px 36px; border-image-outset: 6px 4px; border-image-repeat: stretch;
+  padding: 6px 0 4px;
+}
+.sh-offer.r-comun { border-image-source: url(assets/ui/tienda-comun.webp); }
+.sh-offer.r-rara { border-image-source: url(assets/ui/tienda-rara.webp); }
+.sh-offer.r-epica { border-image-source: url(assets/ui/tienda-epica.webp); }
+.sh-offer.r-mitica { border-image-source: url(assets/ui/tienda-mitica.webp); }
+.sh-offer.r-legendaria { border-image-source: url(assets/ui/tienda-legendaria.webp); }
+.sh-offer b, .sh-offer .sh-n {
+  font-family: 'Lilita One', 'Nunito', sans-serif; font-weight: 400; color: #fff;
+  -webkit-text-stroke: 5px var(--edge); paint-order: stroke fill; text-shadow: 0 2px 0 var(--edge);
+}
+.sh-offer .sh-n { color: #fff1b8; -webkit-text-stroke-width: 4px; }
+
+/* botón 2.5D: contorno, canto, cara en degradado y brillo de caramelo.
+   Al pulsar baja lo mismo que mide el canto. */
+.btn3d {
+  --c1: #8df07a; --c2: #2fae3a; --c-edge: #1d6b23;
+  position: relative; border: 3px solid var(--ink); border-radius: 16px;
+  background: linear-gradient(180deg, var(--c1) 0%, var(--c2) 100%);
+  box-shadow: 0 6px 0 var(--c-edge), 0 9px 10px rgba(0,0,0,0.35), inset 0 -6px 0 rgba(0,0,0,0.18), inset 0 2px 0 rgba(255,255,255,0.55);
+  transition: transform 0.06s, box-shadow 0.06s;
+}
+.btn3d::before {
+  content: ''; position: absolute; left: 8%; right: 8%; top: 6%; height: 42%; pointer-events: none;
+  border-radius: 12px 12px 40% 40% / 12px 12px 18px 18px;
+  background: linear-gradient(180deg, rgba(255,255,255,0.55), rgba(255,255,255,0.08));
+}
+.btn3d:active {
+  transform: translateY(5px);
+  box-shadow: 0 1px 0 var(--c-edge), 0 2px 3px rgba(0,0,0,0.3), inset 0 -3px 0 rgba(0,0,0,0.18), inset 0 2px 0 rgba(255,255,255,0.4);
+}
+.btn3d.orange { --c1: #ffc65a; --c2: #f08a12; --c-edge: #a2520a; }
+.btn3d.blue { --c1: #6fc3ff; --c2: #1f74e0; --c-edge: #154a91; }
+.btn3d.gray { --c1: #b8bfd0; --c2: #7a8399; --c-edge: #4b5263; }
+/* los precios de la tienda, con el mismo volumen */
+.sh-price { position: relative; box-shadow: 0 4px 0 #1d6b23, inset 0 -4px 0 rgba(0,0,0,0.18), inset 0 2px 0 rgba(255,255,255,0.55); }
+.sh-price.poor { box-shadow: 0 4px 0 #4b5263, inset 0 -4px 0 rgba(0,0,0,0.18), inset 0 2px 0 rgba(255,255,255,0.35); }
+.sh-price.sold { box-shadow: none; }

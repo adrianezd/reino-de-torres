@@ -136,6 +136,7 @@ function Board(opts) {
   this.leaked = 0;
   this.event = null;
   this.shake = 0;
+  this.tileSeed = Math.floor(Math.random() * 10000); // variante de las losas de cada casilla
 }
 function shuffleArr(a) {
   for (var i = a.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)); var t = a[i]; a[i] = a[j]; a[j] = t; }
@@ -263,6 +264,7 @@ Board.prototype.spawn = function (kind, hp, opt) {
     hp: hp, maxHp: hp, d: opt.d || 0, x: 0, y: 0,
     speed: (this.geo.len / BASE_CROSS_TIME) * d.speed * (opt.speedMult || 1),
     slowPct: 0, slowT: 0, poison: 0, poisonT: 0, stun: 0, shield: 0, abilityT: 3, dead: false, critT: 0, breakT: 0,
+    hitT: 0, kbx: 0, kby: 0,
     armor: d.armor || 0, dodge: d.dodge || 0
   };
   var p = this.pos(e.d); e.x = p.x; e.y = p.y;
@@ -282,6 +284,10 @@ Board.prototype.hit = function (e, dmg, unitDef, kind) {
   this.dmgBy[src] = (this.dmgBy[src] || 0) + Math.min(dmg, Math.max(0, e.hp));
   e.hp -= dmg;
   this.damage += dmg;
+  // golpe: destello blanco, aplastón y un empujoncito hacia fuera del tablero
+  e.hitT = HIT_TIME;
+  var hcx = this.geo.W / 2, hcy = this.geo.H / 2, hd = Math.hypot(e.x - hcx, e.y - hcy) || 1;
+  e.kbx = (e.x - hcx) / hd * 0.05; e.kby = (e.y - hcy) / hd * 0.05;
   if (crit) this.addText(e.x, e.y - 0.5, '¡' + fmtNum(dmg) + '!', '#ff4f7b', true);
   if (crit && !unitDef.critPic) e.critT = 0.55;
   if (unitDef && unitDef.pierce && e.armor > 0) e.breakT = 0.55;
@@ -297,7 +303,7 @@ Board.prototype.kill = function (e) {
   this.kills++;
   var reward = (e.boss ? 100 : ENEMIES[e.kind].reward) * (this.event === 'lluvia' ? 2 : 1);
   this.mana += reward;
-  this.addFx('pop', { x: e.x, y: e.y }, e.boss ? BOSSES[e.kind].color : ENEMIES[e.kind].color);
+  this.deathFx(e);
   if (e.boss) {
     this.addText(e.x, e.y - 0.5, '+' + reward + ' 💧', '#7dfcff', true);
     this.shake = 0.4;
@@ -320,6 +326,8 @@ Board.prototype.findTarget = function (mode, exclude) {
 };
 
 /* ---------- disparos ---------- */
+// los destellos que tapan mucho a la tropa van más pequeños
+var FLASH_SIZE = { holy: 0.3, shadow: 0.36, bullet: 0.5 };
 Board.prototype.fire = function (i, u) {
   var d = UNITS[u.id];
   var target = this.findTarget(d.target);
@@ -332,8 +340,10 @@ Board.prototype.fire = function (i, u) {
     // rayo instantáneo que salta entre enemigos
     var hitSet = {}, cur = target, prev = from, dmg = this.unitDamage(i);
     var jumps = d.chain + Math.floor((u.rank - 1) / 2);
+    this.fx.push({ type: 'pic', key: 'fx/rayo-destello', x: from.x, y: from.y - 0.12, size: 0.5, rot: 0, grow: 0.5, life: 0.2, max: 0.2 });
     for (var j = 0; j < jumps && cur; j++) {
       this.fx.push({ type: 'bolt', x1: prev.x, y1: prev.y, x2: cur.x, y2: cur.y, life: 0.18, max: 0.18, color: d.color2 });
+      this.fx.push({ type: 'pic', key: 'fx/rayo-impacto', x: cur.x, y: cur.y, size: 0.55, rot: 0, grow: 0.5, life: 0.3, max: 0.3 });
       hitSet[cur.id] = true;
       this.applyHit(cur, dmg, d, u);
       prev = { x: cur.x, y: cur.y };
@@ -347,7 +357,7 @@ Board.prototype.fire = function (i, u) {
   if (FX_OF[d.proj]) {
     var mk = 'fx/' + FX_OF[d.proj] + '-destello';
     this.fx.push({ type: 'pic', key: mk, x: from.x + Math.cos(u.aim) * 0.32, y: from.y - 0.12 + Math.sin(u.aim) * 0.32,
-      size: 0.46, rot: FX_TURNS[mk] ? u.aim : 0, grow: 0.5, life: 0.16, max: 0.16 });
+      size: FLASH_SIZE[d.proj] || 0.46, rot: FX_TURNS[mk] ? u.aim : 0, grow: 0.5, life: 0.16, max: 0.16 });
   }
   return true;
 };
@@ -384,6 +394,19 @@ Board.prototype.applyHit = function (e, dmg, d, u) {
 };
 
 /* ---------- efectos visuales ---------- */
+// muerte: nube con gotas de maná y una ráfaga de trocitos del color del monstruo
+var MAX_PARTS = 160;
+Board.prototype.deathFx = function (e) {
+  var col = e.boss ? BOSSES[e.kind].color : ENEMIES[e.kind].color, big = e.boss ? 1.8 : 1;
+  if (!art('fx/muerte-puf')) this.addFx('pop', { x: e.x, y: e.y }, col);
+  else this.fx.push({ type: 'pic', key: 'fx/muerte-puf', x: e.x, y: e.y - 0.08, size: 0.85 * big, rot: 0, grow: 0.45, life: 0.5, max: 0.5 });
+  var parts = 0;
+  for (var k = 0; k < this.fx.length; k++) if (this.fx[k].type === 'part') parts++;
+  for (var n = 0; n < 10 * big && parts < MAX_PARTS; n++, parts++) {
+    var a = Math.random() * Math.PI * 2, v = 1.2 + Math.random() * 1.8;
+    this.fx.push({ type: 'part', x: e.x, y: e.y, vx: Math.cos(a) * v, vy: Math.sin(a) * v - 1.2, r: 0.035 + Math.random() * 0.04, color: col, life: 0.45, max: 0.45 });
+  }
+};
 var METEOR_FALL = 0.32; // segundos que tarda un meteoro en caer
 // ola ilustrada que cruza el tablero de izquierda a derecha (dos filas desfasadas)
 Board.prototype.addSweep = function (key) {
@@ -410,7 +433,7 @@ Board.prototype.update = function (dt) {
     var u = this.cells[i];
     if (!u) continue;
     if (u.anim > 0) u.anim = Math.max(0, u.anim - dt * 2.5);
-    if (u.recoil > 0) u.recoil = Math.max(0, u.recoil - dt * 6);
+    if (u.recoil > 0) u.recoil = Math.max(0, u.recoil - dt * 4);
     if (u.atk > 0) u.atk = Math.max(0, u.atk - dt);
     if (u.frozen > 0) { u.frozen -= dt; continue; }
     if (this.tiles[i] === 'fuente') this.mana += TILES.fuente.mana * dt * u.rank;
@@ -421,7 +444,7 @@ Board.prototype.update = function (dt) {
         u.gen = 0;
         var amt = this.manaAmount(u);
         this.mana += amt;
-        u.atk = 0.5; // pose de ataque al repartir el maná
+        u.atk = 0.5; u.recoil = 1; // pose de ataque y rebote al repartir el maná
         var p = this.cc(i);
         this.addText(p.x, p.y - 0.5, '+' + amt + ' 💧', '#7dfcff');
       }
@@ -430,7 +453,7 @@ Board.prototype.update = function (dt) {
     if (d.buff) {
       // la bardo toca: pose de ataque a ratos
       u.gen += dt;
-      if (u.gen >= 2.4) { u.gen = 0; u.atk = 0.5; }
+      if (u.gen >= 2.4) { u.gen = 0; u.atk = 0.5; u.recoil = 1; }
     }
     if (!d.dmg) continue;
     u.cd -= dt * d.rate * this.unitSpeed(i) * (1 + 0.06 * (u.rank - 1));
@@ -463,6 +486,8 @@ Board.prototype.update = function (dt) {
   for (k = 0; k < this.enemies.length; k++) {
     var e = this.enemies[k];
     if (e.dead) continue;
+    if (e.hitT > 0) e.hitT = Math.max(0, e.hitT - dt);
+    if (e.kbx || e.kby) { var kf = Math.pow(0.0001, dt); e.kbx *= kf; e.kby *= kf; }
     if (e.poison > 0) {
       var pd = e.poison * dt * (1 - e.armor * 0.5);
       if (e.poisonBy) this.dmgBy[e.poisonBy] = (this.dmgBy[e.poisonBy] || 0) + Math.min(pd, Math.max(0, e.hp));
@@ -491,7 +516,12 @@ Board.prototype.update = function (dt) {
   this.enemies = this.enemies.filter(function (e) { return !e.dead; });
 
   // efectos
-  for (k = this.fx.length - 1; k >= 0; k--) { this.fx[k].life -= dt; if (this.fx[k].life <= 0) this.fx.splice(k, 1); }
+  for (k = this.fx.length - 1; k >= 0; k--) {
+    var fk = this.fx[k];
+    fk.life -= dt;
+    if (fk.type === 'part') { fk.x += fk.vx * dt; fk.y += fk.vy * dt; fk.vy += 5 * dt; }
+    if (fk.life <= 0) this.fx.splice(k, 1);
+  }
   for (k = this.meteors.length - 1; k >= 0; k--) {
     var mt = this.meteors[k];
     mt.t -= dt;
