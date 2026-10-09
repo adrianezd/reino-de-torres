@@ -7,8 +7,16 @@
    La ventana sale sola al entrar con una versión nueva (meta.lastSeenVersion)
    y también desde Opciones.
    ========================================================= */
-var APP_VERSION = '1.3.0';
+var APP_VERSION = '1.3.1';
 var APP_PATCH_NOTES = [
+  {
+    version: '1.3.1',
+    summary: 'El tablero es siempre el mismo en todos los mapas',
+    items: [
+      'Las 15 losas del tablero son siempre las mismas en todos los mapas: 9 lisas y 6 agrietadas.',
+      'Altar, Fuente y Atalaya ya no tapan su losa: salen como emblema con un borde de su color encima.'
+    ]
+  },
   {
     version: '1.3.0',
     summary: 'Mazo por tipos, espera al recolocar y cartas reequilibradas',

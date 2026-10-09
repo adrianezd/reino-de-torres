@@ -567,8 +567,9 @@ function drawBoard(b, L, now, isMain) {
     }
     for (var ti = 0; ti < COLS * ROWS; ti++) {
       var tt = b.tiles[ti];
-      if (!tt) drawStoneTile(b, ti, b.cc(ti), G);
-      else drawTileFloor(tt, b.cc(ti), G, ti, now);
+      // las 15 losas siempre; la casilla especial, como emblema encima
+      drawStoneTile(b, ti, b.cc(ti), G);
+      if (tt) drawTileFloor(tt, b.cc(ti), G, ti, now);
     }
   } else {
   // marco
@@ -589,8 +590,8 @@ function drawBoard(b, L, now, isMain) {
     var c = cellCenter(i);
     rrect(ctx, c.x - 0.47, c.y - 0.47, 0.94, 0.94, 0.14);
     ctx.fillStyle = (i + Math.floor(i / COLS)) % 2 ? bio.grass : bio.grass2; ctx.fill();
+    drawStoneTile(b, i, c, b.geo);
     if (b.tiles[i]) drawTileFloor(b.tiles[i], c, b.geo, i, now);
-    else drawStoneTile(b, i, c, b.geo);
   }
   // franja inferior bajo el tablero
   ctx.fillStyle = shade(bio.frame, -10);
@@ -798,19 +799,20 @@ function drawGate(x, y) {
   rrect(ctx, x - 0.32, y - 0.38, 0.64, 0.5, 0.12); ctx.fillStyle = '#5a3a20'; ctx.fill(); ink(ctx, 0.04);
   ctx.fillStyle = '#ffd166'; star(ctx, x, y - 0.12, 0.14); ctx.fill();
 }
-/* Suelo de una casilla especial: su ilustración (altar, fuente, atalaya)
-   ocupando la casilla, con un brillo suave del color de la casilla. */
+/* Casilla especial (altar, fuente, atalaya) sobre su losa de piedra: la
+   losa no cambia; encima van un borde que late del color de la casilla y
+   su ilustración en pequeño, como emblema. */
 function drawTileFloor(type, cc, G, i, now) {
   var pic = art('tiles/' + type), t = TILES[type];
-  var s = Math.min(G.cw, G.ch);
+  var s = Math.min(G.cw, G.ch), pulse = Math.sin(now / 500 + i);
+  rrect(ctx, cc.x - s * 0.45, cc.y - s * 0.45, s * 0.9, s * 0.9, 0.1);
+  ctx.strokeStyle = alpha(t.color, 0.75 + pulse * 0.2); ctx.lineWidth = 0.05; ctx.stroke();
   if (!pic) {
-    rrect(ctx, cc.x - G.cw * 0.47, cc.y - G.ch * 0.47, G.cw * 0.94, G.ch * 0.94, 0.12);
-    ctx.fillStyle = alpha(t.color, 0.22 + Math.sin(now / 500 + i) * 0.07); ctx.fill();
-    ctx.strokeStyle = alpha(t.color, 0.9); ctx.lineWidth = 0.05; ctx.stroke();
+    ctx.fillStyle = alpha(t.color, 0.18 + pulse * 0.06); ctx.fill();
     return;
   }
-  glow(ctx, cc.x, cc.y, s * 0.62, t.color, 0.35 + Math.sin(now / 500 + i) * 0.12);
-  var w = s * 0.96, h = w * pic.naturalHeight / pic.naturalWidth;
+  glow(ctx, cc.x, cc.y, s * 0.45, t.color, 0.35 + pulse * 0.12);
+  var w = s * 0.58, h = w * pic.naturalHeight / pic.naturalWidth;
   ctx.drawImage(pic, cc.x - w / 2, cc.y - h / 2, w, h);
 }
 /* Losa de piedra de una casilla normal: siempre las mismas 15, en franjas
