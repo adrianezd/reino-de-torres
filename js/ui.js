@@ -81,23 +81,28 @@ function renderMenu(name, arg) {
   var m = $('menu');
   var html = '';
   if (name === 'home') {
-    var free = freeChestReady();
+    var free = freeChestReady(), cmd = COMMANDERS[meta.commander];
+    var side = function (go, pic, label, cls) { return '<button class="side-btn ' + (cls || '') + '" data-go="' + go + '"><img src="assets/' + pic + '.webp" alt=""><span>' + label + '</span></button>'; };
     html = topBar() +
-      '<div class="logo"><h1><img src="assets/ui/titulo.webp" alt="Reino de Torres"></h1><p>Invoca tropas, fusiónalas y defiende tu reino</p></div>' +
-      // el mazo bajo su letrero, cada retrato en uno de los cinco aros del banner
-      '<div class="deck-sign"><span>Mazo actual</span></div>' +
-      '<div class="deck-preview">' + meta.deck.map(function (id, i) { return '<img src="' + unitIcon(id, 0, 96) + '" alt="' + esc(UNITS[id].name) + '" style="left:' + DECK_RINGS[i] + '%">'; }).join('') + '</div>' +
-      '<button class="play-hero" data-go="playNext" aria-label="Jugar la siguiente fase de la campaña"><img src="assets/ui/boton-jugar.webp" alt=""></button>' +
-      '<div class="slots" id="chestSlots">' + slotsInner() + '</div>' +
-      '<div class="mode-list">' +
-      modeBtn('campaign', ico('icons/estrella'), 'Campaña', '15 fases con jefes · ' + totalStars() + '/45 ⭐', 'm-campaign') +
-      modeBtn('duelPick', '⚔️', 'Duelo 1 contra 1', 'Aguanta más que tu rival', 'm-duel') +
-      modeBtn('coop', ico('icons/escudo'), '2 contra la máquina', 'Tú y un aliado vs oleadas · récord ' + meta.coopBest, 'm-coop') +
+      // título con los atajos a los lados, como las ofertas del género
+      '<div class="home-top">' +
+      '<div class="side-col">' + side('freeChest', 'chests/madera', free ? 'Gratis' : 'Mañana', free ? 'glow' : '') + side('codes', 'icons/ticket', 'Códigos') + '</div>' +
+      '<div class="logo"><h1><img src="assets/ui/titulo.webp" alt="Reino de Torres"></h1></div>' +
+      '<div class="side-col">' + side('howto', 'icons/pergamino', 'Ayuda') + side('collection', 'icons/espadas', 'Tropas') + '</div>' +
       '</div>' +
-      '<div class="home-grid">' +
-      '<button class="tile-btn ' + (free ? 'glow' : '') + '" data-go="freeChest">🎁<span>' + (free ? 'Cofre gratis' : 'Mañana más') + '</span></button>' +
-      '<button class="tile-btn code" data-go="codes">🎟️<span>Códigos</span></button>' +
-      '<button class="tile-btn" data-go="howto">❓<span>Cómo jugar</span></button>' +
+      '<div class="slots" id="chestSlots">' + slotsInner() + '</div>' +
+      // mazo: banner del comandante (figura a la izquierda, nombre en el hueco)
+      // y debajo las cinco tropas, cada retrato en un aro del banner
+      '<div class="deck-panel">' +
+      '<button class="cmd-banner" data-go="commanders"><img src="assets/commanders/' + meta.commander + '-cuerpo.webp" alt=""><span class="cb-txt"><small>Habilidad</small><b>' + esc(cmd.ability) + '</b></span><span class="cb-slot">' + esc(cmd.name) + '</span></button>' +
+      '<button class="deck-preview" data-go="collection" aria-label="Mazo actual">' + meta.deck.map(function (id, i) { return '<img src="' + unitIcon(id, 0, 96) + '" alt="' + esc(UNITS[id].name) + '" style="left:' + DECK_RINGS[i] + '%">'; }).join('') + '</button>' +
+      '</div>' +
+      // tres botones de jugar: duelo, campaña (la siguiente fase) y cooperativo
+      '<div class="play-row">' +
+      '<button class="play-side" data-go="duelPick"><img src="assets/ui/boton-duelo.webp" alt=""><span>1 contra 1</span></button>' +
+      '<div class="play-mid"><button class="play-hero" data-go="playNext" aria-label="Jugar la siguiente fase de la campaña"><img src="assets/ui/boton-jugar.webp" alt=""></button>' +
+      '<button class="play-camp" data-go="campaign">Campaña <small>' + totalStars() + '/45 ⭐</small></button></div>' +
+      '<button class="play-side" data-go="coop"><img src="assets/ui/boton-coop.webp" alt=""><span>2 contra IA</span></button>' +
       '</div>' +
       '<label class="sound-row"><input type="checkbox" id="soundChk" ' + (meta.settings.sound ? 'checked' : '') + '> Sonido</label>' +
       '<button class="reset-btn" data-go="reset">Restablecer juego</button>' +
@@ -191,9 +196,6 @@ function rivalCardsText(off) {
 }
 // efecto ilustrado de la habilidad de cada comandante (assets/fx)
 var CMD_FX = { aria: 'ventisca', merlo: 'marea', brann: 'meteoro' };
-function modeBtn(go, icon, title, sub, cls) {
-  return '<button class="mode-btn ' + cls + '" data-go="' + go + '"><span class="mode-ico">' + icon + '</span><span><b>' + title + '</b><small>' + sub + '</small></span><span class="mode-go">▶</span></button>';
-}
 // Pestañas dentro de Mazo: tropas y comandante.
 function deckTabs(on) {
   return '<div class="sub-tabs"><button data-go="collection" class="' + (on === 'collection' ? 'on' : '') + '">Tropas</button>' +
@@ -294,6 +296,7 @@ function unitTraits(u) {
   if (u.slow) t.push(['❄️', 'Ralentiza', 'Hasta ' + Math.round(u.slow.max * 100) + '%']);
   if (u.bossMult) t.push(['👑', 'Cazajefes', '×' + u.bossMult + ' a jefes']);
   if (u.pierce) t.push(['🛡️', 'Perfora', 'Sin armadura']);
+  if (u.bounty) t.push(['💧', 'Botín', '+' + u.bounty + ' maná por baja']);
   if (u.buff) t.push(['🎵', 'Ritmo', '+' + Math.round(u.buff.speed * 100) + '% vecinas']);
   if (u.dmg) t.push(['🎯', 'Objetivo', u.target === 'strong' ? 'El más fuerte' : 'El primero']);
   return t;
@@ -328,7 +331,7 @@ function showCardModal(id) {
     '<div class="uc-hero"><div class="uc-rays"></div><img class="uc-img" src="' + unitIcon(id, Math.min(7, c.lv), 220) + '" alt=""></div>' +
     '<div class="uc-ribbon"><h2>' + esc(u.name) + '</h2></div>' +
     '<p class="uc-title">' + esc(u.title) + '</p>' +
-    '<div class="uc-chips"><span class="uc-chip rar">' + (u.rarity === 'legendaria' ? '★ ' : '') + rar.name + '</span><span class="uc-chip el">' + el.icon + ' ' + el.name + '</span><span class="uc-chip">' + esc(u.role) + '</span></div>' +
+    '<div class="uc-chips"><span class="uc-chip rar">' + (u.rarity === 'legendaria' || u.rarity === 'mitica' ? '★ ' : '') + rar.name + '</span><span class="uc-chip el">' + el.icon + ' ' + el.name + '</span><span class="uc-chip">' + esc(u.role) + '</span></div>' +
     '<p class="uc-desc">' + esc(u.desc) + (u.chestOnly ? '<br><em>🎁 Solo sale en el cofre de oro</em>' : '') + '</p>' +
     '<div class="uc-demo"><canvas id="ucDemo" aria-label="' + esc(u.name) + ' en acción"></canvas><span>En acción</span></div>' +
     '<div class="pause-stats uc-stats">' + stats + '</div>' +
@@ -369,7 +372,7 @@ function showLockedCard(id) {
     '<div class="uc-hero"><div class="uc-rays"></div><img class="uc-img" src="' + unitIcon(id, 0, 220) + '" alt=""></div>' +
     '<div class="uc-ribbon"><h2>' + esc(u.name) + '</h2></div>' +
     '<p class="uc-title">' + esc(u.title) + '</p>' +
-    '<div class="uc-chips"><span class="uc-chip rar">' + (u.rarity === 'legendaria' ? '★ ' : '') + rar.name + '</span><span class="uc-chip el">' + el.icon + ' ' + el.name + '</span><span class="uc-chip">' + esc(u.role) + '</span></div>' +
+    '<div class="uc-chips"><span class="uc-chip rar">' + (u.rarity === 'legendaria' || u.rarity === 'mitica' ? '★ ' : '') + rar.name + '</span><span class="uc-chip el">' + el.icon + ' ' + el.name + '</span><span class="uc-chip">' + esc(u.role) + '</span></div>' +
     '<p class="uc-desc">' + esc(u.desc) + '</p>' +
     '<div class="uc-demo"><canvas id="ucDemo" aria-label="' + esc(u.name) + ' en acción"></canvas><span>En acción</span></div>' +
     '<div class="pause-stats uc-stats">' + unitStatsHtml(u, 1) + '</div>' +
@@ -505,7 +508,7 @@ function chestNewHtml(r) {
    el cofre. Al final, el resumen. */
 function chestPic(type, open) { return 'assets/chests/' + type + (open ? '-abierto' : '') + '.webp'; }
 var chestFxOn = false;
-var RARITY_RANK = ['comun', 'rara', 'epica', 'legendaria'];
+var RARITY_RANK = ['comun', 'rara', 'epica', 'legendaria', 'mitica'];
 
 // probabilidad de que el cofre traiga al menos una carta con esa probabilidad por carta
 function chestOdds(p, n) {
@@ -527,6 +530,7 @@ function showChestInfo(k, slot) {
     row(RARITY.rara.color, 'Rara', '', chestOdds(ch.rare, ch.cards)) +
     row(RARITY.epica.color, 'Épica', '', chestOdds(ch.epic, ch.cards)) +
     row(RARITY.legendaria.color, 'Legendaria', ch.legend ? '' : 'Solo en el cofre de oro', chestOdds(ch.legend, ch.cards)) +
+    row(RARITY.mitica.color, 'Mítica', ch.myth ? '' : 'Solo en el cofre de oro', chestOdds(ch.myth || 0, ch.cards)) +
     '<p class="ci-note">Puede tocarte cualquier tropa, aunque aún no la tengas.</p>' +
     (inSlot ? slotButtons(slot) : '<button class="btn chest-ok' + (poor ? ' poor' : '') + '" id="ciOpen">Abrir<span>💎 ' + ch.price + '</span></button>') +
     '<button class="btn btn-ghost" id="ciX">Cerrar</button></div>');
@@ -671,13 +675,14 @@ function showChest(r, from) {
   });
   at(rect ? 620 : 460, next);
 }
-// sonido y sacudida del cofre según la rareza; destello blanco con las legendarias
+// sonido y sacudida del cofre según la rareza; destello blanco con las
+// legendarias y míticas
 function chestBump(chest, fx, it) {
-  var rar = UNITS[it.id].rarity;
-  sfx({ comun: 'tap', rara: 'merge', epica: 'power', legendaria: 'win' }[rar]);
-  if (rar === 'epica' || rar === 'legendaria') buzz(rar === 'legendaria' ? 60 : 30);
+  var rar = UNITS[it.id].rarity, top = rar === 'legendaria' || rar === 'mitica';
+  sfx({ comun: 'tap', rara: 'merge', epica: 'power', legendaria: 'win', mitica: 'win' }[rar]);
+  if (rar === 'epica' || top) buzz(rar === 'mitica' ? 90 : top ? 60 : 30);
   chest.classList.remove('bump'); void chest.offsetWidth; chest.classList.add('bump');
-  if (rar === 'legendaria') {
+  if (top) {
     var f = document.createElement('div');
     f.className = 'cfx-flash';
     fx.appendChild(f);
@@ -755,7 +760,7 @@ function buildBattleHud() {
   var b = battle;
   var deck = $('deckBar');
   deck.innerHTML = b.player.deck.map(function (id) {
-    return '<button class="dcard" data-power="' + id + '" style="--rc:' + UNITS[id].color + '"><img src="' + unitIcon(id, 0, 96) + '" alt=""><span class="dlv" id="dlv_' + id + '">1</span><span class="dcost" id="dcost_' + id + '">100</span></button>';
+    return '<button class="dcard" data-power="' + id + '" style="--rc:' + RARITY[UNITS[id].rarity].color + '"><img src="' + unitIcon(id, 0, 96) + '" alt=""><span class="dlv" id="dlv_' + id + '">1</span><span class="dcost" id="dcost_' + id + '">100</span></button>';
   }).join('');
   deck.querySelectorAll('[data-power]').forEach(function (btn) {
     btn.onclick = function () {

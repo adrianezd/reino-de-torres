@@ -81,17 +81,19 @@ function upgradeCard(id) {
 
 /* Cofre: oro + cartas de cualquier tropa según rareza, la tengas o no (la
    primera carta de una tropa nueva la desbloquea). Las legendarias solo salen
-   en el cofre que tiene legend > 0 (el de oro). */
+   en el cofre que tiene legend > 0 (el de oro), y las míticas, en el que
+   tiene myth > 0 (también el de oro). */
 function openChest(type) {
   var ch = CHESTS[type];
   var gold = Math.round(ch.gold[0] + Math.random() * (ch.gold[1] - ch.gold[0]));
   var gems = Math.round(ch.gems[0] + Math.random() * (ch.gems[1] - ch.gems[0]));
-  var byRarity = { comun: [], rara: [], epica: [], legendaria: [] };
+  var byRarity = { comun: [], rara: [], epica: [], legendaria: [], mitica: [] };
   UNIT_ORDER.forEach(function (id) { byRarity[UNITS[id].rarity].push(id); });
   var got = {};
   for (var i = 0; i < ch.cards; i++) {
-    var roll = Math.random(), pool;
-    if (roll < ch.legend) pool = byRarity.legendaria;
+    var roll = Math.random() - (ch.myth || 0), pool;
+    if (roll < 0) pool = byRarity.mitica;
+    else if (roll < ch.legend) pool = byRarity.legendaria;
     else if (roll < ch.legend + ch.epic) pool = byRarity.epica;
     else if (roll < ch.legend + ch.epic + ch.rare) pool = byRarity.rara;
     else pool = byRarity.comun;
@@ -168,7 +170,8 @@ function stageUnlocked(n) { return n === 1 || (meta.campaign[n - 1] || 0) > 0; }
 // (semilla = fecha) y se guardan, para que no cambien al desbloquear tropas.
 // Tres de cartas por oro y una de carta épica o legendaria por gemas.
 // Pueden ser de tropas que aún no tienes (la primera carta la desbloquea),
-// salvo las legendarias, que solo salen en el cofre de oro.
+// salvo las legendarias y míticas, que solo salen en el cofre de oro (en la
+// tienda solo aparecen las que ya tienes).
 function shopOffers() {
   var key = todayKey();
   if (meta.shop.day !== key) meta.shop = { day: key, bought: [], offers: null };
@@ -179,7 +182,7 @@ function makeShopOffers(key) {
   var seed = 0;
   for (var i = 0; i < key.length; i++) seed = (seed * 31 + key.charCodeAt(i)) % 233280;
   var rnd = function () { seed = (seed * 9301 + 49297) % 233280; return seed / 233280; };
-  var pool = UNIT_ORDER.filter(function (id) { return meta.cards[id] || UNITS[id].rarity !== 'legendaria'; });
+  var pool = UNIT_ORDER.filter(function (id) { return meta.cards[id] || (UNITS[id].rarity !== 'legendaria' && UNITS[id].rarity !== 'mitica'); });
   var of = function (r) { return pool.filter(function (id) { return UNITS[id].rarity === r; }); };
   var pickFrom = function (list, taken) {
     var free = list.filter(function (id) { return taken.indexOf(id) === -1; });
@@ -196,7 +199,8 @@ function makeShopOffers(key) {
   add(['comun'], 'gold');
   add([rnd() < 0.5 ? 'comun' : 'rara', 'comun'], 'gold');
   add(['rara', 'comun'], 'gold');
-  add([rnd() < 0.25 ? 'legendaria' : 'epica', 'epica', 'legendaria'], 'gems');
+  var g = rnd();
+  add([g < 0.08 ? 'mitica' : g < 0.33 ? 'legendaria' : 'epica', 'epica', 'legendaria'], 'gems');
   out.forEach(function (o, i) { o.i = i; });
   return out;
 }

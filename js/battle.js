@@ -281,7 +281,7 @@ function resizeCanvas() {
   if (battle && battle.other) {
     var go = battle.other.geo;
     // arriba, la cabecera del rival o aliado (RIVAL_HEAD_H) y su tablero
-    var topH = h * 0.38;
+    var topH = h * 0.35;
     var pw = go.image ? 0 : pad;
     var s2 = Math.min((w - pw * 2) / go.W, (topH - RIVAL_HEAD_H - 6) / go.H);
     layout.other = { sc: s2, ox: (w - go.W * s2) / 2, oy: RIVAL_HEAD_H + 4, g: go };
@@ -526,15 +526,22 @@ function drawBoard(b, L, now, isMain) {
   var G = b.geo;
   var pic = G.image ? art(G.image) : null;
   var dual = !!battle.other;
+  // con dos tableros, tu tablero «over» se pinta entero hasta los lados de
+  // la pantalla, por debajo del separador; el del rival o aliado se recorta
+  // a su zona de juego (los monstruos entran por el camino desde el borde)
+  var wide = pic && G.px.over && (!dual || b === battle.player);
   if (pic && dual) {
-    // con dos tableros, cada uno se recorta a su marco: los monstruos
-    // entran por el camino desde el borde del mapa
-    ctx.beginPath(); ctx.rect(0, 0, G.W, G.H); ctx.clip();
+    ctx.beginPath();
+    if (wide) {
+      var Lo = layout.other, sepY = Lo.oy + Lo.g.H * Lo.sc + 4;
+      ctx.rect(-L.ox / sc, (sepY - L.oy) / sc, layout.w / sc, (layout.h - sepY) / sc);
+    } else ctx.rect(0, 0, G.W, G.H);
+    ctx.clip();
   }
   if (pic) {
     // tablero ilustrado (recortado sin la interfaz de las esquinas)
     var F = G.px, kx = pic.naturalWidth / F.iw, ky = pic.naturalHeight / F.ih;
-    if (F.over && !dual) {
+    if (wide) {
       // ilustración entera con la zona de juego en su sitio: el marco asoma
       // por arriba, abajo y los lados hasta donde llegue la pantalla
       var upx = F.cw / G.W; // píxeles de la imagen por unidad

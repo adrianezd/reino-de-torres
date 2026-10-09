@@ -7,7 +7,8 @@ var RARITY = {
   comun:      { name: 'Común',      color: '#9fb3c8' },
   rara:       { name: 'Rara',       color: '#4da3ff' },
   epica:      { name: 'Épica',      color: '#b26bff' },
-  legendaria: { name: 'Legendaria', color: '#ffb020' }
+  legendaria: { name: 'Legendaria', color: '#ffb020' },
+  mitica:     { name: 'Mítica',     color: '#ff3b6b' }
 };
 
 /*
@@ -16,7 +17,8 @@ var RARITY = {
    proj: tipo de proyectil (para el dibujo)
    efectos opcionales: slow, poison, splash, chain, crit, stun, bossMult,
    manaGen (no dispara: genera maná), buff (no dispara: acelera vecinos),
-   pierce (ignora la armadura), target: 'first' | 'strong'
+   pierce (ignora la armadura), bounty (maná extra por cada baja suya),
+   target: 'first' | 'strong'
 */
 var UNITS = {
   lyra: {
@@ -109,9 +111,22 @@ var UNITS = {
     color: '#5a7a3a', color2: '#c8e66a', skin: '#a8a090',
     dmg: 88, rate: 0.45, proj: 'bomb', splash: 0.5, pierce: true, target: 'strong',
     desc: 'Martillazos que ignoran la armadura y sacuden la zona. Va a por el más fuerte.'
+  },
+  // míticas: solo en el cofre de oro, más raras que las legendarias
+  boreas: {
+    element: 'hielo', name: 'Bóreas', title: 'Dragón del Invierno', role: 'Ventisca', rarity: 'mitica', chestOnly: true, noArt: true,
+    color: '#3fb8ff', color2: '#e6f8ff', skin: '#dff4ff',
+    dmg: 34, rate: 0.85, proj: 'ice', splash: 0.65, slow: { pct: 0.2, max: 0.6, dur: 3 }, stun: { chance: 0.12, dur: 1.4 }, target: 'first',
+    desc: 'Aliento helado que golpea una zona, frena muchísimo y a veces congela del todo.'
+  },
+  midas: {
+    element: 'metal', name: 'Midas', title: 'Rey Dorado', role: 'Oro y daño', rarity: 'mitica', chestOnly: true, noArt: true,
+    color: '#f2b632', color2: '#fff6c2', skin: '#f6c89c',
+    dmg: 64, rate: 0.7, proj: 'holy', crit: { chance: 0.25, mult: 3 }, pierce: true, bounty: 4, target: 'strong',
+    desc: 'Monedas de oro que atraviesan la armadura y pueden ser críticas. Cada baja suya te da maná extra.'
   }
 };
-var UNIT_ORDER = ['lyra', 'brasa', 'nivea', 'doblon', 'rocco', 'volta', 'mirra', 'melodia', 'sombra', 'cronos', 'halcon', 'ulric', 'fenix', 'aurora', 'titan'];
+var UNIT_ORDER = ['lyra', 'brasa', 'nivea', 'doblon', 'rocco', 'volta', 'mirra', 'melodia', 'sombra', 'cronos', 'halcon', 'ulric', 'fenix', 'aurora', 'titan', 'boreas', 'midas'];
 UNIT_ORDER.forEach(function (id) { UNITS[id].id = id; });
 // tropas que pueden usar los rivales y aliados de la máquina
 var AI_UNITS = UNIT_ORDER.filter(function (id) { return !UNITS[id].chestOnly; });
@@ -184,13 +199,13 @@ var BIOMES = {
 };
 
 // rare / epic / legend: probabilidad por carta (puede salir cualquier tropa, aunque no la tengas;
-// las legendarias solo en el cofre de oro)
+// las legendarias y las míticas (myth) solo en el cofre de oro)
 // gems: gemas que trae el cofre · price: lo que cuesta en la tienda (en gemas)
 // time: segundos que tarda en desbloquearse en los huecos de la pantalla principal
 var CHESTS = {
-  madera: { name: 'Cofre de madera', gold: [40, 80],   gems: [0, 2],  cards: 6,  rare: 0.15, epic: 0.03, legend: 0,    color: '#a0663a', price: 15, time: 300 },
-  plata:  { name: 'Cofre de plata',  gold: [90, 160],  gems: [1, 4],  cards: 12, rare: 0.3,  epic: 0.08, legend: 0,    color: '#c9d4e6', price: 40, time: 3600 },
-  oro:    { name: 'Cofre de oro',    gold: [200, 320], gems: [4, 10], cards: 24, rare: 0.4,  epic: 0.15, legend: 0.04, color: '#ffd166', price: 90, time: 10800 }
+  madera: { name: 'Cofre de madera', gold: [40, 80],   gems: [0, 2],  cards: 6,  rare: 0.15, epic: 0.03, legend: 0,    myth: 0,     color: '#a0663a', price: 15, time: 300 },
+  plata:  { name: 'Cofre de plata',  gold: [90, 160],  gems: [1, 4],  cards: 12, rare: 0.3,  epic: 0.08, legend: 0,    myth: 0,     color: '#c9d4e6', price: 40, time: 3600 },
+  oro:    { name: 'Cofre de oro',    gold: [200, 320], gems: [4, 10], cards: 24, rare: 0.4,  epic: 0.15, legend: 0.04, myth: 0.008, color: '#ffd166', price: 90, time: 10800 }
 };
 var CHEST_ORDER = ['madera', 'plata', 'oro'];
 var CHEST_SLOTS = 4;          // huecos de cofre de la pantalla principal
@@ -202,7 +217,8 @@ var SHOP_CARDS = {
   comun:      { n: 10, gold: 120 },
   rara:       { n: 5,  gold: 260 },
   epica:      { n: 2,  gold: 520,  gems: 30 },
-  legendaria: { n: 1,  gold: 1400, gems: 90 }
+  legendaria: { n: 1,  gold: 1400, gems: 90 },
+  mitica:     { n: 1,  gold: 4000, gems: 220 }
 };
 var SHOP_GOLD = [
   { gold: 300,  gems: 25 },
