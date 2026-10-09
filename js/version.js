@@ -7,8 +7,15 @@
    La ventana sale sola al entrar con una versión nueva (meta.lastSeenVersion)
    y también desde Opciones.
    ========================================================= */
-var APP_VERSION = '1.4.1';
+var APP_VERSION = '1.4.2';
 var APP_PATCH_NOTES = [
+  {
+    version: '1.4.2',
+    summary: 'Las 15 losas del tablero, todas iguales',
+    items: [
+      'Las 15 casillas del tablero llevan ahora la misma losa lisa en todos los mapas.'
+    ]
+  },
   {
     version: '1.4.1',
     summary: 'Contador para recolocar tropas junto al maná',

@@ -866,11 +866,10 @@ function drawTileFloor(type, cc, G, i, now) {
   var w = s * 0.58, h = w * pic.naturalHeight / pic.naturalWidth;
   ctx.drawImage(pic, cc.x - w / 2, cc.y - h / 2, w, h);
 }
-/* Losa de piedra de una casilla normal: siempre las mismas 15, en franjas
-   por columnas: 9 lisas (columnas 1, 3 y 5) y 6 agrietadas (2 y 4). */
-var STONE_COLS = ['piedra-1', 'piedra-2', 'piedra-1', 'piedra-2', 'piedra-1'];
+/* Losa de piedra de cada casilla: las 15 iguales, la lisa, en todos los mapas. */
+var STONE_TILE = 'piedra-1';
 function drawStoneTile(b, i, cc, G) {
-  var pic = art('tiles/' + STONE_COLS[i % COLS]);
+  var pic = art('tiles/' + STONE_TILE);
   if (!pic) return false;
   var s = Math.min(G.cw, G.ch) * 0.97;
   ctx.fillStyle = 'rgba(10,12,30,0.3)';

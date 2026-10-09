@@ -49,7 +49,7 @@ var IMG = {};
 var IMG_LIST = {
   units: UNIT_ORDER.filter(function (id) { return !UNITS[id].noArt; }),
   enemies: ['blob', 'ghost', 'brute', 'orco', 'rocoso', 'escarcha', 'gelido', 'coloso', 'coloso2', 'nigro', 'dragon'],
-  tiles: ['altar', 'fuente', 'atalaya', 'piedra-1', 'piedra-2'],
+  tiles: ['altar', 'fuente', 'atalaya', 'piedra-1'],
   boards: ['lava2', 'hielo', 'roca', 'veneno'],
   ui: ['boton', 'fondo', 'vida'],
   commanders: ['aria', 'merlo', 'brann'],
