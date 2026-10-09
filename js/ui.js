@@ -891,7 +891,8 @@ function updateHud(force) {
   $('summonBtn').classList.toggle('poor', p.mana < p.summonCost);
   $('summonBtn').classList.toggle('full', full);
   setHtml('summonCost', full ? 'Tablero lleno' : p.summonCost + ' ' + MANA_ICO);
-  setTxt('bWave', b.wave ? 'Oleada ' + b.wave + (b.maxWaves !== Infinity ? '/' + b.maxWaves : '') : 'Preparando…');
+  // en pantallas estrechas la palabra «Oleada» se esconde (style.css) y queda el número
+  setHtml('bWave', b.wave ? '<span class="wv-w">Oleada </span>' + b.wave + (b.maxWaves !== Infinity ? '/' + b.maxWaves : '') : 'Preparando…');
   setHtml('bEvent', b.event ? '<img src="' + b.event.pic + '" alt="">' + esc(b.event.name) : '');
   $('bEvent').hidden = !b.event;
   setHtml('bLives', heartsHtml(p.lives));
@@ -910,6 +911,12 @@ function updateHud(force) {
   cb.style.setProperty('--charge', (p.charge * 360) + 'deg');
   cb.classList.toggle('ready', p.charge >= 1);
   setTxt('bSpeed', 'x' + b.speed);
+  // espera para recolocar tropas: anillo que se llena y segundos que faltan
+  var cd = b.moveCd > 0 ? b.moveCd : 0, mv = $('bMove');
+  mv.style.setProperty('--p', ((1 - cd / MOVE_COOLDOWN) * 360) + 'deg');
+  setTxt('bMoveT', cd > 0 ? String(Math.ceil(cd)) : '');
+  if (mv.classList.contains('cooling') && !cd && mv.animate) mv.animate([{ transform: 'scale(1)' }, { transform: 'scale(1.25)' }, { transform: 'scale(1)' }], { duration: 260, easing: 'ease-out' });
+  mv.classList.toggle('cooling', cd > 0);
 }
 /* Consejo del tutorial: abajo (junto a los botones) o arriba (sobre el tablero). */
 function showCoach(html, where) {
@@ -1112,6 +1119,11 @@ function initGame() {
     else toast('El comandante aún se está cargando');
   };
   $('bSpeed').onclick = function () { if (battle) { battle.speed = battle.speed === 1 ? 2 : battle.speed === 2 ? 3 : 1; updateHud(); } };
+  $('bMove').onclick = function () {
+    if (!battle) return;
+    sfx('tap');
+    toast(battle.moveCd > 0 ? '⏱ Podrás recolocar una tropa en ' + Math.ceil(battle.moveCd) + ' s' : '↔ Ya puedes recolocar una tropa: arrástrala a otra casilla');
+  };
   $('bQuit').onclick = confirmQuit;
   $('overlay').addEventListener('click', function (e) { if (e.target === this && !(battle && !battle.ended && battle.paused === false)) { /* los modales se cierran con sus botones */ } });
   // nada de zoom: ni pellizcando (Safari no hace caso al viewport), ni con doble toque, ni con Ctrl + rueda

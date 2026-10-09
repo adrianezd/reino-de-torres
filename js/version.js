@@ -7,8 +7,16 @@
    La ventana sale sola al entrar con una versión nueva (meta.lastSeenVersion)
    y también desde Opciones.
    ========================================================= */
-var APP_VERSION = '1.4.0';
+var APP_VERSION = '1.4.1';
 var APP_PATCH_NOTES = [
+  {
+    version: '1.4.1',
+    summary: 'Contador para recolocar tropas junto al maná',
+    items: [
+      'Nuevo contador redondo al lado del maná: mientras esperas, un anillo dorado se llena y te dice los segundos que faltan; cuando ya puedes recolocar una tropa, brilla.',
+      'Tócalo para ver cuánto falta.'
+    ]
+  },
   {
     version: '1.4.0',
     summary: 'Auras en las casillas y efectos nuevos al invocar, fusionar y mover',
