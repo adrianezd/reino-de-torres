@@ -237,12 +237,13 @@ function collectionGrid() {
   var card = function (id) { return cardHtml(id, meta.deck.indexOf(id) !== -1, true); };
   // las que tienes primero; las no encontradas, debajo (sin cambiar el orden dentro de cada grupo)
   var ownedFirst = function (ids) { return ids.filter(isUnlocked).concat(ids.filter(function (id) { return !isUnlocked(id); })); };
+  // de común a legendaria, con la mítica antes que la legendaria (orden de RARITY)
+  var byRar = function (a, b) { return RARITY_ORDER.indexOf(UNITS[a].rarity) - RARITY_ORDER.indexOf(UNITS[b].rarity) || UNIT_ORDER.indexOf(a) - UNIT_ORDER.indexOf(b); };
   if (collSort !== 'tipo') {
-    var ids = ownedFirst(UNIT_ORDER.filter(function (id) { return collFilter === 'all' || UNITS[id].rarity === collFilter; }));
+    var ids = ownedFirst(UNIT_ORDER.filter(function (id) { return collFilter === 'all' || UNITS[id].rarity === collFilter; }).sort(byRar));
     return '<div class="card-grid">' + (ids.map(card).join('') || '<p class="muted coll-empty">No hay tropas de esta rareza</p>') + '</div>';
   }
-  // por tipo: dentro de cada elemento, de común a legendaria
-  var byRar = function (a, b) { return RARITY_ORDER.indexOf(UNITS[a].rarity) - RARITY_ORDER.indexOf(UNITS[b].rarity) || UNIT_ORDER.indexOf(a) - UNIT_ORDER.indexOf(b); };
+  // por tipo: dentro de cada elemento, por rareza
   return Object.keys(ELEMENTS).filter(function (k) { return collEl === 'all' || collEl === k; }).map(function (k) {
     var ids = ownedFirst(UNIT_ORDER.filter(function (id) { return UNITS[id].element === k; }).sort(byRar));
     return '<h4 class="el-head" style="--ec:' + ELEMENTS[k].color + '"><span class="ef-ico">' + ELEMENTS[k].icon + '</span>' + ELEMENTS[k].name + '<small>' + ids.filter(isUnlocked).length + '/' + ids.length + '</small></h4>' +

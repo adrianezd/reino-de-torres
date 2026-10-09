@@ -7,8 +7,15 @@
    La ventana sale sola al entrar con una versión nueva (meta.lastSeenVersion)
    y también desde Opciones.
    ========================================================= */
-var APP_VERSION = '1.6.5';
+var APP_VERSION = '1.6.6';
 var APP_PATCH_NOTES = [
+  {
+    version: '1.6.6',
+    summary: 'Las míticas, antes que las legendarias',
+    items: [
+      'En la colección, las cartas se ordenan por rareza: común, rara, épica, mítica y legendaria. Tus cartas siguen saliendo primero y las no encontradas, debajo.'
+    ]
+  },
   {
     version: '1.6.5',
     summary: 'Las míticas, después de las legendarias',
