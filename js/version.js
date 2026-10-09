@@ -7,8 +7,15 @@
    La ventana sale sola al entrar con una versión nueva (meta.lastSeenVersion)
    y también desde Opciones.
    ========================================================= */
-var APP_VERSION = '1.4.2';
+var APP_VERSION = '1.4.3';
 var APP_PATCH_NOTES = [
+  {
+    version: '1.4.3',
+    summary: 'Las actualizaciones llegan al momento',
+    items: [
+      'Al recargar, el juego comprueba siempre si hay versión nueva: ya no se queda unos minutos con la anterior (por eso a veces seguían viéndose losas distintas).'
+    ]
+  },
   {
     version: '1.4.2',
     summary: 'Las 15 losas del tablero, todas iguales',
