@@ -627,7 +627,16 @@ function drawBoard(b, L, now, isMain) {
       rrect(ctx, cc2.x - G.cw * 0.47, cc2.y - G.ch * 0.47, G.cw * 0.94, G.ch * 0.94, 0.14); ctx.stroke();
     }
     var r = 0.42 * Math.min(G.cw, G.ch) * (1 + u.anim * 0.25);
-    drawUnit(ctx, u.id, cc2.x, cc2.y - 0.02, r, u.rank, now, { frozen: u.frozen > 0, board: true, atk: u.atk, aim: u.aim, recoil: u.recoil || 0 });
+    // al invocar cae y rebota; al fusionar se estira (desde los pies)
+    var pose = summonPose(u.drop) || mergePose(u.pop);
+    if (pose) {
+      var footY = cc2.y - 0.02 + r * 0.9;
+      ctx.save();
+      ctx.globalAlpha *= pose.a;
+      ctx.translate(cc2.x, footY + pose.dy); ctx.scale(pose.sx, pose.sy); ctx.translate(-cc2.x, -footY);
+    }
+    drawUnit(ctx, u.id, cc2.x, cc2.y - 0.02, r, u.rank, now, { frozen: u.frozen > 0, board: true, atk: u.atk, aim: u.aim, recoil: u.recoil || 0, flash: pose ? pose.flash : 0 });
+    if (pose) ctx.restore();
     if (b.tiles[i]) drawTileIcon(b.tiles[i], cc2.x + G.cw * 0.33, cc2.y - G.ch * 0.33, 0.13);
     ctx.globalAlpha = 1;
   }
@@ -679,6 +688,11 @@ function drawBoard(b, L, now, isMain) {
         var q = 1 - f.life / METEOR_FALL;
         drawFxPic(ctx, f.key, f.x - 1.9 * (1 - q), f.y - 0.25 - 2.6 * (1 - q), f.size, 0);
       }
+    } else if (f.type === 'fly') {
+      // la tropa que se funde vuela en arco hasta su pareja y encoge al llegar
+      var ft = 1 - f.life / f.max, fe = 1 - Math.pow(1 - ft, 3);
+      var fr = 0.42 * Math.min(G.cw, G.ch) * (1 - 0.45 * ft);
+      drawUnit(ctx, f.id, f.x1 + (f.x2 - f.x1) * fe, f.y1 + (f.y2 - f.y1) * fe - Math.sin(ft * Math.PI) * 0.25, fr, f.rank, now, { board: true, recoil: 0, noRank: true });
     } else if (f.type === 'part') {
       // trocito del monstruo que sale volando y encoge
       var pk = f.life / f.max;
@@ -717,6 +731,7 @@ function drawBoard(b, L, now, isMain) {
     });
     ctx.globalAlpha = 1;
   }
+  if (isMain && b.orbs.length) drawOrbs(b, toS, sc);
   // arrastre
   if (isMain && drag && drag.moved && b.cells[drag.from]) {
     var du = b.cells[drag.from];
@@ -827,6 +842,39 @@ function drawTileIcon(type, x, y, r) {
     ctx.beginPath(); ctx.moveTo(x + r * 0.5, y - r * 0.5); ctx.lineTo(x + r * 0.05, y - r * 0.4); ctx.lineTo(x + r * 0.4, y - r * 0.05); ctx.closePath(); ctx.fill();
   }
 }
+/* Gotas de maná que salen de cada monstruo muerto y vuelan en curva hasta
+   el contador de arriba. Al llegar cada una, el contador da un saltito. */
+function manaTarget() {
+  var m = document.querySelector('#battleScreen .mana img'), cr = canvas.getBoundingClientRect();
+  if (!m) return { x: layout.w * 0.6, y: -20 };
+  var r = m.getBoundingClientRect();
+  return { x: r.left + r.width / 2 - cr.left, y: r.top + r.height / 2 - cr.top };
+}
+function bumpMana() {
+  var m = document.querySelector('#battleScreen .mana');
+  if (!m || !m.animate) return;
+  if (bumpMana._a) bumpMana._a.cancel();
+  bumpMana._a = m.animate([{ transform: 'scale(1)' }, { transform: 'scale(1.18)' }, { transform: 'scale(1)' }], { duration: 200, easing: 'ease-out' });
+}
+function drawOrbs(b, toS, sc) {
+  var E = manaTarget(), rad = Math.max(6, sc * 0.13);
+  b.orbs.forEach(function (o) {
+    var p = (o.t - o.delay) / o.dur;
+    if (p < 0) return;
+    if (p >= 1) { if (!o.hit) { o.hit = true; bumpMana(); } return; }
+    var S = toS(o.x, o.y);
+    // control de la curva hacia un lado y por encima, para que suba en arco
+    var C = { x: (S.x + E.x) / 2 + o.side * 90, y: (S.y + E.y) / 2 + 40 };
+    var e = p * p, q = 1 - e;
+    var x = q * q * S.x + 2 * q * e * C.x + e * e * E.x, y = q * q * S.y + 2 * q * e * C.y + e * e * E.y;
+    var rr = rad * (1 - 0.35 * p);
+    glow(ctx, x, y, rr * 2.4, '#4af3ff', 0.55);
+    var g = ctx.createRadialGradient(x - rr * 0.35, y - rr * 0.35, rr * 0.1, x, y, rr);
+    g.addColorStop(0, '#ffffff'); g.addColorStop(0.35, '#7dfcff'); g.addColorStop(1, '#1a8fe0');
+    ctx.fillStyle = g; circle(ctx, x, y, rr); ctx.fill();
+    ctx.strokeStyle = '#0b2a5a'; ctx.lineWidth = Math.max(1, rr * 0.18); ctx.stroke();
+  });
+}
 // lado mayor de cada proyectil ilustrado, en casillas
 var SHOT_SIZE = { fire: 0.5, ice: 0.42, bomb: 0.34, arrow: 0.5, shadow: 0.42, gear: 0.3, bullet: 0.55, holy: 0.32 };
 function drawShot(s, now) {
@@ -898,7 +946,7 @@ function onUp(ev) {
   var i = screenToCell(p.x, p.y);
   var d = battle.drag, b = battle.player;
   battle.drag = null;
-  if (d && d.moved) { dropUnit(d.from, i); return; }
+  if (d && d.moved) { dropUnit(d.from, i, { x: (p.x - layout.main.ox) / layout.main.sc, y: (p.y - layout.main.oy) / layout.main.sc }); return; }
   if (i < 0) { battle.selected = null; refreshUnitInfo(); return; }
   var sel = battle.selected;
   if (sel != null && sel !== i) {
@@ -909,10 +957,10 @@ function onUp(ev) {
   else battle.selected = null;
   refreshUnitInfo();
 }
-function dropUnit(from, to) {
+function dropUnit(from, to, start) {
   var b = battle.player;
   if (to < 0 || to === from) return;
-  if (b.canMerge(from, to)) { b.merge(from, to); sfx('merge'); buzz(25); }
+  if (b.canMerge(from, to)) { b.merge(from, to, start); sfx('merge'); buzz(25); }
   else if (!b.cells[to]) { moveUnit(from, to); }
   else { // intercambiar posiciones
     var t = b.cells[to]; b.cells[to] = b.cells[from]; b.cells[from] = t;

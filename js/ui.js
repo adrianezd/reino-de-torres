@@ -90,7 +90,6 @@ function renderMenu(name, arg) {
       '<div class="logo"><h1><img src="assets/ui/titulo.webp" alt="Reino de Torres"></h1></div>' +
       '<div class="side-col">' + side('howto', 'icons/pergamino', 'Ayuda') + side('options', 'icons/engranaje', 'Opciones') + '</div>' +
       '</div>' +
-      '<div class="slots" id="chestSlots">' + slotsInner() + '</div>' +
       // mazo: banner del comandante (figura a la izquierda, nombre en el hueco)
       // y debajo las cinco tropas, cada retrato en un aro del banner
       '<div class="deck-panel">' +
@@ -103,7 +102,9 @@ function renderMenu(name, arg) {
       '<div class="play-mid"><button class="play-hero" data-go="campaign" aria-label="Campaña"><img src="assets/ui/boton-jugar.webp" alt=""></button>' +
       '<button class="play-camp" data-go="campaign">Campaña <small>' + totalStars() + '/45 ⭐</small></button></div>' +
       '<button class="play-side" data-go="coop"><img src="assets/ui/boton-coop.webp" alt=""><span>2 contra IA</span></button>' +
-      '</div>';
+      '</div>' +
+      // huecos de cofre abajo del todo, debajo de los botones de jugar
+      '<div class="slots" id="chestSlots">' + slotsInner() + '</div>';
   } else if (name === 'campaign') {
     html = backBar('Campaña') + '<div class="stage-list">' + CAMPAIGN.map(function (st) {
       var open = stageUnlocked(st.id), stars = meta.campaign[st.id] || 0;

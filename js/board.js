@@ -137,6 +137,7 @@ function Board(opts) {
   this.event = null;
   this.shake = 0;
   this.tileSeed = Math.floor(Math.random() * 10000); // variante de las losas de cada casilla
+  this.orbs = [];                        // gotas de maná camino del contador
 }
 function shuffleArr(a) {
   for (var i = a.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)); var t = a[i]; a[i] = a[j]; a[j] = t; }
@@ -194,8 +195,8 @@ Board.prototype.summon = function () {
   this.mana -= this.summonCost;
   this.summonCost += 10;
   this.summons++;
-  this.cells[i] = { id: pick(this.deck), rank: 1, cd: Math.random(), frozen: 0, anim: 1, gen: 0 };
-  this.addFx('ring', this.cc(i), UNITS[this.cells[i].id].color);
+  // cae desde arriba; el anillo y el polvo salen al tocar suelo (landFx)
+  this.cells[i] = { id: pick(this.deck), rank: 1, cd: Math.random(), frozen: 0, anim: 0, gen: 0, drop: 1 };
   return 'ok';
 };
 Board.prototype.canMerge = function (a, b) {
@@ -203,18 +204,34 @@ Board.prototype.canMerge = function (a, b) {
   return a !== b && u && v && u.id === v.id && u.rank === v.rank && u.rank < MAX_RANK;
 };
 // Fusión dirigida: la tropa de destino conserva su tipo y sube un rango.
-Board.prototype.merge = function (from, to) {
+// start: desde dónde sale volando la tropa que se funde (donde la soltaste
+// al arrastrar); si no, desde su casilla
+Board.prototype.merge = function (from, to, start) {
   if (!this.canMerge(from, to)) return false;
-  var v = this.cells[to];
+  var v = this.cells[to], src = this.cells[from], a = start || this.cc(from), p = this.cc(to);
   this.cells[from] = null;
+  this.fx.push({ type: 'fly', id: src.id, rank: src.rank, x1: a.x, y1: a.y, x2: p.x, y2: p.y, life: MERGE_FLY, max: MERGE_FLY });
   v.rank++;
   this.merges++;
-  v.anim = 1;
+  v.anim = 0; v.drop = 0;
+  v.pop = 1 + MERGE_FLY / MERGE_POP_TIME; // espera a que llegue y entonces rebota
   v.frozen = 0;
-  var p = this.cc(to);
-  this.addFx('burst', p, '#ffd166');
-  this.addText(p.x, p.y - 0.45, 'Rango ' + v.rank, '#ffd166', true);
   return true;
+};
+// la tropa invocada toca suelo: anillo de su color y polvo a los pies
+Board.prototype.landFx = function (i, u) {
+  var p = this.cc(i);
+  this.addFx('ring', p, UNITS[u.id].color);
+  for (var n = 0; n < 6; n++) {
+    var sd = n % 2 ? 1 : -1;
+    this.fx.push({ type: 'part', x: p.x + sd * 0.15, y: p.y + 0.36, vx: sd * (0.6 + Math.random() * 0.8), vy: -0.4 - Math.random() * 0.6, r: 0.04 + Math.random() * 0.03, color: '#e9dcc0', life: 0.35, max: 0.35 });
+  }
+};
+// llega la tropa que se funde: estallido dorado y el rango nuevo
+Board.prototype.mergeArriveFx = function (i, u) {
+  var p = this.cc(i);
+  this.addFx('burst', p, '#ffd166');
+  this.addText(p.x, p.y - 0.45, 'Rango ' + u.rank, '#ffd166', true);
 };
 Board.prototype.powerUp = function (id) {
   var lv = this.power[id] || 1;
@@ -406,6 +423,12 @@ Board.prototype.deathFx = function (e) {
     var a = Math.random() * Math.PI * 2, v = 1.2 + Math.random() * 1.8;
     this.fx.push({ type: 'part', x: e.x, y: e.y, vx: Math.cos(a) * v, vy: Math.sin(a) * v - 1.2, r: 0.035 + Math.random() * 0.04, color: col, life: 0.45, max: 0.45 });
   }
+  // gotas de maná que vuelan en curva hasta el contador (las dibuja y
+  // cuenta battle.js; aquí solo nacen y caducan)
+  var orbs = e.boss ? 5 : 1 + Math.min(2, Math.floor((ENEMIES[e.kind].reward || 0) / 8));
+  for (var o = 0; o < orbs && this.orbs.length < 40; o++) {
+    this.orbs.push({ x: e.x, y: e.y, t: 0, delay: o * 0.07, dur: 0.55 + Math.random() * 0.1, side: Math.random() < 0.5 ? -1 : 1 });
+  }
 };
 var METEOR_FALL = 0.32; // segundos que tarda un meteoro en caer
 // ola ilustrada que cruza el tablero de izquierda a derecha (dos filas desfasadas)
@@ -433,6 +456,16 @@ Board.prototype.update = function (dt) {
     var u = this.cells[i];
     if (!u) continue;
     if (u.anim > 0) u.anim = Math.max(0, u.anim - dt * 2.5);
+    if (u.drop > 0) {
+      var wd = u.drop;
+      u.drop = Math.max(0, u.drop - dt / SUMMON_TIME);
+      if (wd > SUMMON_LAND && u.drop <= SUMMON_LAND) this.landFx(i, u);
+    }
+    if (u.pop > 0) {
+      var wp = u.pop;
+      u.pop = Math.max(0, u.pop - dt / MERGE_POP_TIME);
+      if (wp > 1 && u.pop <= 1) this.mergeArriveFx(i, u);
+    }
     if (u.recoil > 0) u.recoil = Math.max(0, u.recoil - dt * 4);
     if (u.atk > 0) u.atk = Math.max(0, u.atk - dt);
     if (u.frozen > 0) { u.frozen -= dt; continue; }
@@ -521,6 +554,11 @@ Board.prototype.update = function (dt) {
     fk.life -= dt;
     if (fk.type === 'part') { fk.x += fk.vx * dt; fk.y += fk.vy * dt; fk.vy += 5 * dt; }
     if (fk.life <= 0) this.fx.splice(k, 1);
+  }
+  for (k = this.orbs.length - 1; k >= 0; k--) {
+    var ob = this.orbs[k];
+    ob.t += dt;
+    if (ob.t > ob.delay + ob.dur + 0.1) this.orbs.splice(k, 1);
   }
   for (k = this.meteors.length - 1; k >= 0; k--) {
     var mt = this.meteors[k];

@@ -1344,8 +1344,10 @@ x-ico.off { filter: grayscale(1) brightness(0.45); opacity: 0.75; }
 }
 .slot.empty span { position: relative; }
 
-/* la comandante ya no pisa el primer hueco de cofre */
-.deck-panel { margin-top: 40px; }
+/* hueco para la figura de la comandante, que asoma por encima del banner */
+.deck-panel { margin-top: 30px; }
+/* huecos de cofre abajo del todo, debajo de los botones de jugar */
+.play-row + .slots { width: min(100%, 400px); margin: 14px auto; }
 /* texto de ayuda legible sobre el azul */
 .lead { color: rgba(255,255,255,0.85); }
 

@@ -246,9 +246,16 @@ function outlined(im) {
   return (im._outl = cv);
 }
 // dibuja im en el rectángulo (x, y, w, h) con el contorno por fuera
-function drawOutlined(c, im, x, y, w, h) {
+function drawOutlined(c, im, x, y, w, h, flash) {
   var o = outlined(im), mx = o.padX * w, my = o.padY * h;
   c.drawImage(o, x - mx, y - my, w + mx * 2, h + my * 2);
+  if (flash > 0) {
+    // destello blanco encima (al fusionar)
+    var ga = c.globalAlpha;
+    c.globalAlpha = ga * flash;
+    c.drawImage(silhouette(o, '#ffffff'), x - mx, y - my, w + mx * 2, h + my * 2);
+    c.globalAlpha = ga;
+  }
 }
 
 /* Rebote elástico al disparar (recoil va de 1 a 0): aplasta, estira y se
@@ -260,6 +267,26 @@ function jellyScale(recoil, amp) {
   var t = 1 - recoil;
   var k = Math.sin(t * Math.PI * 2.5) * Math.pow(recoil, 1.4) * amp;
   return { sx: 1 + k, sy: 1 - k };
+}
+
+/* Invocar (drop de 1 a 0): cae estirada desde 0,6 casillas y, al tocar
+   suelo (SUMMON_LAND), se aplasta y rebota. Fusionar (pop de >1 a 0):
+   mientras pop > 1 espera a la que llega volando; luego se pone blanca,
+   se estira y se asienta. */
+var SUMMON_TIME = 0.5, SUMMON_LAND = 0.4, MERGE_FLY = 0.18, MERGE_POP_TIME = 0.4;
+function summonPose(drop) {
+  if (!(drop > 0)) return null;
+  if (drop > SUMMON_LAND) {
+    var q = (1 - drop) / (1 - SUMMON_LAND);
+    return { dy: -(1 - q * q) * 0.6, sx: 0.9, sy: 1.12, a: Math.min(1, q * 3), flash: 0 };
+  }
+  var l = 1 - drop / SUMMON_LAND, k = Math.sin(l * Math.PI * 2) * (1 - l) * 0.25;
+  return { dy: 0, sx: 1 + k, sy: 1 - k, a: 1, flash: 0 };
+}
+function mergePose(pop) {
+  if (!(pop > 0) || pop > 1) return null;
+  var l = 1 - pop, k = Math.sin(l * Math.PI * 2.5) * Math.pow(1 - l, 1.2) * 0.22;
+  return { dy: 0, sx: 1 - k, sy: 1 + k, a: 1, flash: Math.max(0, 1 - l * 3) };
 }
 
 var RANK_RIMS = ['#9fb3c8', '#9fb3c8', '#c9d4e6', '#ffd166', '#ffb020', '#c77dff', '#ff5fd2', '#ff3b5c'];
@@ -304,12 +331,12 @@ function drawUnit(c, id, x, y, r, rank, now, opt) {
       // la pose de ataque mira hacia el enemigo
       if (opt.aim != null && Math.cos(opt.aim) * POSES[id].face < 0) c.scale(-1, 1);
       var sa = r * 2.35;
-      drawOutlined(c, hit, -sa / 2, -sa, sa, sa);
+      drawOutlined(c, hit, -sa / 2, -sa, sa, sa, opt.flash);
     } else {
       // respiración: se estira un poco hacia arriba
       if (!opt.still) c.scale(1, 1 + Math.sin(now / 520 + x * 0.05) * 0.025);
       var si = r * 2.35;
-      drawOutlined(c, idle, -si / 2, -si, si, si);
+      drawOutlined(c, idle, -si / 2, -si, si, si, opt.flash);
     }
     c.restore();
     if (!opt.noRank) drawRankStars(c, rank, r);
