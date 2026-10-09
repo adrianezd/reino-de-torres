@@ -1551,3 +1551,32 @@ x-ico.off { filter: grayscale(1) brightness(0.45); opacity: 0.75; }
 }
 .back-bar .pill.gold b { color: #ffe58a; }
 .back-bar .pill.gem b { color: #bff4ff; }
+
+/* Fichas de moneda (oro, gemas, trofeos, estrellas): base azul marino hundida,
+   aro de oro macizo con canto y el icono como medalla asomando a la izquierda */
+.back-bar .pill, .res-bar .pill {
+  position: relative; display: inline-flex; align-items: center; gap: 0; height: 30px; padding: 0 12px 0 27px; margin-left: 14px;
+  border: 2px solid #f5c400; border-radius: 999px;
+  background: linear-gradient(180deg, #0d1434 0%, #1b2766 100%);
+  box-shadow: 0 0 0 2px var(--gold-dark), inset 0 2px 5px rgba(0,0,0,0.6), inset 0 -1px 0 rgba(255,255,255,0.12), 0 3px 0 var(--gold-dark);
+  font-size: 0; /* el espacio entre icono y cifra no cuenta */
+}
+.back-bar .pill x-ico, .res-bar .pill x-ico {
+  position: absolute; left: -13px; top: 50%; width: 36px; height: 36px; margin: 0; transform: translateY(-50%);
+  filter: drop-shadow(0 2px 0 rgba(0,0,0,0.5));
+}
+.back-bar .pill b, .res-bar .pill b { font-size: 1.05rem; line-height: 1; }
+.res-bar .pill:first-child { margin-left: 13px; }
+/* gota de maná junto a una cifra: centrada con la cifra (flex), no a ojo */
+.dcost, .summon-btn small { display: flex; align-items: center; justify-content: center; gap: 2px; }
+.dcost .mi, .summon-btn small .mi { width: 0.85em; height: 1.05em; margin: 0; vertical-align: 0; flex-shrink: 0; }
+
+/* Mejorar carta: misma receta que «Cerrar» (CSS, sin ilustración), en verde */
+.btn-up {
+  color: #fff; border: 4px solid #8fe08a;
+  background: linear-gradient(180deg, #4fd06a, #22903c);
+  box-shadow: 0 0 0 3px var(--ink), 0 6px 0 var(--ink), inset 0 2px 0 rgba(255,255,255,0.4), inset 0 -5px 0 rgba(0,0,0,0.22);
+  text-shadow: 0 2px 0 #145a24;
+}
+.btn-up:active { transform: translateY(5px); box-shadow: 0 0 0 3px var(--ink), 0 1px 0 var(--ink), inset 0 2px 0 rgba(255,255,255,0.3); }
+.btn-up:disabled { filter: grayscale(0.85) brightness(0.75); }

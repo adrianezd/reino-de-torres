@@ -398,7 +398,7 @@ function showCardModal(id, tab) {
     // mejorar en dos toques: el primero enseña lo que gana, el segundo lo confirma
     (maxed ? '' : '<div class="uc-preview" id="mcPrev" hidden><b>Nivel ' + c.lv + ' → ' + (c.lv + 1) + '</b>' +
       cardGainRows(u, c.lv).map(function (r) { return '<div class="ucp-row"><i>' + r[0] + '</i><span>' + r[1] + '</span><em>' + r[2] + ' → <b>' + r[3] + '</b></em><small>+' + (r[3] - r[2]) + '</small></div>'; }).join('') + '</div>' +
-      '<button class="btn btn-green" id="mcUp" ' + (canUpgradeCard(id) ? '' : 'disabled') + '>⬆ Mejorar · ' + gold + ' 🪙</button>' + (why ? '<p class="uc-why">' + why + '</p>' : '')) +
+      '<button class="btn btn-up" id="mcUp" ' + (canUpgradeCard(id) ? '' : 'disabled') + '>⬆ Mejorar ' + gold + ' 🪙</button>' + (why ? '<p class="uc-why">' + why + '</p>' : '')) +
     (inDeck ? '<p class="uc-indeck">✔ En tu mazo</p>' : '<p class="uc-swap-t">Ponla en el mazo en lugar de</p><div class="swap-row">' + meta.deck.map(function (d) { return '<button data-swap="' + d + '" style="--rc:' + RARITY[UNITS[d].rarity].color + '"><img src="' + unitIcon(d, 0, 80) + '" alt="' + esc(UNITS[d].name) + '"></button>'; }).join('') + '</div>') +
     '<button class="btn btn-ghost" id="mcClose">Cerrar</button></div>';
   openOverlay(html);
@@ -409,7 +409,7 @@ function showCardModal(id, tab) {
     var prev = $('mcPrev');
     if (prev.hidden) {
       prev.hidden = false; sfx('tap');
-      up.innerHTML = icons('✔ Confirmar · ' + gold + ' 🪙');
+      up.innerHTML = icons('✔ Confirmar ' + gold + ' 🪙');
       prev.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
       return;
     }
@@ -1000,12 +1000,12 @@ function showResult(res) {
     '<p>' + res.lines.map(esc).join('<br>') + '</p>' +
     '<p class="res-gold">+' + res.gold + ' 🪙' + (res.gems ? ' · +' + res.gems + ' 💎' : '') + (res.trophies ? ' · ' + (res.trophies > 0 ? '+' : '') + res.trophies + ' 🏆' : '') + '</p>' + chest + unlock +
     '<p class="muted">Bajas ' + res.kills + ' · Daño ' + fmtNum(res.damage) + '</p>' + dmgSummary(res) +
-    '<button class="btn btn-green" id="resAgain">' + (res.mode === 'campaign' && res.won && battle.stage.id < 15 ? 'Siguiente fase ▶' : 'Otra vez') + '</button>' +
+    '<button class="btn btn-green" id="resAgain">' + (res.mode === 'campaign' && res.won && battle.stage.id < CAMPAIGN.length ? 'Siguiente fase ▶' : 'Otra vez') + '</button>' +
     '<button class="btn btn-ghost" id="resMenu">Menú</button></div>');
   $('resAgain').onclick = function () {
     closeOverlay();
     var b = battle;
-    if (b.mode === 'campaign') startBattle('campaign', { stage: res.won && b.stage.id < 15 ? b.stage.id + 1 : b.stage.id });
+    if (b.mode === 'campaign') startBattle('campaign', { stage: res.won && b.stage.id < CAMPAIGN.length ? b.stage.id + 1 : b.stage.id });
     else startBattle(b.mode, b.opts);
   };
   $('resMenu').onclick = function () { closeOverlay(); battle = null; showScreen(res.mode === 'campaign' ? 'campaign' : 'home'); };

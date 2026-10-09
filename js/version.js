@@ -7,8 +7,18 @@
    La ventana sale sola al entrar con una versión nueva (meta.lastSeenVersion)
    y también desde Opciones.
    ========================================================= */
-var APP_VERSION = '1.6.3';
+var APP_VERSION = '1.6.4';
 var APP_PATCH_NOTES = [
+  {
+    version: '1.6.4',
+    summary: 'Monedas alineadas, botón Mejorar nuevo y Siguiente fase hasta la 30',
+    items: [
+      'Oro, gemas, trofeos y estrellas en fichas con aro dorado y el icono a la misma altura que la cifra, en todas las pantallas.',
+      'Las gotas de maná de la barra de partida, centradas con su número.',
+      'El botón Mejorar de las cartas tiene el mismo estilo que Cerrar, en verde.',
+      'Arreglado: «Siguiente fase» dejaba de salir a partir de la fase 15.'
+    ]
+  },
   {
     version: '1.6.3',
     summary: 'Sello de escarcha bajo los monstruos ralentizados',
