@@ -134,6 +134,7 @@ function Board(opts) {
   this.damage = 0;
   this.dmgBy = {};                       // daño por tropa ('cmd': meteoro del comandante)
   this.summons = 0; this.merges = 0; this.powers = 0; this.cmds = 0;
+  this.bossKills = 0; this.maxRank = 1;  // para las misiones diarias
   this.leaked = 0;
   this.event = null;
   this.shake = 0;
@@ -249,6 +250,7 @@ Board.prototype.merge = function (from, to, start) {
   this.fx.push({ type: 'fly', id: src.id, rank: src.rank, x1: a.x, y1: a.y, x2: p.x, y2: p.y, life: MERGE_FLY, max: MERGE_FLY });
   v.rank++;
   this.merges++;
+  this.maxRank = Math.max(this.maxRank, v.rank);
   v.anim = 0; v.drop = 0;
   v.pop = 1 + MERGE_FLY / MERGE_POP_TIME; // espera a que llegue y entonces rebota
   v.frozen = 0;
@@ -367,6 +369,7 @@ Board.prototype.kill = function (e) {
   if (e.dead) return;
   e.dead = true;
   this.kills++;
+  if (e.boss) this.bossKills++;
   var reward = (e.boss ? 100 : ENEMIES[e.kind].reward) * (this.event === 'lluvia' ? 2 : 1);
   this.mana += reward;
   this.deathFx(e);

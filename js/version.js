@@ -7,8 +7,23 @@
    La ventana sale sola al entrar con una versión nueva (meta.lastSeenVersion)
    y también desde Opciones.
    ========================================================= */
-var APP_VERSION = '1.10.0';
+var APP_VERSION = '1.11.0';
 var APP_PATCH_NOTES = [
+  {
+    version: '1.11.0',
+    summary: 'Misiones diarias, camino de trofeos y mapa de la campaña',
+    items: [
+      'Misiones diarias: cada día hay tres, con oro y gemas de premio. Si cobras las tres, abres un cofre de plata. Están en el nuevo botón Misiones del inicio, junto a Gratis y Códigos.',
+      'Camino de trofeos: ganar duelos te acerca a paradas con premios (oro, gemas, cofres, cartas épicas, una mítica y una legendaria). Se abre desde el botón Trofeos del inicio o desde la pantalla de 1 contra 1.',
+      'Arenas: con más trofeos, el 1 contra 1 se juega en otro tablero (Prado, Pantano, Ruinas, Glaciar y Río de Lava) y cada victoria da más oro.',
+      'La campaña tiene un mapa arriba: tres zonas con su camino de fases, tus estrellas y tu comandante encima de la fase que te toca. Toca una fase para ir a ella.',
+      'El cofre de la campaña depende de la zona: madera en las fases 1 a 10, plata en la 11 a 20 y oro en la 21 a 30. Si sacas estrellas nuevas, te llevas uno mejor.',
+      'La pantalla del Torneo luce los niveles con las cartas y cintas de cada rareza, y los tres comandantes.',
+      'Arreglado: ganar al rival fácil daba los mismos trofeos que al normal.',
+      'Los filtros de rareza de la colección ya no salen cortados por arriba.',
+      'El nombre de la rareza en las cartas de la tienda se lee mucho más grande.'
+    ]
+  },
   {
     version: '1.10.0',
     summary: 'Portales al abrir cofres, tienda renovada y filtros en horizontal',

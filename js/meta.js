@@ -9,6 +9,9 @@ function defaultMeta() {
   STARTER_UNITS.forEach(function (id) { cards[id] = { lv: 1, n: 0 }; });
   return {
     gold: 150, gems: 30, trophies: 0,
+    trophyBest: 0,                   // récord de trofeos (abre las paradas del camino)
+    road: [],                        // paradas del camino de trofeos ya cobradas (su at)
+    daily: null,                     // misiones del día: { day, list, bonus }
     shop: { day: '', bought: [], offers: null },   // ofertas de hoy y las ya compradas
     codes: [],                       // códigos ya canjeados
     cards: cards,
@@ -45,6 +48,8 @@ function loadMeta() {
       m.deck.push(extra);
     }
     if (!COMMANDERS[m.commander]) m.commander = 'aria';
+    if (!Array.isArray(m.road)) m.road = [];
+    m.trophyBest = Math.max(m.trophyBest || 0, m.trophies || 0);
     if (!m.cmdCards) m.cmdCards = {};
     COMMANDER_ORDER.forEach(function (k) { if (!m.cmdCards[k]) m.cmdCards[k] = { lv: 1, n: 0 }; });
     var slots = Array.isArray(m.slots) ? m.slots : [];
@@ -122,6 +127,7 @@ function openChest(type) {
     Object.keys(got).forEach(function (k) { meta.cmdCards[k].n += got[k]; });
     meta.gold += gold;
     meta.gems += gems;
+    missionAdd('chest', 1);
     saveMeta();
     return { type: type, gold: gold, gems: gems, cards: {}, cmdCards: got, fresh: [] };
   }
@@ -137,6 +143,7 @@ function openChest(type) {
   }
   meta.gold += gold;
   meta.gems += gems;
+  missionAdd('chest', 1);
   var fresh = [];
   Object.keys(got).forEach(function (id) {
     if (meta.cards[id]) { meta.cards[id].n += got[id]; return; }
@@ -284,4 +291,93 @@ function redeemCode(raw) {
   var chest = c.chest ? openChest(c.chest) : null;
   saveMeta();
   return { code: code, gold: c.gold || 0, gems: c.gems || 0, chest: chest };
+}
+
+/* ---------- trofeos: arenas y camino de trofeos ---------- */
+// arena en la que juegas el 1 contra 1 (según los trofeos que tienes ahora)
+function arenaIndex(t) {
+  var tr = t == null ? meta.trophies : t, i = 0;
+  ARENAS.forEach(function (a, k) { if (tr >= a.at) i = k; });
+  return i;
+}
+function addTrophies(n) {
+  meta.trophies = Math.max(0, meta.trophies + n);
+  meta.trophyBest = Math.max(meta.trophyBest || 0, meta.trophies);
+}
+function roadClaimed(i) { return meta.road.indexOf(TROPHY_ROAD[i].at) !== -1; }
+function roadReady(i) { return !roadClaimed(i) && meta.trophyBest >= TROPHY_ROAD[i].at; }
+function roadPending() { return TROPHY_ROAD.filter(function (s, i) { return roadReady(i); }).length; }
+// siguiente parada por cobrar o por alcanzar (null si ya están todas)
+function roadNext() {
+  for (var i = 0; i < TROPHY_ROAD.length; i++) if (!roadClaimed(i)) return i;
+  return null;
+}
+// cobra una parada: { gold, gems, card: { id, n, fresh }, chest: lo que dio el cofre }
+function claimRoad(i) {
+  if (!roadReady(i)) return null;
+  var s = TROPHY_ROAD[i], out = { gold: s.gold || 0, gems: s.gems || 0 };
+  meta.road.push(s.at);
+  meta.gold += out.gold;
+  meta.gems += out.gems;
+  if (s.cards) {
+    // de una tropa al azar de esa rareza; mejor una que aún no tengas
+    var pool = UNIT_ORDER.filter(function (id) { return UNITS[id].rarity === s.cards.rarity; });
+    var fresh = pool.filter(function (id) { return !meta.cards[id]; });
+    var id = pick(fresh.length ? fresh : pool);
+    out.card = { id: id, n: s.cards.n, fresh: !meta.cards[id] };
+    if (meta.cards[id]) meta.cards[id].n += s.cards.n;
+    else meta.cards[id] = { lv: 1, n: s.cards.n - 1 };
+  }
+  saveMeta();
+  if (s.chest) out.chest = openChest(s.chest);
+  return out;
+}
+
+/* ---------- misiones diarias ---------- */
+// tres al día, las mismas para todos ese día (semilla = fecha)
+function dailyMissions() {
+  var key = todayKey();
+  if (!meta.daily || meta.daily.day !== key) { meta.daily = makeDaily(key); saveMeta(); }
+  return meta.daily;
+}
+function makeDaily(key) {
+  var seed = 7;
+  for (var i = 0; i < key.length; i++) seed = (seed * 37 + key.charCodeAt(i)) % 233280;
+  var rnd = function () { seed = (seed * 9301 + 49297) % 233280; return seed / 233280; };
+  var keys = Object.keys(MISSIONS), list = [];
+  while (list.length < DAILY_COUNT && keys.length) {
+    var k = keys.splice(Math.floor(rnd() * keys.length), 1)[0], m = MISSIONS[k];
+    var gi = rnd() < 0.5 ? 0 : 1, f = gi ? 1.5 : 1;
+    list.push({ k: k, goal: m.goals[gi], prog: 0, gold: Math.round(m.gold * f / 10) * 10, gems: Math.round(m.gems * f), got: false });
+  }
+  return { day: key, list: list, bonus: false };
+}
+// suma progreso a las misiones de ese tipo (las de max guardan el mejor
+// resultado de una partida). Lo guarda quien la llama.
+function missionAdd(k, v) {
+  if (!v) return;
+  dailyMissions().list.forEach(function (m) {
+    if (m.k !== k || m.got) return;
+    m.prog = Math.min(m.goal, MISSIONS[k].max ? Math.max(m.prog, v) : m.prog + v);
+  });
+}
+function claimMission(i) {
+  var m = dailyMissions().list[i];
+  if (!m || m.got || m.prog < m.goal) return null;
+  m.got = true;
+  meta.gold += m.gold;
+  meta.gems += m.gems;
+  saveMeta();
+  return m;
+}
+function dailyBonusReady() { var d = dailyMissions(); return !d.bonus && d.list.every(function (m) { return m.got; }); }
+function claimDailyBonus() {
+  if (!dailyBonusReady()) return null;
+  meta.daily.bonus = true;
+  saveMeta();
+  return openChest(DAILY_BONUS);
+}
+// lo que hay por cobrar (misiones cumplidas y el premio del día)
+function dailyPending() {
+  return dailyMissions().list.filter(function (m) { return !m.got && m.prog >= m.goal; }).length + (dailyBonusReady() ? 1 : 0);
 }

@@ -82,13 +82,15 @@ function renderMenu(name, arg) {
   var html = '';
   if (name === 'home') {
     var free = freeChestReady(), cmd = COMMANDERS[meta.commander];
-    var side = function (go, pic, label, cls) { return '<button class="side-btn ' + (cls || '') + '" data-go="' + go + '"><img src="assets/' + pic + '.webp" alt=""><span>' + label + '</span></button>'; };
+    // badge: cuántas cosas hay por cobrar (punto rojo con la cifra)
+    var side = function (go, pic, label, cls, badge) { return '<button class="side-btn ' + (cls || '') + '" data-go="' + go + '"><img src="assets/' + pic + '.webp" alt=""><span>' + label + '</span>' + (badge ? '<i class="side-dot">' + badge + '</i>' : '') + '</button>'; };
+    var msN = dailyPending(), rdN = roadPending();
     html = topBar() +
       // título con los atajos a los lados, como las ofertas del género
       '<div class="home-top">' +
-      '<div class="side-col">' + side('freeChest', 'chests/madera', freeChestLabel(), free ? 'glow' : '') + side('codes', 'icons/ticket', 'Códigos') + '</div>' +
+      '<div class="side-col">' + side('freeChest', 'chests/madera', freeChestLabel(), free ? 'glow' : '') + side('missions', 'ui/misiones', 'Misiones', msN ? 'glow' : '', msN) + side('codes', 'icons/ticket', 'Códigos') + '</div>' +
       '<div class="logo"><h1><img src="assets/ui/titulo.webp" alt="Reino de Torres"></h1></div>' +
-      '<div class="side-col">' + side('howto', 'icons/pergamino', 'Ayuda') + side('options', 'icons/engranaje', 'Opciones') + '</div>' +
+      '<div class="side-col">' + side('road', 'icons/trofeo', 'Trofeos', rdN ? 'glow' : '', rdN) + side('howto', 'icons/pergamino', 'Ayuda') + side('options', 'icons/engranaje', 'Opciones') + '</div>' +
       '</div>' +
       // mazo: banner del comandante (figura a la izquierda, nombre en el hueco)
       // y debajo las cinco tropas, cada retrato en un aro del banner
@@ -110,9 +112,10 @@ function renderMenu(name, arg) {
   } else if (name === 'campaign') {
     // placas de madera con el color de su zona; la siguiente por jugar late
     var nextSt = CAMPAIGN.filter(function (st) { return stageUnlocked(st.id) && !meta.campaign[st.id]; })[0];
-    html = backBar('Campaña') + '<div class="stage-list">' + CAMPAIGN.map(function (st) {
-      var open = stageUnlocked(st.id), stars = meta.campaign[st.id] || 0;
-      return '<button class="stage ' + (open ? '' : 'locked') + (nextSt === st ? ' next' : '') + '" style="--zc:' + (ZONE_COLOR[st.biome] || '#ffd166') + '" ' + (open ? 'data-stage="' + st.id + '"' : 'disabled') + '>' +
+    html = backBar('Campaña') + campaignMap(nextSt) + '<div class="stage-list">' + CAMPAIGN.map(function (st) {
+      var open = stageUnlocked(st.id), stars = meta.campaign[st.id] || 0, z = stageZone(st.id);
+      return (z.from === st.id ? '<h4 class="stage-zone" style="--zc:' + z.color + '"><span>Zona ' + (CAMPAIGN_ZONES.indexOf(z) + 1) + ' · ' + esc(z.name) + '</span><img src="' + chestPic(z.chest) + '" alt=""></h4>' : '') +
+        '<button class="stage ' + (open ? '' : 'locked') + (nextSt === st ? ' next' : '') + '" style="--zc:' + (ZONE_COLOR[st.biome] || '#ffd166') + '" ' + (open ? 'data-stage="' + st.id + '"' : 'disabled') + '>' +
         '<span class="stage-n">' + st.id + '</span>' +
         '<span class="stage-t"><b>' + esc(st.name) + '</b><small>' + st.waves + ' oleadas · Jefe: ' + esc(BOSSES[st.boss].name) + '</small></span>' +
         '<span class="stage-s">' + (open ? starRow(stars) : '🔒') + '</span></button>';
@@ -121,21 +124,24 @@ function renderMenu(name, arg) {
     // una fila por rival: su monstruo, el nivel de sus cartas y el premio en chapas
     html = backBar('1 contra 1') +
       '<p class="lead">Los mismos monstruos para los dos. Gana quien aguante más.</p>' +
+      arenaStrip() +
       '<div class="rival-list">' + ['Fácil', 'Normal', 'Difícil'].map(function (n, i) {
         return '<button class="rival-row d' + i + '" data-duel="' + i + '">' +
           '<span class="rv-face"><img src="assets/enemies/' + ['blob', 'orco', 'dragon'][i] + '.webp" alt=""></span>' +
           '<span class="rv-info"><b>' + n + '</b><small>' + rivalCardsText(DUEL_CARD_OFFSET[i]) + '</small></span>' +
-          '<span class="rv-prize"><img class="rv-chest" src="' + chestPic(i >= 2 ? 'oro' : 'plata') + '" alt=""><span class="rv-chips">' + prizeChips(25 + i * 5, 60 + i * 40, 0) + '</span></span></button>';
+          '<span class="rv-prize"><img class="rv-chest" src="' + chestPic(i >= 2 ? 'oro' : 'plata') + '" alt=""><span class="rv-chips">' + prizeChips(25 + i * 5, 60 + i * 40 + arenaIndex() * ARENA_GOLD, 0) + '</span></span></button>';
       }).join('') + '</div>' +
       recordChips(meta.duelWins, meta.duelLosses);
+  } else if (name === 'road') {
+    html = backBar('Camino de trofeos') + roadHtml();
   } else if (name === 'tourney') {
     // torneo: el nivel de cada rareza, el de los comandantes, el premio y a jugar
     html = backBar('Torneo') +
       '<p class="lead">Tus cartas y las del rival, al mismo nivel. Solo cuenta cómo juegas.</p>' +
       '<div class="tn-panel"><h3>Nivel de torneo</h3><div class="tn-levels">' + Object.keys(RARITY).map(function (k) {
-        return '<span class="tn-lv" style="--rc:' + RARITY[k].color + '"><b>' + TOURNEY_LV[k] + '</b><small>' + RARITY[k].name + '</small></span>';
+        return '<span class="tn-lv r-' + k + '" style="--rc:' + RARITY[k].color + '"><small>Nivel</small><b>' + TOURNEY_LV[k] + '</b><em>' + RARITY[k].name + '</em></span>';
       }).join('') + '</div>' +
-      '<div class="tn-cmd">' + ico('icons/corona') + 'Comandantes al nivel <b>' + TOURNEY_CMD_LV + '</b></div></div>' +
+      '<div class="tn-cmd"><span class="tn-faces">' + COMMANDER_ORDER.map(function (k) { return '<img src="' + COMMANDERS[k].pic + '" alt="" style="--cc:' + COMMANDERS[k].color + '">'; }).join('') + '</span><span>Comandantes al nivel <b>' + TOURNEY_CMD_LV + '</b></span></div></div>' +
       '<div class="tn-panel tn-prize"><img src="' + chestPic('comandante') + '" alt=""><span><b>Premio</b>' + prizeChips(0, 120, 4) + '<small>Cofre de comandante</small></span></div>' +
       '<button class="btn btn-green tn-go" data-tourney="1">Jugar</button>' +
       recordChips(meta.tourneyWins || 0, meta.tourneyLosses || 0);
@@ -180,6 +186,9 @@ function renderMenu(name, arg) {
       '<p><b>⬆ Mejora</b> un tipo de tropa en plena partida tocando su carta abajo: afecta a todas las de ese tipo.</p>' +
       '<p><b>👑 Comandante:</b> cuando su retrato esté cargado, tócalo para usar su habilidad. Sube de nivel con las cartas del cofre de comandante y su habilidad es más fuerte.</p>' +
       '<p><b>🏆 Torneo:</b> un duelo con tus cartas y las del rival al mismo nivel: común 8, rara 6, épica 4, mítica 2 y legendaria 1. Si ganas, cofre de comandante.</p>' +
+      '<p><b>🎯 Misiones:</b> cada día hay tres. Cóbralas en el botón Misiones del inicio y, con las tres, abre un cofre de plata.</p>' +
+      '<p><b>🏆 Camino de trofeos:</b> ganar duelos da trofeos. Cada parada del camino tiene un premio y algunas abren una arena nueva, con su tablero y más oro por victoria.</p>' +
+      '<p><b>🗺️ Cofres de campaña:</b> cada zona da su cofre (madera, plata y oro) y uno mejor si sacas estrellas nuevas.</p>' +
       '<p><b>🌑 Eventos:</b> algunas oleadas traen Eclipse, Lluvia de maná, Niebla, Horda o Calma.</p>' +
       '<p><b>💧 Maná:</b> se gana derrotando monstruos, con el Mercader Doblón y con la Fuente.</p>' +
       '<p><b>💎 Gemas:</b> salen en los cofres, por cada estrella nueva de la campaña, al ganar duelos y en el cooperativo. Gástalas en la tienda.</p>' +
@@ -188,6 +197,11 @@ function renderMenu(name, arg) {
   m.innerHTML = icons(html);
   m.scrollTop = 0;
   bindMenu();
+  // camino de trofeos: a la vista lo que toca (por cobrar o la siguiente parada)
+  if (name === 'road') {
+    var at = m.querySelector('.rd-stop.ready') || m.querySelector('.rd-stop.lock');
+    if (at) at.scrollIntoView({ block: 'center' });
+  }
 }
 /* Tienda: ofertas de cartas del día, cofres por gemas y oro por gemas. */
 function shopHtml() {
@@ -228,6 +242,133 @@ function prizeChips(trophies, gold, gems) {
 function recordChips(w, l) {
   return '<div class="rec-row"><span class="rec-chip win"><b>' + w + '</b>victorias</span><span class="rec-chip lose"><b>' + l + '</b>derrotas</span></div>';
 }
+/* Mapa de la campaña: cada zona es un camino de 10 fases que sube y baja,
+   con lo recorrido en dorado, tu comandante encima de la siguiente fase y
+   corona en la última de la zona. Arriba, el cofre que da la zona. Al tocar
+   una fase baja a su placa. */
+function campaignMap(nextSt) {
+  var curve = function (list) {
+    return 'M' + list[0].x + ' ' + list[0].y + list.slice(1).map(function (q, k) {
+      var o = list[k], mx = (o.x + q.x) / 2;
+      return ' C' + mx + ' ' + o.y + ' ' + mx + ' ' + q.y + ' ' + q.x + ' ' + q.y;
+    }).join('');
+  };
+  return '<div class="camp-map">' + CAMPAIGN_ZONES.map(function (z, zi) {
+    var ids = [];
+    for (var id = z.from; id <= z.to; id++) ids.push(id);
+    var n = ids.length, done = 0, stars = 0;
+    var pts = ids.map(function (id, k) { return { x: 6 + k * 88 / Math.max(1, n - 1), y: k % 2 ? 68 : 32 }; });
+    ids.forEach(function (id, k) { if (meta.campaign[id]) done = k + 1; stars += meta.campaign[id] || 0; });
+    return '<div class="cm-zone' + (stageUnlocked(z.from) ? '' : ' locked') + '" style="--zc:' + z.color + '">' +
+      '<div class="cm-head"><img src="' + chestPic(z.chest) + '" alt=""><span><b>Zona ' + (zi + 1) + ' · ' + esc(z.name) + '</b>' +
+      '<small>Cofre de ' + z.chest + ', de ' + CHEST_UP[z.chest] + ' con estrellas nuevas</small></span><em>' + ico('icons/estrella') + stars + '/' + n * 3 + '</em></div>' +
+      '<div class="cm-trail"><svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><path class="cm-path" d="' + curve(pts) + '"/>' +
+      (done ? '<path class="cm-path done" d="' + curve(pts.slice(0, done + 1)) + '"/>' : '') + '</svg>' +
+      ids.map(function (id, k) {
+        var s = meta.campaign[id] || 0, nx = nextSt && nextSt.id === id, last = k === n - 1;
+        return '<button class="cm-node' + (s ? ' done' : stageUnlocked(id) ? ' open' : ' lock') + (nx ? ' next' : '') + (last ? ' end' : '') + '" style="left:' + pts[k].x + '%;top:' + pts[k].y + '%" data-goto="' + id + '" aria-label="Fase ' + id + '">' +
+          (last ? '<i class="cm-crown">' + ico('icons/corona') + '</i>' : '') +
+          (nx ? '<img class="cm-here" src="' + COMMANDERS[meta.commander].pic + '" alt="">' : '') +
+          '<b>' + id + '</b>' +
+          (s ? '<i class="cm-st">' + [0, 1, 2].map(function (j) { return '<u class="' + (j < s ? 'on' : '') + '"></u>'; }).join('') + '</i>' : '') + '</button>';
+      }).join('') + '</div></div>';
+  }).join('') + '</div>';
+}
+
+/* ---------- arenas y camino de trofeos ---------- */
+function arenaPic(i) { var f = ARENAS[i].field; return f === 'prado' ? 'assets/tablero.webp' : 'assets/boards/' + f + '.webp'; }
+// franja del 1 contra 1: tu arena, tus trofeos y lo que falta para la siguiente parada
+function arenaStrip() {
+  var ai = arenaIndex(), ni = roadNext(), pend = roadPending();
+  var stop = ni == null ? null : TROPHY_ROAD[ni], base = ni ? TROPHY_ROAD[ni - 1].at : 0;
+  var pct = stop ? Math.min(100, Math.max(0, (meta.trophyBest - base) / (stop.at - base) * 100)) : 100;
+  return '<button class="arena-strip" data-go="road"><img src="' + arenaPic(ai) + '" alt="">' +
+    '<span class="as-txt"><small>Arena ' + (ai + 1) + ' · Camino de trofeos</small><b>' + esc(ARENAS[ai].name) + '</b>' +
+    '<span class="ubar' + (pend || !stop ? ' ok' : '') + '"><span style="width:' + pct + '%"></span><em>' + (pend ? '¡Premio por cobrar!' : stop ? meta.trophyBest + '/' + stop.at : 'Camino completo') + '</em></span></span>' +
+    '<span class="as-tro">' + ico('icons/trofeo') + '<b>' + meta.trophies + '</b></span></button>';
+}
+var RARITY_PLURAL = { comun: 'comunes', rara: 'raras', epica: 'épicas', mitica: 'míticas', legendaria: 'legendarias' };
+// cómo se ve el premio de una parada: imagen, título y detalle
+function roadReward(s) {
+  if (s.arena != null) return { pic: arenaPic(s.arena), title: 'Arena ' + (s.arena + 1) + ': ' + ARENAS[s.arena].name, sub: (s.gems ? '+' + s.gems + ' 💎 · ' : '') + '+' + s.arena * ARENA_GOLD + ' 🪙 por victoria' };
+  if (s.chest) return { pic: chestPic(s.chest), title: CHESTS[s.chest].name, sub: 'Se abre al cobrarlo' };
+  if (s.cards) {
+    var r = s.cards.rarity;
+    return { pic: 'assets/ui/fondo-carta-' + r + '.webp', title: s.cards.n + (s.cards.n > 1 ? ' cartas ' + RARITY_PLURAL[r] : ' carta ' + RARITY[r].name.toLowerCase()), sub: 'De una tropa al azar, mejor una que no tengas', rc: RARITY[r].color, card: true };
+  }
+  if (s.gems) return { pic: 'assets/icons/gema.webp', title: '+' + s.gems + ' gemas' };
+  return { pic: 'assets/chests/oro-' + (s.gold >= 2500 ? 'rebosante' : s.gold >= 1000 ? 'saco' : 'monedas') + '.webp', title: '+' + s.gold + ' de oro' };
+}
+function roadHtml() {
+  var ai = arenaIndex(), best = meta.trophyBest;
+  var stops = TROPHY_ROAD.map(function (s, i) {
+    var r = roadReward(s), got = roadClaimed(i), ready = roadReady(i);
+    return '<div class="rd-stop ' + (got ? 'got' : ready ? 'ready' : 'lock') + (s.arena != null ? ' arena' : '') + (best >= s.at ? ' reach' : '') + '">' +
+      '<span class="rd-at">' + ico('icons/trofeo') + '<b>' + s.at + '</b></span>' +
+      '<div class="rd-card"' + (r.rc ? ' style="--rc:' + r.rc + '"' : '') + '><span class="rd-pic' + (r.card ? ' card' : '') + '"><img src="' + r.pic + '" alt="">' + (r.card ? '<i>?</i>' : '') + '</span>' +
+      '<span class="rd-txt"><b>' + esc(r.title) + '</b>' + (r.sub ? '<small>' + r.sub + '</small>' : '') + '</span>' +
+      (got ? '<i class="rd-ok">✔</i>' : ready ? '<button class="btn btn-green rd-claim" data-road="' + i + '">Cobrar</button>' : '<i class="rd-lock">🔒</i>') + '</div></div>';
+  }).join('');
+  return '<div class="rd-head"><img src="' + arenaPic(ai) + '" alt=""><span><small>Arena ' + (ai + 1) + ' de ' + ARENAS.length + '</small><b>' + esc(ARENAS[ai].name) + '</b>' +
+    '<em>' + ico('icons/trofeo') + meta.trophies + ' trofeos · récord ' + best + '</em></span></div>' +
+    '<p class="lead">Gana duelos 1 contra 1 para sumar trofeos. Cada parada se cobra una vez, aunque luego bajes.</p>' +
+    '<div class="road">' + stops + '</div>';
+}
+function claimRoadStop(i) {
+  var r = claimRoad(i);
+  if (!r) return;
+  buzz(30);
+  var extra = [r.gold ? '+' + r.gold + ' 🪙' : '', r.gems ? '+' + r.gems + ' 💎' : ''].filter(Boolean).join(' · ');
+  if (r.chest) { showChest(r.chest); if (extra) toast(extra); return; }
+  sfx('chest');
+  if (r.card) {
+    var u = UNITS[r.card.id];
+    openOverlay('<div class="modal-card chest-modal"><div class="chest-cards"><div class="chest-card' + (r.card.fresh ? ' fresh' : '') + '" style="--rc:' + RARITY[u.rarity].color + '"><img src="' + unitIcon(r.card.id, 0, 96) + '" alt=""><b>×' + r.card.n + '</b><small>' + esc(u.name) + '</small></div></div>' +
+      '<h2>' + (r.card.fresh ? '¡Tropa nueva!' : '¡Cartas!') + '</h2><p class="gold-big">' + r.card.n + (r.card.n > 1 ? ' cartas' : ' carta') + ' de ' + esc(u.name) + '</p>' +
+      '<button class="btn chest-ok" id="chestOk">¡Genial!</button></div>');
+    $('chestOk').onclick = function () { closeOverlay(); renderMenu(currentScreen); };
+    return;
+  }
+  toast(extra);
+  renderMenu(currentScreen);
+}
+
+/* ---------- misiones diarias ----------
+   Tres al día con su barra y su premio; con las tres cobradas se abre el
+   premio del día (DAILY_BONUS). */
+function showMissions() {
+  var d = dailyMissions(), gotN = d.list.filter(function (m) { return m.got; }).length, bonus = dailyBonusReady();
+  var now = new Date(), mid = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+  var left = Math.max(1, Math.ceil((mid - now) / 3600000));
+  openOverlay('<div class="modal-card missions"><img class="ms-medal" src="assets/ui/misiones.webp" alt=""><h2>Misiones diarias</h2>' +
+    '<p class="lead">Tres nuevas cada día. Cobra las tres y abre un ' + CHESTS[DAILY_BONUS].name.toLowerCase() + '.</p>' +
+    d.list.map(function (m, i) {
+      var M = MISSIONS[m.k], done = m.prog >= m.goal;
+      return '<div class="ms-row' + (m.got ? ' got' : done ? ' ready' : '') + '"><span class="ms-ico">' + ico(M.icon) + '</span>' +
+        '<span class="ms-body"><b>' + esc(missionText(m.k, m.goal)) + '</b>' +
+        '<span class="ubar' + (done ? ' ok' : '') + '"><span style="width:' + (m.prog / m.goal * 100) + '%"></span><em>' + m.prog + '/' + m.goal + '</em></span>' +
+        '<span class="ms-prize">' + prizeChips(0, m.gold, m.gems) + '</span></span>' +
+        (m.got ? '<i class="ms-ok">✔</i>' : '<button class="btn btn-green ms-claim" data-ms="' + i + '"' + (done ? '' : ' disabled') + '>Cobrar</button>') + '</div>';
+    }).join('') +
+    '<div class="ms-row ms-bonus' + (d.bonus ? ' got' : bonus ? ' ready' : '') + '"><span class="ms-ico"><img src="' + chestPic(DAILY_BONUS) + '" alt=""></span>' +
+    '<span class="ms-body"><b>Premio del día</b><small>' + gotN + '/' + d.list.length + ' misiones cobradas</small></span>' +
+    (d.bonus ? '<i class="ms-ok">✔</i>' : '<button class="btn btn-green ms-claim" id="msBonus"' + (bonus ? '' : ' disabled') + '>Abrir</button>') + '</div>' +
+    '<p class="muted ms-left">Misiones nuevas en ' + left + ' h</p>' +
+    '<button class="btn btn-ghost" id="msX">Cerrar</button></div>');
+  document.querySelectorAll('[data-ms]').forEach(function (b) {
+    b.onclick = function () {
+      var m = claimMission(+b.dataset.ms);
+      if (!m) return;
+      sfx('chest'); buzz(20);
+      toast('+' + m.gold + ' 🪙 · +' + m.gems + ' 💎');
+      if (currentScreen !== 'battle') renderMenu(currentScreen);
+      showMissions();
+    };
+  });
+  if ($('msBonus')) $('msBonus').onclick = function () { var r = claimDailyBonus(); if (!r) return; closeOverlay(); showChest(r); };
+  $('msX').onclick = function () { sfx('tap'); closeOverlay(); renderMenu(currentScreen); };
+}
+
 // efecto ilustrado de la habilidad de cada comandante (assets/fx)
 var CMD_FX = { aria: 'ventisca', merlo: 'marea', brann: 'meteoro' };
 // Pestañas dentro de Mazo: tropas y comandante.
@@ -315,12 +456,24 @@ function bindMenu() {
       var g = b.dataset.go;
       if (g === 'coop') { startBattle('coop'); return; }
       if (g === 'codes') { showCodes(); return; }
+      if (g === 'missions') { showMissions(); return; }
       if (g === 'options') { showOptions(); return; }
       if (g === 'freeChest') { var r = claimFreeChest(); if (r) showChest(r); else toast('⏱ Otro cofre gratis en ' + fmtDur(freeChestLeft())); return; }
       showScreen(g);
     };
   });
   m.querySelectorAll('[data-stage]').forEach(function (b) { b.onclick = function () { startBattle('campaign', { stage: +b.dataset.stage }); }; });
+  // mapa de la campaña: lleva a la placa de la fase y la hace brillar
+  m.querySelectorAll('[data-goto]').forEach(function (b) {
+    b.onclick = function () {
+      var el = m.querySelector('[data-stage="' + b.dataset.goto + '"]');
+      if (!el) { sfx('no'); toast('Gana la fase anterior para abrirla'); return; }
+      sfx('tap');
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      el.classList.remove('flash'); void el.offsetWidth; el.classList.add('flash');
+    };
+  });
+  m.querySelectorAll('[data-road]').forEach(function (b) { b.onclick = function () { claimRoadStop(+b.dataset.road); }; });
   m.querySelectorAll('[data-duel]').forEach(function (b) { b.onclick = function () { startBattle('duel', { level: +b.dataset.duel }); }; });
   m.querySelectorAll('[data-tourney]').forEach(function (b) { b.onclick = function () { startBattle('duel', { tourney: true, level: 1 }); }; });
   var cu = $('cmdUp');
@@ -793,11 +946,13 @@ function showChest(r, from) {
     // portal de luz del cofre (assets/chests/portal-<tipo>): aparece debajo al abrirse
     '<img class="cfx-portal" src="assets/chests/portal-' + r.type + '.webp" alt="">' +
     '<img class="cfx-chest shake" src="' + chestPic(r.type) + '" alt=""></div>' +
+    // rayos dorados detrás del contador cuando solo quedan legendarias
+    '<div class="cfx-lrays" style="left:' + (cx2 + size2 * 0.5) + 'px;top:' + (cy2 + size2 * 0.38) + 'px"></div>' +
     '<div class="cfx-left" style="left:' + (cx2 + size2 * 0.5) + 'px;top:' + (cy2 + size2 * 0.38) + 'px"><b></b><small>quedan</small></div>' +
     '<button class="cfx-skip">Saltar</button><p class="cfx-hint"></p>';
   document.body.appendChild(fx);
   if (from) from.style.visibility = 'hidden';
-  var chest = fx.querySelector('.cfx-chest'), spot = fx.querySelector('.cfx-at'), left = fx.querySelector('.cfx-left'), hint = fx.querySelector('.cfx-hint');
+  var chest = fx.querySelector('.cfx-chest'), spot = fx.querySelector('.cfx-at'), left = fx.querySelector('.cfx-left'), hint = fx.querySelector('.cfx-hint'), lrays = fx.querySelector('.cfx-lrays');
   var items = chestItems(r), idx = -1, cur = null, lockUntil = Infinity, timers = [], done = false;
   function at(ms, fn) { timers.push(setTimeout(fn, ms)); }
   function finish() {
@@ -822,6 +977,11 @@ function showChest(r, from) {
     left.querySelector('b').textContent = rest;
     left.querySelector('small').textContent = rest === 1 ? 'queda' : 'quedan';
     left.classList.toggle('none', !rest);
+    // si todo lo que queda son legendarias, el contador brilla (sin decirlo)
+    var legend = rest > 0 && items.slice(idx + 1).every(function (o) { return o.id && UNITS[o.id].rarity === 'legendaria'; });
+    if (legend && !left.classList.contains('legend')) buzz([20, 40, 20]);
+    left.classList.toggle('legend', legend);
+    lrays.classList.toggle('on', legend);
     left.classList.remove('tick'); void left.offsetWidth; left.classList.add('tick');
     hint.textContent = rest ? 'Toca para la siguiente' : 'Toca para terminar';
     lockUntil = Date.now() + 380;

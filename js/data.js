@@ -231,6 +231,18 @@ var CAMPAIGN = [];
   }
 })();
 
+/* Zonas de la campaña, de 10 fases cada una. chest: el cofre que da ganar
+   una fase de la zona; si consigues estrellas nuevas, el siguiente (CHEST_UP).
+   Así repetir la fase 1 ya no da el mismo cofre que la 30. */
+var CAMPAIGN_ZONES = [
+  { name: 'Valle del Reino',    from: 1,  to: 10, chest: 'madera', color: '#7fd84a' },
+  { name: 'Fronteras Salvajes', from: 11, to: 20, chest: 'plata',  color: '#7fd6ff' },
+  { name: 'Dominios del Caos',  from: 21, to: 30, chest: 'oro',    color: '#ff6a2a' }
+];
+var CHEST_UP = { madera: 'plata', plata: 'oro', oro: 'oro' };
+function stageZone(id) { return CAMPAIGN_ZONES.filter(function (z) { return id >= z.from && id <= z.to; })[0] || CAMPAIGN_ZONES[CAMPAIGN_ZONES.length - 1]; }
+function stageChest(id, newStars) { var c = stageZone(id).chest; return newStars ? CHEST_UP[c] : c; }
+
 var BIOMES = {
   prado:    { grass: '#5fbf5a', grass2: '#55b350', path: '#e6c78c', path2: '#d8b879', frame: '#8a6a45', bg: '#3c8d4b' },
   bosque:   { grass: '#3f9e58', grass2: '#388f4f', path: '#cfae7a', path2: '#bf9e6b', frame: '#6b4a2b', bg: '#245c35' },
@@ -285,6 +297,69 @@ var CODES = {
   MITICO:        { gems: 150 },
   FUSION:        { gold: 400 }
 };
+
+/* Arenas del 1 contra 1: se llega con los trofeos que tienes (at). Cada una
+   juega en su tablero (field, de FIELDS en js/board.js) y suma ARENA_GOLD de
+   oro a cada victoria por cada arena por encima de la primera. */
+var ARENAS = [
+  { name: 'Prado del Reino',  at: 0,    field: 'prado' },
+  { name: 'Pantano Tóxico',   at: 300,  field: 'veneno' },
+  { name: 'Ruinas de Piedra', at: 700,  field: 'roca' },
+  { name: 'Glaciar Eterno',   at: 1200, field: 'hielo' },
+  { name: 'Río de Lava',      at: 1800, field: 'lava2' }
+];
+var ARENA_GOLD = 20;
+
+/* Camino de trofeos: un premio en cada parada (at: trofeos). Se cobran una
+   vez, al llegar a ese récord de trofeos (aunque luego bajes).
+   gold / gems · chest: cofre que se abre al cobrarlo · cards: { rarity, n },
+   cartas de una tropa al azar de esa rareza (la desbloquea si no la tienes) ·
+   arena: índice de ARENAS que se abre en esa parada. */
+var TROPHY_ROAD = [
+  { at: 100,  gold: 300 },
+  { at: 200,  chest: 'plata' },
+  { at: 300,  gems: 20, arena: 1 },
+  { at: 400,  cards: { rarity: 'rara', n: 6 } },
+  { at: 500,  chest: 'oro' },
+  { at: 600,  gold: 800 },
+  { at: 700,  gems: 40, arena: 2 },
+  { at: 800,  cards: { rarity: 'epica', n: 3 } },
+  { at: 900,  chest: 'comandante' },
+  { at: 1000, chest: 'oro' },
+  { at: 1100, gold: 1500 },
+  { at: 1200, gems: 60, arena: 3 },
+  { at: 1300, cards: { rarity: 'epica', n: 5 } },
+  { at: 1400, chest: 'comandante' },
+  { at: 1500, cards: { rarity: 'mitica', n: 1 } },
+  { at: 1600, gold: 2500 },
+  { at: 1800, gems: 100, arena: 4 },
+  { at: 2000, chest: 'oro' },
+  { at: 2200, chest: 'comandante' },
+  { at: 2500, cards: { rarity: 'legendaria', n: 1 } }
+];
+
+/* Misiones diarias: cada día tocan 3 distintas (semilla = fecha).
+   text: {n} es la meta (o [singular, plural]) · goals: metas posibles (la segunda paga x1,5) ·
+   max: cuenta el mejor resultado de una partida, no la suma · gold / gems:
+   premio con la primera meta · icon: imagen de assets. Con las tres
+   cobradas, DAILY_BONUS (cofre que se abre al momento). */
+var MISSIONS = {
+  win:    { text: 'Gana {n} partidas', goals: [2, 3], gold: 120, gems: 3, icon: 'icons/corona' },
+  duel:   { text: ['Gana {n} duelo 1 contra 1', 'Gana {n} duelos 1 contra 1'], goals: [1, 2], gold: 150, gems: 4, icon: 'icons/espadas' },
+  stars:  { text: ['Consigue 3 estrellas en {n} fase', 'Consigue 3 estrellas en {n} fases'], goals: [1, 2], gold: 130, gems: 3, icon: 'icons/estrella' },
+  merge:  { text: 'Fusiona tropas {n} veces', goals: [15, 25], gold: 100, gems: 2, icon: 'icons/chispas' },
+  summon: { text: 'Invoca {n} tropas', goals: [30, 50], gold: 100, gems: 2, icon: 'icons/dado' },
+  kills:  { text: 'Derrota a {n} monstruos', goals: [150, 300], gold: 110, gems: 2, icon: 'icons/calavera' },
+  boss:   { text: 'Derrota a {n} jefes', goals: [2, 3], gold: 120, gems: 3, icon: 'icons/explosion' },
+  cmd:    { text: 'Usa la habilidad del comandante {n} veces', goals: [4, 6], gold: 100, gems: 2, icon: 'icons/rayo' },
+  power:  { text: 'Mejora tropas en partida {n} veces', goals: [5, 8], gold: 100, gems: 2, icon: 'icons/mejorar' },
+  rank:   { text: 'Sube una tropa a rango {n}', goals: [4, 5], max: true, gold: 120, gems: 3, icon: 'icons/grafico' },
+  coop:   { text: 'Llega a la oleada {n} en 2 contra la máquina', goals: [10, 15], max: true, gold: 130, gems: 3, icon: 'icons/ola' },
+  chest:  { text: 'Abre {n} cofres', goals: [2, 3], gold: 100, gems: 2, icon: 'chests/madera' }
+};
+var DAILY_COUNT = 3;
+function missionText(k, n) { var t = MISSIONS[k].text; return (Array.isArray(t) ? t[n === 1 ? 0 : 1] : t).replace('{n}', n); }
+var DAILY_BONUS = 'plata';
 
 /* Afinidad: cada tropa vecina (arriba/abajo/izquierda/derecha) del mismo
    elemento da +AFFINITY_BONUS de daño. */

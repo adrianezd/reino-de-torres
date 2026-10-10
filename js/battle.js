@@ -27,7 +27,8 @@ function startBattle(mode, opts) {
   // uno de su bioma; el duelo y el cooperativo, cualquiera, con un bioma
   // que le pegue para el decorado de alrededor
   var loaded = function (k) { return art(FIELD_GEOS[k].image); };
-  var choices = stage ? [].concat(BIOME_FIELD[biome] || 'prado') : Object.keys(FIELD_GEOS);
+  // el 1 contra 1 (no el torneo) se juega en el tablero de tu arena
+  var choices = stage ? [].concat(BIOME_FIELD[biome] || 'prado') : mode === 'duel' && !opts.tourney ? [ARENAS[arenaIndex()].field] : Object.keys(FIELD_GEOS);
   var ready = choices.filter(loaded);
   var fid = ready.length ? pick(ready) : loaded('prado') ? 'prado' : null;
   if (!stage && fid) {
@@ -218,11 +219,12 @@ function endBattle(won, draw) {
     if (won) {
       var lives = b.player.lives.v;
       res.stars = lives >= 5 ? 3 : lives >= 3 ? 2 : 1;
-      var prev = meta.campaign[st.id] || 0;
-      res.gold = st.gold + (res.stars > prev ? (res.stars - prev) * 30 : 0);
+      var prev = meta.campaign[st.id] || 0, better = res.stars > prev;
+      res.gold = st.gold + (better ? (res.stars - prev) * 30 : 0);
       // gemas por cada estrella nueva
-      if (res.stars > prev) { res.gems = (res.stars - prev) * 5; meta.campaign[st.id] = res.stars; }
-      res.chest = res.stars === 3 ? 'oro' : res.stars === 2 ? 'plata' : 'madera';
+      if (better) { res.gems = (res.stars - prev) * 5; meta.campaign[st.id] = res.stars; }
+      // cofre de su zona; uno mejor si has sacado estrellas nuevas
+      res.chest = stageChest(st.id, better);
       res.lines.push('Has defendido ' + st.name + '.');
     } else {
       res.gold = 15 + b.wave * 5;
@@ -249,8 +251,8 @@ function endBattle(won, draw) {
       res.gold = 40;
       res.lines.push(b.other.name + ' y tú caísteis a la vez.');
     } else if (won) {
-      res.trophies = 25 + (b.opts.level || 1) * 5;
-      res.gold = 60 + b.opts.level * 40;
+      res.trophies = 25 + b.opts.level * 5;
+      res.gold = 60 + b.opts.level * 40 + arenaIndex() * ARENA_GOLD;
       res.gems = 2 + b.opts.level * 2;
       res.chest = b.opts.level >= 2 ? 'oro' : 'plata';
       meta.duelWins++;
@@ -261,7 +263,10 @@ function endBattle(won, draw) {
       meta.duelLosses++;
       res.lines.push(b.other.name + ' aguantó más que tú.');
     }
-    meta.trophies = Math.max(0, meta.trophies + res.trophies);
+    var arena0 = arenaIndex();
+    addTrophies(res.trophies);
+    if (arenaIndex() > arena0) res.lines.push('¡Nueva arena: ' + ARENAS[arenaIndex()].name + '!');
+    if (roadPending()) res.lines.push('Tienes premios en el camino de trofeos.');
   } else {
     res.gold = 20 + b.wave * 12;
     res.gems = Math.floor(b.wave / 5);
@@ -273,6 +278,14 @@ function endBattle(won, draw) {
   }
   // ganar cualquier batalla siempre da algo de oro y gemas, aunque sea poco
   if (res.won) { res.gold = Math.max(res.gold, 30); res.gems = Math.max(res.gems, 1); }
+  // misiones diarias
+  var p = b.player;
+  missionAdd('summon', p.summons); missionAdd('merge', p.merges); missionAdd('kills', p.kills);
+  missionAdd('boss', p.bossKills); missionAdd('cmd', p.cmds); missionAdd('power', p.powers); missionAdd('rank', p.maxRank);
+  if (res.won) missionAdd('win', 1);
+  if (b.mode === 'duel' && res.won) missionAdd('duel', 1);
+  if (b.mode === 'campaign' && res.won && res.stars === 3) missionAdd('stars', 1);
+  if (b.mode === 'coop') missionAdd('coop', b.wave);
   meta.gold += res.gold;
   meta.gems += res.gems;
   if (res.chest) res.chestSlot = addChestSlot(res.chest);   // se guarda en los huecos de cofre
