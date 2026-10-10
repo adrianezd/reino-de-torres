@@ -262,6 +262,7 @@ Board.prototype.merge = function (from, to, start) {
   // Eco: el resultado es la otra tropa, y a veces resuena y sube dos rangos
   var echo = !!(UNITS[src.id].wild || UNITS[v.id].wild);
   if (UNITS[v.id].wild && !UNITS[src.id].wild) v.id = src.id;
+  v.ecoFx = echo;
   v.rank++;
   if (echo && v.rank < MAX_RANK && Math.random() < this.echoChance()) { v.rank++; v.echoed = true; }
   this.merges++;
@@ -287,11 +288,18 @@ Board.prototype.mergeArriveFx = function (i, u) {
   var p = this.cc(i);
   // burbuja dorada con flechas hacia arriba (assets/fx/fusion); Doblón, con
   // su propio remolino de monedas (assets/fx/fusion-doblon)
-  var fk = u.id === 'doblon' && art('fx/fusion-doblon') ? 'fx/fusion-doblon' : 'fx/fusion';
+  // con Eco de por medio, su vórtice (assets/fx/fusion-eco)
+  var fk = u.ecoFx && art('fx/fusion-eco') ? 'fx/fusion-eco' : u.id === 'doblon' && art('fx/fusion-doblon') ? 'fx/fusion-doblon' : 'fx/fusion';
+  u.ecoFx = false;
   if (art(fk)) this.fx.push({ type: 'pic', key: fk, x: p.x, y: p.y - (fk === 'fx/fusion' ? 0.12 : 0), size: fk === 'fx/fusion' ? 1.15 : 1.05, rot: 0, grow: 0.45, life: 0.55, max: 0.55 });
   else this.addFx('burst', p, '#ffd166');
   this.addText(p.x, p.y - 0.45, 'Rango ' + u.rank, '#ffd166', true);
-  if (u.echoed) { u.echoed = false; this.addText(p.x, p.y - 0.85, '¡Resuena!', '#d8c4ff', true); this.addFx('burst', p, '#b48bff'); }
+  if (u.echoed) {
+    u.echoed = false;
+    this.addText(p.x, p.y - 0.85, '¡Resuena!', '#d8c4ff', true);
+    if (art('fx/eco-resuena')) this.fx.push({ type: 'pic', key: 'fx/eco-resuena', x: p.x, y: p.y - 0.2, size: 1.1, rot: 0, grow: 0.4, life: 0.8, max: 0.8 });
+    else this.addFx('burst', p, '#b48bff');
+  }
 };
 Board.prototype.powerUp = function (id) {
   var lv = this.power[id] || 1;
@@ -454,7 +462,7 @@ Board.prototype.releaseWolf = function (i, u) {
   u.aim = Math.atan2(at.y - p.y, at.x - p.x);
   u.recoil = 1;
   u.atk = 0.5;
-  this.wolves.push({ d: start, x: at.x, y: at.y, dir: -1, t: 0, biteT: 0, bitten: {},
+  this.wolves.push({ d: start, x: at.x, y: at.y, dir: -1, t: 0, biteT: 0, bitten: {}, v: Math.random() < 0.5 ? '' : '-2',
     bites: d.wolves.bites + Math.floor((u.rank - 1) / 2), dmg: this.unitDamage(i), def: d, unit: u });
   this.fx.push({ type: 'pic', key: 'fx/muerte-puf', x: at.x, y: at.y - 0.05, size: 0.55, rot: 0, grow: 0.4, life: 0.4, max: 0.4 });
   return true;
@@ -584,6 +592,7 @@ Board.prototype.update = function (dt) {
           u.atk = 0.5; u.recoil = 1;
           var pi = this.cc(i);
           this.addText(pi.x, pi.y - 0.5, '+' + gain + ' 💧', GAME_PALETTE.goldYellow);
+          this.fx.push({ type: 'pic', key: 'fx/oria-interes', x: pi.x, y: pi.y - 0.15, size: 0.95, rot: 0, grow: 0.45, life: 0.6, max: 0.6 });
         }
       }
       continue;

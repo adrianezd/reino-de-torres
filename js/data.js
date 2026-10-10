@@ -113,14 +113,14 @@ var UNITS = {
   },
   // wild: comodín de fusión (echo: probabilidad de subir dos rangos al fusionarse)
   eco: {
-    element: 'arcano', name: 'Eco', title: 'Imitadora', role: 'Comodín', rarity: 'epica', noArt: true,
+    element: 'arcano', name: 'Eco', title: 'Imitadora', role: 'Comodín', rarity: 'epica',
     color: '#b48bff', color2: '#f0e6ff', skin: '#efe2ff',
     wild: { echo: 0.1 },
     desc: 'No ataca. Se fusiona con cualquier tropa de su mismo rango y se convierte en ella. A veces resuena y la tropa sube dos rangos.'
   },
   // interest: cada every segundos da pct del maná guardado (tope: cap por rango)
   oria: {
-    element: 'metal', name: 'Oria', title: 'Banquera', role: 'Intereses', rarity: 'epica', noArt: true,
+    element: 'metal', name: 'Oria', title: 'Banquera', role: 'Intereses', rarity: 'epica',
     color: '#e0b040', color2: '#fff3c4', skin: '#f3cfae',
     interest: { every: 5, pct: 0.03, cap: 12 },
     desc: 'No ataca. Cada 5 segundos te da un 3% del maná que tengas guardado, con un tope. Cuanto más ahorras, más gana.'
@@ -171,7 +171,7 @@ var UNITS = {
   },
   // wolves: no dispara; suelta lobos que recorren el camino al revés (bites: mordiscos por lobo, speed: rapidez)
   garra: {
-    element: 'naturaleza', name: 'Garra', title: 'Domadora de Lobos', role: 'Manada', rarity: 'mitica', chestOnly: true, noArt: true,
+    element: 'naturaleza', name: 'Garra', title: 'Domadora de Lobos', role: 'Manada', rarity: 'mitica', chestOnly: true,
     color: '#8a6a4a', color2: '#e8d9b0', skin: '#f0c9a0',
     dmg: 80, rate: 0.28, wolves: { bites: 3, speed: 2.2 }, target: 'first',
     desc: 'No dispara: suelta lobos que recorren el camino al revés y muerden a los monstruos que se cruzan. Con más rango, más mordiscos.'

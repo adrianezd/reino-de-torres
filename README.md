@@ -31,11 +31,11 @@ Tower defense de fusión para móvil y escritorio, gratis y sin anuncios. Invoca
 
 Además, legendarias que solo salen en el cofre de oro (Ígnea, Aurora y Titán) y dos **míticas**, entre la épica y la legendaria (Común < Rara < Épica < Mítica < Legendaria; en el cofre de oro, 4 % por carta la mítica y 1,2 % la legendaria): **Bóreas**, dragón del invierno (❄️, área que frena muchísimo y a veces congela, con su remolino de hielo sobre el enemigo) y **Midas**, rey dorado (⚙️, lanza monedas que perforan, críticos con el medallón «Critical» y +4 de maná por cada baja suya, `bounty`). Su arte sale de `assets/boreas_*` y `assets/midas_*`. En la tienda solo salen las míticas que ya tienes.
 
-Tres cartas con mecánica propia, aún con dibujo provisional (`noArt` en `js/data.js`):
+Tres cartas con mecánica propia (arte recortado de `assets/eco-set-imagenes-1.jpg`, `assets/garra-set-imagenes-2.jpg` y `-3`, y `assets/oria-set-imagenes-2.jpg` y `-3`; los otros sets son alternativas y los `-old` no se usan). Sus figuras del tablero son solo en reposo (`NO_ATTACK_POSE` en `js/art.js`) y Eco no tiene aura de casilla (`NO_CELL_AURA`). Efectos: `fx/fusion-eco` y `fx/eco-resuena`, `fx/oria-interes`, y los dos lobos `fx/garra-lobo` y `fx/garra-lobo-2` (los dos mirando a la derecha; cada lobo sale con uno al azar).
 
 - **Eco**, la Imitadora (épica, 🔮, `wild`): no ataca. Se fusiona con cualquier tropa de su mismo rango y el resultado es la otra tropa; con un 10 % (más con nivel de carta y mejora de partida, `echoChance` en `js/board.js`) resuena y sube dos rangos.
 - **Oria**, la Banquera (épica, ⚙️, `interest`): no ataca. Cada 5 s da un 3 % del maná guardado (más con el rango), con tope de 12 por rango (`interestAmount`).
-- **Garra**, Domadora de Lobos (mítica, 🌿, `wolves`, solo en el cofre de oro): en vez de disparar suelta un lobo al final del camino que corre hacia la entrada y muerde una vez a cada monstruo que se cruza (3 mordiscos, uno más cada dos rangos; un jefe gasta dos). El lobo usa `assets/fx/garra-lobo.webp` si existe y, si no, se dibuja por código (`drawWolf` en `js/art.js`).
+- **Garra**, Domadora de Lobos (mítica, 🌿, `wolves`, solo en el cofre de oro): en vez de disparar suelta un lobo al final del camino que corre hacia la entrada y muerde una vez a cada monstruo que se cruza (3 mordiscos, uno más cada dos rangos; un jefe gasta dos). Si las imágenes del lobo aún no han cargado, se dibuja por código (`drawWolf` en `js/art.js`).
 
 ## Lo que lo hace distinto
 

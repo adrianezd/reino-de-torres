@@ -46,6 +46,9 @@ function star(c, x, y, r, pts) {
 
 /* ---------- imágenes de los diseños (assets/) ---------- */
 var IMG = {};
+// tropas sin aura en su casilla ni pose de ataque (no disparan)
+var NO_CELL_AURA = { eco: true };
+var NO_ATTACK_POSE = { eco: true, oria: true, garra: true };
 var IMG_LIST = {
   units: UNIT_ORDER.filter(function (id) { return !UNITS[id].noArt; }),
   enemies: ['blob', 'ghost', 'brute', 'orco', 'rocoso', 'escarcha', 'gelido', 'coloso', 'coloso2', 'nigro', 'dragon'],
@@ -55,7 +58,7 @@ var IMG_LIST = {
   commanders: ['aria', 'merlo', 'brann'],
   icons: ['estrella', 'gota', 'espadas', 'escudo'],
   chests: ['moneda'], // proyectil de Midas
-  cells: UNIT_ORDER.filter(function (id) { return !UNITS[id].noArt; }) // aura de cada tropa en su casilla (assets/cells)
+  cells: UNIT_ORDER.filter(function (id) { return !UNITS[id].noArt && !NO_CELL_AURA[id]; }) // aura de cada tropa en su casilla (assets/cells)
 };
 var imgReadyCount = 0;
 Object.keys(IMG_LIST).forEach(function (dir) {
@@ -75,13 +78,14 @@ Object.keys(IMG_LIST).forEach(function (dir) {
   im.src = 'assets/tablero.' + exts[0];
 })(['webp', 'png', 'jpg', 'jpeg']);
 function art(key) { var im = IMG[key]; return im && im.ready ? im : null; }
-// lobo de Garra (assets/fx/garra-lobo.webp, mirando a la derecha); si aún no está, se dibuja
-(function () {
+// lobos de Garra (assets/fx/garra-lobo y garra-lobo-2, los dos mirando a la
+// derecha); si aún no han cargado, se dibuja uno por código
+['garra-lobo', 'garra-lobo-2'].forEach(function (k) {
   var im = new Image();
   im.onload = function () { im.ready = true; };
-  im.src = 'assets/fx/garra-lobo.webp';
-  IMG['fx/garra-lobo'] = im;
-})();
+  im.src = 'assets/fx/' + k + '.webp';
+  IMG['fx/' + k] = im;
+});
 /* Lobo de Garra corriendo por el camino: w.dir dice hacia dónde mira y
    w.biteT, si está mordiendo (se lanza hacia delante). */
 function drawWolf(c, w) {
@@ -91,7 +95,7 @@ function drawWolf(c, w) {
   c.scale(w.dir < 0 ? -1 : 1, 1);
   if (w.biteT > 0) { c.translate(r * 0.4, 0); c.rotate(-0.2); }
   c.fillStyle = 'rgba(0,0,0,0.3)'; c.beginPath(); c.ellipse(0, r * 0.95, r * 1.2, r * 0.25, 0, 0, Math.PI * 2); c.fill();
-  var pic = art('fx/garra-lobo');
+  var pic = art('fx/garra-lobo' + (w.v || '')) || art('fx/garra-lobo');
   if (pic) {
     var s = r * 3.6, h = s * pic.naturalHeight / pic.naturalWidth;
     c.drawImage(pic, -s / 2, r * 1.0 - h, s, h);
@@ -132,11 +136,11 @@ var POSES = {
   nivea: { face: -1 }, doblon: { face: 1 }, volta: { face: -1 }, mirra: { face: -1 },
   melodia: { face: 1 }, cronos: { face: -1 }, halcon: { face: 1 }, ulric: { face: 1 },
   fenix: { face: -1 }, aurora: { face: 1 }, titan: { face: 1 }, boreas: { face: 1 }, midas: { face: 1 },
-  kaia: { face: 1 }, seren: { face: 1 }
+  kaia: { face: 1 }, seren: { face: 1 }, eco: { face: 1 }, oria: { face: 1 }, garra: { face: 1 }
 };
 var ATK_POSE_TIME = 0.15;
 Object.keys(POSES).forEach(function (id) {
-  ['idle', 'attack'].forEach(function (pose) {
+  (NO_ATTACK_POSE[id] ? ['idle'] : ['idle', 'attack']).forEach(function (pose) {
     var im = new Image();
     im.onload = function () { im.ready = true; };
     im.src = 'assets/units/board/' + id + '-' + pose + '.webp' + (pose === 'idle' ? '?v=2' : '');
@@ -156,7 +160,7 @@ var FX_OF = { fire: 'fuego', ice: 'hielo', poison: 'veneno', bomb: 'canon', arro
     IMG['fx/' + el + '-' + part] = im;
   });
 });
-['ventisca', 'marea', 'meteoro', 'crater', 'boreas-ventisca', 'midas-critico', 'muerte-puf', 'invocar', 'fusion', 'fusion-doblon', 'mover', 'ralentizado-1', 'ralentizado-2', 'ralentizado-3', 'ralentizado-4', 'ralentizado-5'].concat(Object.keys(ELEMENTS).map(function (el) { return 'conector-' + el; })).forEach(function (k) {
+['ventisca', 'marea', 'meteoro', 'crater', 'boreas-ventisca', 'midas-critico', 'eco-resuena', 'fusion-eco', 'oria-interes', 'muerte-puf', 'invocar', 'fusion', 'fusion-doblon', 'mover', 'ralentizado-1', 'ralentizado-2', 'ralentizado-3', 'ralentizado-4', 'ralentizado-5'].concat(Object.keys(ELEMENTS).map(function (el) { return 'conector-' + el; })).forEach(function (k) {
   var im = new Image();
   im.onload = function () { im.ready = true; };
   im.src = 'assets/fx/' + k + '.webp';

@@ -7,8 +7,18 @@
    La ventana sale sola al entrar con una versión nueva (meta.lastSeenVersion)
    y también desde Opciones.
    ========================================================= */
-var APP_VERSION = '1.12.0';
+var APP_VERSION = '1.12.1';
 var APP_PATCH_NOTES = [
+  {
+    version: '1.12.1',
+    summary: 'Eco, Oria y Garra estrenan sus ilustraciones',
+    items: [
+      'Las tres cartas nuevas ya tienen su retrato y su figura en el tablero.',
+      'Garra suelta dos lobos distintos y tiene un aura de raíces con runas en su casilla.',
+      'Al fusionar con Eco aparece su vórtice y, si resuena, su doble fantasma.',
+      'Oria suelta una lluvia de monedas cada vez que cobra intereses, con un engranaje de gema verde en su casilla.'
+    ]
+  },
   {
     version: '1.12.0',
     summary: 'Tres cartas nuevas: Eco, Oria y Garra',
