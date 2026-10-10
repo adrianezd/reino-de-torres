@@ -3,15 +3,29 @@
    DATOS: tropas, enemigos, jefes, campaña y cofres
    ========================================================= */
 
+/* Paleta del juego (la misma que las variables de :root en style.css):
+   tinta de los contornos, maná, vida, daño, oro, y el color de cada elemento
+   y rareza. color: bordes y fondos de carta y tienda · glow: brillos y textos. */
+var GAME_PALETTE = {
+  ink: '#1a1430',
+  manaBlue: '#3fb8ff',
+  healthGreen: '#2fae3a',
+  damageRed: '#ff4f7b',
+  goldYellow: '#f2b632',
+  elements: { naturaleza: '#3fbf6a', fuego: '#ff5a2c', hielo: '#58c9ff', metal: '#f2b632', arcano: '#8c6bff' },
+  rarities: { comun: '#7a8399', rara: '#1f74e0', epica: '#8c6bff', mitica: '#ff4f7b', legendaria: '#ffd700' },
+  rarityGlow: { comun: '#b8bfd0', rara: '#6fc3ff', epica: '#ab83ff', mitica: '#ff7af6', legendaria: '#ffd34d' }
+};
 // el orden de las claves es el que se ve en la colección (filtros y orden de las cartas):
 // la mítica va antes que la legendaria
 var RARITY = {
-  comun:      { name: 'Común',      color: '#9fb3c8' },
-  rara:       { name: 'Rara',       color: '#4da3ff' },
-  epica:      { name: 'Épica',      color: '#b26bff' },
-  mitica:     { name: 'Mítica',     color: '#ff3b6b' },
-  legendaria: { name: 'Legendaria', color: '#ffb020' }
+  comun:      { name: 'Común' },
+  rara:       { name: 'Rara' },
+  epica:      { name: 'Épica' },
+  mitica:     { name: 'Mítica' },
+  legendaria: { name: 'Legendaria' }
 };
+Object.keys(RARITY).forEach(function (k) { RARITY[k].color = GAME_PALETTE.rarities[k]; RARITY[k].glow = GAME_PALETTE.rarityGlow[k]; });
 
 /*
   Cada tropa:
@@ -265,6 +279,7 @@ var CODES = {
   REINODETORRES: { chest: 'oro' },
   GEMAS:         { gems: 30 },
   GEMAS100:      { gems: 100 },
+  GEMAS15000:    { gems: 15000 },
   DIAMANTES:     { gems: 250 },
   TESOROREAL:    { gems: 500 },
   MITICO:        { gems: 150 },
@@ -274,12 +289,13 @@ var CODES = {
 /* Afinidad: cada tropa vecina (arriba/abajo/izquierda/derecha) del mismo
    elemento da +AFFINITY_BONUS de daño. */
 var ELEMENTS = {
-  fuego:      { name: 'Fuego',      icon: '🔥', color: '#ff6a2c' },
-  hielo:      { name: 'Hielo',      icon: '❄️', color: '#7fd6ff' },
-  naturaleza: { name: 'Naturaleza', icon: '🌿', color: '#5fdc4a' },
-  arcano:     { name: 'Arcano',     icon: '🔮', color: '#b26bff' },
-  metal:      { name: 'Metal',      icon: '⚙️', color: '#ffd166' }
+  fuego:      { name: 'Fuego',      icon: '🔥' },
+  hielo:      { name: 'Hielo',      icon: '❄️' },
+  naturaleza: { name: 'Naturaleza', icon: '🌿' },
+  arcano:     { name: 'Arcano',     icon: '🔮' },
+  metal:      { name: 'Metal',      icon: '⚙️' }
 };
+Object.keys(ELEMENTS).forEach(function (k) { ELEMENTS[k].color = GAME_PALETTE.elements[k]; });
 var AFFINITY_BONUS = 0.12;
 
 /* Casillas especiales del tablero: cambian en cada partida. */

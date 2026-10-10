@@ -7,8 +7,19 @@
    La ventana sale sola al entrar con una versión nueva (meta.lastSeenVersion)
    y también desde Opciones.
    ========================================================= */
-var APP_VERSION = '1.8.0';
+var APP_VERSION = '1.9.0';
 var APP_PATCH_NOTES = [
+  {
+    version: '1.9.0',
+    summary: 'Premio en cada victoria, cadenas de runas y filtros de madera',
+    items: [
+      'Ganar cualquier batalla da siempre algo de oro y al menos una gema, también al repetir fases de la campaña.',
+      'Las tropas vecinas del mismo elemento se unen con una cadena de runas de su color en el tablero.',
+      'Los filtros por rareza de la colección son ahora pestañas de madera unidas por cuerdas.',
+      'Colores unificados en todo el juego: elementos, rarezas, maná y contornos con la misma paleta.',
+      'Nuevo código de regalo: GEMAS15000.'
+    ]
+  },
   {
     version: '1.8.0',
     summary: 'Torneo, niveles de comandante y cofre de comandante',

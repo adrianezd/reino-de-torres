@@ -5,8 +5,31 @@
   --bg1: #2a4bb0; --bg2: #16205a;
   --gold: #ffd166; --green: #4fd36a; --green-d: #23853a;
   --red: #ff5a6a; --red-d: #a8243a;
-  --ink: #0e0c1c; --panel: #1d2a6e; --panel2: #24357f;
+  --panel: #1d2a6e; --panel2: #24357f;
   --text: #ffffff; --muted: #b9c4f0;
+
+  /* paleta del juego (la misma que GAME_PALETTE de js/data.js) */
+  /* tinta y contornos */
+  --ink: #1a1430;                /* contorno principal: morado tinta */
+  --ink-light: #2a1a0c;          /* contorno de las maderas */
+  /* elementos */
+  --elem-nature: #3fbf6a;
+  --elem-fire: #ff5a2c;
+  --elem-ice: #58c9ff;
+  --elem-metal: #f2b632;
+  --elem-arcano: #8c6bff;
+  /* rarezas: fondos y bordes de cartas y tienda */
+  --rarity-common: #7a8399;
+  --rarity-rare: #1f74e0;
+  --rarity-epic: #8c6bff;
+  --rarity-mythic: #ff4f7b;
+  --rarity-legendary: #ffd700;
+  /* madera, oro y piedra */
+  --ui-wood-dark: #2a1a0c;
+  --ui-wood-base: #a0663a;
+  --ui-gold: #ffc65a;
+  --ui-gold-edge: #a2520a;
+  --ui-panel-bg: rgba(26, 20, 48, 0.85);
 }
 /* sin zoom al tocar dos veces ni al pellizcar: solo se puede desplazar */
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; touch-action: pan-x pan-y; }
@@ -161,7 +184,7 @@ button { font: inherit; color: inherit; cursor: pointer; touch-action: pan-x pan
 .res-chest.full img { filter: grayscale(0.8); opacity: 0.7; }
 .res-unlock { display: flex; align-items: center; gap: 8px; justify-content: center; margin-top: 8px; color: var(--gold); }
 .res-unlock img { width: 60px; height: 60px; }
-.res-unlock.secret { color: #ffb020; animation: popIn 0.5s backwards; }
+.res-unlock.secret { color: var(--rarity-legendary); animation: popIn 0.5s backwards; }
 .toast { position: fixed; left: 50%; bottom: 26%; transform: translate(-50%, 10px); z-index: 60; background: #fff; color: #1a1a3a; padding: 8px 16px; border-radius: 999px; border: 3px solid var(--ink); opacity: 0; pointer-events: none; transition: 0.2s; white-space: nowrap; }
 .toast.show { opacity: 1; transform: translate(-50%, 0); }
 
@@ -697,7 +720,7 @@ body {
   margin: 0 0 10px; padding: 9px 12px; border-radius: 14px; font-size: 0.92rem; line-height: 1.35;
   background: rgba(6,10,36,0.45); border: 1px solid rgba(255,214,90,0.25);
 }
-.uc-desc em { color: #ffb020; font-style: normal; font-size: 0.85rem; }
+.uc-desc em { color: var(--rarity-legendary); font-style: normal; font-size: 0.85rem; }
 .pause-stats.uc-stats { grid-template-columns: repeat(3, 1fr); }
 .uc-traits { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; margin: 8px 0 4px; }
 .uc-trait {
@@ -935,7 +958,7 @@ body {
 .slot img { position: absolute; top: 4px; left: 50%; width: 78%; aspect-ratio: 1; object-fit: contain; transform: translateX(-50%); filter: drop-shadow(0 0 6px var(--cc)); }
 .slot b { position: relative; font-size: 0.78rem; white-space: nowrap; text-shadow: 0 2px 0 var(--ink); }
 .slot small { position: relative; font-size: 0.6rem; color: var(--muted); font-weight: 800; white-space: nowrap; }
-.slot.unlocking { border-color: #4da3ff; box-shadow: 0 0 0 2px #0d2a5a, 0 5px 0 #0d2a5a; }
+.slot.unlocking { border-color: var(--rarity-rare); box-shadow: 0 0 0 2px #0d2a5a, 0 5px 0 #0d2a5a; }
 .slot.unlocking b { color: #9ad6ff; }
 .slot.ready { border-color: var(--gold-frame); background: linear-gradient(180deg, #3a62d0, #1d2c78); animation: glow 1.2s ease-in-out infinite; }
 .slot.ready img { animation: slotBob 1.4s ease-in-out infinite; }
@@ -1034,7 +1057,7 @@ button.ucard.locked { cursor: pointer; }
 .slot img { top: 9%; width: 60%; }
 .slot.empty { border: 0; background: url(assets/ui/hueco-cofre.webp) center / 100% 100% no-repeat; padding: 0 16%; }
 .slot.empty span { max-width: 70%; white-space: normal; color: rgba(220,228,255,0.55); text-align: center; line-height: 1.15; }
-.slot.unlocking { box-shadow: none; filter: drop-shadow(0 4px 0 rgba(10,12,40,0.4)) drop-shadow(0 0 6px #4da3ff); }
+.slot.unlocking { box-shadow: none; filter: drop-shadow(0 4px 0 rgba(10,12,40,0.4)) drop-shadow(0 0 6px var(--rarity-rare)); }
 .slot.ready { background: url(assets/ui/hueco-cofre.webp) center / 100% 100% no-repeat; animation: slotGlow 1.2s ease-in-out infinite; }
 @keyframes slotGlow { 50% { filter: drop-shadow(0 4px 0 rgba(10,12,40,0.4)) drop-shadow(0 0 10px rgba(255,209,102,0.95)); } }
 
@@ -1600,3 +1623,29 @@ x-ico.off { filter: grayscale(1) brightness(0.45); opacity: 0.75; }
 .cmd-why { margin: 4px 0 0; font-size: 0.8rem; color: #ffb3bc; text-align: center; }
 .cfx-cmd { background: linear-gradient(180deg, #5a2fb8, #2a1466); box-shadow: 0 6px 0 var(--ink), 0 0 40px 10px color-mix(in srgb, var(--rc) 55%, transparent); }
 .cfx-cmd img { object-position: 50% 100%; }
+
+/* =========================================================
+   Filtros por rareza: pestañas de madera unidas por cuerdas
+   (assets/ui/filtro-rareza.webp, de assets/filtros-tabs.jpg; la
+   cuerda de cada lado es media, así que juntas forman la entera).
+   Nombre en vertical, del color de su rareza con trazo de tinta, y
+   la cuenta en una chapa abajo. Las de elemento siguen como estaban.
+   ========================================================= */
+.rar-tabs { gap: 0; overflow: visible; margin: 2px 0 12px; padding: 4px 0 6px; }
+.rar-tabs .rar-f {
+  position: relative; flex: 1 1 0; min-width: 0; max-width: 92px; aspect-ratio: 149 / 274; padding: 0; border: 0; border-radius: 0;
+  background: url(assets/ui/filtro-rareza.webp) center / 100% 100% no-repeat; box-shadow: none;
+  filter: brightness(0.72) saturate(0.75) drop-shadow(0 3px 0 rgba(10,8,30,0.45)); transition: transform 0.15s cubic-bezier(0.3, 1.6, 0.5, 1), filter 0.15s;
+}
+.rar-tabs .rar-f.on { background: url(assets/ui/filtro-rareza.webp) center / 100% 100% no-repeat; box-shadow: none; transform: translateY(-4px); filter: drop-shadow(0 3px 0 rgba(10,8,30,0.45)) drop-shadow(0 0 7px var(--rc)); z-index: 1; }
+.rar-tabs .rf-n {
+  position: absolute; left: 50%; top: 47%; transform: translate(-50%, -50%) rotate(180deg); writing-mode: vertical-rl; white-space: nowrap;
+  font: 400 clamp(0.62rem, 2.9vw, 0.95rem) 'Lilita One', sans-serif; color: var(--rc); letter-spacing: 0.02em;
+  -webkit-text-stroke: 3px var(--ink); paint-order: stroke fill; text-shadow: 0 2px 0 var(--ink);
+}
+.rar-tabs .rar-f.on .rf-n { color: #fff; }
+.rar-tabs .rar-f small, .rar-tabs .rar-f.on small {
+  position: absolute; left: 50%; bottom: 3%; transform: translateX(-50%); padding: 0 5px; border-radius: 7px; white-space: nowrap;
+  background: var(--ui-panel-bg); border: 2px solid var(--rc); color: #fff; font-size: 0.58rem; line-height: 1.25;
+}
+.rar-tabs .rar-f:active { transform: translateY(1px); }

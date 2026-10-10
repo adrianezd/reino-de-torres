@@ -217,11 +217,12 @@ function backBar(title, tab) { return '<div class="back-bar">' + (tab ? '' : '<b
 var collFilter = 'all';
 function rarityFilters() {
   var keys = ['all'].concat(Object.keys(RARITY));
-  return '<div class="rar-filters">' + keys.map(function (k) {
+  // pestañas de madera unidas por cuerdas (assets/ui/filtro-rareza, de assets/filtros-tabs.jpg)
+  return '<div class="rar-filters rar-tabs">' + keys.map(function (k) {
     var ids = UNIT_ORDER.filter(function (id) { return k === 'all' || UNITS[id].rarity === k; });
     var own = ids.filter(isUnlocked).length;
-    return '<button class="rar-f' + (collFilter === k ? ' on' : '') + '" data-rf="' + k + '" style="--rc:' + (k === 'all' ? '#ffd166' : RARITY[k].color) + '">' +
-      (k === 'all' ? 'Todas' : RARITY[k].name) + '<small>' + own + '/' + ids.length + '</small></button>';
+    return '<button class="rar-f' + (collFilter === k ? ' on' : '') + '" data-rf="' + k + '" style="--rc:' + (k === 'all' ? 'var(--ui-gold)' : RARITY[k].color) + '">' +
+      '<span class="rf-n">' + (k === 'all' ? 'Todas' : RARITY[k].name) + '</span><small>' + own + '/' + ids.length + '</small></button>';
   }).join('') + '</div>';
 }
 // color de cada zona de la campaña (franja de su placa)

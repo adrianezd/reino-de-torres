@@ -271,6 +271,8 @@ function endBattle(won, draw) {
     won = true;
     res.won = b.wave >= 10;
   }
+  // ganar cualquier batalla siempre da algo de oro y gemas, aunque sea poco
+  if (res.won) { res.gold = Math.max(res.gold, 30); res.gems = Math.max(res.gems, 1); }
   meta.gold += res.gold;
   meta.gems += res.gems;
   if (res.chest) res.chestSlot = addChestSlot(res.chest);   // se guarda en los huecos de cofre
@@ -774,9 +776,11 @@ function drawBoard(b, L, now, isMain) {
       que atacan alrededor; Doblón, al dar maná.
     - el resto, suave siempre y se enciende al disparar.
    Las de remolino giran despacio; las altas (Doblón, Ulric) se apoyan en los pies. */
-/* Afinidad (+AFFINITY_BONUS por vecina del mismo elemento): un lazo de luz
-   del color del elemento entre las dos casillas, a ras de suelo, con una
-   chispa que lo recorre. Así se ve qué tropas se están potenciando. */
+/* Afinidad (+AFFINITY_BONUS por vecina del mismo elemento): una cadena de
+   runas del elemento (assets/fx/conector-<elemento>, de assets/conectores.jpg)
+   entre las dos casillas, a ras de suelo, que late, con una chispa que la
+   recorre; sin la imagen, un lazo de luz de su color. Así se ve qué tropas
+   se están potenciando. */
 function drawAffinityLinks(b, s, now) {
   ctx.save();
   ctx.lineCap = 'round';
@@ -789,6 +793,19 @@ function drawAffinityLinks(b, s, now) {
       if (j < i || !v || v.drop > SUMMON_LAND || UNITS[v.id].element !== el) return;
       var a = b.cc(i), c = b.cc(j), col = ELEMENTS[el].color, fy = s * 0.3;
       var pulse = 0.5 + 0.5 * Math.sin(now / 350 + i + j);
+      var rune = art('fx/conector-' + el);
+      if (rune) {
+        var dx = c.x - a.x, dy = c.y - a.y, len = Math.hypot(dx, dy), rh = len * rune.height / rune.width * 1.15;
+        ctx.save();
+        ctx.translate((a.x + c.x) / 2, (a.y + c.y) / 2 + fy);
+        ctx.rotate(Math.atan2(dy, dx));
+        ctx.globalAlpha = 0.7 + pulse * 0.3;
+        ctx.drawImage(rune, -len * 0.55, -rh / 2, len * 1.1, rh);
+        ctx.restore();
+        var tr = 0.5 + 0.5 * Math.sin(now / 600 + i);
+        glow(ctx, a.x + dx * tr, a.y + fy + dy * tr, s * 0.1, col, 0.8);
+        return;
+      }
       ctx.globalAlpha = 0.35 + pulse * 0.25; ctx.strokeStyle = col; ctx.lineWidth = s * 0.11;
       ctx.beginPath(); ctx.moveTo(a.x, a.y + fy); ctx.lineTo(c.x, c.y + fy); ctx.stroke();
       ctx.globalAlpha = 0.55 + pulse * 0.3; ctx.strokeStyle = '#ffffff'; ctx.lineWidth = s * 0.03;

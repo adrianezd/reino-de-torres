@@ -4,7 +4,7 @@
    jefes y efectos. Todo vectorial en canvas.
    ========================================================= */
 
-var INK = 'rgba(14,12,28,0.9)';
+var INK = 'rgba(26,20,48,0.9)';   // GAME_PALETTE.ink con algo de transparencia
 
 function shade(hex, amt) {
   var n = parseInt(hex.slice(1), 16);
@@ -108,7 +108,7 @@ var FX_OF = { fire: 'fuego', ice: 'hielo', poison: 'veneno', bomb: 'canon', arro
     IMG['fx/' + el + '-' + part] = im;
   });
 });
-['ventisca', 'marea', 'meteoro', 'crater', 'boreas-ventisca', 'midas-critico', 'muerte-puf', 'invocar', 'fusion', 'fusion-doblon', 'mover', 'ralentizado-1', 'ralentizado-2', 'ralentizado-3', 'ralentizado-4', 'ralentizado-5'].forEach(function (k) {
+['ventisca', 'marea', 'meteoro', 'crater', 'boreas-ventisca', 'midas-critico', 'muerte-puf', 'invocar', 'fusion', 'fusion-doblon', 'mover', 'ralentizado-1', 'ralentizado-2', 'ralentizado-3', 'ralentizado-4', 'ralentizado-5'].concat(Object.keys(ELEMENTS).map(function (el) { return 'conector-' + el; })).forEach(function (k) {
   var im = new Image();
   im.onload = function () { im.ready = true; };
   im.src = 'assets/fx/' + k + '.webp';

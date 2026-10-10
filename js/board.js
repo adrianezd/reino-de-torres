@@ -298,7 +298,7 @@ Board.prototype.useCommander = function () {
   } else if (cmd === 'merlo') {
     var gain = Math.round(pw);
     this.mana += gain;
-    this.addText(this.geo.W / 2, this.geo.H / 2, '+' + gain + ' 💧', '#7dfcff', true);
+    this.addText(this.geo.W / 2, this.geo.H / 2, '+' + gain + ' 💧', GAME_PALETTE.manaBlue, true);
     this.addFx('flash', { x: this.geo.W / 2, y: this.geo.H / 2 }, '#b26bff');
     this.addSweep('fx/marea');
   } else if (cmd === 'brann') {
@@ -348,7 +348,7 @@ Board.prototype.hit = function (e, dmg, unitDef, kind) {
   e.hitT = HIT_TIME;
   var hcx = this.geo.W / 2, hcy = this.geo.H / 2, hd = Math.hypot(e.x - hcx, e.y - hcy) || 1;
   e.kbx = (e.x - hcx) / hd * 0.05; e.kby = (e.y - hcy) / hd * 0.05;
-  if (crit) this.addText(e.x, e.y - 0.5, '¡' + fmtNum(dmg) + '!', '#ff4f7b', true);
+  if (crit) this.addText(e.x, e.y - 0.5, '¡' + fmtNum(dmg) + '!', GAME_PALETTE.damageRed, true);
   if (crit && !unitDef.critPic) e.critT = 0.55;
   if (unitDef && unitDef.pierce && e.armor > 0) e.breakT = 0.55;
   if (crit && unitDef.critPic) this.fx.push({ type: 'pic', key: unitDef.critPic, x: e.x, y: e.y - 0.3, size: 0.75, rot: 0, grow: 0.4, life: 0.55, max: 0.55 });
@@ -359,7 +359,7 @@ Board.prototype.hit = function (e, dmg, unitDef, kind) {
     this.addText(e.x, e.y - 0.5, '¡Remate!', '#c9b8ff', true);
   }
   if (e.hp <= 0) {
-    if (unitDef && unitDef.bounty) { this.mana += unitDef.bounty; this.addText(e.x, e.y - 0.25, '+' + unitDef.bounty + ' 💧', '#ffd166'); }
+    if (unitDef && unitDef.bounty) { this.mana += unitDef.bounty; this.addText(e.x, e.y - 0.25, '+' + unitDef.bounty + ' 💧', GAME_PALETTE.goldYellow); }
     this.kill(e);
   }
 };
@@ -371,7 +371,7 @@ Board.prototype.kill = function (e) {
   this.mana += reward;
   this.deathFx(e);
   if (e.boss) {
-    this.addText(e.x, e.y - 0.5, '+' + reward + ' 💧', '#7dfcff', true);
+    this.addText(e.x, e.y - 0.5, '+' + reward + ' 💧', GAME_PALETTE.manaBlue, true);
     this.shake = 0.4;
     if (BOSSES[e.kind].ability === 'split') {
       for (var k = 0; k < 4; k++) this.spawn('blob', e.maxHp * 0.08, { d: Math.max(0, e.d - k * 0.35) });
@@ -537,7 +537,7 @@ Board.prototype.update = function (dt) {
         this.mana += amt;
         u.atk = 0.5; u.recoil = 1; // pose de ataque y rebote al repartir el maná
         var p = this.cc(i);
-        this.addText(p.x, p.y - 0.5, '+' + amt + ' 💧', '#7dfcff');
+        this.addText(p.x, p.y - 0.5, '+' + amt + ' 💧', GAME_PALETTE.manaBlue);
       }
       continue;
     }
@@ -650,7 +650,7 @@ Board.prototype.bossAbility = function (e, dt) {
   } else if (ab === 'summon') {
     e.abilityT = 7;
     for (var k = 0; k < 2; k++) this.spawn('ghost', e.maxHp * 0.03, { d: Math.max(0, e.d - 0.3 - k * 0.3) });
-    this.addText(p.x, p.y - 0.6, '¡Invoca!', '#b26bff', true);
+    this.addText(p.x, p.y - 0.6, '¡Invoca!', GAME_PALETTE.elements.arcano, true);
   } else if (ab === 'burn') {
     e.abilityT = 9;
     var list = this.cells.map(function (u, i) { return u ? i : -1; }).filter(function (i) { return i >= 0; });
