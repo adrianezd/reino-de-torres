@@ -7,8 +7,17 @@
    La ventana sale sola al entrar con una versión nueva (meta.lastSeenVersion)
    y también desde Opciones.
    ========================================================= */
-var APP_VERSION = '1.9.0';
+var APP_VERSION = '1.9.1';
 var APP_PATCH_NOTES = [
+  {
+    version: '1.9.1',
+    summary: 'Botones de jugar nuevos y pantalla de duelo renovada',
+    items: [
+      'La pantalla principal tiene cuatro cartas para jugar: Campaña, 1 contra 1, 2 contra la máquina y Torneo.',
+      'El Torneo tiene su propia pantalla, con el nivel de cada rareza y el premio.',
+      'El 1 contra 1 se ve más limpio: cada rival con su monstruo, el nivel de sus cartas y el premio en chapas.'
+    ]
+  },
   {
     version: '1.9.0',
     summary: 'Premio en cada victoria, cadenas de runas y filtros de madera',

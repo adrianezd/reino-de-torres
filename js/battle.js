@@ -71,7 +71,7 @@ function startBattle(mode, opts) {
   showScreen('battle');
   buildBattleHud();
   resizeCanvas();
-  showBanner(mode === 'campaign' ? 'Fase ' + stage.id + ': ' + stage.name : tourney ? '🏅 Torneo contra ' + battle.other.name : mode === 'duel' ? '⚔️ Duelo contra ' + battle.other.name : '🤝 Con ' + battle.other.name + ' contra la horda', 'Prepárate…');
+  showBanner(mode === 'campaign' ? 'Fase ' + stage.id + ': ' + stage.name : tourney ? 'Torneo contra ' + battle.other.name : mode === 'duel' ? '⚔️ Duelo contra ' + battle.other.name : '🤝 Con ' + battle.other.name + ' contra la horda', 'Prepárate…');
   sfx('start');
 }
 

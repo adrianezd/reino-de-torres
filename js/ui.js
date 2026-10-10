@@ -96,12 +96,14 @@ function renderMenu(name, arg) {
       '<button class="cmd-banner" data-go="commanders" style="--cc:' + cmd.color + '"><img src="assets/commanders/' + meta.commander + '-cuerpo.webp" alt=""><span class="cb-txt"><small>Habilidad</small><b>' + esc(cmd.ability) + '</b></span><span class="cb-slot">' + esc(cmd.name) + '</span></button>' +
       '<button class="deck-preview" data-go="collection" aria-label="Mazo actual">' + meta.deck.map(function (id, i) { return '<img src="' + unitIcon(id, 0, 96) + '" alt="' + esc(UNITS[id].name) + '" style="left:' + DECK_RINGS[i] + '%">'; }).join('') + '</button>' +
       '</div>' +
-      // tres botones de jugar: duelo, campaña (lista de fases) y cooperativo
-      '<div class="play-row">' +
-      '<button class="play-side" data-go="duelPick"><img src="assets/ui/boton-duelo.webp" alt=""><span>1 contra 1</span></button>' +
-      '<div class="play-mid"><button class="play-hero" data-go="campaign" aria-label="Campaña"><img src="assets/ui/boton-jugar.webp" alt=""></button>' +
-      '<button class="play-camp" data-go="campaign">Campaña <small>' + totalStars() + '/' + CAMPAIGN.length * 3 + ' ⭐</small></button></div>' +
-      '<button class="play-side" data-go="coop"><img src="assets/ui/boton-coop.webp" alt=""><span>2 contra IA</span></button>' +
+      // cuatro cartas de modo (assets/ui/modo-*, de assets/botones_jugar.jpg;
+      // el nombre ya viene en la ilustración): campaña, 1 contra 1, 2 contra
+      // la máquina y torneo. La de campaña lleva sus estrellas en una chapa.
+      '<div class="mode-row">' +
+      '<button class="mode-card" data-go="campaign" aria-label="Campaña"><img src="assets/ui/modo-campana.webp" alt=""><span class="mode-chip">' + ico('icons/estrella') + totalStars() + '/' + CAMPAIGN.length * 3 + '</span></button>' +
+      '<button class="mode-card" data-go="duelPick" aria-label="1 contra 1"><img src="assets/ui/modo-duelo.webp" alt=""></button>' +
+      '<button class="mode-card" data-go="coop" aria-label="2 contra la máquina"><img src="assets/ui/modo-coop.webp" alt=""></button>' +
+      '<button class="mode-card" data-go="tourney" aria-label="Torneo"><img src="assets/ui/modo-torneo.webp" alt=""></button>' +
       '</div>' +
       // huecos de cofre abajo del todo, debajo de los botones de jugar
       '<div class="slots" id="chestSlots">' + slotsInner() + '</div>';
@@ -116,13 +118,27 @@ function renderMenu(name, arg) {
         '<span class="stage-s">' + (open ? starRow(stars) : '🔒') + '</span></button>';
     }).join('') + '</div>';
   } else if (name === 'duelPick') {
-    html = backBar('Duelo 1 contra 1') +
-      '<p class="lead">Los dos recibís los mismos monstruos. Cada uno que se escapa te quita un corazón (el jefe, dos). Gana quien aguante más.</p>' +
-      ['Fácil', 'Normal', 'Difícil'].map(function (n, i) {
-        return '<button class="big-choice d' + i + '" data-duel="' + i + '"><span><b>' + ['🙂', '😠', '😈'][i] + ' Rival ' + n + '</b><small>' + rivalCardsText(DUEL_CARD_OFFSET[i]) + '</small><small>Premio: ' + (25 + i * 5) + ' 🏆 · ' + (60 + i * 40) + ' 🪙 · cofre de ' + (i >= 2 ? 'oro' : 'plata') + '</small></span></button>';
-      }).join('') +
-      '<button class="big-choice d3" data-tourney="1"><span><b>🏅 Torneo</b><small>Tus cartas y las del rival al mismo nivel: común 8 · rara 6 · épica 4 · mítica 2 · legendaria 1. Comandantes al nivel ' + TOURNEY_CMD_LV + '</small><small>Premio: 120 🪙 · 4 💎 · cofre de comandante</small></span></button>' +
-      '<p class="muted">Duelos: victorias ' + meta.duelWins + ' · derrotas ' + meta.duelLosses + '<br>Torneo: victorias ' + (meta.tourneyWins || 0) + ' · derrotas ' + (meta.tourneyLosses || 0) + '</p>';
+    // una fila por rival: su monstruo, el nivel de sus cartas y el premio en chapas
+    html = backBar('1 contra 1') +
+      '<p class="lead">Los mismos monstruos para los dos. Gana quien aguante más.</p>' +
+      '<div class="rival-list">' + ['Fácil', 'Normal', 'Difícil'].map(function (n, i) {
+        return '<button class="rival-row d' + i + '" data-duel="' + i + '">' +
+          '<span class="rv-face"><img src="assets/enemies/' + ['blob', 'orco', 'dragon'][i] + '.webp" alt=""></span>' +
+          '<span class="rv-info"><b>' + n + '</b><small>' + rivalCardsText(DUEL_CARD_OFFSET[i]) + '</small></span>' +
+          '<span class="rv-prize"><img class="rv-chest" src="' + chestPic(i >= 2 ? 'oro' : 'plata') + '" alt=""><span class="rv-chips">' + prizeChips(25 + i * 5, 60 + i * 40, 0) + '</span></span></button>';
+      }).join('') + '</div>' +
+      recordChips(meta.duelWins, meta.duelLosses);
+  } else if (name === 'tourney') {
+    // torneo: el nivel de cada rareza, el de los comandantes, el premio y a jugar
+    html = backBar('Torneo') +
+      '<p class="lead">Tus cartas y las del rival, al mismo nivel. Solo cuenta cómo juegas.</p>' +
+      '<div class="tn-panel"><h3>Nivel de torneo</h3><div class="tn-levels">' + Object.keys(RARITY).map(function (k) {
+        return '<span class="tn-lv" style="--rc:' + RARITY[k].color + '"><b>' + TOURNEY_LV[k] + '</b><small>' + RARITY[k].name + '</small></span>';
+      }).join('') + '</div>' +
+      '<div class="tn-cmd">' + ico('icons/corona') + 'Comandantes al nivel <b>' + TOURNEY_CMD_LV + '</b></div></div>' +
+      '<div class="tn-panel tn-prize"><img src="' + chestPic('comandante') + '" alt=""><span><b>Premio</b>' + prizeChips(0, 120, 4) + '<small>Cofre de comandante</small></span></div>' +
+      '<button class="btn btn-green tn-go" data-tourney="1">Jugar</button>' +
+      recordChips(meta.tourneyWins || 0, meta.tourneyLosses || 0);
   } else if (name === 'collection') {
     html = backBar('Mazo', true) + deckTabs('collection') +
       '<p class="lead">Tu mazo (5 tropas). Toca una carta para verla, cambiarla o mejorarla.</p>' +
@@ -163,7 +179,7 @@ function renderMenu(name, arg) {
       '<p><b>🔥❄️🌿🔮⚙️ Afinidad:</b> cada tropa vecina del mismo elemento da +12% de daño.</p>' +
       '<p><b>⬆ Mejora</b> un tipo de tropa en plena partida tocando su carta abajo: afecta a todas las de ese tipo.</p>' +
       '<p><b>👑 Comandante:</b> cuando su retrato esté cargado, tócalo para usar su habilidad. Sube de nivel con las cartas del cofre de comandante y su habilidad es más fuerte.</p>' +
-      '<p><b>🏅 Torneo:</b> un duelo con tus cartas y las del rival al mismo nivel: común 8, rara 6, épica 4, mítica 2 y legendaria 1. Si ganas, cofre de comandante.</p>' +
+      '<p><b>🏆 Torneo:</b> un duelo con tus cartas y las del rival al mismo nivel: común 8, rara 6, épica 4, mítica 2 y legendaria 1. Si ganas, cofre de comandante.</p>' +
       '<p><b>🌑 Eventos:</b> algunas oleadas traen Eclipse, Lluvia de maná, Niebla, Horda o Calma.</p>' +
       '<p><b>💧 Maná:</b> se gana derrotando monstruos, con el Mercader Doblón y con la Fuente.</p>' +
       '<p><b>💎 Gemas:</b> salen en los cofres, por cada estrella nueva de la campaña, al ganar duelos y en el cooperativo. Gástalas en la tienda.</p>' +
@@ -202,7 +218,15 @@ function shopHtml() {
 }
 function rivalCardsText(off) {
   if (!off) return 'Cartas a tu nivel';
-  return 'Cartas ' + Math.abs(off) + (Math.abs(off) === 1 ? ' nivel ' : ' niveles ') + (off < 0 ? 'por debajo' : 'por encima') + ' de las tuyas';
+  return 'Cartas ' + (off < 0 ? '−' : '+') + Math.abs(off) + (Math.abs(off) === 1 ? ' nivel' : ' niveles');
+}
+// chapas de premio con su icono (trofeos, oro y gemas; las que sean 0 no salen)
+function prizeChips(trophies, gold, gems) {
+  var chip = function (pic, v) { return v ? '<span class="pz-chip">' + ico(pic) + '<b>' + v + '</b></span>' : ''; };
+  return chip('icons/trofeo', trophies) + chip('icons/moneda', gold) + chip('icons/gema', gems);
+}
+function recordChips(w, l) {
+  return '<div class="rec-row"><span class="rec-chip win"><b>' + w + '</b>victorias</span><span class="rec-chip lose"><b>' + l + '</b>derrotas</span></div>';
 }
 // efecto ilustrado de la habilidad de cada comandante (assets/fx)
 var CMD_FX = { aria: 'ventisca', merlo: 'marea', brann: 'meteoro' };
@@ -1065,7 +1089,7 @@ function confirmQuit() {
   sfx('tap');
   var b = battle, p = b.player;
   var where = b.mode === 'campaign' ? '🗺️ Fase ' + b.stage.id + ' · ' + esc(b.stage.name)
-    : b.mode === 'duel' ? (b.opts.tourney ? '🏅 Torneo contra ' : '⚔️ Duelo contra ') + esc(b.other.name) : '🤝 Con ' + esc(b.other.name) + ' contra la horda';
+    : b.mode === 'duel' ? (b.opts.tourney ? 'Torneo contra ' : '⚔️ Duelo contra ') + esc(b.other.name) : '🤝 Con ' + esc(b.other.name) + ' contra la horda';
   var wave = b.wave ? b.wave + (b.maxWaves !== Infinity ? '<small>/' + b.maxWaves + '</small>' : '') : '—';
   var prog = b.maxWaves !== Infinity ? Math.min(1, b.wave / b.maxWaves) : 0;
   function stat(ico, val, lbl) { return '<div class="ps-stat"><i>' + ico + '</i><b>' + val + '</b><small>' + lbl + '</small></div>'; }
