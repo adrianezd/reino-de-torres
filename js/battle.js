@@ -795,12 +795,13 @@ function drawAffinityLinks(b, s, now) {
       var pulse = 0.5 + 0.5 * Math.sin(now / 350 + i + j);
       var rune = art('fx/conector-' + el);
       if (rune) {
-        var dx = c.x - a.x, dy = c.y - a.y, len = Math.hypot(dx, dy), rh = len * rune.height / rune.width * 1.15;
+        // ancho de casilla a casilla y alto de media casilla: la cadena se ve entera entre las dos tropas
+        var dx = c.x - a.x, dy = c.y - a.y, len = Math.hypot(dx, dy), rh = s * 0.5;
         ctx.save();
         ctx.translate((a.x + c.x) / 2, (a.y + c.y) / 2 + fy);
         ctx.rotate(Math.atan2(dy, dx));
-        ctx.globalAlpha = 0.7 + pulse * 0.3;
-        ctx.drawImage(rune, -len * 0.55, -rh / 2, len * 1.1, rh);
+        ctx.globalAlpha = 0.85 + pulse * 0.15;
+        ctx.drawImage(rune, -len * 0.62, -rh / 2, len * 1.24, rh);
         ctx.restore();
         var tr = 0.5 + 0.5 * Math.sin(now / 600 + i);
         glow(ctx, a.x + dx * tr, a.y + fy + dy * tr, s * 0.1, col, 0.8);

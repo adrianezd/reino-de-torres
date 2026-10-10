@@ -7,8 +7,21 @@
    La ventana sale sola al entrar con una versión nueva (meta.lastSeenVersion)
    y también desde Opciones.
    ========================================================= */
-var APP_VERSION = '1.9.1';
+var APP_VERSION = '1.10.0';
 var APP_PATCH_NOTES = [
+  {
+    version: '1.10.0',
+    summary: 'Portales al abrir cofres, tienda renovada y filtros en horizontal',
+    items: [
+      'Al abrir un cofre aparece debajo un portal de luz de su tipo: madera, plata, oro o comandante.',
+      'Las cartas de la tienda tienen el fondo de su rareza y una cinta encima con el nombre de la rareza.',
+      'Los filtros por rareza de la colección van en horizontal, en dos filas.',
+      'La cadena de runas entre tropas vecinas del mismo elemento se ve mucho más grande en el tablero.',
+      'Nueva letra para los textos, más limpia, y titulares de la tienda más gruesos.',
+      'Los botones verdes de aceptar y jugar tienen un diseño nuevo.',
+      'El título «1 contra 1» ya no se parte en dos líneas.'
+    ]
+  },
   {
     version: '1.9.1',
     summary: 'Botones de jugar nuevos y pantalla de duelo renovada',

@@ -790,6 +790,8 @@ function showChest(r, from) {
   fx.innerHTML = '<div class="cfx-dim"></div>' +
     '<div class="cfx-at" style="left:' + cx + 'px;top:' + cy + 'px;width:' + size + 'px">' +
     '<div class="cfx-rays"><img src="assets/chests/destello.webp" alt=""></div>' +
+    // portal de luz del cofre (assets/chests/portal-<tipo>): aparece debajo al abrirse
+    '<img class="cfx-portal" src="assets/chests/portal-' + r.type + '.webp" alt="">' +
     '<img class="cfx-chest shake" src="' + chestPic(r.type) + '" alt=""></div>' +
     '<div class="cfx-left" style="left:' + (cx2 + size2 * 0.5) + 'px;top:' + (cy2 + size2 * 0.38) + 'px"><b></b><small>quedan</small></div>' +
     '<button class="cfx-skip">Saltar</button><p class="cfx-hint"></p>';
@@ -921,7 +923,7 @@ function chestResult(r) {
     if (it.cmd) return '<div class="chest-card" style="--rc:' + COMMANDERS[it.cmd].color + '"><img src="' + COMMANDERS[it.cmd].pic + '" alt=""><b>×' + it.n + '</b><small>' + esc(COMMANDERS[it.cmd].name) + '</small></div>';
     return '<div class="chest-card' + (it.fresh ? ' fresh' : '') + '" style="--rc:' + RARITY[UNITS[it.id].rarity].color + '"><img src="' + unitIcon(it.id, 0, 96) + '" alt=""><b>×' + it.n + '</b><small>' + esc(UNITS[it.id].name) + '</small></div>';
   }).join('');
-  openOverlay('<div class="modal-card chest-modal"><div class="chest-pic"><img class="chest-pic-rays" src="assets/chests/destello.webp" alt=""><img class="chest-pic-img" src="' + chestPic(r.type, true) + '" alt=""></div><h2>' + ch.name + '</h2><p class="gold-big">+' + r.gold + ' 🪙' + (r.gems ? ' · +' + r.gems + ' 💎' : '') + '</p>' + chestNewHtml(r) + '<div class="chest-cards">' + cards + '</div><button class="btn chest-ok" id="chestOk">¡Genial!</button></div>');
+  openOverlay('<div class="modal-card chest-modal"><div class="chest-pic"><img class="chest-pic-rays" src="assets/chests/destello.webp" alt=""><img class="chest-pic-portal" src="assets/chests/portal-' + r.type + '.webp" alt=""><img class="chest-pic-img" src="' + chestPic(r.type, true) + '" alt=""></div><h2>' + ch.name + '</h2><p class="gold-big">+' + r.gold + ' 🪙' + (r.gems ? ' · +' + r.gems + ' 💎' : '') + '</p>' + chestNewHtml(r) + '<div class="chest-cards">' + cards + '</div><button class="btn chest-ok" id="chestOk">¡Genial!</button></div>');
   $('chestOk').onclick = function () { closeOverlay(); renderMenu(currentScreen === 'battle' ? 'home' : currentScreen); };
 }
 

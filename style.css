@@ -36,7 +36,7 @@
 [hidden] { display: none !important; }
 html, body { margin: 0; height: 100%; overflow: hidden; }
 body {
-  font-family: 'Nunito', system-ui, sans-serif; font-weight: 800; color: var(--text);
+  font-family: 'Fredoka', 'Nunito', system-ui, sans-serif; font-weight: 600; color: var(--text);
   background:
     radial-gradient(circle at 20% 10%, rgba(255,255,255,0.12) 0 2px, transparent 3px) 0 0 / 34px 34px,
     linear-gradient(180deg, var(--bg1), var(--bg2));
@@ -92,7 +92,7 @@ button { font: inherit; color: inherit; cursor: pointer; touch-action: pan-x pan
 .foot { text-align: center; color: var(--muted); font-size: 0.72rem; font-weight: 700; margin-top: 10px; }
 
 .back-bar { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
-.back-bar h2 { flex: 1; margin: 0; font-size: 1.6rem; text-shadow: 0 3px 0 var(--ink); }
+.back-bar h2 { flex: 1; min-width: 0; margin: 0; font-size: clamp(1.15rem, 5.6vw, 1.6rem); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-shadow: 0 3px 0 var(--ink); }
 .back { width: 44px; height: 44px; border-radius: 14px; font-size: 1.6rem; background: var(--panel2); border: 3px solid var(--ink); box-shadow: 0 3px 0 var(--ink); }
 .lead { color: var(--muted); margin: 0 0 12px; }
 .muted { color: var(--muted); text-align: center; font-size: 0.85rem; }
@@ -229,7 +229,7 @@ button { font: inherit; color: inherit; cursor: pointer; touch-action: pan-x pan
   background: linear-gradient(180deg, #ffe066, #f2a01a); color: #3a1d00; text-shadow: 0 1px 0 rgba(255,255,255,0.5);
   box-shadow: 0 5px 0 var(--ink), inset 0 -5px 0 rgba(0,0,0,0.15), inset 0 3px 0 rgba(255,255,255,0.5);
 }
-.summon-btn small { font-family: 'Nunito'; font-weight: 900; font-size: 0.8rem; }
+.summon-btn small { font-family: 'Fredoka', 'Nunito'; font-weight: 700; font-size: 0.8rem; }
 .summon-btn:active { transform: translateY(3px); box-shadow: 0 2px 0 var(--ink); }
 .deck-bar { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
 .dcard { position: relative; display: flex; flex-direction: column; align-items: center; padding: 3px 2px 2px; border-radius: 12px; border: 3px solid var(--ink); background: linear-gradient(180deg, color-mix(in srgb, var(--rc) 45%, #1d2c78), #16215a); box-shadow: 0 3px 0 var(--ink); }
@@ -307,7 +307,6 @@ body {
     linear-gradient(180deg, var(--bg1), var(--bg2));
 }
 .summon-btn {
-  background: url('assets/ui/boton-invocar.webp') center / 100% 100% no-repeat;
   border: none; box-shadow: none; border-radius: 22px; height: 64px;
   filter: drop-shadow(0 4px 0 var(--gold-dark));
 }
@@ -404,14 +403,16 @@ body {
 }
 .dlv { top: -4px; left: -3px; }
 
-/* botones verdes de los menús con la ilustración del botón */
+/* botones verdes de los menús: solo CSS (misma receta que «Mejorar»),
+   sin la ilustración verde del botón */
 .btn-green {
-  background: none; border-style: solid; border-width: 12px 18px; padding: 2px 8px;
-  border-image: url('assets/ui/boton-invocar.webp') 26% 16% fill / 12px 18px stretch;
-  box-shadow: none; filter: drop-shadow(0 4px 0 #6a3a10);
+  color: #fff; border: 4px solid #8fe08a; padding: 10px 18px;
+  background: linear-gradient(180deg, #4fd06a, #22903c);
+  box-shadow: 0 0 0 3px var(--ink), 0 6px 0 var(--ink), inset 0 2px 0 rgba(255,255,255,0.4), inset 0 -5px 0 rgba(0,0,0,0.22);
+  text-shadow: 0 2px 0 #145a24; filter: none;
 }
 .btn-green::after { display: none; }
-.btn-green:active { box-shadow: none; filter: drop-shadow(0 1px 0 #6a3a10); }
+.btn-green:active { transform: translateY(5px); box-shadow: 0 0 0 3px var(--ink), 0 1px 0 var(--ink), inset 0 2px 0 rgba(255,255,255,0.3); filter: none; }
 .btn-green:disabled { filter: grayscale(0.8) brightness(0.8); }
 
 /* cartas del mazo en el menú de tropas con el marco de partida */
@@ -769,7 +770,7 @@ body {
   font: 400 0.9rem 'Lilita One', sans-serif; color: #fff; text-shadow: 0 2px 0 var(--ink);
   background: rgba(6,10,36,0.45); border: 2px solid color-mix(in srgb, var(--rc) 55%, transparent);
 }
-.rar-f small { font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 0.66rem; color: var(--muted); text-shadow: none; }
+.rar-f small { font-family: 'Fredoka', 'Nunito', sans-serif; font-weight: 700; font-size: 0.66rem; color: var(--muted); text-shadow: none; }
 .rar-f.on { color: var(--ink); text-shadow: none; background: linear-gradient(180deg, color-mix(in srgb, var(--rc) 45%, #fff), var(--rc)); border-color: var(--ink); box-shadow: 0 3px 0 var(--ink); }
 .rar-f.on small { color: color-mix(in srgb, var(--ink) 75%, transparent); }
 .rar-f:active { transform: translateY(2px); }
@@ -1625,28 +1626,27 @@ x-ico.off { filter: grayscale(1) brightness(0.45); opacity: 0.75; }
 .cfx-cmd img { object-position: 50% 100%; }
 
 /* =========================================================
-   Filtros por rareza: pestañas de madera unidas por cuerdas
-   (assets/ui/filtro-rareza.webp, de assets/filtros-tabs.jpg; la
-   cuerda de cada lado es media, así que juntas forman la entera).
-   Nombre en vertical, del color de su rareza con trazo de tinta, y
-   la cuenta en una chapa abajo. Las de elemento siguen como estaban.
+   Filtros por rareza: pestañas de madera en horizontal
+   (assets/ui/filtro-rareza-h.webp, de assets/filtros-tabs.jpg girada),
+   en dos filas de tres. Nombre del color de su rareza con trazo de
+   tinta y la cuenta en una chapa abajo. Las de elemento siguen igual.
    ========================================================= */
-.rar-tabs { gap: 0; justify-content: center; overflow: visible; margin: 2px 0 12px; padding: 4px 0 6px; }
+.rar-tabs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px 8px; overflow: visible; margin: 2px 0 14px; padding: 4px 0 6px; }
 .rar-tabs .rar-f {
-  position: relative; flex: 1 1 0; min-width: 0; max-width: 70px; aspect-ratio: 149 / 274; padding: 0; border: 0; border-radius: 0;
-  background: url(assets/ui/filtro-rareza.webp) center / 100% 100% no-repeat; box-shadow: none;
+  position: relative; min-width: 0; aspect-ratio: 270 / 127; padding: 0; border: 0; border-radius: 0;
+  background: url(assets/ui/filtro-rareza-h.webp) center / 100% 100% no-repeat; box-shadow: none;
   filter: brightness(0.88) saturate(0.85) drop-shadow(0 3px 0 rgba(10,8,30,0.45)); transition: transform 0.15s cubic-bezier(0.3, 1.6, 0.5, 1), filter 0.15s;
 }
-.rar-tabs .rar-f.on { background: url(assets/ui/filtro-rareza.webp) center / 100% 100% no-repeat; box-shadow: none; transform: translateY(-4px); filter: drop-shadow(0 3px 0 rgba(10,8,30,0.45)) drop-shadow(0 0 7px var(--rc)); z-index: 1; }
+.rar-tabs .rar-f.on { background: url(assets/ui/filtro-rareza-h.webp) center / 100% 100% no-repeat; box-shadow: none; transform: translateY(-3px); filter: drop-shadow(0 3px 0 rgba(10,8,30,0.45)) drop-shadow(0 0 7px var(--rc)); z-index: 1; }
 .rar-tabs .rf-n {
-  position: absolute; left: 50%; top: 47%; transform: translate(-50%, -50%) rotate(180deg); writing-mode: vertical-rl; white-space: nowrap;
-  font: 400 clamp(0.62rem, 2.9vw, 0.95rem) 'Lilita One', sans-serif; color: color-mix(in srgb, var(--rc) 60%, #fff); letter-spacing: 0.02em;
+  position: absolute; left: 50%; top: 46%; transform: translate(-50%, -50%); white-space: nowrap;
+  font: 400 clamp(0.8rem, 3.6vw, 1.05rem) 'Lilita One', sans-serif; color: color-mix(in srgb, var(--rc) 60%, #fff); letter-spacing: 0.02em;
   -webkit-text-stroke: 3px var(--ink); paint-order: stroke fill; text-shadow: 0 2px 0 var(--ink);
 }
 .rar-tabs .rar-f.on .rf-n { color: #fff; }
 .rar-tabs .rar-f small, .rar-tabs .rar-f.on small {
-  position: absolute; left: 50%; bottom: 3%; transform: translateX(-50%); padding: 0 5px; border-radius: 7px; white-space: nowrap;
-  background: var(--ui-panel-bg); border: 2px solid var(--rc); color: #fff; font-size: 0.58rem; line-height: 1.25;
+  position: absolute; left: 50%; bottom: -7px; transform: translateX(-50%); padding: 0 6px; border-radius: 7px; white-space: nowrap;
+  background: var(--ui-panel-bg); border: 2px solid var(--rc); color: #fff; font-size: 0.6rem; line-height: 1.25;
 }
 .rar-tabs .rar-f:active { transform: translateY(1px); }
 
@@ -1725,3 +1725,42 @@ x-ico.off { filter: grayscale(1) brightness(0.45); opacity: 0.75; }
 .tn-prize > span > b { width: 100%; font: 400 1.1rem 'Lilita One', sans-serif; color: var(--ui-gold); text-shadow: 0 2px 0 var(--ink); }
 .tn-prize > span > small { width: 100%; font-size: 0.8rem; color: var(--muted); }
 .tn-go { display: block; width: 100%; font-size: 1.4rem; margin-bottom: 8px; }
+
+/* =========================================================
+   Tienda: cartas con el fondo de su rareza
+   (assets/ui/fondo-carta-<rareza>, de assets/fondos-interior-cartas-tiendas.jpg)
+   y encima la cinta de su rareza (assets/ui/cinta-<rareza>, de
+   assets/cintas-tipo-cartas.jpg) con el nombre en español.
+   Titulares de la tienda en Titan One.
+   ========================================================= */
+.sh-offers { gap: 30px 10px; padding-top: 18px; }
+.sh-offer[class*=" r-"] {
+  border: 18px solid transparent; border-image-slice: 12% fill; border-image-width: 18px; border-image-outset: 0; border-image-repeat: stretch;
+  padding: 50px 0 4px;
+}
+.sh-offer.r-comun { border-image-source: url(assets/ui/fondo-carta-comun.webp); }
+.sh-offer.r-rara { border-image-source: url(assets/ui/fondo-carta-rara.webp); }
+.sh-offer.r-epica { border-image-source: url(assets/ui/fondo-carta-epica.webp); }
+.sh-offer.r-mitica { border-image-source: url(assets/ui/fondo-carta-mitica.webp); }
+.sh-offer.r-legendaria { border-image-source: url(assets/ui/fondo-carta-legendaria.webp); }
+.sh-offer .sh-rar {
+  top: -34px; width: 88%; aspect-ratio: 200 / 126; display: grid; place-items: center; padding: 0 0 12%; z-index: 2;
+  border: 0; border-radius: 0; background: url(assets/ui/cinta-comun.webp) center / 100% 100% no-repeat;
+  font: 400 clamp(0.66rem, 3vw, 0.85rem) 'Titan One', 'Lilita One', sans-serif; color: #fff; letter-spacing: 0.03em;
+  -webkit-text-stroke: 3px var(--ink); paint-order: stroke fill; text-shadow: 0 2px 0 var(--ink);
+}
+.sh-offer.r-rara .sh-rar { background-image: url(assets/ui/cinta-rara.webp); }
+.sh-offer.r-epica .sh-rar { background-image: url(assets/ui/cinta-epica.webp); }
+.sh-offer.r-mitica .sh-rar { background-image: url(assets/ui/cinta-mitica.webp); }
+.sh-offer.r-legendaria .sh-rar { background-image: url(assets/ui/cinta-legendaria.webp); }
+.sh-offer .sh-new { top: 2px; right: -12px; z-index: 3; }
+.sh-head h3 { font-family: 'Titan One', 'Lilita One', sans-serif; letter-spacing: 0.02em; }
+
+/* portal de luz bajo el cofre al abrirlo (assets/chests/portal-<tipo>) */
+.cfx-portal {
+  position: absolute; left: 50%; top: 66%; width: 190%; height: auto; pointer-events: none;
+  transform: translate(-50%, -50%) scale(0.2); opacity: 0; transition: transform 0.5s cubic-bezier(0.3, 1.4, 0.5, 1), opacity 0.3s;
+}
+.chest-fx.open .cfx-portal { transform: translate(-50%, -50%) scale(1); opacity: 1; animation: cfxPortal 2.4s ease-in-out 0.5s infinite; }
+@keyframes cfxPortal { 50% { filter: brightness(1.25) drop-shadow(0 0 14px var(--cc)); } }
+.chest-pic-portal { position: absolute; left: 50%; top: 68%; width: 210px; transform: translate(-50%, -50%); pointer-events: none; }
