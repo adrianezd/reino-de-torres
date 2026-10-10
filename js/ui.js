@@ -528,8 +528,11 @@ function unitTraits(u) {
   if (u.mixed) t.push(['📍', 'Variedad', '+' + Math.round(u.mixed * 100) + '% por cada vecina distinta']);
   if (u.edge) t.push(['📍', 'Borde', '+' + Math.round(u.edge * 100) + '% en las casillas de fuera']);
   if (u.lone) t.push(['📍', 'Solitaria', '+' + Math.round(u.lone * 100) + '% sin tropas al lado']);
+  if (u.wild) t.push(['✨', 'Comodín', 'Se fusiona con cualquier tropa de su rango'], ['🎲', 'Resuena', Math.round(u.wild.echo * 100) + '% de subir 2 rangos']);
+  if (u.interest) t.push(['💧', 'Intereses', Math.round(u.interest.pct * 100) + '% del maná cada ' + u.interest.every + ' s']);
+  if (u.wolves) t.push(['🐺', 'Manada', u.wolves.bites + ' mordiscos por lobo, más con rango']);
   if (u.execute) t.push(['💀', 'Remate', 'Bajo el ' + Math.round(u.execute * 100) + '% cae al instante']);
-  if (u.dmg) t.push(['🎯', 'Objetivo', u.target === 'strong' ? 'El más fuerte' : 'El primero']);
+  if (u.dmg && !u.wolves) t.push(['🎯', 'Objetivo', u.target === 'strong' ? 'El más fuerte' : 'El primero']);
   return t;
 }
 // Cómo se consigue una tropa que aún no tienes.
@@ -566,6 +569,8 @@ function cardGainRows(u, lv) {
   if (u.poison) rows.push([u.element === 'fuego' ? '🔥' : '☠️', u.element === 'fuego' ? 'Quema/s' : 'Veneno/s', Math.round(u.poison.dps * m(lv)), Math.round(u.poison.dps * m(lv + 1))]);
   if (u.manaGen) rows.push(['💧', 'Maná', Math.round(u.manaGen.amount * m(lv)), Math.round(u.manaGen.amount * m(lv + 1))]);
   if (u.buff) rows.push(['🎵', 'Velocidad %', Math.round(u.buff.speed * m(lv) * 100), Math.round(u.buff.speed * m(lv + 1) * 100)]);
+  if (u.wild) rows.push(['🎲', 'Resuena %', Math.round(u.wild.echo * m(lv) * 100), Math.round(u.wild.echo * m(lv + 1) * 100)]);
+  if (u.interest) rows.push(['🔒', 'Tope', Math.round(u.interest.cap * m(lv)), Math.round(u.interest.cap * m(lv + 1))]);
   return rows;
 }
 function showCardModal(id, tab) {
@@ -582,7 +587,9 @@ function showCardModal(id, tab) {
   var gain = maxed ? ''
     : u.dmg ? '<span class="uc-gain">⚔️ ' + dmgAt(c.lv) + ' → <b>' + dmgAt(c.lv + 1) + '</b></span>'
     : u.manaGen ? '<span class="uc-gain">💧 ' + manaAt(c.lv) + ' → <b>' + manaAt(c.lv + 1) + '</b></span>'
-    : u.buff ? '<span class="uc-gain">🎵 ' + buffAt(c.lv) + '% → <b>' + buffAt(c.lv + 1) + '%</b></span>' : '';
+    : u.buff ? '<span class="uc-gain">🎵 ' + buffAt(c.lv) + '% → <b>' + buffAt(c.lv + 1) + '%</b></span>'
+    : u.wild ? '<span class="uc-gain">🎲 ' + Math.round(u.wild.echo * (1 + CARD_BONUS * (c.lv - 1)) * 100) + '% → <b>' + Math.round(u.wild.echo * (1 + CARD_BONUS * c.lv) * 100) + '%</b></span>'
+    : u.interest ? '<span class="uc-gain">🔒 ' + Math.round(u.interest.cap * (1 + CARD_BONUS * (c.lv - 1))) + ' → <b>' + Math.round(u.interest.cap * (1 + CARD_BONUS * c.lv)) + '</b></span>' : '';
   var html = '<div class="modal-card unit-card rar-' + u.rarity + '" style="--rc:' + rar.color + ';--ec:' + el.color + '">' +
     '<button class="uc-x" id="mcX" aria-label="Cerrar">✕</button>' +
     '<div class="uc-hero"><div class="uc-rays"></div><img class="uc-img" src="' + unitIcon(id, Math.min(7, c.lv), 220) + '" alt=""></div>' +
@@ -623,6 +630,9 @@ function showCardModal(id, tab) {
 function unitStatsHtml(u, lv) {
   var mult = 1 + CARD_BONUS * (lv - 1), dmg = Math.round((u.dmg || 0) * mult);
   var stat = function (icon, val, label) { return '<div class="ps-stat"><i>' + icon + '</i><b>' + val + '</b><small>' + label + '</small></div>'; };
+  if (u.wolves) return stat('⚔️', dmg, 'Mordisco') + stat('🐺', u.wolves.bites, 'Mordiscos') + stat('⏱️', String(Math.round(10 / u.rate) / 10).replace('.', ',') + ' s', 'Cada lobo');
+  if (u.wild) return stat('✨', 'Todas', 'Fusión') + stat('🎲', Math.round(u.wild.echo * mult * 100) + '%', 'Resuena') + stat('⬆', '+2', 'Rangos');
+  if (u.interest) return stat('💧', Math.round(u.interest.pct * 100) + '%', 'Interés') + stat('⏱️', u.interest.every + ' s', 'Cada') + stat('🔒', Math.round(u.interest.cap * mult), 'Tope');
   return u.dmg
     ? stat('⚔️', dmg, 'Daño') + stat('⏱️', u.rate, 'Disparos/s') + stat('📈', Math.round(dmg * u.rate), 'Daño/s')
     : u.manaGen
@@ -657,12 +667,14 @@ function startCardDemo(cv, id) {
   if (!cv) return;
   var W = 6, H = 2.5, PY = 1.9;
   var geo = makeGeo({ W: W, H: H, x0: 2.5, y0: 0.4, cw: 1, ch: 1, way: [{ x: -0.6, y: PY }, { x: W + 0.6, y: PY }] });
-  var deck = UNITS[id].buff ? [id, 'lyra'] : [id];
+  var pair = UNITS[id].buff || UNITS[id].wild;
+  var deck = pair ? [id, 'lyra'] : [id];
   var lv = {}; deck.forEach(function (k) { lv[k] = meta.cards[k] ? meta.cards[k].lv : 1; });
   var b = new Board({ name: 'demo', deck: deck, cardLv: lv, lives: { v: 999, max: 999 }, geo: geo, mana: 0 });
   b.tiles = {};
   b.cells[0] = { id: id, rank: 1, cd: 0.3, frozen: 0, anim: 0, gen: UNITS[id].manaGen ? UNITS[id].manaGen.every - 1.2 : 0 };
-  if (UNITS[id].buff) { b.cells[0].id = 'lyra'; b.cells[1] = { id: id, rank: 1, cd: 0, frozen: 0, anim: 0, gen: 1.5 }; }
+  if (pair) { b.cells[0].id = 'lyra'; b.cells[1] = { id: id, rank: 1, cd: 0, frozen: 0, anim: 0, gen: 1.5 }; }
+  if (UNITS[id].interest) { b.mana = 300; b.cells[0].gen = UNITS[id].interest.every - 1.2; }
   // vida de los monstruos: unos cuantos golpes de la tropa
   var dps = UNITS[b.cells[0].id].dmg ? b.unitDamage(0) * UNITS[b.cells[0].id].rate : 20;
   var kinds = ['blob', 'orco', 'ghost', 'brute'], nk = 0, spawnT = 0, last = 0;
@@ -695,6 +707,7 @@ function startCardDemo(cv, id) {
     b.enemies.slice().sort(function (p, q) { return p.y - q.y; }).forEach(function (e) {
       drawEnemy(dc, e, ENEMIES[e.kind].size * 0.82, t);
     });
+    b.wolves.forEach(function (w) { drawWolf(dc, w); });
     var keep = ctx; ctx = dc; // drawShot dibuja en el lienzo global
     b.shots.forEach(function (s2) { drawShot(s2, t); });
     ctx = keep;
@@ -1196,9 +1209,11 @@ function refreshUnitInfo() {
   var u = b.player.cells[i], d = UNITS[u.id];
   var aff = b.player.affinity(i);
   var bits = [];
-  if (d.dmg) bits.push('⚔️ ' + fmtNum(b.player.unitDamage(i)) + ' por golpe');
+  if (d.dmg) bits.push('⚔️ ' + fmtNum(b.player.unitDamage(i)) + (d.wolves ? ' por mordisco' : ' por golpe'));
   if (d.manaGen) bits.push('💧 +' + b.player.manaAmount(u) + ' cada ' + d.manaGen.every + ' s');
   if (d.buff) bits.push('🎵 +' + Math.round(b.player.buffSpeed(u) * 100) + '% vel. a vecinas');
+  if (d.interest) bits.push('💧 +' + b.player.interestAmount(u) + ' cada ' + d.interest.every + ' s');
+  if (d.wild) bits.push('✨ Se fusiona con cualquiera de rango ' + u.rank + ' · 🎲 ' + Math.round(b.player.echoChance() * 100) + '%');
   if (aff) bits.push(ELEMENTS[d.element].icon + ' Afinidad +' + Math.round(aff * AFFINITY_BONUS * 100) + '%');
   if (b.player.tiles[i]) bits.push(TILES[b.player.tiles[i]].icon + ' ' + TILES[b.player.tiles[i]].name);
   box.innerHTML = icons('<img src="' + unitIcon(u.id, u.rank, 72) + '" alt=""><div><b>' + esc(d.name) + ' · Rango ' + u.rank + '</b><small>' + esc(d.role) + ' · ' + bits.join(' · ') + '</small><small class="hint">Toca otra igual para fusionar o una casilla vacía para moverla</small></div>');

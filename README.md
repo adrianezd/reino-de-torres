@@ -31,6 +31,12 @@ Tower defense de fusión para móvil y escritorio, gratis y sin anuncios. Invoca
 
 Además, legendarias que solo salen en el cofre de oro (Ígnea, Aurora y Titán) y dos **míticas**, entre la épica y la legendaria (Común < Rara < Épica < Mítica < Legendaria; en el cofre de oro, 4 % por carta la mítica y 1,2 % la legendaria): **Bóreas**, dragón del invierno (❄️, área que frena muchísimo y a veces congela, con su remolino de hielo sobre el enemigo) y **Midas**, rey dorado (⚙️, lanza monedas que perforan, críticos con el medallón «Critical» y +4 de maná por cada baja suya, `bounty`). Su arte sale de `assets/boreas_*` y `assets/midas_*`. En la tienda solo salen las míticas que ya tienes.
 
+Tres cartas con mecánica propia, aún con dibujo provisional (`noArt` en `js/data.js`):
+
+- **Eco**, la Imitadora (épica, 🔮, `wild`): no ataca. Se fusiona con cualquier tropa de su mismo rango y el resultado es la otra tropa; con un 10 % (más con nivel de carta y mejora de partida, `echoChance` en `js/board.js`) resuena y sube dos rangos.
+- **Oria**, la Banquera (épica, ⚙️, `interest`): no ataca. Cada 5 s da un 3 % del maná guardado (más con el rango), con tope de 12 por rango (`interestAmount`).
+- **Garra**, Domadora de Lobos (mítica, 🌿, `wolves`, solo en el cofre de oro): en vez de disparar suelta un lobo al final del camino que corre hacia la entrada y muerde una vez a cada monstruo que se cruza (3 mordiscos, uno más cada dos rangos; un jefe gasta dos). El lobo usa `assets/fx/garra-lobo.webp` si existe y, si no, se dibuja por código (`drawWolf` en `js/art.js`).
+
 ## Lo que lo hace distinto
 
 - **Próxima oleada**: con un solo tablero, una franja arriba dice cuántos monstruos quedan y qué trae la siguiente oleada (monstruos, jefe y evento).

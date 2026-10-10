@@ -691,6 +691,8 @@ function drawBoard(b, L, now, isMain) {
     drawEnemy(ctx, e, (e.boss ? 0.42 : d.size) * (G.image ? 0.82 : 1) * grow, now);
     ctx.globalAlpha = 1;
   });
+  // lobos de Garra
+  b.wolves.forEach(function (w) { drawWolf(ctx, w); });
   // proyectiles
   b.shots.forEach(function (s) { drawShot(s, now); });
   // efectos
@@ -858,7 +860,7 @@ function drawCellAuras(b, G, now) {
     }
     if (d.mixed || d.edge || d.lone) { if (!(b.posBonus(i) > 0)) continue; a = 0.7 + pulse * 0.25; }
     else if (d.buff) { if (!(b.placeScore(i) > 0)) continue; a = 0.65 + pulse * 0.25; }
-    else if (d.manaGen) { if (!(u.atk > 0)) continue; a = Math.min(1, u.atk / 0.25); k = 1.1 - 0.2 * (u.atk / 0.5); }
+    else if (d.manaGen || d.interest) { if (!(u.atk > 0)) continue; a = Math.min(1, u.atk / 0.25); k = 1.1 - 0.2 * (u.atk / 0.5); }
     else { a = 0.4 + 0.5 * (u.recoil || 0); k = 1 + 0.12 * (u.recoil || 0); }
     if (u.frozen > 0) a *= 0.4;
     var w2 = s * 0.95 * k, h2 = w2 * pic.naturalHeight / pic.naturalWidth;

@@ -7,8 +7,18 @@
    La ventana sale sola al entrar con una versión nueva (meta.lastSeenVersion)
    y también desde Opciones.
    ========================================================= */
-var APP_VERSION = '1.11.0';
+var APP_VERSION = '1.12.0';
 var APP_PATCH_NOTES = [
+  {
+    version: '1.12.0',
+    summary: 'Tres cartas nuevas: Eco, Oria y Garra',
+    items: [
+      'Eco, la Imitadora (épica, arcano): no ataca, pero se fusiona con cualquier tropa de su mismo rango y se convierte en ella. A veces resuena y la tropa sube dos rangos de golpe.',
+      'Oria, la Banquera (épica, metal): no ataca. Cada 5 segundos te da un 3% del maná que tengas guardado, con un tope. Cuanto más ahorras, más gana.',
+      'Garra, Domadora de Lobos (mítica, naturaleza): suelta lobos que recorren el camino al revés y muerden a los monstruos que se cruzan. Con más rango, más mordiscos. Solo sale en el cofre de oro.',
+      'Por ahora llevan un dibujo provisional; su ilustración llega pronto.'
+    ]
+  },
   {
     version: '1.11.0',
     summary: 'Misiones diarias, camino de trofeos y mapa de la campaña',

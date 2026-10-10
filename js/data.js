@@ -34,6 +34,7 @@ Object.keys(RARITY).forEach(function (k) { RARITY[k].color = GAME_PALETTE.rariti
    efectos opcionales: slow, poison, splash, chain, crit, stun, bossMult,
    manaGen (no dispara: genera maná), buff (no dispara: acelera vecinos),
    pierce (ignora la armadura), bounty (maná extra por cada baja suya),
+   wild (comodín de fusión), interest (intereses del maná), wolves (lobos por el camino),
    stunPic / critPic (dibujo que salta sobre el enemigo al aturdirlo o con un crítico),
    target: 'first' | 'strong'
 */
@@ -110,6 +111,20 @@ var UNITS = {
     dmg: 130, rate: 0.32, proj: 'bullet', edge: 0.6, target: 'strong',
     desc: 'Lento pero demoledor. Siempre apunta al enemigo con más vida y en las casillas de fuera tiene mejor tiro.'
   },
+  // wild: comodín de fusión (echo: probabilidad de subir dos rangos al fusionarse)
+  eco: {
+    element: 'arcano', name: 'Eco', title: 'Imitadora', role: 'Comodín', rarity: 'epica', noArt: true,
+    color: '#b48bff', color2: '#f0e6ff', skin: '#efe2ff',
+    wild: { echo: 0.1 },
+    desc: 'No ataca. Se fusiona con cualquier tropa de su mismo rango y se convierte en ella. A veces resuena y la tropa sube dos rangos.'
+  },
+  // interest: cada every segundos da pct del maná guardado (tope: cap por rango)
+  oria: {
+    element: 'metal', name: 'Oria', title: 'Banquera', role: 'Intereses', rarity: 'epica', noArt: true,
+    color: '#e0b040', color2: '#fff3c4', skin: '#f3cfae',
+    interest: { every: 5, pct: 0.03, cap: 12 },
+    desc: 'No ataca. Cada 5 segundos te da un 3% del maná que tengas guardado, con un tope. Cuanto más ahorras, más gana.'
+  },
   ulric: {
     element: 'hielo', name: 'Ulric', title: 'Paladín', role: 'Mata jefes', rarity: 'legendaria',
     color: '#c9d4e6', color2: '#ffd34d', skin: '#f3cfae',
@@ -153,9 +168,16 @@ var UNITS = {
     color: '#7b6bff', color2: '#e6e1ff', skin: '#efe2ff',
     dmg: 58, rate: 0.9, proj: 'holy', execute: 0.25, target: 'first',
     desc: 'Estrellas que rematan: cualquier monstruo que no sea jefe y baje del 25% de vida cae al instante.'
+  },
+  // wolves: no dispara; suelta lobos que recorren el camino al revés (bites: mordiscos por lobo, speed: rapidez)
+  garra: {
+    element: 'naturaleza', name: 'Garra', title: 'Domadora de Lobos', role: 'Manada', rarity: 'mitica', chestOnly: true, noArt: true,
+    color: '#8a6a4a', color2: '#e8d9b0', skin: '#f0c9a0',
+    dmg: 80, rate: 0.28, wolves: { bites: 3, speed: 2.2 }, target: 'first',
+    desc: 'No dispara: suelta lobos que recorren el camino al revés y muerden a los monstruos que se cruzan. Con más rango, más mordiscos.'
   }
 };
-var UNIT_ORDER = ['lyra', 'brasa', 'nivea', 'doblon', 'rocco', 'volta', 'mirra', 'melodia', 'kaia', 'sombra', 'cronos', 'halcon', 'ulric', 'fenix', 'aurora', 'titan', 'boreas', 'midas', 'seren'];
+var UNIT_ORDER = ['lyra', 'brasa', 'nivea', 'doblon', 'rocco', 'volta', 'mirra', 'melodia', 'kaia', 'sombra', 'cronos', 'halcon', 'eco', 'oria', 'ulric', 'fenix', 'aurora', 'titan', 'boreas', 'midas', 'seren', 'garra'];
 UNIT_ORDER.forEach(function (id) { UNITS[id].id = id; });
 // tropas que pueden usar los rivales y aliados de la máquina
 var AI_UNITS = UNIT_ORDER.filter(function (id) { return !UNITS[id].chestOnly; });

@@ -127,6 +127,7 @@ function Board(opts) {
   this.shots = [];
   this.fx = [];
   this.meteors = []; // meteoros de Brann en el aire (el daño llega al caer)
+  this.wolves = [];  // lobos de Garra corriendo por el camino
   this.texts = [];
   this.charge = 0;
   this.aiTimer = 1;
@@ -155,6 +156,15 @@ Board.prototype.unitPower = function (id) {
 // maná que reparte una tropa de maná y velocidad que da una de apoyo (suben con el rango, la mejora de la partida y el nivel de carta)
 Board.prototype.manaAmount = function (u) {
   return Math.round(UNITS[u.id].manaGen.amount * u.rank * (1 + 0.25 * ((this.power[u.id] || 1) - 1)) * this.cardMult(u.id));
+};
+// intereses de Oria: un tanto por ciento del maná guardado, con tope (los dos suben con el rango)
+Board.prototype.interestAmount = function (u) {
+  var it = UNITS[u.id].interest, f = (1 + 0.25 * ((this.power[u.id] || 1) - 1)) * this.cardMult(u.id);
+  return Math.floor(Math.min(this.mana * it.pct * (1 + 0.5 * (u.rank - 1)), it.cap * u.rank) * f);
+};
+// probabilidad de que Eco resuene al fusionarse (sube con la mejora de la partida y el nivel de carta)
+Board.prototype.echoChance = function () {
+  return UNITS.eco.wild.echo * (1 + 0.5 * ((this.power.eco || 1) - 1)) * this.cardMult('eco');
 };
 Board.prototype.buffSpeed = function (u) {
   return UNITS[u.id].buff.speed * u.rank * (1 + 0.1 * ((this.power[u.id] || 1) - 1)) * this.cardMult(u.id);
@@ -238,7 +248,8 @@ Board.prototype.summon = function () {
 };
 Board.prototype.canMerge = function (a, b) {
   var u = this.cells[a], v = this.cells[b];
-  return a !== b && u && v && u.id === v.id && u.rank === v.rank && u.rank < MAX_RANK;
+  // Eco (wild) se fusiona con cualquier tropa de su mismo rango
+  return a !== b && u && v && u.rank === v.rank && u.rank < MAX_RANK && (u.id === v.id || !!UNITS[u.id].wild || !!UNITS[v.id].wild);
 };
 // Fusión dirigida: la tropa de destino conserva su tipo y sube un rango.
 // start: desde dónde sale volando la tropa que se funde (donde la soltaste
@@ -248,7 +259,11 @@ Board.prototype.merge = function (from, to, start) {
   var v = this.cells[to], src = this.cells[from], a = start || this.cc(from), p = this.cc(to);
   this.cells[from] = null;
   this.fx.push({ type: 'fly', id: src.id, rank: src.rank, x1: a.x, y1: a.y, x2: p.x, y2: p.y, life: MERGE_FLY, max: MERGE_FLY });
+  // Eco: el resultado es la otra tropa, y a veces resuena y sube dos rangos
+  var echo = !!(UNITS[src.id].wild || UNITS[v.id].wild);
+  if (UNITS[v.id].wild && !UNITS[src.id].wild) v.id = src.id;
   v.rank++;
+  if (echo && v.rank < MAX_RANK && Math.random() < this.echoChance()) { v.rank++; v.echoed = true; }
   this.merges++;
   this.maxRank = Math.max(this.maxRank, v.rank);
   v.anim = 0; v.drop = 0;
@@ -276,6 +291,7 @@ Board.prototype.mergeArriveFx = function (i, u) {
   if (art(fk)) this.fx.push({ type: 'pic', key: fk, x: p.x, y: p.y - (fk === 'fx/fusion' ? 0.12 : 0), size: fk === 'fx/fusion' ? 1.15 : 1.05, rot: 0, grow: 0.45, life: 0.55, max: 0.55 });
   else this.addFx('burst', p, '#ffd166');
   this.addText(p.x, p.y - 0.45, 'Rango ' + u.rank, '#ffd166', true);
+  if (u.echoed) { u.echoed = false; this.addText(p.x, p.y - 0.85, '¡Resuena!', '#d8c4ff', true); this.addFx('burst', p, '#b48bff'); }
 };
 Board.prototype.powerUp = function (id) {
   var lv = this.power[id] || 1;
@@ -399,6 +415,7 @@ Board.prototype.findTarget = function (mode, exclude) {
 var FLASH_SIZE = { holy: 0.3, shadow: 0.36, bullet: 0.5 };
 Board.prototype.fire = function (i, u) {
   var d = UNITS[u.id];
+  if (d.wolves) return this.releaseWolf(i, u);
   var target = this.findTarget(d.target);
   if (!target) return false;
   var from = this.cc(i);
@@ -428,6 +445,18 @@ Board.prototype.fire = function (i, u) {
     this.fx.push({ type: 'pic', key: mk, x: from.x + Math.cos(u.aim) * 0.32, y: from.y - 0.12 + Math.sin(u.aim) * 0.32,
       size: FLASH_SIZE[d.proj] || 0.46, rot: FX_TURNS[mk] ? u.aim : 0, grow: 0.5, life: 0.16, max: 0.16 });
   }
+  return true;
+};
+// Garra suelta un lobo al final del camino, que corre hacia la entrada
+Board.prototype.releaseWolf = function (i, u) {
+  if (!this.enemies.length) return false;
+  var d = UNITS[u.id], p = this.cc(i), start = this.geo.len - 0.15, at = this.pos(start);
+  u.aim = Math.atan2(at.y - p.y, at.x - p.x);
+  u.recoil = 1;
+  u.atk = 0.5;
+  this.wolves.push({ d: start, x: at.x, y: at.y, dir: -1, t: 0, biteT: 0, bitten: {},
+    bites: d.wolves.bites + Math.floor((u.rank - 1) / 2), dmg: this.unitDamage(i), def: d, unit: u });
+  this.fx.push({ type: 'pic', key: 'fx/muerte-puf', x: at.x, y: at.y - 0.05, size: 0.55, rot: 0, grow: 0.4, life: 0.4, max: 0.4 });
   return true;
 };
 Board.prototype.nearestTo = function (p, exclude, maxD) {
@@ -544,6 +573,21 @@ Board.prototype.update = function (dt) {
       }
       continue;
     }
+    if (d.interest) {
+      // Oria: intereses del maná guardado
+      u.gen += dt;
+      if (u.gen >= d.interest.every) {
+        u.gen = 0;
+        var gain = this.interestAmount(u);
+        if (gain > 0) {
+          this.mana += gain;
+          u.atk = 0.5; u.recoil = 1;
+          var pi = this.cc(i);
+          this.addText(pi.x, pi.y - 0.5, '+' + gain + ' 💧', GAME_PALETTE.goldYellow);
+        }
+      }
+      continue;
+    }
     if (d.buff) {
       // la bardo toca: pose de ataque a ratos
       u.gen += dt;
@@ -608,6 +652,32 @@ Board.prototype.update = function (dt) {
     }
   }
   this.enemies = this.enemies.filter(function (e) { return !e.dead; });
+
+  // lobos de Garra: corren por el camino al revés y muerden una vez a cada
+  // monstruo que se cruzan (un jefe gasta dos mordiscos)
+  var wsp = this.geo.len / BASE_CROSS_TIME;
+  for (k = this.wolves.length - 1; k >= 0; k--) {
+    var w = this.wolves[k];
+    w.t += dt;
+    if (w.biteT > 0) w.biteT -= dt;
+    w.d -= wsp * w.def.wolves.speed * dt;
+    var wp = this.pos(Math.max(0, w.d));
+    if (Math.abs(wp.x - w.x) > 0.001) w.dir = wp.x < w.x ? -1 : 1;
+    w.x = wp.x; w.y = wp.y;
+    for (var q = 0; q < this.enemies.length && w.bites > 0; q++) {
+      var en = this.enemies[q];
+      if (en.dead || w.bitten[en.id] || Math.abs(en.d - w.d) > 0.3) continue;
+      w.bitten[en.id] = true;
+      w.bites -= en.boss ? 2 : 1;
+      w.biteT = 0.18;
+      this.addFx('boom', { x: en.x, y: en.y }, w.def.color2, 0.3);
+      this.applyHit(en, w.dmg, w.def, w.unit);
+    }
+    if (w.bites <= 0 || w.d <= 0) {
+      this.wolves.splice(k, 1);
+      this.fx.push({ type: 'pic', key: 'fx/muerte-puf', x: w.x, y: w.y - 0.05, size: 0.5, rot: 0, grow: 0.4, life: 0.4, max: 0.4 });
+    }
+  }
 
   // efectos
   for (k = this.fx.length - 1; k >= 0; k--) {

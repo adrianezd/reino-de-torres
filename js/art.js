@@ -75,6 +75,54 @@ Object.keys(IMG_LIST).forEach(function (dir) {
   im.src = 'assets/tablero.' + exts[0];
 })(['webp', 'png', 'jpg', 'jpeg']);
 function art(key) { var im = IMG[key]; return im && im.ready ? im : null; }
+// lobo de Garra (assets/fx/garra-lobo.webp, mirando a la derecha); si aún no está, se dibuja
+(function () {
+  var im = new Image();
+  im.onload = function () { im.ready = true; };
+  im.src = 'assets/fx/garra-lobo.webp';
+  IMG['fx/garra-lobo'] = im;
+})();
+/* Lobo de Garra corriendo por el camino: w.dir dice hacia dónde mira y
+   w.biteT, si está mordiendo (se lanza hacia delante). */
+function drawWolf(c, w) {
+  var r = 0.17, run = Math.sin(w.t * 24);
+  c.save();
+  c.translate(w.x, w.y - 0.04 - Math.abs(run) * 0.03);
+  c.scale(w.dir < 0 ? -1 : 1, 1);
+  if (w.biteT > 0) { c.translate(r * 0.4, 0); c.rotate(-0.2); }
+  c.fillStyle = 'rgba(0,0,0,0.3)'; c.beginPath(); c.ellipse(0, r * 0.95, r * 1.2, r * 0.25, 0, 0, Math.PI * 2); c.fill();
+  var pic = art('fx/garra-lobo');
+  if (pic) {
+    var s = r * 3.6, h = s * pic.naturalHeight / pic.naturalWidth;
+    c.drawImage(pic, -s / 2, r * 1.0 - h, s, h);
+    c.restore();
+    return;
+  }
+  // patas que corren
+  c.strokeStyle = '#3f372f'; c.lineWidth = r * 0.2; c.lineCap = 'round';
+  [[-0.6, 1], [-0.3, -1], [0.35, 1], [0.65, -1]].forEach(function (l) {
+    c.beginPath(); c.moveTo(r * l[0], r * 0.2); c.lineTo(r * (l[0] + run * 0.3 * l[1]), r * 0.85); c.stroke();
+  });
+  var fur = vgrad(c, -r * 0.6, r * 0.5, '#c4bdb0', '#6e675c');
+  // cola
+  c.beginPath(); c.moveTo(-r * 0.75, -r * 0.1);
+  c.quadraticCurveTo(-r * 1.55, -r * 0.45 + run * r * 0.15, -r * 1.4, -r * 0.8);
+  c.quadraticCurveTo(-r * 1.1, -r * 0.25, -r * 0.7, r * 0.15); c.closePath();
+  c.fillStyle = fur; c.fill(); ink(c, r * 0.08);
+  // cuerpo
+  c.beginPath(); c.ellipse(0, 0, r * 0.95, r * 0.5, 0, 0, Math.PI * 2); c.fillStyle = fur; c.fill(); ink(c, r * 0.09);
+  // orejas
+  c.beginPath(); c.moveTo(r * 0.7, -r * 0.55); c.lineTo(r * 0.78, -r * 1.05); c.lineTo(r * 1.0, -r * 0.65); c.closePath();
+  c.fillStyle = '#8a8478'; c.fill(); ink(c, r * 0.07);
+  // cabeza y hocico
+  c.beginPath(); c.ellipse(r * 0.95, -r * 0.35, r * 0.42, r * 0.36, 0, 0, Math.PI * 2); c.fillStyle = fur; c.fill(); ink(c, r * 0.08);
+  c.beginPath(); c.moveTo(r * 1.15, -r * 0.48); c.lineTo(r * 1.7, -r * 0.28); c.lineTo(r * 1.15, -r * 0.1); c.closePath();
+  c.fillStyle = '#e2dccf'; c.fill(); ink(c, r * 0.07);
+  c.fillStyle = '#1a1430'; circle(c, r * 1.68, -r * 0.29, r * 0.07); c.fill();
+  // ojo ámbar
+  c.fillStyle = '#ffd34d'; circle(c, r * 1.02, -r * 0.45, r * 0.08); c.fill();
+  c.restore();
+}
 
 /* Poses del tablero: cuerpo entero sin chapa, en reposo y disparando,
    con el mismo encuadre (pies abajo en el centro) para que no salte.
