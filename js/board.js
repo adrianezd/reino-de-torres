@@ -111,6 +111,7 @@ function Board(opts) {
   this.deck = opts.deck.slice();
   this.cardLv = opts.cardLv || {};
   this.commander = opts.commander || 'aria';
+  this.cmdLv = opts.cmdLv || 1;          // nivel del comandante: más fuerza en su habilidad
   this.lives = opts.lives;               // objeto compartido { v, max }
   this.biome = opts.biome || 'prado';
   this.geo = opts.geo || VECTOR_GEO;
@@ -289,20 +290,21 @@ Board.prototype.useCommander = function () {
   if (this.charge < 1) return false;
   this.charge = 0;
   this.cmds++;
-  var cmd = this.commander;
+  var cmd = this.commander, pw = cmdPower(cmd, this.cmdLv);
   if (cmd === 'aria') {
-    this.enemies.forEach(function (e) { e.stun = Math.max(e.stun, 3); e.stunIce = true; });
+    this.enemies.forEach(function (e) { e.stun = Math.max(e.stun, pw); e.stunIce = true; });
     this.addFx('flash', { x: this.geo.W / 2, y: this.geo.H / 2 }, '#bfefff');
     this.addSweep('fx/ventisca');
   } else if (cmd === 'merlo') {
-    this.mana += 120;
-    this.addText(this.geo.W / 2, this.geo.H / 2, '+120 💧', '#7dfcff', true);
+    var gain = Math.round(pw);
+    this.mana += gain;
+    this.addText(this.geo.W / 2, this.geo.H / 2, '+' + gain + ' 💧', '#7dfcff', true);
     this.addFx('flash', { x: this.geo.W / 2, y: this.geo.H / 2 }, '#b26bff');
     this.addSweep('fx/marea');
   } else if (cmd === 'brann') {
     // caen uno tras otro sobre los más adelantados; el daño llega al tocar suelo
     var targets = this.enemies.slice().sort(function (a, b) { return b.d - a.d; }).slice(0, 6);
-    var dmg = 520 * hpScale();
+    var dmg = pw * hpScale();
     targets.forEach(function (e, k) {
       var t = METEOR_FALL + k * 0.09;
       this.meteors.push({ e: e, x: e.x, y: e.y, t: t, dmg: dmg });

@@ -159,6 +159,16 @@ var CARD_MAX = 10;
 var CARD_BONUS = 0.08;
 function cardsNeeded(lv) { return [0, 2, 4, 8, 12, 18, 26, 36, 50, 70][lv] || 999; }
 function cardUpgradeGold(lv) { return [0, 40, 100, 200, 400, 700, 1100, 1700, 2600, 4000][lv] || 99999; }
+/* Torneo: tus cartas y las del rival, todas al nivel de torneo de su rareza
+   (con la misma fuerza más o menos: común 8 = rara 6 = épica 4 = mítica 2 =
+   legendaria 1) y los dos comandantes al mismo nivel. */
+var TOURNEY_LV = { comun: 8, rara: 6, epica: 4, mitica: 2, legendaria: 1 };
+var TOURNEY_CMD_LV = 5;
+function tourneyLevels() {
+  var o = {};
+  UNIT_ORDER.forEach(function (id) { o[id] = TOURNEY_LV[UNITS[id].rarity]; });
+  return o;
+}
 
 var ENEMIES = {
   blob:  { name: 'Gelatina', color: '#6fd86a', hp: 1,   speed: 1,    size: 0.34, reward: 8 },
@@ -225,9 +235,11 @@ var BIOMES = {
 var CHESTS = {
   madera: { name: 'Cofre de madera', gold: [40, 80],   gems: [0, 2],  cards: 6,  rare: 0.15, epic: 0.03, legend: 0,    myth: 0,     color: '#a0663a', price: 15, time: 300 },
   plata:  { name: 'Cofre de plata',  gold: [90, 160],  gems: [1, 4],  cards: 12, rare: 0.3,  epic: 0.08, legend: 0,    myth: 0,     color: '#c9d4e6', price: 40, time: 3600 },
-  oro:    { name: 'Cofre de oro',    gold: [200, 320], gems: [4, 10], cards: 24, rare: 0.4,  epic: 0.15, legend: 0.012, myth: 0.04, color: '#ffd166', price: 90, time: 10800 }
+  oro:    { name: 'Cofre de oro',    gold: [200, 320], gems: [4, 10], cards: 24, rare: 0.4,  epic: 0.15, legend: 0.012, myth: 0.04, color: '#ffd166', price: 90, time: 10800 },
+  // de comandante: pocas cartas, cada una de un comandante al azar (cmd: true)
+  comandante: { name: 'Cofre de comandante', gold: [30, 60], gems: [0, 1], cards: 3, cmd: true, rare: 0, epic: 0, legend: 0, myth: 0, color: '#a35bff', price: 60, time: 7200 }
 };
-var CHEST_ORDER = ['madera', 'plata', 'oro'];
+var CHEST_ORDER = ['madera', 'plata', 'oro', 'comandante'];
 var CHEST_SLOTS = 4;          // huecos de cofre de la pantalla principal
 var SKIP_SECONDS = 360;       // abrir ya: 1 gema por cada 6 minutos que falten
 
@@ -277,13 +289,29 @@ var TILES = {
   atalaya: { name: 'Atalaya', icon: '🏹', color: '#ffd166', desc: '+30% de velocidad de ataque.', speed: 0.3 }
 };
 
-/* Comandantes: habilidad que se carga con el tiempo. */
+/* Comandantes: habilidad que se carga con el tiempo. power: fuerza a nivel 1
+   (aria: segundos de congelación · merlo: maná · brann: daño del meteoro). */
 var COMMANDERS = {
-  aria:  { name: 'Aria',  title: 'Capitana de Escarcha', color: '#7fd6ff', icon: '🌨️', pic: 'assets/commanders/aria.webp?v=2', ability: 'Ventisca',  desc: 'Congela a todos los enemigos 3 segundos.', cd: 30 },
-  merlo: { name: 'Merlo', title: 'Archimago',            color: '#b26bff', icon: '✨', pic: 'assets/commanders/merlo.webp?v=2', ability: 'Marea de maná', desc: 'Te da 120 de maná al instante.', cd: 35 },
-  brann: { name: 'Brann', title: 'General Enano',        color: '#ff8f3c', icon: '☄️', pic: 'assets/commanders/brann.webp?v=2', ability: 'Meteoro',   desc: 'Un meteorito golpea a los enemigos más adelantados.', cd: 28 }
+  aria:  { name: 'Aria',  title: 'Capitana de Escarcha', color: '#7fd6ff', icon: '🌨️', pic: 'assets/commanders/aria.webp?v=2', ability: 'Ventisca',  desc: 'Congela a todos los enemigos 3 segundos.', power: 3, cd: 30 },
+  merlo: { name: 'Merlo', title: 'Archimago',            color: '#b26bff', icon: '✨', pic: 'assets/commanders/merlo.webp?v=2', ability: 'Marea de maná', desc: 'Te da 120 de maná al instante.', power: 120, cd: 35 },
+  brann: { name: 'Brann', title: 'General Enano',        color: '#ff8f3c', icon: '☄️', pic: 'assets/commanders/brann.webp?v=2', ability: 'Meteoro',   desc: 'Un meteorito golpea a los enemigos más adelantados.', power: 520, cd: 28 }
 };
 var COMMANDER_ORDER = ['aria', 'merlo', 'brann'];
+// niveles de comandante: cada nivel, +CMD_BONUS de fuerza en su habilidad.
+// Sus cartas salen solo en el cofre de comandante (pocas), por eso piden menos.
+var CMD_MAX = 10;
+var CMD_BONUS = 0.08;
+function cmdMult(lv) { return 1 + CMD_BONUS * ((lv || 1) - 1); }
+function cmdCardsNeeded(lv) { return [0, 1, 2, 3, 4, 5, 7, 9, 12, 15][lv] || 999; }
+function cmdUpgradeGold(lv) { return [0, 100, 250, 500, 900, 1400, 2100, 3000, 4200, 6000][lv] || 99999; }
+// fuerza de la habilidad a un nivel, y su texto
+function cmdPower(k, lv) { return COMMANDERS[k].power * cmdMult(lv); }
+function cmdDesc(k, lv) {
+  var p = cmdPower(k, lv);
+  if (k === 'aria') return 'Congela a todos los enemigos ' + String(Math.round(p * 10) / 10).replace('.', ',') + ' segundos.';
+  if (k === 'merlo') return 'Te da ' + Math.round(p) + ' de maná al instante.';
+  return 'Un meteorito golpea a los enemigos más adelantados con un ' + Math.round(cmdMult(lv) * 100) + '% de fuerza.';
+}
 
 /* Eventos que pueden tocar al empezar una oleada (a partir de la 3). */
 var WAVE_EVENTS = [

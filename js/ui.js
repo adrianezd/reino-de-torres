@@ -121,7 +121,8 @@ function renderMenu(name, arg) {
       ['Fácil', 'Normal', 'Difícil'].map(function (n, i) {
         return '<button class="big-choice d' + i + '" data-duel="' + i + '"><span><b>' + ['🙂', '😠', '😈'][i] + ' Rival ' + n + '</b><small>' + rivalCardsText(DUEL_CARD_OFFSET[i]) + '</small><small>Premio: ' + (25 + i * 5) + ' 🏆 · ' + (60 + i * 40) + ' 🪙 · cofre de ' + (i >= 2 ? 'oro' : 'plata') + '</small></span></button>';
       }).join('') +
-      '<p class="muted">Victorias ' + meta.duelWins + ' · Derrotas ' + meta.duelLosses + '</p>';
+      '<button class="big-choice d3" data-tourney="1"><span><b>🏅 Torneo</b><small>Tus cartas y las del rival al mismo nivel: común 8 · rara 6 · épica 4 · mítica 2 · legendaria 1. Comandantes al nivel ' + TOURNEY_CMD_LV + '</small><small>Premio: 120 🪙 · 4 💎 · cofre de comandante</small></span></button>' +
+      '<p class="muted">Duelos: victorias ' + meta.duelWins + ' · derrotas ' + meta.duelLosses + '<br>Torneo: victorias ' + (meta.tourneyWins || 0) + ' · derrotas ' + (meta.tourneyLosses || 0) + '</p>';
   } else if (name === 'collection') {
     html = backBar('Mazo', true) + deckTabs('collection') +
       '<p class="lead">Tu mazo (5 tropas). Toca una carta para verla, cambiarla o mejorarla.</p>' +
@@ -132,16 +133,25 @@ function renderMenu(name, arg) {
   } else if (name === 'commanders') {
     // tarjetas con el comandante de cuerpo entero; en los medallones de abajo
     // se enciende el suyo. Debajo, la habilidad del elegido con su efecto.
-    var cs = COMMANDERS[meta.commander];
+    var cs = COMMANDERS[meta.commander], cc = meta.cmdCards[meta.commander];
+    var cNeed = cmdCardsNeeded(cc.lv), cGold = cmdUpgradeGold(cc.lv), cMax = cc.lv >= CMD_MAX;
+    var cWhy = cMax ? '' : cc.n < cNeed ? (cNeed - cc.n === 1 ? 'Falta 1 carta' : 'Faltan ' + (cNeed - cc.n) + ' cartas') : meta.gold < cGold ? 'Te faltan ' + (cGold - meta.gold) + ' 🪙' : '';
     html = backBar('Mazo', true) + deckTabs('commanders') + '<p class="lead">Su habilidad se carga durante la partida. Pulsa su retrato para usarla.</p>' +
       '<div class="cmd-cards">' + COMMANDER_ORDER.map(function (k, i) {
         var c = COMMANDERS[k];
         return '<button class="cmd-card' + (meta.commander === k ? ' sel' : '') + '" data-cmd="' + k + '" style="--cc:' + c.color + '" aria-label="' + esc(c.name) + '">' +
           '<img class="cmd-body" src="assets/commanders/' + k + '-cuerpo.webp" alt=""><span class="cmd-frame"></span><b>' + esc(c.name) + '</b>' +
+          '<span class="cmd-lv' + (canUpgradeCmd(k) ? ' ready' : '') + '">Nv ' + cmdLevel(k) + '</span>' +
           COMMANDER_ORDER.map(function (o, j) { return j === i ? '' : '<i class="cmd-dim" style="left:' + [26, 50.8, 75.8][j] + '%"></i>'; }).join('') + '</button>';
       }).join('') + '</div>' +
       '<div class="cmd-detail" style="--cc:' + cs.color + '"><img src="assets/fx/' + CMD_FX[meta.commander] + '.webp" alt=""><div><b>' + esc(cs.name) + ' · ' + esc(cs.title) + '</b>' +
-      '<small><em>' + esc(cs.ability) + ':</em> ' + esc(cs.desc) + '</small><small>' + ico('icons/reloj') + ' Se carga en ' + cs.cd + ' s</small></div></div>';
+      '<small><em>' + esc(cs.ability) + ':</em> ' + esc(cmdDesc(meta.commander, cc.lv)) + '</small><small>' + ico('icons/reloj') + ' Se carga en ' + cs.cd + ' s</small></div></div>' +
+      // nivel del comandante: sus cartas salen en el cofre de comandante
+      '<div class="uc-level cmd-level"><span class="uc-lvmedal">' + cc.lv + '</span><div class="uc-lvbody"><div class="uc-lvtop"><b>' + (cMax ? 'Nivel máximo' : 'Nivel ' + cc.lv) + '</b>' +
+      (cMax ? '' : '<span class="uc-gain">💪 ' + Math.round(cmdMult(cc.lv) * 100) + '% → <b>' + Math.round(cmdMult(cc.lv + 1) * 100) + '%</b></span>') + '</div>' +
+      '<div class="ubar' + (canUpgradeCmd(meta.commander) ? ' ok' : '') + '"><span style="width:' + (cMax ? 100 : Math.min(100, cc.n / cNeed * 100)) + '%"></span><em>' + (cMax ? 'MÁX' : cc.n + '/' + cNeed) + '</em></div></div></div>' +
+      (cMax ? '' : '<button class="btn btn-up cmd-upbtn" id="cmdUp" ' + (canUpgradeCmd(meta.commander) ? '' : 'disabled') + '>⬆ Mejorar ' + cGold + ' 🪙</button>' + (cWhy ? '<p class="cmd-why">' + cWhy + '</p>' : '')) +
+      '<p class="muted">🎁 Las cartas de comandante salen en el cofre de comandante: lo ganas en el Torneo y está en la tienda.</p>';
   } else if (name === 'shop') {
     html = backBar('Tienda', true) + shopHtml();
   } else if (name === 'howto') {
@@ -152,7 +162,8 @@ function renderMenu(name, arg) {
       '<p><b>⚔️💧🏹 Casillas especiales:</b> Altar (+35% daño), Fuente (maná extra) y Atalaya (+30% velocidad). Cambian en cada partida.</p>' +
       '<p><b>🔥❄️🌿🔮⚙️ Afinidad:</b> cada tropa vecina del mismo elemento da +12% de daño.</p>' +
       '<p><b>⬆ Mejora</b> un tipo de tropa en plena partida tocando su carta abajo: afecta a todas las de ese tipo.</p>' +
-      '<p><b>👑 Comandante:</b> cuando su retrato esté cargado, tócalo para usar su habilidad.</p>' +
+      '<p><b>👑 Comandante:</b> cuando su retrato esté cargado, tócalo para usar su habilidad. Sube de nivel con las cartas del cofre de comandante y su habilidad es más fuerte.</p>' +
+      '<p><b>🏅 Torneo:</b> un duelo con tus cartas y las del rival al mismo nivel: común 8, rara 6, épica 4, mítica 2 y legendaria 1. Si ganas, cofre de comandante.</p>' +
       '<p><b>🌑 Eventos:</b> algunas oleadas traen Eclipse, Lluvia de maná, Niebla, Horda o Calma.</p>' +
       '<p><b>💧 Maná:</b> se gana derrotando monstruos, con el Mercader Doblón y con la Fuente.</p>' +
       '<p><b>💎 Gemas:</b> salen en los cofres, por cada estrella nueva de la campaña, al ganar duelos y en el cooperativo. Gástalas en la tienda.</p>' +
@@ -286,6 +297,12 @@ function bindMenu() {
   });
   m.querySelectorAll('[data-stage]').forEach(function (b) { b.onclick = function () { startBattle('campaign', { stage: +b.dataset.stage }); }; });
   m.querySelectorAll('[data-duel]').forEach(function (b) { b.onclick = function () { startBattle('duel', { level: +b.dataset.duel }); }; });
+  m.querySelectorAll('[data-tourney]').forEach(function (b) { b.onclick = function () { startBattle('duel', { tourney: true, level: 1 }); }; });
+  var cu = $('cmdUp');
+  if (cu) cu.onclick = function () {
+    var k = meta.commander;
+    if (upgradeCmd(k)) { sfx('power'); buzz(20); toast(COMMANDERS[k].name + ' sube a nivel ' + cmdLevel(k)); renderMenu('commanders'); }
+  };
   m.querySelectorAll('[data-cmd]').forEach(function (b) { b.onclick = function () { meta.commander = b.dataset.cmd; saveMeta(); sfx('tap'); renderMenu('commanders'); }; });
   m.querySelectorAll('[data-rf]').forEach(function (b) { b.onclick = function () { collFilter = b.dataset.rf; sfx('tap'); renderMenu('collection'); }; });
   m.querySelectorAll('[data-ef]').forEach(function (b) { b.onclick = function () { collEl = b.dataset.ef; sfx('tap'); renderMenu('collection'); }; });
@@ -625,12 +642,17 @@ function showChestInfo(k, slot) {
     '<div class="chest-pic closed"><img class="chest-pic-rays" src="assets/chests/destello.webp" alt=""><img class="chest-pic-img" id="ciPic" src="' + chestPic(k) + '" alt=""></div>' +
     '<h2>' + ch.name + '</h2>' +
     '<div class="ci-loot"><span><b>' + ch.cards + '</b>cartas</span><span><b>' + ch.gold[0] + ' a ' + ch.gold[1] + '</b>🪙 oro</span><span><b>' + ch.gems[0] + ' a ' + ch.gems[1] + '</b>💎 gemas</span></div>' +
-    '<h3 class="ci-t">Probabilidad por cofre</h3>' +
-    row(RARITY.rara.color, 'Rara', '', chestOdds(ch.rare, ch.cards)) +
-    row(RARITY.epica.color, 'Épica', '', chestOdds(ch.epic, ch.cards)) +
-    row(RARITY.mitica.color, 'Mítica', ch.myth ? '' : 'Solo en el cofre de oro', chestOdds(ch.myth || 0, ch.cards)) +
-    row(RARITY.legendaria.color, 'Legendaria', ch.legend ? '' : 'Solo en el cofre de oro', chestOdds(ch.legend, ch.cards)) +
-    '<p class="ci-note">Puede tocarte cualquier tropa, aunque aún no la tengas.</p>' +
+    (ch.cmd
+      // el de comandante: qué comandantes pueden tocar, con su nivel
+      ? '<h3 class="ci-t">Cartas de comandante</h3>' + COMMANDER_ORDER.map(function (c) {
+        return row(COMMANDERS[c].color, COMMANDERS[c].name, 'Nivel ' + cmdLevel(c), '1 de ' + COMMANDER_ORDER.length);
+      }).join('') + '<p class="ci-note">Cada carta es de un comandante al azar. Con ellas subes su nivel.</p>'
+      : '<h3 class="ci-t">Probabilidad por cofre</h3>' +
+      row(RARITY.rara.color, 'Rara', '', chestOdds(ch.rare, ch.cards)) +
+      row(RARITY.epica.color, 'Épica', '', chestOdds(ch.epic, ch.cards)) +
+      row(RARITY.mitica.color, 'Mítica', ch.myth ? '' : 'Solo en el cofre de oro', chestOdds(ch.myth || 0, ch.cards)) +
+      row(RARITY.legendaria.color, 'Legendaria', ch.legend ? '' : 'Solo en el cofre de oro', chestOdds(ch.legend, ch.cards)) +
+      '<p class="ci-note">Puede tocarte cualquier tropa, aunque aún no la tengas.</p>') +
     (inSlot ? slotButtons(slot) : '<button class="btn chest-ok' + (poor ? ' poor' : '') + '" id="ciOpen">Abrir<span>💎 ' + ch.price + '</span></button>') +
     '<button class="btn btn-ghost" id="ciX">Cerrar</button></div>');
   $('ciX').onclick = closeOverlay;
@@ -721,6 +743,8 @@ function chestItems(r) {
   Object.keys(r.cards).sort(function (a, b) {
     return RARITY_RANK.indexOf(UNITS[a].rarity) - RARITY_RANK.indexOf(UNITS[b].rarity) || r.cards[a] - r.cards[b];
   }).forEach(function (id) { items.push({ id: id, n: r.cards[id], fresh: (r.fresh || []).indexOf(id) !== -1 }); });
+  // cartas de comandante (cofre de comandante)
+  Object.keys(r.cmdCards || {}).forEach(function (k) { items.push({ cmd: k, n: r.cmdCards[k] }); });
   return items;
 }
 // from: imagen del cofre de la que sale (ficha del cofre); sin ella, sale en el centro
@@ -766,7 +790,7 @@ function showChest(r, from) {
     if (idx >= items.length) { finish(); return; }
     var it = items[idx], rest = items.length - idx - 1;
     cur = chestItemIn(fx, it, cx2, cy2, vw / 2, cardY);
-    if (!it.id) chestCoins(fx, cx2, cy2 - size2 * 0.12, size2);
+    if (!it.id && !it.cmd) chestCoins(fx, cx2, cy2 - size2 * 0.12, size2);
     else chestBump(chest, fx, it);
     left.querySelector('b').textContent = rest;
     left.querySelector('small').textContent = rest === 1 ? 'queda' : 'quedan';
@@ -791,6 +815,7 @@ function showChest(r, from) {
 // sonido y sacudida del cofre según la rareza; destello blanco con las
 // legendarias y míticas
 function chestBump(chest, fx, it) {
+  if (it.cmd) { sfx('power'); buzz(30); chest.classList.remove('bump'); void chest.offsetWidth; chest.classList.add('bump'); return; }
   var rar = UNITS[it.id].rarity, top = rar === 'legendaria' || rar === 'mitica';
   sfx({ comun: 'tap', rara: 'merge', epica: 'power', legendaria: 'win', mitica: 'win' }[rar]);
   if (rar === 'epica' || top) buzz(rar === 'legendaria' ? 90 : top ? 60 : 30);
@@ -831,7 +856,13 @@ var cfxTf = function (tx, ty, s, rot) { return 'translate(' + tx + 'px,' + ty + 
 // una carta (o el oro) sale de dentro del cofre y crece hasta el centro
 function chestItemIn(fx, it, x, y, tx, ty) {
   var el = document.createElement('div');
-  if (!it.id) {
+  if (it.cmd) {
+    var cm = COMMANDERS[it.cmd], cc = meta.cmdCards[it.cmd], cmax = cc.lv >= CMD_MAX, cneed = cmdCardsNeeded(cc.lv);
+    el.className = 'cfx-card cfx-cmd';
+    el.style.setProperty('--rc', cm.color);
+    el.innerHTML = '<span class="cfx-rar">Comandante</span><img src="assets/commanders/' + it.cmd + '-cuerpo.webp" alt=""><b>' + esc(cm.name) + '</b><small>×' + it.n + '</small>' +
+      '<div class="cfx-bar' + (!cmax && cc.n >= cneed ? ' full' : '') + '"><span style="width:' + (cmax ? 100 : Math.min(100, cc.n / cneed * 100)) + '%"></span><em>' + (cmax ? 'MÁX' : 'Nv ' + cc.lv + ' · ' + cc.n + '/' + cneed) + '</em></div>';
+  } else if (!it.id) {
     el.className = 'cfx-card cfx-gold';
     el.innerHTML = icons('<span class="cfx-rar">Oro</span><img src="assets/chests/oro-monedas.webp" alt=""><b>+' + it.gold + ' 🪙</b>' + (it.gems ? '<small>+' + it.gems + ' 💎</small>' : ''));
   } else {
@@ -862,6 +893,7 @@ function chestItemOut(el, vw, ty) {
 function chestResult(r) {
   var ch = CHESTS[r.type];
   var cards = chestItems(r).slice(1).reverse().map(function (it) {
+    if (it.cmd) return '<div class="chest-card" style="--rc:' + COMMANDERS[it.cmd].color + '"><img src="' + COMMANDERS[it.cmd].pic + '" alt=""><b>×' + it.n + '</b><small>' + esc(COMMANDERS[it.cmd].name) + '</small></div>';
     return '<div class="chest-card' + (it.fresh ? ' fresh' : '') + '" style="--rc:' + RARITY[UNITS[it.id].rarity].color + '"><img src="' + unitIcon(it.id, 0, 96) + '" alt=""><b>×' + it.n + '</b><small>' + esc(UNITS[it.id].name) + '</small></div>';
   }).join('');
   openOverlay('<div class="modal-card chest-modal"><div class="chest-pic"><img class="chest-pic-rays" src="assets/chests/destello.webp" alt=""><img class="chest-pic-img" src="' + chestPic(r.type, true) + '" alt=""></div><h2>' + ch.name + '</h2><p class="gold-big">+' + r.gold + ' 🪙' + (r.gems ? ' · +' + r.gems + ' 💎' : '') + '</p>' + chestNewHtml(r) + '<div class="chest-cards">' + cards + '</div><button class="btn chest-ok" id="chestOk">¡Genial!</button></div>');
@@ -1032,7 +1064,7 @@ function confirmQuit() {
   sfx('tap');
   var b = battle, p = b.player;
   var where = b.mode === 'campaign' ? '🗺️ Fase ' + b.stage.id + ' · ' + esc(b.stage.name)
-    : b.mode === 'duel' ? '⚔️ Duelo contra ' + esc(b.other.name) : '🤝 Con ' + esc(b.other.name) + ' contra la horda';
+    : b.mode === 'duel' ? (b.opts.tourney ? '🏅 Torneo contra ' : '⚔️ Duelo contra ') + esc(b.other.name) : '🤝 Con ' + esc(b.other.name) + ' contra la horda';
   var wave = b.wave ? b.wave + (b.maxWaves !== Infinity ? '<small>/' + b.maxWaves + '</small>' : '') : '—';
   var prog = b.maxWaves !== Infinity ? Math.min(1, b.wave / b.maxWaves) : 0;
   function stat(ico, val, lbl) { return '<div class="ps-stat"><i>' + ico + '</i><b>' + val + '</b><small>' + lbl + '</small></div>'; }

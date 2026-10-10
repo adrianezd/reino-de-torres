@@ -4,6 +4,8 @@
    Modos:
     - campaign: tu tablero contra oleadas, con jefe final.
     - duel: 1 contra 1 frente a un rival (IA). Gana quien aguante más.
+      Con opts.tourney es el torneo: las cartas y los comandantes de los dos,
+      a nivel de torneo (TOURNEY_LV), y el rival puede llevar cualquier tropa.
     - coop: tú y un aliado (IA) contra oleadas infinitas, vidas compartidas.
    ========================================================= */
 
@@ -17,7 +19,9 @@ function startBattle(mode, opts) {
   var stage = mode === 'campaign' ? CAMPAIGN[opts.stage - 1] : null;
   var biome = stage ? stage.biome : pick(Object.keys(BIOMES));
   var deck = meta.deck.slice();
-  var lv = cardLevels();
+  var tourney = mode === 'duel' && !!opts.tourney;
+  var lv = tourney ? tourneyLevels() : cardLevels();
+  var myCmdLv = tourney ? TOURNEY_CMD_LV : cmdLevel(meta.commander);
   var lives = mode === 'campaign' ? { v: 5, max: 5 } : mode === 'duel' ? { v: 3, max: 3 } : { v: 6, max: 6 };
   // tablero ilustrado (al azar entre los que ya han cargado): la campaña usa
   // uno de su bioma; el duelo y el cooperativo, cualquiera, con un bioma
@@ -31,7 +35,7 @@ function startBattle(mode, opts) {
     if (fits.length) biome = pick(fits);
   }
   var geo = fid ? FIELD_GEOS[fid] : VECTOR_GEO;
-  var player = new Board({ name: 'Tú', deck: deck, cardLv: lv, commander: meta.commander, lives: lives, biome: biome, geo: geo, mana: stage ? stage.mana : 100 });
+  var player = new Board({ name: 'Tú', deck: deck, cardLv: lv, commander: meta.commander, cmdLv: myCmdLv, lives: lives, biome: biome, geo: geo, mana: stage ? stage.mana : 100 });
   battle = {
     mode: mode, stage: stage, opts: opts,
     boards: [player], player: player, other: null,
@@ -44,18 +48,20 @@ function startBattle(mode, opts) {
   };
   battle.next = planWave(1);
   if (mode === 'duel') {
-    var aiLv = opts.level == null ? 1 : opts.level;
-    var aiDeck = shuffleArr(AI_UNITS.slice()).filter(function (id) { return id !== 'melodia' || aiLv > 0; }).slice(0, 5);
+    var aiLv = tourney ? 1 : opts.level == null ? 1 : opts.level;
+    var aiDeck = shuffleArr((tourney ? UNIT_ORDER : AI_UNITS).slice()).filter(function (id) { return id !== 'melodia' || aiLv > 0; }).slice(0, 5);
     if (aiDeck.indexOf('doblon') === -1 && aiLv > 0) aiDeck[4] = 'doblon';
     var aiCard = {};
     var avg = Math.round(Object.keys(lv).reduce(function (s, k) { return s + lv[k]; }, 0) / Math.max(1, Object.keys(lv).length));
     UNIT_ORDER.forEach(function (id) { aiCard[id] = Math.max(1, avg + DUEL_CARD_OFFSET[aiLv]); });
-    battle.other = new Board({ name: pick(RIVAL_NAMES), ai: true, aiLevel: aiLv, deck: aiDeck, cardLv: aiCard, commander: pick(COMMANDER_ORDER), lives: { v: 3, max: 3 }, biome: biome, geo: geo });
+    if (tourney) aiCard = tourneyLevels();
+    var aiCmdLv = tourney ? TOURNEY_CMD_LV : Math.max(1, Math.min(CMD_MAX, myCmdLv + DUEL_CARD_OFFSET[aiLv]));
+    battle.other = new Board({ name: pick(RIVAL_NAMES), ai: true, aiLevel: aiLv, deck: aiDeck, cardLv: aiCard, commander: pick(COMMANDER_ORDER), cmdLv: aiCmdLv, lives: { v: 3, max: 3 }, biome: biome, geo: geo });
   } else if (mode === 'coop') {
     var allyDeck = shuffleArr(AI_UNITS.slice()).slice(0, 5);
     var allyCard = {};
     UNIT_ORDER.forEach(function (id) { allyCard[id] = Math.max(1, (lv[id] || 1)); });
-    battle.other = new Board({ name: pick(ALLY_NAMES), ai: true, aiLevel: 2, deck: allyDeck, cardLv: allyCard, commander: pick(COMMANDER_ORDER), lives: lives, biome: biome, geo: geo });
+    battle.other = new Board({ name: pick(ALLY_NAMES), ai: true, aiLevel: 2, deck: allyDeck, cardLv: allyCard, commander: pick(COMMANDER_ORDER), cmdLv: myCmdLv, lives: lives, biome: biome, geo: geo });
   }
   if (battle.other) { battle.boards.push(battle.other); battle.other.battle = battle; }
   player.battle = battle;
@@ -65,7 +71,7 @@ function startBattle(mode, opts) {
   showScreen('battle');
   buildBattleHud();
   resizeCanvas();
-  showBanner(mode === 'campaign' ? 'Fase ' + stage.id + ': ' + stage.name : mode === 'duel' ? '⚔️ Duelo contra ' + battle.other.name : '🤝 Con ' + battle.other.name + ' contra la horda', 'Prepárate…');
+  showBanner(mode === 'campaign' ? 'Fase ' + stage.id + ': ' + stage.name : tourney ? '🏅 Torneo contra ' + battle.other.name : mode === 'duel' ? '⚔️ Duelo contra ' + battle.other.name : '🤝 Con ' + battle.other.name + ' contra la horda', 'Prepárate…');
   sfx('start');
 }
 
@@ -221,6 +227,22 @@ function endBattle(won, draw) {
     } else {
       res.gold = 15 + b.wave * 5;
       res.lines.push('Caíste en la oleada ' + b.wave + ' de ' + b.maxWaves + '.');
+    }
+  } else if (b.mode === 'duel' && b.opts.tourney) {
+    // torneo: sin trofeos; si ganas, cofre de comandante
+    if (draw) {
+      res.gold = 40;
+      res.lines.push(b.other.name + ' y tú caísteis a la vez.');
+    } else if (won) {
+      res.gold = 120;
+      res.gems = 4;
+      res.chest = 'comandante';
+      meta.tourneyWins++;
+      res.lines.push('Con las mismas cartas, ' + b.other.name + ' no pudo contigo.');
+    } else {
+      res.gold = 25;
+      meta.tourneyLosses++;
+      res.lines.push('Con las mismas cartas, ' + b.other.name + ' aguantó más.');
     }
   } else if (b.mode === 'duel') {
     if (draw) {

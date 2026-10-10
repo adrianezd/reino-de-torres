@@ -40,7 +40,8 @@ Además, legendarias que solo salen en el cofre de oro (Ígnea, Aurora y Titán)
 - **Rasgos de posición**: Nívea pega más con otra Nívea al lado (`twin`), Mirra y Cronos con vecinas distintas (`mixed`) y Halcón en las casillas de fuera (`edge`).
 - **Casillas especiales** que cambian cada partida: Altar (+daño), Fuente (maná) y Atalaya (+velocidad).
 - **Afinidad elemental**: cada vecina del mismo elemento suma +12% de daño.
-- **Comandantes** con habilidad que se carga: Aria (Ventisca), Merlo (Marea de maná) y Brann (Meteoro).
+- **Comandantes** con habilidad que se carga: Aria (Ventisca), Merlo (Marea de maná) y Brann (Meteoro). Suben de nivel hasta el 10 (cada nivel, +8% de fuerza en su habilidad) con las cartas del cofre de comandante (3 cartas de comandantes al azar), que se gana en el Torneo y está en la tienda.
+- **🏅 Torneo** (en 1 contra 1): duelo con tus cartas y las del rival a nivel de torneo (común 8, rara 6, épica 4, mítica 2, legendaria 1; `TOURNEY_LV` en `js/data.js`) y los dos comandantes al nivel 5. El rival puede llevar cualquier tropa. Sin trofeos; si ganas, cofre de comandante.
 - **Eventos de oleada**: Eclipse, Lluvia de maná, Niebla, Horda y Calma.
 - **Jefes** con habilidades: se dividen, congelan tropas, se blindan, invocan o queman rangos.
 

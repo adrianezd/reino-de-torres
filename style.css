@@ -1580,3 +1580,23 @@ x-ico.off { filter: grayscale(1) brightness(0.45); opacity: 0.75; }
 }
 .btn-up:active { transform: translateY(5px); box-shadow: 0 0 0 3px var(--ink), 0 1px 0 var(--ink), inset 0 2px 0 rgba(255,255,255,0.3); }
 .btn-up:disabled { filter: grayscale(0.85) brightness(0.75); }
+
+/* =========================================================
+   Torneo, niveles de comandante y cofre de comandante
+   ========================================================= */
+.big-choice.d3 { background: linear-gradient(180deg, #a77bff, #5a2fb8); }
+.big-choice.d3 small { color: #fff; opacity: 0.9; }
+.sh-chests { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.sh-chests .sh-chest-pic { width: 62%; }
+.cmd-card .cmd-lv {
+  position: absolute; left: 50%; top: 5%; transform: translateX(-50%); padding: 0 8px 1px; border-radius: 8px; white-space: nowrap;
+  background: linear-gradient(180deg, #ffb84a, #e07b1a); border: 2px solid var(--ink); color: #fff;
+  font: 400 0.78rem 'Lilita One', sans-serif; -webkit-text-stroke: 2.5px var(--ink); paint-order: stroke fill;
+}
+.cmd-card .cmd-lv.ready { background: linear-gradient(180deg, #b6ff8a, #3fcf4a); animation: cmdLvPulse 1.2s ease-in-out infinite; }
+@keyframes cmdLvPulse { 50% { transform: translateX(-50%) scale(1.12); } }
+.cmd-level { margin-top: 10px; }
+.cmd-upbtn { display: block; width: 100%; margin-top: 10px; }
+.cmd-why { margin: 4px 0 0; font-size: 0.8rem; color: #ffb3bc; text-align: center; }
+.cfx-cmd { background: linear-gradient(180deg, #5a2fb8, #2a1466); box-shadow: 0 6px 0 var(--ink), 0 0 40px 10px color-mix(in srgb, var(--rc) 55%, transparent); }
+.cfx-cmd img { object-position: 50% 100%; }

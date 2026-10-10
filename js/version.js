@@ -7,8 +7,17 @@
    La ventana sale sola al entrar con una versión nueva (meta.lastSeenVersion)
    y también desde Opciones.
    ========================================================= */
-var APP_VERSION = '1.7.0';
+var APP_VERSION = '1.8.0';
 var APP_PATCH_NOTES = [
+  {
+    version: '1.8.0',
+    summary: 'Torneo, niveles de comandante y cofre de comandante',
+    items: [
+      'Nuevo Torneo en 1 contra 1: tus cartas y las del rival juegan al mismo nivel, el de torneo: común 8, rara 6, épica 4, mítica 2 y legendaria 1. Los dos comandantes, al nivel 5. Si ganas, cofre de comandante.',
+      'Los comandantes suben de nivel: cada nivel hace su habilidad un 8% más fuerte (Aria congela más rato, Merlo da más maná y el meteoro de Brann pega más). Se mejoran en Mazo, pestaña Comandante.',
+      'Cofre de comandante: trae 3 cartas de comandantes al azar, algo de oro y a veces una gema. Lo ganas en el Torneo y también está en la tienda.'
+    ]
+  },
   {
     version: '1.7.0',
     summary: 'Dos cartas nuevas: Kaia (rara) y Seren (mítica)',

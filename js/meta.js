@@ -14,15 +14,22 @@ function defaultMeta() {
     cards: cards,
     deck: STARTER_UNITS.slice(),
     commander: 'aria',
+    cmdCards: defaultCmdCards(),      // nivel y cartas de cada comandante
     campaign: {},          // fase -> estrellas
     coopBest: 0,
     duelWins: 0, duelLosses: 0,
+    tourneyWins: 0, tourneyLosses: 0,
     freeChestAt: 0,         // cuándo está listo el siguiente cofre gratis (ms)
     slots: [null, null, null, null],   // cofres ganados: { type, unlockAt } (unlockAt: cuándo se abre; 0 si no se ha empezado)
     settings: { sound: true },
     seenTutorial: false,
     lastSeenVersion: ''   // última versión cuyas novedades se han visto (js/version.js)
   };
+}
+function defaultCmdCards() {
+  var o = {};
+  COMMANDER_ORDER.forEach(function (k) { o[k] = { lv: 1, n: 0 }; });
+  return o;
 }
 function loadMeta() {
   try {
@@ -38,6 +45,8 @@ function loadMeta() {
       m.deck.push(extra);
     }
     if (!COMMANDERS[m.commander]) m.commander = 'aria';
+    if (!m.cmdCards) m.cmdCards = {};
+    COMMANDER_ORDER.forEach(function (k) { if (!m.cmdCards[k]) m.cmdCards[k] = { lv: 1, n: 0 }; });
     var slots = Array.isArray(m.slots) ? m.slots : [];
     m.slots = [];
     for (var i = 0; i < CHEST_SLOTS; i++) m.slots.push(slots[i] && CHESTS[slots[i].type] ? slots[i] : null);
@@ -80,6 +89,22 @@ function upgradeCard(id) {
   return true;
 }
 
+/* ---------- niveles de comandante ---------- */
+function cmdLevel(k) { return meta.cmdCards[k] ? meta.cmdCards[k].lv : 1; }
+function canUpgradeCmd(k) {
+  var c = meta.cmdCards[k];
+  return c && c.lv < CMD_MAX && c.n >= cmdCardsNeeded(c.lv) && meta.gold >= cmdUpgradeGold(c.lv);
+}
+function upgradeCmd(k) {
+  if (!canUpgradeCmd(k)) return false;
+  var c = meta.cmdCards[k];
+  meta.gold -= cmdUpgradeGold(c.lv);
+  c.n -= cmdCardsNeeded(c.lv);
+  c.lv++;
+  saveMeta();
+  return true;
+}
+
 /* Cofre: oro + cartas de cualquier tropa según rareza, la tengas o no (la
    primera carta de una tropa nueva la desbloquea). Las legendarias solo salen
    en el cofre que tiene legend > 0 (el de oro), y las míticas, algo menos
@@ -91,6 +116,15 @@ function openChest(type) {
   var byRarity = { comun: [], rara: [], epica: [], mitica: [], legendaria: [] };
   UNIT_ORDER.forEach(function (id) { byRarity[UNITS[id].rarity].push(id); });
   var got = {};
+  // cofre de comandante: cada carta, de un comandante al azar
+  if (ch.cmd) {
+    for (var j = 0; j < ch.cards; j++) { var k = pick(COMMANDER_ORDER); got[k] = (got[k] || 0) + 1; }
+    Object.keys(got).forEach(function (k) { meta.cmdCards[k].n += got[k]; });
+    meta.gold += gold;
+    meta.gems += gems;
+    saveMeta();
+    return { type: type, gold: gold, gems: gems, cards: {}, cmdCards: got, fresh: [] };
+  }
   for (var i = 0; i < ch.cards; i++) {
     var roll = Math.random() - (ch.myth || 0), pool;
     if (roll < 0) pool = byRarity.mitica;
