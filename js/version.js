@@ -7,8 +7,16 @@
    La ventana sale sola al entrar con una versión nueva (meta.lastSeenVersion)
    y también desde Opciones.
    ========================================================= */
-var APP_VERSION = '1.15.1';
+var APP_VERSION = '1.15.2';
 var APP_PATCH_NOTES = [
+  {
+    version: '1.15.2',
+    summary: 'Tarjetas de comandante iguales y casillas que no pisan el camino',
+    items: [
+      'Los siete comandantes usan la misma tarjeta de madera, sin los medallones de abajo.',
+      'En los tableros de hielo, roca y veneno las casillas son un poco más pequeñas y ya no pisan el camino de los monstruos.'
+    ]
+  },
   {
     version: '1.15.1',
     summary: 'Fuera el modificador Comandantes con habilidades',

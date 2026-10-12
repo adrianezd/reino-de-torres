@@ -415,14 +415,13 @@ var COMMANDERS = {
   merlo: { name: 'Merlo', title: 'Archimago',            color: '#b26bff', icon: '✨', pic: 'assets/commanders/merlo.webp?v=2', ability: 'Marea de maná', desc: 'Te da 120 de maná al instante.', power: 120, cd: 35 },
   brann: { name: 'Brann', title: 'General Enano',        color: '#ff8f3c', icon: '☄️', pic: 'assets/commanders/brann.webp?v=2', ability: 'Meteoro',   desc: 'Un meteorito golpea a los enemigos más adelantados.', power: 520, cd: 28 },
   // los cuatro nuevos (de assets/pack-nyx-sol-morgana-tormal.jpg) empiezan
-  // bloqueados (locked) y se consiguen en los cofres; su tarjeta no lleva el
-  // marco de tres medallones de las tres primeras (noFrame)
-  nyx:   { name: 'Nyx',   title: 'Hechicera del Eclipse', color: '#c04bff', icon: '🌑', locked: true, noFrame: true, pic: 'assets/commanders/nyx.webp', ability: 'Maldición', desc: 'Los monstruos reciben un 60% más de daño durante 6 segundos.', power: 6, cd: 32 },
-  sol:   { name: 'Sol',   title: 'Paladín del Alba',      color: '#ffc83a', icon: '☀️', locked: true, noFrame: true, pic: 'assets/commanders/sol.webp', ability: 'Escudo divino', desc: 'Durante 5 segundos no pierdes vidas.', power: 5, cd: 40 },
+  // bloqueados (locked) y se consiguen en los cofres
+  nyx:   { name: 'Nyx',   title: 'Hechicera del Eclipse', color: '#c04bff', icon: '🌑', locked: true, pic: 'assets/commanders/nyx.webp', ability: 'Maldición', desc: 'Los monstruos reciben un 60% más de daño durante 6 segundos.', power: 6, cd: 32 },
+  sol:   { name: 'Sol',   title: 'Paladín del Alba',      color: '#ffc83a', icon: '☀️', locked: true, pic: 'assets/commanders/sol.webp', ability: 'Escudo divino', desc: 'Durante 5 segundos no pierdes vidas.', power: 5, cd: 40 },
   // héroes: su habilidad se usa sobre el tablero eligiendo tropas (hero: cuántas);
   // con nivel se cargan antes en vez de tener más fuerza
-  morgana: { name: 'Morgana', title: 'Inventora', color: '#2fd6a0', icon: '⚙️', locked: true, noFrame: true, pic: 'assets/commanders/morgana.webp', hero: 2, ability: 'Ensamblaje', desc: 'Eliges dos tropas del mismo rango, aunque sean distintas, y se fusionan.', power: 1, cd: 45 },
-  torvald: { name: 'Torvald', title: 'Viejo Maestro', color: '#ff7a3c', icon: '🧮', locked: true, noFrame: true, pic: 'assets/commanders/torvald.webp', hero: 1, ability: 'Forja', desc: 'Eliges una tropa y sube un rango, hasta el 5.', power: 1, cd: 110 }
+  morgana: { name: 'Morgana', title: 'Inventora', color: '#2fd6a0', icon: '⚙️', locked: true, pic: 'assets/commanders/morgana.webp', hero: 2, ability: 'Ensamblaje', desc: 'Eliges dos tropas del mismo rango, aunque sean distintas, y se fusionan.', power: 1, cd: 45 },
+  torvald: { name: 'Torvald', title: 'Viejo Maestro', color: '#ff7a3c', icon: '🧮', locked: true, pic: 'assets/commanders/torvald.webp', hero: 1, ability: 'Forja', desc: 'Eliges una tropa y sube un rango, hasta el 5.', power: 1, cd: 110 }
 };
 var COMMANDER_ORDER = ['aria', 'merlo', 'brann', 'nyx', 'sol', 'morgana', 'torvald'];
 COMMANDER_ORDER.forEach(function (k) { var c = COMMANDERS[k]; c.body = c.gen ? '' : 'assets/commanders/' + k + '-cuerpo.webp'; });

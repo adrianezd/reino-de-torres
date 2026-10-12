@@ -242,14 +242,12 @@ function renderMenu(name, arg) {
     html = backBar('Mazo', true) + deckTabs('commanders') + '<p class="lead">Su habilidad se carga durante la partida. Pulsa su retrato para usarla. Los héroes la usan sobre el tablero: eliges las tropas.</p>' +
       '<div class="cmd-cards">' + COMMANDER_ORDER.map(function (k, i) {
         var c = COMMANDERS[k];
-        // las tres primeras van en su tarjeta ilustrada (con un medallón por
-        // comandante); las nuevas, en una tarjeta dibujada con su color
-        var own = cmdOwned(k), alt = c.noFrame || c.gen;
-        return '<button class="cmd-card' + (meta.commander === k ? ' sel' : '') + (alt ? ' gen' : '') + (own ? '' : ' locked') + '" data-cmd="' + k + '" style="--cc:' + c.color + '" aria-label="' + esc(c.name) + '">' +
-          '<img class="cmd-body" src="' + c.body + '" alt="">' + (alt ? '' : '<span class="cmd-frame"></span>') + '<b>' + esc(c.name) + '</b>' +
+        var own = cmdOwned(k);
+        return '<button class="cmd-card' + (meta.commander === k ? ' sel' : '') + (own ? '' : ' locked') + '" data-cmd="' + k + '" style="--cc:' + c.color + '" aria-label="' + esc(c.name) + '">' +
+          '<img class="cmd-body" src="' + c.body + '" alt=""><span class="cmd-frame"></span><b>' + esc(c.name) + '</b>' +
           (c.hero ? '<span class="cmd-hero">Héroe</span>' : '') +
           (own ? '<span class="cmd-lv' + (canUpgradeCmd(k) ? ' ready' : '') + '">Nv ' + cmdLevel(k) + '</span>' : '<span class="cmd-lock">' + ico('icons/candado') + '</span>') +
-          (alt ? '' : [0, 1, 2].map(function (j) { return j === i ? '' : '<i class="cmd-dim" style="left:' + [26, 50.8, 75.8][j] + '%"></i>'; }).join('')) + '</button>';
+          '</button>';
       }).join('') + '</div>' +
       '<div class="cmd-detail" style="--cc:' + cs.color + '"><img src="' + cmdFxPic(meta.commander) + '" alt=""><div><b>' + esc(cs.name) + ' · ' + esc(cs.title) + '</b>' +
       '<small><em>' + esc(cs.ability) + ':</em> ' + esc(cmdDesc(meta.commander, cc.lv)) + '</small><small>' + ico('icons/reloj') + ' Se carga en ' + cmdCd(meta.commander, cc.lv) + ' s' + (cs.hero ? ' · con cada nivel, antes' : '') + '</small></div></div>' +

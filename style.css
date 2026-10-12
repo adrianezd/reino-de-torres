@@ -1182,20 +1182,20 @@ x-ico.off { filter: grayscale(1) brightness(0.45); opacity: 0.75; }
    ========================================================= */
 .cmd-cards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin: 4px 0 12px; }
 .cmd-card {
-  position: relative; aspect-ratio: 330 / 512; padding: 0; border: 0; background: none;
+  position: relative; aspect-ratio: 330 / 431; padding: 0; border: 0; background: none;
   filter: drop-shadow(0 4px 0 rgba(10,12,40,0.45)); transition: transform 0.15s cubic-bezier(0.3, 1.6, 0.5, 1);
 }
 .cmd-card::before {
-  content: ''; position: absolute; left: 13%; right: 11%; top: 11%; bottom: 31%;
+  content: ''; position: absolute; left: 13%; right: 11%; top: 13%; bottom: 18%;
   background: radial-gradient(circle at 50% 42%, color-mix(in srgb, var(--cc) 55%, #1a2766), #111a4a 78%);
 }
-.cmd-card .cmd-body { position: absolute; left: 14%; width: 74%; bottom: 33%; height: 50%; object-fit: contain; object-position: 50% 100%; }
-.cmd-card .cmd-frame { position: absolute; inset: 0; background: url(assets/ui/tarjeta-comandante.webp) center / 100% 100% no-repeat; }
+.cmd-card .cmd-body { position: absolute; left: 14%; width: 74%; bottom: 20.4%; height: 59.4%; object-fit: contain; object-position: 50% 100%; }
+/* el mismo marco para todos (assets/ui/tarjeta-comandante-2: el de siempre sin la fila de medallones) */
+.cmd-card .cmd-frame { position: absolute; inset: 0; background: url(assets/ui/tarjeta-comandante-2.webp) center / 100% 100% no-repeat; }
 .cmd-card b {
-  position: absolute; left: 13%; right: 11%; top: 68%; height: 9.8%; display: grid; place-items: center;
+  position: absolute; left: 13%; right: 11%; top: 80.7%; height: 11.6%; display: grid; place-items: center;
   font-family: 'Lilita One', 'Nunito', sans-serif; font-weight: 400; font-size: clamp(0.85rem, 4vw, 1.1rem); color: #3a2410; letter-spacing: 0.02em;
 }
-.cmd-card .cmd-dim { position: absolute; top: 86.4%; width: 19.5%; aspect-ratio: 1; transform: translate(-50%, -50%); border-radius: 50%; background: rgba(8,10,30,0.62); }
 .cmd-card.sel { transform: translateY(-6px) scale(1.03); filter: drop-shadow(0 4px 0 rgba(10,12,40,0.45)) drop-shadow(0 0 10px var(--cc)); }
 .cmd-card:active { transform: translateY(2px) scale(0.98); }
 .cmd-detail {
@@ -1613,7 +1613,7 @@ x-ico.off { filter: grayscale(1) brightness(0.45); opacity: 0.75; }
 .sh-chests { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .sh-chests .sh-chest-pic { width: 62%; }
 .cmd-card .cmd-lv {
-  position: absolute; left: 50%; top: 5%; transform: translateX(-50%); padding: 0 8px 1px; border-radius: 8px; white-space: nowrap;
+  position: absolute; left: 50%; top: 5.9%; transform: translateX(-50%); padding: 0 8px 1px; border-radius: 8px; white-space: nowrap;
   background: linear-gradient(180deg, #ffb84a, #e07b1a); border: 2px solid var(--ink); color: #fff;
   font: 400 0.78rem 'Lilita One', sans-serif; -webkit-text-stroke: 2.5px var(--ink); paint-order: stroke fill;
 }
@@ -2076,9 +2076,7 @@ x-ico.off { filter: grayscale(1) brightness(0.45); opacity: 0.75; }
 .tn-decks { margin: 0 0 8px; font-size: 0.78rem; color: var(--muted); text-align: center; }
 
 /* ---------- comandantes nuevos (sin ilustración) y héroes ---------- */
-.cmd-card.gen { background: radial-gradient(circle at 50% 40%, color-mix(in srgb, var(--cc) 55%, #1d2a6e), #141c4c 75%); border: 3px solid var(--cc); border-radius: 14px; }
-.cmd-card.gen .cmd-body { bottom: 22%; height: 60%; }
-.cmd-hero { position: absolute; top: 6px; left: 6px; padding: 1px 6px; border-radius: 8px; font-size: 0.62rem; font-weight: 800; background: var(--cc); color: #1a1430; border: 2px solid var(--ink); }
+.cmd-hero { position: absolute; top: 14%; left: 15%; z-index: 1; padding: 1px 6px; border-radius: 8px; font-size: 0.62rem; font-weight: 800; background: var(--cc); color: #1a1430; border: 2px solid var(--ink); }
 .cmd-btn.aiming { animation: cmdAim 0.6s ease-in-out infinite; }
 @keyframes cmdAim { 50% { transform: scale(1.12); } }
 .hero-hint { position: absolute; left: 50%; top: 38%; transform: translateX(-50%); z-index: 6; pointer-events: none; text-align: center; padding: 6px 12px; border-radius: 12px; background: rgba(10,12,40,0.88); border: 2px solid var(--gold); font-size: 0.9rem; white-space: nowrap; }
@@ -2153,5 +2151,5 @@ x-ico.off { filter: grayscale(1) brightness(0.45); opacity: 0.75; }
 .ct-row { display: grid; grid-template-columns: repeat(var(--n), minmax(0, 1fr)); gap: 6px; margin-top: 4px; }
 .cmd-card.locked .cmd-body { filter: grayscale(1) brightness(0.45); }
 .cmd-card.locked b { opacity: 0.7; }
-.cmd-lock { position: absolute; left: 50%; top: 42%; transform: translate(-50%, -50%); width: 34%; aspect-ratio: 1; display: grid; place-items: center; }
+.cmd-lock { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); width: 34%; aspect-ratio: 1; display: grid; place-items: center; }
 .cmd-lock x-ico { width: 100%; height: 100%; }
