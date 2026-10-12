@@ -288,9 +288,12 @@ var CHESTS = {
   oro:    { name: 'Cofre de oro',    gold: [200, 320], gems: [4, 10], cards: 24, rare: 0.4,  epic: 0.15, legend: 0.012, myth: 0.04, color: '#ffd166', price: 90, time: 10800,
     types: { comun: 2, rara: 2, epica: 1, mitica: 1, legendaria: 1 }, cmdChance: 0.5, cmdCards: 4 },
   // de comandante: muchas cartas, todas de un mismo comandante al azar (cmd: true)
+  // legendario: solo en la tienda; una carta legendaria al azar y nada más.
+  // mid: imagen del cofre abriéndose, entre el cerrado y el abierto
+  legendario: { name: 'Cofre legendario', gold: [0, 0], gems: [0, 0], cards: 1, legendOnly: true, mid: 'assets/chests/legendario-abriendo.webp', rare: 0, epic: 0, legend: 1, myth: 0, color: '#3fd0ff', price: 500, time: 10800 },
   comandante: { name: 'Cofre de comandante', gold: [30, 60], gems: [0, 1], cards: 10, cmd: true, rare: 0, epic: 0, legend: 0, myth: 0, color: '#a35bff', price: 60, time: 7200 }
 };
-var CHEST_ORDER = ['madera', 'plata', 'oro', 'comandante'];
+var CHEST_ORDER = ['madera', 'plata', 'oro', 'comandante', 'legendario'];
 var CHEST_SLOTS = 4;          // huecos de cofre de la pantalla principal
 var SKIP_SECONDS = 360;       // abrir ya: 1 gema por cada 6 minutos que falten
 

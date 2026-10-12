@@ -946,8 +946,14 @@ function showChestInfo(k, slot) {
   openOverlay('<div class="modal-card chest-info" style="--cc:' + ch.color + '">' +
     '<div class="chest-pic closed"><img class="chest-pic-rays" src="assets/chests/destello.webp" alt=""><img class="chest-pic-img" id="ciPic" src="' + chestPic(k) + '" alt=""></div>' +
     '<h2>' + ch.name + '</h2>' +
-    '<div class="ci-loot"><span><b>' + ch.cards + '</b>cartas</span><span><b>' + ch.gold[0] + ' a ' + ch.gold[1] + '</b>🪙 oro</span><span><b>' + ch.gems[0] + ' a ' + ch.gems[1] + '</b>💎 gemas</span></div>' +
-    (ch.cmd
+    (ch.legendOnly ? '' : '<div class="ci-loot"><span><b>' + ch.cards + '</b>cartas</span><span><b>' + ch.gold[0] + ' a ' + ch.gold[1] + '</b>🪙 oro</span><span><b>' + ch.gems[0] + ' a ' + ch.gems[1] + '</b>💎 gemas</span></div>') +
+    (ch.legendOnly
+      ? (function (ls) {
+        return '<h3 class="ci-t">Una carta legendaria</h3>' + ls.map(function (id) {
+          return row(RARITY.legendaria.color, UNITS[id].name, meta.cards[id] ? 'Nivel ' + meta.cards[id].lv : 'Aún no la tienes', '1 de ' + ls.length);
+        }).join('') + '<p class="ci-note">Solo trae una carta, siempre legendaria y al azar.</p>';
+      })(UNIT_ORDER.filter(function (id) { return UNITS[id].rarity === 'legendaria'; }))
+      : ch.cmd
       // el de comandante: qué comandantes pueden tocar, con su nivel
       ? '<h3 class="ci-t">Cartas de comandante</h3>' + COMMANDER_ORDER.map(function (c) {
         return row(COMMANDERS[c].color, COMMANDERS[c].name, 'Nivel ' + cmdLevel(c), '1 de ' + COMMANDER_ORDER.length);
@@ -1046,7 +1052,7 @@ setInterval(function () {
 // lo que sale del cofre, en orden: el oro, las cartas de comandante y luego
 // las tropas de menor a mayor rareza
 function chestItems(r) {
-  var items = [{ gold: r.gold, gems: r.gems }];
+  var items = r.gold || r.gems ? [{ gold: r.gold, gems: r.gems }] : [];
   Object.keys(r.cmdCards || {}).forEach(function (k) { items.push({ cmd: k, n: r.cmdCards[k] }); });
   Object.keys(r.cards).sort(function (a, b) {
     return RARITY_RANK.indexOf(UNITS[a].rarity) - RARITY_RANK.indexOf(UNITS[b].rarity) || r.cards[a] - r.cards[b];
@@ -1117,7 +1123,12 @@ function showChest(r, from) {
   fx.onclick = function () { if (Date.now() >= lockUntil) next(); };
   fx.querySelector('.cfx-skip').onclick = function (e) { e.stopPropagation(); finish(); };
   sfx('tap'); buzz(15);
-  at(300, function () {
+  var mid = CHESTS[r.type].mid, midT = mid ? 380 : 0;
+  if (mid) {
+    new Image().src = mid;
+    at(300, function () { chest.src = mid; chest.classList.remove('shake'); void chest.offsetWidth; chest.classList.add('shake'); sfx('tap'); buzz(20); });
+  }
+  at(300 + midT, function () {
     chest.src = open.src;
     chest.classList.remove('shake');
     chest.classList.add('opened');
@@ -1125,7 +1136,7 @@ function showChest(r, from) {
     spot.style.transform = 'translate(-50%, -50%) translate(' + (cx2 - cx) + 'px,' + (cy2 - cy) + 'px) scale(' + size2 / size + ')';
     sfx('chest'); buzz(35);
   });
-  at(rect ? 620 : 460, next);
+  at((rect ? 620 : 460) + midT, next);
 }
 // sonido y sacudida del cofre según la rareza; destello blanco con las
 // legendarias y míticas
@@ -1207,11 +1218,11 @@ function chestItemOut(el, vw, ty) {
 }
 function chestResult(r) {
   var ch = CHESTS[r.type];
-  var cards = chestItems(r).slice(1).reverse().map(function (it) {
+  var cards = chestItems(r).filter(function (it) { return it.id || it.cmd; }).reverse().map(function (it) {
     if (it.cmd) return '<div class="chest-card" style="--rc:' + COMMANDERS[it.cmd].color + '"><img src="' + COMMANDERS[it.cmd].pic + '" alt=""><b>×' + it.n + '</b><small>' + esc(COMMANDERS[it.cmd].name) + '</small></div>';
     return '<div class="chest-card' + (it.fresh ? ' fresh' : '') + '" style="--rc:' + RARITY[UNITS[it.id].rarity].color + '"><img src="' + unitIcon(it.id, 0, 96) + '" alt=""><b>×' + it.n + '</b><small>' + esc(UNITS[it.id].name) + '</small></div>';
   }).join('');
-  openOverlay('<div class="modal-card chest-modal"><div class="chest-pic"><img class="chest-pic-rays" src="assets/chests/destello.webp" alt=""><img class="chest-pic-portal" src="assets/chests/portal-' + r.type + '.webp" alt=""><img class="chest-pic-img" src="' + chestPic(r.type, true) + '" alt=""></div><h2>' + ch.name + '</h2><p class="gold-big">+' + r.gold + ' 🪙' + (r.gems ? ' · +' + r.gems + ' 💎' : '') + '</p>' + chestNewHtml(r) + '<div class="chest-cards">' + cards + '</div><button class="btn chest-ok" id="chestOk">¡Genial!</button></div>');
+  openOverlay('<div class="modal-card chest-modal"><div class="chest-pic"><img class="chest-pic-rays" src="assets/chests/destello.webp" alt=""><img class="chest-pic-portal" src="assets/chests/portal-' + r.type + '.webp" alt=""><img class="chest-pic-img" src="' + chestPic(r.type, true) + '" alt=""></div><h2>' + ch.name + '</h2>' + (r.gold || r.gems ? '<p class="gold-big">+' + r.gold + ' 🪙' + (r.gems ? ' · +' + r.gems + ' 💎' : '') + '</p>' : '') + chestNewHtml(r) + '<div class="chest-cards">' + cards + '</div><button class="btn chest-ok" id="chestOk">¡Genial!</button></div>');
   $('chestOk').onclick = function () { closeOverlay(); renderMenu(currentScreen === 'battle' ? 'home' : currentScreen); };
 }
 

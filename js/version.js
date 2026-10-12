@@ -7,8 +7,16 @@
    La ventana sale sola al entrar con una versión nueva (meta.lastSeenVersion)
    y también desde Opciones.
    ========================================================= */
-var APP_VERSION = '1.14.0';
+var APP_VERSION = '1.14.1';
 var APP_PATCH_NOTES = [
+  {
+    version: '1.14.1',
+    summary: 'Cofre legendario en la tienda',
+    items: [
+      'Nuevo cofre legendario en la tienda, por 500 gemas: trae una sola carta, siempre legendaria y al azar.',
+      'Al abrirlo, el cofre se entreabre con su brillo azul y después suelta un remolino.'
+    ]
+  },
   {
     version: '1.14.0',
     summary: 'Modo roguelike, héroes, talentos, torneos nuevos y repeticiones',

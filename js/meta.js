@@ -126,8 +126,10 @@ function openChest(type) {
   // pocas tropas distintas: de cada rareza solo pueden tocar unas cuantas
   if (ch.types) Object.keys(byRarity).forEach(function (r) { if (ch.types[r]) byRarity[r] = shuffleArr(byRarity[r].slice()).slice(0, ch.types[r]); });
   var got = {};
+  // cofre legendario: una legendaria al azar
+  if (ch.legendOnly) got[pick(byRarity.legendaria)] = 1;
   // cofre de comandante: todas las cartas, de un mismo comandante al azar
-  if (ch.cmd) {
+  else if (ch.cmd) {
     got[pick(COMMANDER_ORDER)] = ch.cards;
     Object.keys(got).forEach(function (k) { meta.cmdCards[k].n += got[k]; });
     meta.gold += gold;
@@ -136,7 +138,7 @@ function openChest(type) {
     saveMeta();
     return { type: type, gold: gold, gems: gems, cards: {}, cmdCards: got, fresh: [] };
   }
-  for (var i = 0; i < ch.cards; i++) {
+  for (var i = 0; i < (ch.legendOnly ? 0 : ch.cards); i++) {
     var roll = Math.random() - (ch.myth || 0), pool;
     if (roll < 0) pool = byRarity.mitica;
     else if (roll < ch.legend) pool = byRarity.legendaria;

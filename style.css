@@ -2132,3 +2132,7 @@ x-ico.off { filter: grayscale(1) brightness(0.45); opacity: 0.75; }
 .tal-node:disabled { opacity: 0.45; cursor: default; }
 .tal-link { display: block; width: 4px; height: 12px; margin: 2px auto; background: var(--gold); border-radius: 2px; }
 .tal-note { font-size: 0.72rem; color: var(--muted); text-align: center; margin: 8px 0 0; }
+
+/* cofre legendario de la tienda: ocupa la fila entera y brilla */
+.sh-chests .sh-chest[data-buychest="legendario"] { grid-column: 1 / -1; box-shadow: 0 0 0 2px var(--ink), 0 0 16px rgba(63,208,255,0.55); }
+.sh-chests .sh-chest[data-buychest="legendario"] .sh-chest-pic { width: 34%; filter: drop-shadow(0 0 10px rgba(63,208,255,0.7)); }
