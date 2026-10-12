@@ -9,6 +9,8 @@
       Con opts.tourney es el torneo: las cartas y los comandantes de los dos,
       a nivel de torneo (TOURNEY_LV), y el rival puede llevar cualquier tropa.
     - coop: tú y un aliado (IA) contra oleadas infinitas, vidas compartidas.
+      Camino compartido: los monstruos entran por el tablero del aliado y lo
+      que se le escapa pasa al tuyo; el maná de cada baja es para los dos.
     - rogue: tú solo contra ROGUE_WAVES oleadas y un jefe final elegido por la
       ruleta; cada ROGUE_PICK_EVERY segundos eliges 1 de 3 ventajas.
    ========================================================= */
@@ -46,7 +48,7 @@ function startBattle(mode, opts) {
     if (fits.length) biome = pick(fits);
   }
   var geo = fid ? FIELD_GEOS[fid] : VECTOR_GEO;
-  var player = new Board({ name: 'Tú', deck: deck, cardLv: lv, commander: meta.commander, cmdLv: myCmdLv, lives: lives, biome: biome, geo: geo, mana: stage ? stage.mana : 100, talents: myTalents(lv) });
+  var player = new Board({ name: 'Tú', deck: deck, cardLv: lv, commander: meta.commander, cmdLv: myCmdLv, lives: lives, biome: biome, geo: geo, mana: stage ? stage.mana : 100, talents: myTalents(lv), cmdNodes: cmdTreeActive(meta.commander, myCmdLv, (meta.cmdTree || {})[meta.commander]) });
   battle = {
     mode: mode, stage: stage, opts: opts, tmode: tmode, lent: lent,
     boards: [player], player: player, other: null,
@@ -67,7 +69,8 @@ function startBattle(mode, opts) {
     UNIT_ORDER.forEach(function (id) { aiCard[id] = Math.max(1, avg + DUEL_CARD_OFFSET[aiLv]); });
     if (tourney) aiCard = tourneyLevels();
     var aiCmdLv = tourney ? TOURNEY_CMD_LV : Math.max(1, Math.min(CMD_MAX, myCmdLv + DUEL_CARD_OFFSET[aiLv]));
-    battle.other = new Board({ name: pick(RIVAL_NAMES), ai: true, aiLevel: aiLv, deck: aiDeck, cardLv: aiCard, commander: pick(COMMANDER_ORDER), cmdLv: aiCmdLv, lives: { v: 3, max: 3 }, biome: biome, geo: geo, talents: aiTalents(aiCard) });
+    var aiCmd = pick(COMMANDER_ORDER);
+    battle.other = new Board({ name: pick(RIVAL_NAMES), ai: true, aiLevel: aiLv, deck: aiDeck, cardLv: aiCard, commander: aiCmd, cmdLv: aiCmdLv, lives: { v: 3, max: 3 }, biome: biome, geo: geo, talents: aiTalents(aiCard), cmdNodes: cmdTreeActive(aiCmd, aiCmdLv, aiCmdTree(aiCmd)) });
   } else if (mode === 'coop') {
     var allyDeck = shuffleArr(AI_UNITS.slice()).slice(0, 5);
     var allyCard = {};
@@ -75,6 +78,7 @@ function startBattle(mode, opts) {
     battle.other = new Board({ name: pick(ALLY_NAMES), ai: true, aiLevel: 2, deck: allyDeck, cardLv: allyCard, commander: pick(COMMANDER_ORDER), cmdLv: myCmdLv, lives: lives, biome: biome, geo: geo });
   }
   if (battle.other) { battle.boards.push(battle.other); battle.other.battle = battle; }
+  if (mode === 'coop') { battle.other.passTo = player; battle.other.shareWith = player; player.shareWith = battle.other; }
   // 1 contra 1 (no el torneo): modificador y jefe final al azar; la partida
   // espera a que la ruleta los enseñe (showDuelRoulette)
   if (mode === 'duel' && !tourney) {
@@ -149,6 +153,10 @@ function myTalents(lv) {
   });
   return o;
 }
+// la máquina elige las ramas de su comandante al azar
+function aiCmdTree(k) {
+  return (CMD_TREE[k] || []).map(function (tier, t) { return shuffleArr(tier.map(function (n) { return n.id; })).slice(0, CMD_TREE_PICK[t]); });
+}
 // la máquina elige sus talentos al azar
 function aiTalents(lv) {
   var o = {};
@@ -212,6 +220,7 @@ function finishPick(chosen) {
 // cartas del rival del duelo respecto a la media de las tuyas (fácil, normal, difícil)
 var DUEL_CARD_OFFSET = [-2, 0, 2];
 var ROGUE_LATE = 1.11;
+var COOP_HP = 2.4;
 function hpScale() {
   var b = battle, w = Math.max(1, b.wave);
   var s = 42 * Math.pow(1.17, w - 1);
@@ -224,6 +233,8 @@ function hpScale() {
   // roguelike: a partir de la 15 aprieta más, que las ventajas se acumulan
   if (b.mode === 'rogue' && w > 15) s *= Math.pow(ROGUE_LATE, w - 15);
   if (b.event && b.event.id === 'horda') s *= 0.7;
+  // cooperativo: cada monstruo se las ve con los dos tableros
+  if (b.mode === 'coop') s *= COOP_HP;
   return s * modHp();
 }
 function isBossWave(w) {
@@ -304,7 +315,8 @@ function updateCoach(dt) {
 function spawnNext() {
   var b = battle, spec = b.queue.shift();
   var sc = hpScale();
-  b.boards.forEach(function (bd) {
+  // en el cooperativo solo entran por el tablero del aliado (camino compartido)
+  (b.mode === 'coop' ? [b.other] : b.boards).forEach(function (bd) {
     if (spec.boss) {
       var hp = sc * BOSSES[spec.kind].hp * (1 + b.wave * 0.04) * (spec.final ? ROGUE_FINAL_HP : 1);
       bd.spawn(spec.kind, hp, { boss: true });

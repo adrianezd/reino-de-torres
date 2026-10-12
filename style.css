@@ -2060,16 +2060,7 @@ x-ico.off { filter: grayscale(1) brightness(0.45); opacity: 0.75; }
 .sp-have { margin: 10px 0 0; font-size: 0.75rem; color: var(--muted); text-align: center; }
 @media (prefers-reduced-motion: reduce) { .rl-card.win { animation: none; } }
 
-/* ---------- modo roguelike (inicio y su pantalla) ---------- */
-.rogue-btn {
-  display: flex; align-items: center; gap: 10px; width: min(100%, 380px); margin: 8px auto 0; padding: 8px 14px; cursor: pointer; text-align: left;
-  font: inherit; color: #fff; border-radius: 16px; border: 3px solid var(--ink);
-  background: linear-gradient(180deg, #7b4be0, #3d1f8a); box-shadow: 0 0 0 2px #c9a8ff inset, 0 5px 0 var(--ink);
-}
-.rogue-btn:active { transform: translateY(3px); box-shadow: 0 0 0 2px #c9a8ff inset, 0 2px 0 var(--ink); }
-.rogue-btn img { width: 40px; height: 40px; object-fit: contain; flex: none; filter: drop-shadow(0 2px 0 rgba(0,0,0,0.4)); }
-.rogue-btn b { display: block; font-family: 'Lilita One'; font-weight: 400; font-size: 1.2rem; text-shadow: 0 2px 0 var(--ink); }
-.rogue-btn small { display: block; font-size: 0.75rem; color: #e3d6ff; }
+/* ---------- modo roguelike (su pantalla) ---------- */
 .rg-panel { display: flex; align-items: center; gap: 10px; }
 .rg-panel img { width: 46px; height: 46px; object-fit: contain; flex: none; }
 .rg-panel b { display: block; }
@@ -2136,3 +2127,31 @@ x-ico.off { filter: grayscale(1) brightness(0.45); opacity: 0.75; }
 /* cofre legendario de la tienda: ocupa la fila entera y brilla */
 .sh-chests .sh-chest[data-buychest="legendario"] { grid-column: 1 / -1; box-shadow: 0 0 0 2px var(--ink), 0 0 16px rgba(63,208,255,0.55); }
 .sh-chests .sh-chest[data-buychest="legendario"] .sh-chest-pic { width: 34%; filter: drop-shadow(0 0 10px rgba(63,208,255,0.7)); }
+
+/* destello de detrás del cofre (ficha y resumen): se difumina hacia los
+   bordes de su caja en vez de cortarse en seco */
+.chest-pic-glow {
+  position: absolute; inset: 0; pointer-events: none;
+  -webkit-mask-image: radial-gradient(ellipse 50% 50% at 50% 50%, #000 45%, transparent 100%);
+  mask-image: radial-gradient(ellipse 50% 50% at 50% 50%, #000 45%, transparent 100%);
+}
+
+/* cinco cartas de modo en la misma fila; Co-op y Roguelike llevan el nombre
+   escrito encima de la ilustración, a la altura del de las demás */
+.mode-row { grid-template-columns: repeat(5, minmax(0, 1fr)); width: min(100%, 440px); gap: 5px; }
+.mode-card { container-type: inline-size; }
+.mode-card:nth-child(5) { animation-delay: 0.2s; }
+.mode-name {
+  position: absolute; left: 0; right: 0; top: 67.8%; transform: translateY(-50%); text-align: center; pointer-events: none;
+  font-family: 'Lilita One', 'Titan One', sans-serif; font-size: 13cqw; line-height: 1; color: #fff; white-space: nowrap;
+  -webkit-text-stroke: 0.9cqw #1a1430; paint-order: stroke fill; text-shadow: 0 0.8cqw 0 #1a1430;
+}
+
+/* árbol de habilidades del comandante (pestaña Comandante) */
+.ct-tree { margin: 10px 0; padding: 10px; border-radius: 16px; background: var(--ui-panel-bg); border: 3px solid var(--cc); }
+.ct-tree h3 { margin: 0 0 6px; font-size: 1.05rem; }
+.ct-row { display: grid; grid-template-columns: repeat(var(--n), minmax(0, 1fr)); gap: 6px; margin-top: 4px; }
+.cmd-card.locked .cmd-body { filter: grayscale(1) brightness(0.45); }
+.cmd-card.locked b { opacity: 0.7; }
+.cmd-lock { position: absolute; left: 50%; top: 42%; transform: translate(-50%, -50%); width: 34%; aspect-ratio: 1; display: grid; place-items: center; }
+.cmd-lock x-ico { width: 100%; height: 100%; }

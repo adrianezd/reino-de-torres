@@ -18,6 +18,7 @@ function defaultMeta() {
     deck: STARTER_UNITS.slice(),
     commander: 'aria',
     cmdCards: defaultCmdCards(),      // nivel y cartas de cada comandante
+    cmdOwned: COMMANDER_ORDER.filter(function (k) { return !COMMANDERS[k].locked; }),   // comandantes conseguidos
     campaign: {},          // fase -> estrellas
     coopBest: 0,
     duelWins: 0, duelLosses: 0,
@@ -25,6 +26,7 @@ function defaultMeta() {
     tourneyMode: 'clasico',  // forma de jugar el torneo (TOURNEY_MODES)
     rogueBest: 0,            // récord de oleadas del modo roguelike
     talents: {},             // tropa -> rama elegida en cada piso de su árbol (TALENTS)
+    cmdTree: {},             // comandante -> ramas elegidas en cada piso de su árbol (CMD_TREE)
     freeChestAt: 0,         // cuándo está listo el siguiente cofre gratis (ms)
     slots: [null, null, null, null],   // cofres ganados: { type, unlockAt } (unlockAt: cuándo se abre; 0 si no se ha empezado)
     settings: { sound: true },
@@ -55,6 +57,13 @@ function loadMeta() {
     m.trophyBest = Math.max(m.trophyBest || 0, m.trophies || 0);
     if (!m.cmdCards) m.cmdCards = {};
     COMMANDER_ORDER.forEach(function (k) { if (!m.cmdCards[k]) m.cmdCards[k] = { lv: 1, n: 0 }; });
+    // partidas de antes de los comandantes bloqueados: se quedan los que ya
+    // tenían cartas, subidos o elegidos
+    if (!Array.isArray(m.cmdOwned)) m.cmdOwned = COMMANDER_ORDER.filter(function (k) {
+      var c = m.cmdCards[k];
+      return !COMMANDERS[k].locked || k === m.commander || c.lv > 1 || c.n > 0;
+    });
+    if (m.cmdOwned.indexOf(m.commander) === -1) m.commander = 'aria';
     var slots = Array.isArray(m.slots) ? m.slots : [];
     m.slots = [];
     for (var i = 0; i < CHEST_SLOTS; i++) m.slots.push(slots[i] && CHESTS[slots[i].type] ? slots[i] : null);
@@ -98,6 +107,12 @@ function upgradeCard(id) {
 }
 
 /* ---------- niveles de comandante ---------- */
+function cmdOwned(k) { return meta.cmdOwned.indexOf(k) !== -1; }
+// cartas de comandante de un cofre: la primera de uno que no tienes lo consigue
+function addCmdCards(k, n, fresh) {
+  if (!cmdOwned(k)) { meta.cmdOwned.push(k); n--; fresh.push(k); }
+  meta.cmdCards[k].n += n;
+}
 function cmdLevel(k) { return meta.cmdCards[k] ? meta.cmdCards[k].lv : 1; }
 function canUpgradeCmd(k) {
   var c = meta.cmdCards[k];
@@ -131,12 +146,13 @@ function openChest(type) {
   // cofre de comandante: todas las cartas, de un mismo comandante al azar
   else if (ch.cmd) {
     got[pick(COMMANDER_ORDER)] = ch.cards;
-    Object.keys(got).forEach(function (k) { meta.cmdCards[k].n += got[k]; });
+    var cmdFresh = [];
+    Object.keys(got).forEach(function (k) { addCmdCards(k, got[k], cmdFresh); });
     meta.gold += gold;
     meta.gems += gems;
     missionAdd('chest', 1);
     saveMeta();
-    return { type: type, gold: gold, gems: gems, cards: {}, cmdCards: got, fresh: [] };
+    return { type: type, gold: gold, gems: gems, cards: {}, cmdCards: got, fresh: [], cmdFresh: cmdFresh };
   }
   for (var i = 0; i < (ch.legendOnly ? 0 : ch.cards); i++) {
     var roll = Math.random() - (ch.myth || 0), pool;
@@ -149,11 +165,11 @@ function openChest(type) {
     got[id] = (got[id] || 0) + 1;
   }
   // cartas de comandante (salen antes que las tropas, ver chestItems)
-  var cmdGot = {};
+  var cmdGot = {}, cmdNew = [];
   if (ch.cmdChance && Math.random() < ch.cmdChance) {
     var ck = pick(COMMANDER_ORDER);
     cmdGot[ck] = ch.cmdCards;
-    meta.cmdCards[ck].n += ch.cmdCards;
+    addCmdCards(ck, ch.cmdCards, cmdNew);
   }
   meta.gold += gold;
   meta.gems += gems;
@@ -165,7 +181,7 @@ function openChest(type) {
     fresh.push(id);
   });
   saveMeta();
-  return { type: type, gold: gold, gems: gems, cards: got, cmdCards: cmdGot, fresh: fresh };
+  return { type: type, gold: gold, gems: gems, cards: got, cmdCards: cmdGot, fresh: fresh, cmdFresh: cmdNew };
 }
 
 /* ---------- huecos de cofre ----------

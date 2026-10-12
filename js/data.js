@@ -382,7 +382,7 @@ var MISSIONS = {
   cmd:    { text: 'Usa la habilidad del comandante {n} veces', goals: [4, 6], gold: 100, gems: 2, icon: 'icons/rayo' },
   power:  { text: 'Mejora tropas en partida {n} veces', goals: [5, 8], gold: 100, gems: 2, icon: 'icons/mejorar' },
   rank:   { text: 'Sube una tropa a rango {n}', goals: [4, 5], max: true, gold: 120, gems: 3, icon: 'icons/grafico' },
-  coop:   { text: 'Llega a la oleada {n} en 2 contra la máquina', goals: [10, 15], max: true, gold: 130, gems: 3, icon: 'icons/ola' },
+  coop:   { text: 'Llega a la oleada {n} en Co-op', goals: [10, 15], max: true, gold: 130, gems: 3, icon: 'icons/ola' },
   chest:  { text: 'Abre {n} cofres', goals: [2, 3], gold: 100, gems: 2, icon: 'chests/madera' }
 };
 var DAILY_COUNT = 3;
@@ -414,23 +414,26 @@ var COMMANDERS = {
   aria:  { name: 'Aria',  title: 'Capitana de Escarcha', color: '#7fd6ff', icon: '🌨️', pic: 'assets/commanders/aria.webp?v=2', ability: 'Ventisca',  desc: 'Congela a todos los enemigos 3 segundos.', power: 3, cd: 30 },
   merlo: { name: 'Merlo', title: 'Archimago',            color: '#b26bff', icon: '✨', pic: 'assets/commanders/merlo.webp?v=2', ability: 'Marea de maná', desc: 'Te da 120 de maná al instante.', power: 120, cd: 35 },
   brann: { name: 'Brann', title: 'General Enano',        color: '#ff8f3c', icon: '☄️', pic: 'assets/commanders/brann.webp?v=2', ability: 'Meteoro',   desc: 'Un meteorito golpea a los enemigos más adelantados.', power: 520, cd: 28 },
-  // sin ilustración todavía (gen: su retrato y su figura se dibujan con su icono, ver art.js)
-  nyx:   { name: 'Nyx',   title: 'Bruja del Eclipse',    color: '#c04bff', icon: '🌑', gen: true, ability: 'Maldición', desc: 'Los monstruos reciben un 60% más de daño durante 6 segundos.', power: 6, cd: 32 },
-  sol:   { name: 'Sol',   title: 'Sacerdotisa del Alba', color: '#ffc83a', icon: '☀️', gen: true, ability: 'Escudo divino', desc: 'Durante 5 segundos no pierdes vidas.', power: 5, cd: 40 },
+  // los cuatro nuevos (de assets/pack-nyx-sol-morgana-tormal.jpg) empiezan
+  // bloqueados (locked) y se consiguen en los cofres; su tarjeta no lleva el
+  // marco de tres medallones de las tres primeras (noFrame)
+  nyx:   { name: 'Nyx',   title: 'Hechicera del Eclipse', color: '#c04bff', icon: '🌑', locked: true, noFrame: true, pic: 'assets/commanders/nyx.webp', ability: 'Maldición', desc: 'Los monstruos reciben un 60% más de daño durante 6 segundos.', power: 6, cd: 32 },
+  sol:   { name: 'Sol',   title: 'Paladín del Alba',      color: '#ffc83a', icon: '☀️', locked: true, noFrame: true, pic: 'assets/commanders/sol.webp', ability: 'Escudo divino', desc: 'Durante 5 segundos no pierdes vidas.', power: 5, cd: 40 },
   // héroes: su habilidad se usa sobre el tablero eligiendo tropas (hero: cuántas);
   // con nivel se cargan antes en vez de tener más fuerza
-  morgana: { name: 'Morgana', title: 'Transmutadora', color: '#2fd6a0', icon: '⚗️', gen: true, hero: 2, ability: 'Transmutación', desc: 'Eliges dos tropas del mismo rango, aunque sean distintas, y se fusionan.', power: 1, cd: 45 },
-  torvald: { name: 'Torvald', title: 'Maestro Herrero', color: '#ff7a3c', icon: '🔨', gen: true, hero: 1, ability: 'Forja', desc: 'Eliges una tropa y sube un rango, hasta el 5.', power: 1, cd: 110 }
+  morgana: { name: 'Morgana', title: 'Inventora', color: '#2fd6a0', icon: '⚙️', locked: true, noFrame: true, pic: 'assets/commanders/morgana.webp', hero: 2, ability: 'Ensamblaje', desc: 'Eliges dos tropas del mismo rango, aunque sean distintas, y se fusionan.', power: 1, cd: 45 },
+  torvald: { name: 'Torvald', title: 'Viejo Maestro', color: '#ff7a3c', icon: '🧮', locked: true, noFrame: true, pic: 'assets/commanders/torvald.webp', hero: 1, ability: 'Forja', desc: 'Eliges una tropa y sube un rango, hasta el 5.', power: 1, cd: 110 }
 };
 var COMMANDER_ORDER = ['aria', 'merlo', 'brann', 'nyx', 'sol', 'morgana', 'torvald'];
 COMMANDER_ORDER.forEach(function (k) { var c = COMMANDERS[k]; c.body = c.gen ? '' : 'assets/commanders/' + k + '-cuerpo.webp'; });
 // niveles de comandante: cada nivel, +CMD_BONUS de fuerza en su habilidad.
 // Sus cartas salen solo en el cofre de comandante (pocas), por eso piden menos.
-var CMD_MAX = 10;
-var CMD_BONUS = 0.08;
-function cmdMult(lv) { return 1 + CMD_BONUS * ((lv || 1) - 1); }
-function cmdCardsNeeded(lv) { return [0, 1, 2, 3, 4, 5, 7, 9, 12, 15][lv] || 999; }
-function cmdUpgradeGold(lv) { return [0, 100, 250, 500, 900, 1400, 2100, 3000, 4200, 6000][lv] || 99999; }
+// Del 11 al 25 cada nivel da menos (CMD_BONUS_HIGH) y pide bastante más.
+var CMD_MAX = 25;
+var CMD_BONUS = 0.08, CMD_BONUS_HIGH = 0.03;
+function cmdMult(lv) { lv = lv || 1; return 1 + CMD_BONUS * (Math.min(lv, 10) - 1) + CMD_BONUS_HIGH * Math.max(0, lv - 10); }
+function cmdCardsNeeded(lv) { return [0, 1, 2, 3, 4, 5, 7, 9, 12, 15, 18, 21, 24, 27, 30, 34, 38, 42, 46, 50, 55, 60, 65, 70, 80][lv] || 999; }
+function cmdUpgradeGold(lv) { return [0, 100, 250, 500, 900, 1400, 2100, 3000, 4200, 6000, 7000, 8000, 9000, 10000, 11500, 13000, 14500, 16000, 18000, 20000, 22500, 25000, 28000, 32000, 36000][lv] || 99999; }
 // fuerza de la habilidad a un nivel, y su texto
 function cmdPower(k, lv) { return COMMANDERS[k].power * cmdMult(lv); }
 // segundos de carga: los héroes se cargan antes con cada nivel
@@ -443,6 +446,73 @@ function cmdDesc(k, lv) {
   if (k === 'aria') return 'Congela a todos los enemigos ' + String(Math.round(p * 10) / 10).replace('.', ',') + ' segundos.';
   if (k === 'merlo') return 'Te da ' + Math.round(p) + ' de maná al instante.';
   return 'Un meteorito golpea a los enemigos más adelantados con un ' + Math.round(cmdMult(lv) * 100) + '% de fuerza.';
+}
+
+/* Árbol de habilidades de cada comandante: con el nivel CMD_TREE_LV[piso]
+   se abre un piso y en él se eligen CMD_TREE_PICK[piso] ramas (meta.cmdTree).
+   Cada rama cambia datos del tablero al empezar la partida (applyCmdNode):
+   mul multiplica, add suma, elem suma daño a un elemento, set fija, lives da vidas. */
+var CMD_TREE_LV = [5, 25];
+var CMD_TREE_PICK = [1, 2];
+var CMD_TREE = {
+  aria: [
+    [{ id: 'cortante', name: 'Escarcha cortante', desc: 'La Ventisca también hace daño a todos los monstruos.', add: { cmdDmg: 150 } },
+     { id: 'largo', name: 'Invierno largo', desc: 'La Ventisca congela un 50% más de tiempo.', mul: { cmdPowerMult: 1.5 } }],
+    [{ id: 'recarga', name: 'Recarga', desc: 'Se carga un 30% más rápido.', mul: { chargeMult: 1.3 } },
+     { id: 'eterno', name: 'Hielo eterno', desc: 'Tras la Ventisca, los monstruos van un 30% más lentos 4 segundos.', set: { cmdSlow: 0.3 } },
+     { id: 'corazon', name: 'Corazón de hielo', desc: 'Las tropas de hielo hacen un 20% más de daño.', elem: { hielo: 0.2 } }]
+  ],
+  merlo: [
+    [{ id: 'doble', name: 'Marea crecida', desc: 'La Marea de maná da un 50% más.', mul: { cmdPowerMult: 1.5 } },
+     { id: 'torrente', name: 'Torrente', desc: 'Con la Marea invocas además una tropa gratis.', set: { refuerzo: true } }],
+    [{ id: 'recarga', name: 'Recarga', desc: 'Se carga un 30% más rápido.', mul: { chargeMult: 1.3 } },
+     { id: 'arcano', name: 'Saber arcano', desc: 'Las tropas arcanas hacen un 20% más de daño.', elem: { arcano: 0.2 } },
+     { id: 'erudito', name: 'Erudito', desc: 'Mejorar tropas en la partida cuesta un 20% menos.', mul: { powerCostMult: 0.8 } }]
+  ],
+  brann: [
+    [{ id: 'lluvia', name: 'Lluvia de fuego', desc: 'Caen 3 meteoros más.', add: { extraMeteors: 3 } },
+     { id: 'gran', name: 'Gran meteoro', desc: 'Los meteoros hacen un 50% más de daño.', mul: { cmdPowerMult: 1.5 } }],
+    [{ id: 'recarga', name: 'Recarga', desc: 'Se carga un 30% más rápido.', mul: { chargeMult: 1.3 } },
+     { id: 'fragua', name: 'Fragua', desc: 'Las tropas de fuego hacen un 20% más de daño.', elem: { fuego: 0.2 } },
+     { id: 'botin', name: 'Botín enano', desc: 'Cada baja te da 2 de maná más.', add: { killBonus: 2 } }]
+  ],
+  nyx: [
+    [{ id: 'larga', name: 'Maldición larga', desc: 'La Maldición dura un 50% más.', mul: { cmdPowerMult: 1.5 } },
+     { id: 'profunda', name: 'Maldición profunda', desc: 'Con la Maldición reciben el doble de daño en vez de un 60% más.', set: { curseMult: 2 } }],
+    [{ id: 'recarga', name: 'Recarga', desc: 'Se carga un 30% más rápido.', mul: { chargeMult: 1.3 } },
+     { id: 'sombras', name: 'Sombras', desc: 'Las tropas arcanas hacen un 20% más de daño.', elem: { arcano: 0.2 } },
+     { id: 'pacto', name: 'Pacto', desc: 'Cada baja durante la Maldición te da 4 de maná.', add: { curseMana: 4 } }]
+  ],
+  sol: [
+    [{ id: 'largo', name: 'Escudo largo', desc: 'El Escudo divino dura un 50% más.', mul: { cmdPowerMult: 1.5 } },
+     { id: 'sanadora', name: 'Luz sanadora', desc: 'Al usar el Escudo divino recuperas una vida.', set: { solHeal: true } }],
+    [{ id: 'recarga', name: 'Recarga', desc: 'Se carga un 30% más rápido.', mul: { chargeMult: 1.3 } },
+     { id: 'bendicion', name: 'Bendición', desc: 'Todas tus tropas hacen un 10% más de daño.', mul: { dmgMult: 1.1 } },
+     { id: 'muralla', name: 'Muralla', desc: 'Empiezas con una vida más.', lives: 1 }]
+  ],
+  morgana: [
+    [{ id: 'fino', name: 'Ensamblaje fino', desc: 'Un 25% de las veces la tropa sube dos rangos.', add: { heroBoost: 0.25 } },
+     { id: 'chatarra', name: 'Chatarra útil', desc: 'Cada Ensamblaje te da 40 de maná.', add: { heroMana: 40 } }],
+    [{ id: 'recarga', name: 'Recarga', desc: 'Se carga un 30% más rápido.', mul: { chargeMult: 1.3 } },
+     { id: 'engranajes', name: 'Engranajes', desc: 'Las tropas de metal hacen un 20% más de daño.', elem: { metal: 0.2 } },
+     { id: 'taller', name: 'Taller', desc: 'Invocar sube de precio la mitad de rápido.', mul: { summonStep: 0.5 } }]
+  ],
+  torvald: [
+    [{ id: 'maestra', name: 'Forja maestra', desc: 'La Forja puede subir tropas hasta el rango 6.', set: { forgeMax: 6 } },
+     { id: 'yunque', name: 'Yunque', desc: 'Se carga un 25% más rápido.', mul: { chargeMult: 1.25 } }],
+    [{ id: 'veterania', name: 'Veteranía', desc: 'Tus tropas invocadas tienen un 15% de salir con rango 2.', add: { rank2: 0.15 } },
+     { id: 'arsenal', name: 'Arsenal', desc: 'Todas tus tropas hacen un 10% más de daño.', mul: { dmgMult: 1.1 } },
+     { id: 'metal', name: 'Temple', desc: 'Las tropas de metal hacen un 20% más de daño.', elem: { metal: 0.2 } }]
+  ]
+};
+// ramas elegidas que valen a este nivel de comandante
+function cmdTreeActive(k, lv, picks) {
+  var out = [];
+  (CMD_TREE[k] || []).forEach(function (tier, t) {
+    if ((lv || 1) < CMD_TREE_LV[t]) return;
+    tier.forEach(function (n) { if (picks && picks[t] && picks[t].indexOf(n.id) !== -1) out.push(n); });
+  });
+  return out;
 }
 
 /* Eventos que pueden tocar al empezar una oleada (a partir de la 3). */

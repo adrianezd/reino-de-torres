@@ -153,11 +153,23 @@ function Board(opts) {
   this.curseT = 0; this.guardT = 0;
   // combos de fusión: fusiones seguidas en menos de COMBO_TIME
   this.combo = 0; this.comboT = 0;
+  // árbol del comandante (CMD_TREE): daño y frenado de la Ventisca, meteoros de
+  // más, fuerza y maná de la Maldición, vida del Escudo, Ensamblaje y Forja
+  this.cmdDmg = 0; this.cmdSlow = 0; this.extraMeteors = 0; this.curseMult = 1.6; this.curseMana = 0;
+  this.solHeal = false; this.heroBoost = 0; this.heroMana = 0; this.forgeMax = FORGE_MAX;
+  (opts.cmdNodes || []).forEach(function (n) { this.applyCmdNode(n); }, this);
   // tropas con talentos (opts.talents: { id: [rama de cada piso] })
   this.defs = {};
   Object.keys(opts.talents || {}).forEach(function (id) { if (TALENTS[id]) this.defs[id] = talentDef(id, opts.talents[id]); }, this);
 }
 var COMBO_TIME = 2;
+Board.prototype.applyCmdNode = function (n) {
+  Object.keys(n.mul || {}).forEach(function (k) { this[k] *= n.mul[k]; }, this);
+  Object.keys(n.add || {}).forEach(function (k) { this[k] += n.add[k]; }, this);
+  Object.keys(n.set || {}).forEach(function (k) { this[k] = n.set[k]; }, this);
+  Object.keys(n.elem || {}).forEach(function (k) { this.elemBonus[k] = (this.elemBonus[k] || 0) + n.elem[k]; }, this);
+  if (n.lives) { this.lives.max += n.lives; this.lives.v += n.lives; }
+};
 // datos de una tropa en este tablero (con sus talentos, si tiene)
 Board.prototype.def = function (id) { return this.defs[id] || UNITS[id]; };
 function shuffleArr(a) {
@@ -374,14 +386,14 @@ var FORGE_MAX = 5; // Forja de Torvald: hasta este rango
 Board.prototype.heroValid = function (picks) {
   var c = COMMANDERS[this.commander], a = this.cells[picks[0]], b = this.cells[picks[1]];
   if (!a || a.rank >= MAX_RANK) return false;
-  if (c.hero === 1) return picks.length === 1 && a.rank < FORGE_MAX;
+  if (c.hero === 1) return picks.length === 1 && a.rank < this.forgeMax;
   if (picks.length === 1) return true;
   return picks[0] !== picks[1] && b && b.rank === a.rank;
 };
 // la máquina elige por su cuenta las tropas de su héroe
 Board.prototype.heroPicks = function () {
   var c = COMMANDERS[this.commander], list = [];
-  this.cells.forEach(function (u, i) { if (u && u.rank < (c.hero === 1 ? FORGE_MAX : MAX_RANK) && UNITS[u.id].dmg) list.push(i); });
+  this.cells.forEach(function (u, i) { if (u && u.rank < (c.hero === 1 ? this.forgeMax : MAX_RANK) && UNITS[u.id].dmg) list.push(i); }, this);
   if (c.hero === 1) {
     list.sort(function (x, y) { return this.cells[y].rank - this.cells[x].rank; }.bind(this));
     return list.length ? [list[0]] : null;
@@ -400,7 +412,7 @@ Board.prototype.useCommander = function (picks) {
     this.charge = 0; this.cmds++;
     var u = this.cells[picks[picks.length - 1]];
     if (picks.length === 2) {
-      // Transmutación: la primera vuela a la segunda y se funden en esta
+      // Ensamblaje: la primera vuela a la segunda y se funden en esta
       var src = this.cells[picks[0]], a0 = this.cc(picks[0]), p1 = this.cc(picks[1]);
       this.cells[picks[0]] = null;
       this.fx.push({ type: 'fly', id: src.id, rank: src.rank, x1: a0.x, y1: a0.y, x2: p1.x, y2: p1.y, life: MERGE_FLY, max: MERGE_FLY });
@@ -408,10 +420,12 @@ Board.prototype.useCommander = function (picks) {
       this.merges++;
     } else u.pop = 1;
     u.rank++; u.frozen = 0; u.anim = 0;
+    if (picks.length === 2 && this.heroBoost && u.rank < MAX_RANK && Math.random() < this.heroBoost) { u.rank++; u.echoed = true; }
+    if (picks.length === 2 && this.heroMana) this.addMana(this.heroMana);
     this.maxRank = Math.max(this.maxRank, u.rank);
     var pu = this.cc(picks[picks.length - 1]);
     this.addFx('flash', pu, COMMANDERS[cmd].color);
-    this.addText(pu.x, pu.y - 0.6, picks.length === 2 ? '¡Transmutación!' : '¡Forja! +1 rango', COMMANDERS[cmd].color, true);
+    this.addText(pu.x, pu.y - 0.6, picks.length === 2 ? '¡Ensamblaje!' : '¡Forja! +1 rango', COMMANDERS[cmd].color, true);
     if (this.refuerzo) this.summon(true);
     return true;
   }
@@ -419,6 +433,8 @@ Board.prototype.useCommander = function (picks) {
   this.cmds++;
   if (cmd === 'aria') {
     this.enemies.forEach(function (e) { e.stun = Math.max(e.stun, pw); e.stunIce = true; });
+    if (this.cmdSlow) this.enemies.forEach(function (e) { e.slowPct = Math.max(e.slowPct, this.cmdSlow); e.slowT = pw + 4; }, this);
+    if (this.cmdDmg) { var vd = this.cmdDmg * cmdMult(this.cmdLv) * hpScale(); this.enemies.slice().forEach(function (e) { this.hit(e, vd, null, 'meteor'); }, this); }
     this.addFx('flash', { x: this.geo.W / 2, y: this.geo.H / 2 }, '#bfefff');
     this.addSweep('fx/ventisca');
   } else if (cmd === 'merlo') {
@@ -428,7 +444,7 @@ Board.prototype.useCommander = function (picks) {
     this.addSweep('fx/marea');
   } else if (cmd === 'brann') {
     // caen uno tras otro sobre los más adelantados; el daño llega al tocar suelo
-    var targets = this.enemies.slice().sort(function (a, b) { return b.d - a.d; }).slice(0, 6);
+    var targets = this.enemies.slice().sort(function (a, b) { return b.d - a.d; }).slice(0, 6 + this.extraMeteors);
     var dmg = pw * hpScale();
     targets.forEach(function (e, k) {
       var t = METEOR_FALL + k * 0.09;
@@ -442,6 +458,7 @@ Board.prototype.useCommander = function (picks) {
     this.addText(this.geo.W / 2, this.geo.H / 2, '¡Maldición!', '#e0a8ff', true);
   } else if (cmd === 'sol') {
     this.guardT = pw;
+    if (this.solHeal && this.lives.v < this.lives.max) { this.lives.v++; this.addText(this.geo.W / 2, this.geo.H / 2 + 0.5, '+1 vida', GAME_PALETTE.healthGreen, true); }
     this.addFx('flash', { x: this.geo.W / 2, y: this.geo.H / 2 }, '#ffe08a');
     this.addText(this.geo.W / 2, this.geo.H / 2, '¡Escudo divino!', '#ffe08a', true);
   }
@@ -466,6 +483,12 @@ Board.prototype.spawn = function (kind, hp, opt) {
   this.enemies.push(e);
   return e;
 };
+// monstruo que llega del tablero anterior del camino compartido, con la vida que le quede
+Board.prototype.receive = function (e) {
+  var n = this.spawn(e.kind, e.hp, { boss: e.boss });
+  n.maxHp = e.maxHp;
+  return n;
+};
 Board.prototype.hit = function (e, dmg, unitDef, kind) {
   if (e.dead) return;
   if (e.shield > 0) { this.addText(e.x, e.y - 0.4, 'Bloqueo', '#c9d4e6'); return; }
@@ -474,7 +497,7 @@ Board.prototype.hit = function (e, dmg, unitDef, kind) {
   var crit = false;
   if (unitDef && unitDef.crit && Math.random() < unitDef.crit.chance) { dmg *= unitDef.crit.mult; crit = true; }
   else if (unitDef && this.luck && Math.random() < this.luck) { dmg *= 2; crit = true; }
-  if (this.curseT > 0) dmg *= 1.6;
+  if (this.curseT > 0) dmg *= this.curseMult;
   if (unitDef && unitDef.bossMult && e.boss) dmg *= unitDef.bossMult;
   if (unitDef && e.boss) dmg *= this.bossDmgMult;
   if (!(unitDef && unitDef.pierce)) dmg *= 1 - e.armor;
@@ -506,7 +529,11 @@ Board.prototype.kill = function (e) {
   e.dead = true;
   this.kills++;
   if (e.boss) this.bossKills++;
-  var reward = this.addMana(Math.round((e.boss ? 100 : ENEMIES[e.kind].reward) * (this.event === 'lluvia' ? 2 : 1) * this.rewardMult) + this.killBonus);
+  var raw = Math.round((e.boss ? 100 : ENEMIES[e.kind].reward) * (this.event === 'lluvia' ? 2 : 1) * this.rewardMult);
+  var reward = this.addMana(raw + this.killBonus);
+  // cooperativo: el maná de cada baja es para los dos
+  if (this.shareWith) this.shareWith.addMana(raw);
+  if (this.curseT > 0 && this.curseMana) this.addMana(this.curseMana);
   this.deathFx(e);
   if (e.boss) {
     this.addText(e.x, e.y - 0.5, '+' + reward + ' 💧', GAME_PALETTE.manaBlue, true);
@@ -767,6 +794,8 @@ Board.prototype.update = function (dt) {
     if (e.boss) this.bossAbility(e, dt);
     if (e.d >= this.geo.len) {
       e.dead = true;
+      // camino compartido (cooperativo): sigue por el tablero siguiente sin quitar vida
+      if (this.passTo) { this.passTo.receive(e); continue; }
       var loss = this.guardT > 0 ? 0 : e.boss ? 2 : 1;
       if (!loss) this.addText(e.x, e.y - 0.4, '¡Protegido!', '#ffe08a', true);
       this.lives.v = Math.max(0, this.lives.v - loss);

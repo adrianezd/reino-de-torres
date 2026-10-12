@@ -55,7 +55,7 @@ var IMG_LIST = {
   tiles: ['altar', 'fuente', 'atalaya', 'piedra-1'],
   boards: ['lava2', 'hielo', 'roca', 'veneno'],
   ui: ['boton', 'fondo', 'vida'],
-  commanders: ['aria', 'merlo', 'brann'],
+  commanders: COMMANDER_ORDER,
   icons: ['estrella', 'gota', 'espadas', 'escudo'],
   chests: ['moneda'], // proyectil de Midas
   cells: UNIT_ORDER.filter(function (id) { return !UNITS[id].noArt && !NO_CELL_AURA[id]; }) // aura de cada tropa en su casilla (assets/cells)

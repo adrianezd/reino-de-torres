@@ -7,8 +7,21 @@
    La ventana sale sola al entrar con una versión nueva (meta.lastSeenVersion)
    y también desde Opciones.
    ========================================================= */
-var APP_VERSION = '1.14.1';
+var APP_VERSION = '1.15.0';
 var APP_PATCH_NOTES = [
+  {
+    version: '1.15.0',
+    summary: 'Árbol de habilidades de comandante, Co-op con camino compartido y comandantes nuevos ilustrados',
+    items: [
+      'Cada comandante tiene su árbol de habilidades: en el nivel 5 eliges 1 de 2 y en el nivel 25, 2 de 3. Están en la pestaña Comandante y puedes cambiarlas cuando quieras.',
+      'Los comandantes suben ahora hasta el nivel 25. Del 11 en adelante cada nivel da algo menos de fuerza y pide más cartas.',
+      'Nyx, Sol, Morgana y Torvald ya tienen su ilustración. Empiezan bloqueados: se consiguen con sus cartas en el cofre de comandante y en el de oro.',
+      'Co-op (antes 2 contra la máquina): ahora es un camino compartido. Los monstruos pasan primero por el tablero de tu aliado y lo que se le escapa llega al tuyo. El maná de cada baja es para los dos.',
+      'El Roguelike tiene su carta en la fila de modos, en rojo.',
+      'El destello y el portal de los cofres ya no se cortan en su ficha ni en el resumen.',
+      'Al mejorar una carta o comprar en la tienda, la pantalla se queda donde estaba en vez de volver arriba.'
+    ]
+  },
   {
     version: '1.14.1',
     summary: 'Cofre legendario en la tienda',
