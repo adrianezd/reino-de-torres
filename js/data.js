@@ -420,7 +420,7 @@ var COMMANDERS = {
   sol:   { name: 'Sol',   title: 'Paladín del Alba',      color: '#ffc83a', icon: '☀️', locked: true, pic: 'assets/commanders/sol.webp', ability: 'Escudo divino', desc: 'Durante 5 segundos no pierdes vidas.', power: 5, cd: 40 },
   // héroes: su habilidad se usa sobre el tablero eligiendo tropas (hero: cuántas);
   // con nivel se cargan antes en vez de tener más fuerza
-  morgana: { name: 'Morgana', title: 'Inventora', color: '#2fd6a0', icon: '⚙️', locked: true, pic: 'assets/commanders/morgana.webp', hero: 2, ability: 'Ensamblaje', desc: 'Eliges dos tropas del mismo rango, aunque sean distintas, y se fusionan.', power: 1, cd: 45 },
+  morgana: { name: 'Morgana', title: 'Inventora', color: '#2fd6a0', icon: '⚙️', locked: true, pic: 'assets/commanders/morgana.webp', hero: 2, ability: 'Ensamblaje', desc: 'Eliges dos tropas del mismo rango, aunque sean distintas, y se fusionan.', power: 1, cd: 30 },
   torvald: { name: 'Torvald', title: 'Viejo Maestro', color: '#ff7a3c', icon: '🧮', locked: true, pic: 'assets/commanders/torvald.webp', hero: 1, ability: 'Forja', desc: 'Eliges una tropa y sube un rango, hasta el 5.', power: 1, cd: 110 }
 };
 var COMMANDER_ORDER = ['aria', 'merlo', 'brann', 'nyx', 'sol', 'morgana', 'torvald'];

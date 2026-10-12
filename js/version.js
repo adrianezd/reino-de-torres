@@ -7,8 +7,17 @@
    La ventana sale sola al entrar con una versión nueva (meta.lastSeenVersion)
    y también desde Opciones.
    ========================================================= */
-var APP_VERSION = '1.16.1';
+var APP_VERSION = '1.16.2';
 var APP_PATCH_NOTES = [
+  {
+    version: '1.16.2',
+    summary: 'Morgana se carga antes y Brann bien colocado',
+    items: [
+      'Morgana se carga en 30 segundos en vez de 45.',
+      'Brann ya no sale demasiado arriba en su tarjeta.',
+      'Morgana y Torvald ya no llevan la etiqueta Héroe.'
+    ]
+  },
   {
     version: '1.16.1',
     summary: 'Tablero del rival más grande y talentos más claros',

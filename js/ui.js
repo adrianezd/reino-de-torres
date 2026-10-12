@@ -239,13 +239,12 @@ function renderMenu(name, arg) {
     var cs = COMMANDERS[meta.commander], cc = meta.cmdCards[meta.commander];
     var cNeed = cmdCardsNeeded(cc.lv), cGold = cmdUpgradeGold(cc.lv), cMax = cc.lv >= CMD_MAX;
     var cWhy = cMax ? '' : cc.n < cNeed ? (cNeed - cc.n === 1 ? 'Falta 1 carta' : 'Faltan ' + (cNeed - cc.n) + ' cartas') : meta.gold < cGold ? 'Te faltan ' + (cGold - meta.gold) + ' 🪙' : '';
-    html = backBar('Mazo', true) + deckTabs('commanders') + '<p class="lead">Su habilidad se carga durante la partida. Pulsa su retrato para usarla. Los héroes la usan sobre el tablero: eliges las tropas.</p>' +
+    html = backBar('Mazo', true) + deckTabs('commanders') + '<p class="lead">Su habilidad se carga durante la partida. Pulsa su retrato para usarla. Morgana y Torvald la usan sobre el tablero: eliges tú las tropas.</p>' +
       '<div class="cmd-cards">' + COMMANDER_ORDER.map(function (k, i) {
         var c = COMMANDERS[k];
         var own = cmdOwned(k);
         return '<button class="cmd-card' + (meta.commander === k ? ' sel' : '') + (own ? '' : ' locked') + '" data-cmd="' + k + '" style="--cc:' + c.color + '" aria-label="' + esc(c.name) + '">' +
           '<img class="cmd-body" src="' + c.body + '" alt=""><span class="cmd-frame"></span><b>' + esc(c.name) + '</b>' +
-          (c.hero ? '<span class="cmd-hero">Héroe</span>' : '') +
           (own ? '<span class="cmd-lv' + (canUpgradeCmd(k) ? ' ready' : '') + '">Nv ' + cmdLevel(k) + '</span>' : '<span class="cmd-lock">' + ico('icons/candado') + '</span>') +
           '</button>';
       }).join('') + '</div>' +
@@ -1843,7 +1842,7 @@ function initGame() {
     if (!battle || battleBusy()) return;
     if (COMMANDERS[battle.player.commander].hero) {
       if (battle.targeting) { cancelHeroTarget(); return; }
-      if (battle.player.charge < 1) { toast('El héroe aún se está cargando'); return; }
+      if (battle.player.charge < 1) { toast('El comandante aún se está cargando'); return; }
       if (!battle.player.heroPicks() && !battle.player.cells.some(function (u) { return u && u.rank < MAX_RANK; })) { toast('No tienes tropas que elegir'); return; }
       startHeroTarget();
       return;
