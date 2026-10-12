@@ -192,7 +192,7 @@ var FX_OF = { fire: 'fuego', ice: 'hielo', poison: 'veneno', bomb: 'canon', arro
     IMG['fx/' + el + '-' + part] = im;
   });
 });
-['ventisca', 'marea', 'meteoro', 'crater', 'boreas-ventisca', 'midas-critico', 'eco-resuena', 'fusion-eco', 'oria-interes', 'muerte-puf', 'invocar', 'fusion', 'fusion-doblon', 'mover', 'ralentizado-1', 'ralentizado-2', 'ralentizado-3', 'ralentizado-4', 'ralentizado-5'].concat(Object.keys(ELEMENTS).map(function (el) { return 'conector-' + el; })).forEach(function (k) {
+['ventisca', 'marea', 'meteoro', 'crater', 'nyx-maldicion', 'nyx-chispas', 'sol-escudo', 'morgana-ensamblaje', 'torvald-forja', 'torvald-carga', 'boreas-ventisca', 'midas-critico', 'eco-resuena', 'fusion-eco', 'oria-interes', 'muerte-puf', 'invocar', 'fusion', 'fusion-doblon', 'mover', 'ralentizado-1', 'ralentizado-2', 'ralentizado-3', 'ralentizado-4', 'ralentizado-5'].concat(Object.keys(ELEMENTS).map(function (el) { return 'conector-' + el; })).forEach(function (k) {
   var im = new Image();
   im.onload = function () { im.ready = true; };
   im.src = 'assets/fx/' + k + '.webp';

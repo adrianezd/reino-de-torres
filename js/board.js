@@ -425,6 +425,10 @@ Board.prototype.useCommander = function (picks) {
     this.maxRank = Math.max(this.maxRank, u.rank);
     var pu = this.cc(picks[picks.length - 1]);
     this.addFx('flash', pu, COMMANDERS[cmd].color);
+    if (picks.length === 2) {
+      var pa = this.cc(picks[0]), dl = Math.hypot(pu.x - pa.x, pu.y - pa.y);
+      this.fx.push({ type: 'pic', key: 'fx/morgana-ensamblaje', x: (pa.x + pu.x) / 2, y: (pa.y + pu.y) / 2, size: Math.max(1.3, dl * 1.35), rot: Math.atan2(pu.y - pa.y, pu.x - pa.x), grow: 0.5, life: 0.9, max: 0.9 });
+    } else this.fx.push({ type: 'rise', key: 'fx/torvald-forja', x: pu.x, y: pu.y, size: 0.95, life: 1, max: 1 });
     this.addText(pu.x, pu.y - 0.6, picks.length === 2 ? '¡Ensamblaje!' : '¡Forja! +1 rango', COMMANDERS[cmd].color, true);
     if (this.refuerzo) this.summon(true);
     return true;
@@ -455,9 +459,12 @@ Board.prototype.useCommander = function (picks) {
   else if (cmd === 'nyx') {
     this.curseT = pw;
     this.addFx('flash', { x: this.geo.W / 2, y: this.geo.H / 2 }, '#c04bff');
+    this.enemies.forEach(function (e) { this.fx.push({ type: 'pic', key: 'fx/nyx-chispas', x: e.x, y: e.y - 0.15, size: 0.8, rot: 0, grow: 0.4, life: 0.7, max: 0.7 }); }, this);
     this.addText(this.geo.W / 2, this.geo.H / 2, '¡Maldición!', '#e0a8ff', true);
   } else if (cmd === 'sol') {
     this.guardT = pw;
+    var ex = this.pos(this.geo.len - 0.35);
+    this.fx.push({ type: 'pic', key: 'fx/sol-escudo', x: ex.x, y: ex.y, size: 1.6, rot: 0, grow: 0.3, life: 0.6, max: 0.6 });
     if (this.solHeal && this.lives.v < this.lives.max) { this.lives.v++; this.addText(this.geo.W / 2, this.geo.H / 2 + 0.5, '+1 vida', GAME_PALETTE.healthGreen, true); }
     this.addFx('flash', { x: this.geo.W / 2, y: this.geo.H / 2 }, '#ffe08a');
     this.addText(this.geo.W / 2, this.geo.H / 2, '¡Escudo divino!', '#ffe08a', true);

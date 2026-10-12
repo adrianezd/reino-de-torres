@@ -827,6 +827,15 @@ function drawBoard(b, L, now, isMain) {
     ctx.globalAlpha = 1;
   }
 
+  // Maldición de Nyx: anillo de runas a los pies de cada monstruo mientras dure
+  if (b.curseT > 0 && art('fx/nyx-maldicion')) {
+    ctx.globalAlpha = Math.min(1, b.curseT / 0.5) * 0.9;
+    b.enemies.forEach(function (e) {
+      var es = e.boss ? 0.42 : ENEMIES[e.kind].size;
+      drawFxPic(ctx, 'fx/nyx-maldicion', e.x, e.y + es * 0.55, es * 2.4, 0);
+    });
+    ctx.globalAlpha = 1;
+  }
   // monstruos (los de más atrás primero)
   var ens = b.enemies.slice().sort(function (p, q) { return p.y - q.y; });
   ens.forEach(function (e) {
@@ -839,6 +848,13 @@ function drawBoard(b, L, now, isMain) {
     drawEnemy(ctx, e, (e.boss ? 0.42 : d.size) * (G.image ? 0.82 : 1) * grow, now);
     ctx.globalAlpha = 1;
   });
+  // Escudo divino de Sol: esfera de luz tapando la salida mientras dure
+  if (b.guardT > 0 && art('fx/sol-escudo')) {
+    var gp = b.pos(G.len - 0.35);
+    ctx.globalAlpha = Math.min(1, b.guardT / 0.5) * (0.8 + 0.15 * Math.sin(now / 160));
+    drawFxPic(ctx, 'fx/sol-escudo', gp.x, gp.y, 1.25 + 0.05 * Math.sin(now / 220), 0);
+    ctx.globalAlpha = 1;
+  }
   // lobos de Garra
   b.wolves.forEach(function (w) { drawWolf(ctx, w); });
   // proyectiles
@@ -864,6 +880,11 @@ function drawBoard(b, L, now, isMain) {
       ctx.lineTo(f.x2, f.y2); ctx.stroke(); ctx.globalAlpha = 1;
     } else if (f.type === 'pic') {
       drawPicFx(ctx, f);
+    } else if (f.type === 'rise') {
+      // Forja de Torvald: las flechas suben desde la tropa y se desvanecen
+      ctx.globalAlpha = t < 0.6 ? 1 : (1 - t) / 0.4;
+      drawFxPic(ctx, f.key, f.x, f.y - 0.1 - t * 0.45, f.size * (0.7 + 0.3 * Math.min(1, t * 4)), 0);
+      ctx.globalAlpha = 1;
     } else if (f.type === 'sweep') {
       // habilidad de Aria o Merlo: la ola cruza el tablero y se apaga al final
       var sw = G.W * 0.8;

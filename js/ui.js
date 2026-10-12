@@ -392,7 +392,8 @@ function roadHtml() {
     var r = roadReward(s), got = roadClaimed(i), ready = roadReady(i);
     return '<div class="rd-stop ' + (got ? 'got' : ready ? 'ready' : 'lock') + (s.arena != null ? ' arena' : '') + (best >= s.at ? ' reach' : '') + '">' +
       '<span class="rd-at">' + ico('icons/trofeo') + '<b>' + s.at + '</b></span>' +
-      '<div class="rd-card"' + (r.rc ? ' style="--rc:' + r.rc + '"' : '') + '><span class="rd-pic' + (r.card ? ' card' : '') + '"><img src="' + r.pic + '" alt="">' + (r.card ? '<i>?</i>' : '') + '</span>' +
+      '<div class="rd-card"' + (r.rc ? ' style="--rc:' + r.rc + '"' : '') + '><span class="rd-pic' + (r.card ? ' card' : '') + '">' +
+      (r.card ? (s.cards.n > 1 ? '<u style="background-image:url(' + r.pic + ')"></u>' : '') + '<u style="background-image:url(' + r.pic + ')"><i>?</i></u>' : '<img src="' + r.pic + '" alt="">') + '</span>' +
       '<span class="rd-txt"><b>' + esc(r.title) + '</b>' + (r.sub ? '<small>' + r.sub + '</small>' : '') + '</span>' +
       (got ? '<i class="rd-ok">✔</i>' : ready ? '<button class="btn btn-green rd-claim" data-road="' + i + '">Cobrar</button>' : '<i class="rd-lock">🔒</i>') + '</div></div>';
   }).join('');
@@ -457,20 +458,18 @@ function showMissions() {
 }
 
 // efecto ilustrado de la habilidad de cada comandante (assets/fx)
-var CMD_FX = { aria: 'ventisca', merlo: 'marea', brann: 'meteoro' };
+var CMD_FX = { aria: 'ventisca', merlo: 'marea', brann: 'meteoro', nyx: 'nyx-maldicion', sol: 'sol-escudo', morgana: 'morgana-ensamblaje', torvald: 'torvald-forja' };
 /* Árbol de habilidades del comandante elegido: un piso por nivel de
    CMD_TREE_LV; en el primero se elige 1 rama y en el segundo 2 (se pueden
    cambiar cuando quieras). */
 function cmdTreeHtml(k, lv) {
   var picks = (meta.cmdTree && meta.cmdTree[k]) || [];
-  return '<div class="ct-tree" style="--cc:' + COMMANDERS[k].color + '"><h3>Habilidades</h3>' + CMD_TREE[k].map(function (tier, t) {
-    var open = lv >= CMD_TREE_LV[t], mine = picks[t] || [], n = CMD_TREE_PICK[t];
-    return '<div class="tal-tier' + (open ? '' : ' locked') + '"><span class="tal-lv">' + (open ? 'Nv ' + CMD_TREE_LV[t] : '🔒 Nv ' + CMD_TREE_LV[t]) + ' · elige ' + n + ' de ' + tier.length + '</span>' +
-      '<div class="ct-row" style="--n:' + tier.length + '">' + tier.map(function (o) {
-        return '<button class="tal-node' + (mine.indexOf(o.id) !== -1 ? ' on' : '') + '" data-ctree="' + t + ':' + o.id + '"' + (open ? '' : ' disabled') + '><b>' + esc(o.name) + '</b><small>' + esc(o.desc) + '</small></button>';
-      }).join('') + '</div></div>';
-  }).join('<i class="tal-link"></i>') + '</div>';
+  return '<div class="ct-tree" style="--cc:' + COMMANDERS[k].color + '"><h3>Habilidades de ' + esc(COMMANDERS[k].name) + '</h3>' +
+    treeHtml(TREE_CMD, CMD_TREE[k].map(function (tier, t) {
+      return { lv: CMD_TREE_LV[t], n: CMD_TREE_PICK[t], open: lv >= CMD_TREE_LV[t], picked: picks[t] || [], nodes: tier, owner: k, attr: 'data-ctree' };
+    }), 'Puedes cambiarlas cuando quieras.') + '</div>';
 }
+
 function cmdFxPic(k) { return CMD_FX[k] ? 'assets/fx/' + CMD_FX[k] + '.webp' : COMMANDERS[k].pic; }
 // Pestañas dentro de Mazo: tropas y comandante.
 function deckTabs(on) {
@@ -478,7 +477,7 @@ function deckTabs(on) {
     '<button data-go="commanders" class="' + (on === 'commanders' ? 'on' : '') + '">👑 Comandante</button></div>';
 }
 // tab: pantalla de la barra de abajo, sin botón de volver
-function backBar(title, tab) { return '<div class="back-bar">' + (tab ? '' : '<button class="back" data-go="home">‹</button>') + '<h2>' + title + '</h2>' + '<span class="pill gold">🪙 <b>' + meta.gold + '</b></span><span class="pill gem">💎 <b>' + meta.gems + '</b></span></div>'; }
+function backBar(title, tab) { return '<div class="back-bar">' + (tab ? '' : '<button class="back" data-go="home">‹</button>') + '<h2' + (title.length > 9 ? ' class="long"' : '') + '>' + title + '</h2>' + '<span class="pill gold">🪙 <b>' + meta.gold + '</b></span><span class="pill gem">💎 <b>' + meta.gems + '</b></span></div>'; }
 /* Filtro por rareza de la colección: todas o una rareza, con cuántas tienes de cada. */
 var collFilter = 'all';
 function rarityFilters() {
@@ -593,6 +592,8 @@ function bindMenu() {
       if (at !== -1) mine.splice(at, 1);
       else { mine.push(id); while (mine.length > CMD_TREE_PICK[t]) mine.shift(); }  // con el piso lleno, cambia la más antigua
       picks[t] = mine; meta.cmdTree[k] = picks; saveMeta();
+      var cn = CMD_TREE[k][t].filter(function (o) { return o.id === id; })[0];
+      toast(cn.name + ': ' + cn.desc);
       sfx('power'); renderMenu('commanders');
     };
   });
@@ -683,16 +684,39 @@ function talentPending(id) {
 }
 function talentTreeHtml(id) {
   var lv = meta.cards[id].lv, picks = talentPicks(id);
-  return '<div class="tal-tree">' + TALENTS[id].map(function (tier, t) {
-    var open = lv >= TALENT_LV[t];
-    return '<div class="tal-tier' + (open ? '' : ' locked') + '"><span class="tal-lv">' + (open ? 'Nv ' + TALENT_LV[t] : '🔒 Nv ' + TALENT_LV[t]) + '</span>' +
-      '<div class="tal-pair">' + tier.map(function (o) {
-        var on = picks[t] === o.id;
-        return '<button class="tal-node' + (on ? ' on' : '') + '" data-tal="' + t + ':' + o.id + '"' + (open ? '' : ' disabled') + '><b>' + esc(o.name) + '</b><small>' + esc(o.desc) + '</small></button>';
-      }).join('<i class="tal-or">o</i>') + '</div></div>';
-  }).join('<i class="tal-link"></i>') + '</div>' +
-    '<p class="tal-note">Cada piso se abre con el nivel de la carta. Elige una rama en cada uno; puedes cambiarla cuando quieras.</p>';
+  return treeHtml(TREE_TROOP, TALENTS[id].map(function (tier, t) {
+    return { lv: TALENT_LV[t], n: 1, open: lv >= TALENT_LV[t], picked: picks[t] ? [picks[t]] : [], nodes: tier, owner: id, attr: 'data-tal' };
+  }), 'Cada piso se abre con el nivel de la carta. Elige una rama en cada uno; puedes cambiarla cuando quieras.');
 }
+/* Árbol con la ilustración de assets/ui/arbol-* (sin texto): las casillas de
+   cada piso, de abajo arriba, en píxeles de la imagen (box: lado de la
+   casilla). En cada una, el icono de su rama; en el rombo, el nivel. */
+var TREE_TROOP = { img: 'assets/ui/arbol-talentos.webp', w: 687, h: 1344, box: 156,
+  tiers: [{ at: [[97, 760], [435, 760]], badge: [343, 1013] }, { at: [[97, 440], [435, 440]], badge: [343, 693] }, { at: [[97, 120], [435, 120]], badge: [343, 368] }] };
+var TREE_CMD = { img: 'assets/ui/arbol-comandante.webp', w: 687, h: 1024, box: 156,
+  tiers: [{ at: [[97, 440], [435, 440]], badge: [343, 693] }, { at: [[97, 120], [267, 94], [435, 120]], badge: [343, 368] }] };
+function treeHtml(g, tiers, note) {
+  var pc = function (v, tot) { return (v / tot * 100).toFixed(2) + '%'; };
+  var html = '<div class="tree" style="aspect-ratio:' + g.w + ' / ' + g.h + ';background-image:url(' + g.img + ')">';
+  tiers.forEach(function (tr, t) {
+    var geo = g.tiers[t];
+    tr.nodes.forEach(function (o, k) {
+      var at = geo.at[k], on = tr.picked.indexOf(o.id) !== -1;
+      html += '<button class="tree-node' + (on ? ' on' : '') + '" ' + tr.attr + '="' + t + ':' + o.id + '"' + (tr.open ? '' : ' disabled') +
+        ' style="left:' + pc(at[0], g.w) + ';top:' + pc(at[1], g.h) + ';width:' + pc(g.box, g.w) + ';height:' + pc(g.box, g.h) + '" aria-label="' + esc(o.name) + '">' +
+        '<img src="assets/' + (TREE_ICO[tr.owner + ':' + o.id] || 'icons/estrella') + '.webp" alt=""></button>';
+    });
+    html += '<span class="tree-lv' + (tr.open ? '' : ' locked') + '" style="left:' + pc(geo.badge[0], g.w) + ';top:' + pc(geo.badge[1], g.h) + '">' + tr.lv + '</span>';
+  });
+  html += '</div><div class="tree-list">' + tiers.map(function (tr) {
+    var chosen = tr.nodes.filter(function (o) { return tr.picked.indexOf(o.id) !== -1; });
+    var head = '<b>Nivel ' + tr.lv + '</b> · elige ' + tr.n + ' de ' + tr.nodes.length;
+    if (!tr.open) return '<p class="locked">🔒 ' + head + '</p>';
+    return '<p>' + head + (chosen.length ? chosen.map(function (o) { return '<span><em>' + esc(o.name) + ':</em> ' + esc(o.desc) + '</span>'; }).join('') : '<span class="tree-none">Toca una casilla para elegir</span>') + '</p>';
+  }).reverse().join('') + '</div>' + (note ? '<p class="tal-note">' + note + '</p>' : '');
+  return html;
+}
+
 function bindUcTabs() {
   document.querySelectorAll('[data-uct]').forEach(function (b) {
     b.onclick = function () {
@@ -758,6 +782,8 @@ function showCardModal(id, tab) {
       if (!meta.talents) meta.talents = {};
       var picks = (meta.talents[id] || [null, null, null]).slice();
       picks[t] = k; meta.talents[id] = picks; saveMeta();
+      var tn = TALENTS[id][t].filter(function (o) { return o.id === k; })[0];
+      toast(tn.name + ': ' + tn.desc);
       sfx('power'); showCardModal(id, 'talents'); renderMenu(currentScreen);
     };
   });
@@ -786,7 +812,7 @@ function unitStatsHtml(u, lv) {
   if (u.wild) return stat('✨', 'Todas', 'Fusión') + stat('🎲', Math.round(u.wild.echo * mult * 100) + '%', 'Resuena') + stat('⬆', '+2', 'Rangos');
   if (u.interest) return stat('💧', Math.round(u.interest.pct * 100) + '%', 'Interés') + stat('⏱️', u.interest.every + ' s', 'Cada') + stat('🔒', Math.round(u.interest.cap * mult), 'Tope');
   return u.dmg
-    ? stat('⚔️', dmg, 'Daño') + stat('⏱️', u.rate, 'Disparos/s') + stat('📈', Math.round(dmg * u.rate), 'Daño/s')
+    ? stat('⚔️', dmg, 'Daño') + stat('⏱️', String(u.rate).replace('.', ','), 'Disparos/s') + stat('📈', Math.round(dmg * u.rate), 'Daño/s')
     : u.manaGen
       ? stat('💧', '+' + Math.round(u.manaGen.amount * mult), 'Maná') + stat('⏱️', u.manaGen.every + ' s', 'Cada') + stat('✨', '×rango', 'Fusión')
       : stat('🎵', '+' + Math.round(u.buff.speed * mult * 100) + '%', 'Velocidad') + stat('📍', '4', 'Vecinas') + stat('✨', '×rango', 'Fusión');
@@ -992,7 +1018,7 @@ function showChestInfo(k, slot) {
     (ch.legendOnly
       ? (function (ls) {
         return '<h3 class="ci-t">Una carta legendaria</h3>' + ls.map(function (id) {
-          return row(RARITY.legendaria.color, UNITS[id].name, meta.cards[id] ? 'Nivel ' + meta.cards[id].lv : 'Aún no la tienes', '1 de ' + ls.length);
+          return row(RARITY.legendaria.color, UNITS[id].name, meta.cards[id] ? 'Nivel ' + meta.cards[id].lv : 'Aún no la tienes', '1 de ' + ls.length).replace('<i></i>', '<img class="ci-face" src="' + unitIcon(id, 0, 64) + '" alt="">');
         }).join('') + '<p class="ci-note">Solo trae una carta, siempre legendaria y al azar.</p>';
       })(UNIT_ORDER.filter(function (id) { return UNITS[id].rarity === 'legendaria'; }))
       : ch.cmd
@@ -1546,11 +1572,16 @@ function startHeroTarget() {
   if (b.targeting) { cancelHeroTarget(); return; }
   b.targeting = { picks: [] };
   b.selected = null; refreshUnitInfo();
-  heroHint(c.hero === 2 ? 'Toca la primera tropa' : 'Toca la tropa que quieres subir');
+  heroHint(c.hero === 2 ? 'Toca la primera tropa' : 'Toca la tropa que quieres subir', c.hero === 2 ? 'fx/morgana-ensamblaje' : 'fx/torvald-carga');
   sfx('tap');
 }
 function cancelHeroTarget() { if (battle) battle.targeting = null; $('heroHint').hidden = true; }
-function heroHint(t) { var h = $('heroHint'); h.innerHTML = icons(esc(t) + ' <small>Toca el retrato para cancelar</small>'); h.hidden = false; }
+function heroHint(t, pic) {
+  var h = $('heroHint');
+  if (pic) h._pic = pic;
+  h.innerHTML = (h._pic ? '<img src="assets/' + h._pic + '.webp" alt="">' : '') + '<span>' + icons(esc(t) + ' <small>Toca el retrato para cancelar</small>') + '</span>';
+  h.hidden = false;
+}
 // toque en una casilla mientras se elige: devuelve true si lo ha usado
 function heroTap(i) {
   var b = battle, t = b.targeting, p = b.player, c = COMMANDERS[p.commander];

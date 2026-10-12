@@ -2153,3 +2153,58 @@ x-ico.off { filter: grayscale(1) brightness(0.45); opacity: 0.75; }
 .cmd-card.locked b { opacity: 0.7; }
 .cmd-lock { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); width: 34%; aspect-ratio: 1; display: grid; place-items: center; }
 .cmd-lock x-ico { width: 100%; height: 100%; }
+
+/* aviso de los héroes con su efecto (barras de Torvald, engranajes de Morgana) */
+.hero-hint { display: flex; align-items: center; gap: 8px; text-align: left; }
+.hero-hint img { height: 38px; width: auto; max-width: 70px; object-fit: contain; }
+
+/* árbol de talentos y de habilidades (ilustración de assets/ui/arbol-*) */
+.tree { position: relative; width: min(100%, 300px); margin: 8px auto 0; background: center / 100% 100% no-repeat; }
+.tree-node {
+  position: absolute; padding: 9%; border: 0; border-radius: 10%; background: none; cursor: pointer;
+  display: grid; place-items: center;
+}
+.tree-node img { width: 72%; height: 72%; object-fit: contain; filter: drop-shadow(0 2px 0 rgba(0,0,0,0.5)); opacity: 0.55; }
+.tree-node.on { box-shadow: 0 0 0 3px var(--gold), 0 0 16px 4px rgba(255,209,102,0.8); background: rgba(255,209,102,0.18); }
+.tree-node.on img { opacity: 1; transform: scale(1.08); }
+.tree-node:disabled { cursor: default; }
+.tree-node:disabled img { opacity: 0.2; filter: grayscale(1); }
+.tree-lv {
+  position: absolute; transform: translate(-50%, -50%); font-family: 'Lilita One', sans-serif; font-size: clamp(0.8rem, 4.2vw, 1.05rem);
+  color: #ffe9a8; -webkit-text-stroke: 3px #1a1430; paint-order: stroke fill; pointer-events: none;
+}
+.tree-lv.locked { color: #9aa0b8; }
+.tree-list { margin-top: 8px; text-align: left; }
+.tree-list p { margin: 0 0 6px; padding: 6px 8px; border-radius: 10px; background: rgba(0,0,0,0.25); font-size: 0.8rem; }
+.tree-list p.locked { color: var(--muted); }
+.tree-list span { display: block; margin-top: 2px; color: #fff; }
+.tree-list em { font-style: normal; color: var(--gold); }
+.tree-list .tree-none { color: var(--muted); }
+
+/* ---------- repaso visual ---------- */
+/* títulos largos de las pantallas: en dos líneas y algo más pequeños en vez de cortarse */
+.back-bar h2 { white-space: normal; overflow: visible; text-overflow: clip; line-height: 1.05; font-size: clamp(1rem, 5vw, 1.5rem); overflow-wrap: anywhere; }
+/* los atajos del inicio por encima de la figura del comandante */
+.side-col { position: relative; z-index: 3; }
+.side-btn span { position: relative; z-index: 1; }
+/* iconos de las casillas del árbol a buen tamaño */
+.tree-node { padding: 0; }
+.tree-node img { width: 58%; height: 58%; }
+/* camino de trofeos: cartas con su forma */
+.rd-pic.card { width: 54px; height: 54px; }
+.rd-pic.card u {
+  position: absolute; width: 30px; height: 44px; border-radius: 5px; border: 2px solid var(--rc);
+  background: center / cover no-repeat; box-shadow: 0 2px 0 rgba(10,8,30,0.5); display: grid; place-items: center; text-decoration: none;
+}
+.rd-pic.card u:first-child:not(:last-child) { transform: translate(-8px, 2px) rotate(-12deg); filter: brightness(0.75); }
+.rd-pic.card u:last-child { transform: translateX(3px) rotate(4deg); }
+.rd-pic.card u i { position: static; font: 400 1.25rem 'Lilita One', sans-serif; font-style: normal; color: #fff; -webkit-text-stroke: 4px var(--ink); paint-order: stroke fill; }
+/* elección de ventajas y habilidades: tarjeta opaca (no se transparenta el cartel de detrás) */
+.sp-card { background: linear-gradient(180deg, #232c6e, #161c4c); }
+/* ficha de cofre: retrato de cada legendaria */
+.ci-row .ci-face { width: 34px; height: 34px; border-radius: 50%; border: 2px solid var(--rc); flex: none; object-fit: cover; }
+/* ficha de tropa: aire entre las pestañas y su contenido */
+.uc-pane { margin-top: 8px; }
+/* oleada en la barra de arriba: sin la palabra «Oleada» cuando no cabe */
+@media (max-width: 430px) { .wv-w { display: none; } }
+.back-bar h2.long { font-size: clamp(0.95rem, 4.3vw, 1.3rem); overflow-wrap: normal; }

@@ -7,8 +7,18 @@
    La ventana sale sola al entrar con una versión nueva (meta.lastSeenVersion)
    y también desde Opciones.
    ========================================================= */
-var APP_VERSION = '1.15.2';
+var APP_VERSION = '1.16.0';
 var APP_PATCH_NOTES = [
+  {
+    version: '1.16.0',
+    summary: 'Efectos de los comandantes nuevos, árboles ilustrados y repaso visual',
+    items: [
+      'Nyx deja un anillo de runas a los pies de cada monstruo mientras dura su Maldición; Sol tapa la salida con una esfera de luz; Morgana une las dos tropas con engranajes y a la que forja Torvald le suben unas flechas doradas.',
+      'Los talentos de las tropas y las habilidades de los comandantes tienen ahora un árbol ilustrado, con un icono en cada casilla y el nivel en cada rombo.',
+      'Camino de trofeos: los premios de cartas ya no salen estirados.',
+      'Repaso visual: los títulos largos ya no se cortan, los atajos del inicio no quedan detrás del comandante, la ficha del cofre legendario enseña cada legendaria, la elección de ventajas no se transparenta y la oleada cabe en la barra de arriba.'
+    ]
+  },
   {
     version: '1.15.2',
     summary: 'Tarjetas de comandante iguales y casillas que no pisan el camino',

@@ -504,6 +504,19 @@ var CMD_TREE = {
      { id: 'metal', name: 'Temple', desc: 'Las tropas de metal hacen un 20% más de daño.', elem: { metal: 0.2 } }]
   ]
 };
+// icono de cada rama en su casilla del árbol (assets/<ruta>.webp), por «tropa o comandante:rama»
+var TREE_ICO = {
+  'lyra:arco': 'icons/espadas', 'lyra:rafaga': 'icons/rapido', 'lyra:acero': 'icons/perfora', 'lyra:certero': 'icons/critico', 'lyra:caza': 'icons/corona', 'lyra:explosiva': 'icons/explosion',
+  'brasa:llama': 'icons/espadas', 'brasa:granbola': 'icons/explosion', 'brasa:ascuas': 'icons/fuego', 'brasa:chispa': 'icons/rapido', 'brasa:lava': 'icons/ola', 'brasa:fatuo': 'icons/rayo',
+  'nivea:afilado': 'icons/espadas', 'nivea:gemelas': 'icons/vecinas', 'nivea:intenso': 'icons/hielo', 'nivea:carambano': 'icons/explosion', 'nivea:congela': 'icons/rayo', 'nivea:corazon': 'icons/corona',
+  'aria:cortante': 'icons/espadas', 'aria:largo': 'icons/hielo', 'aria:recarga': 'icons/reloj', 'aria:eterno': 'icons/ola', 'aria:corazon': 'icons/diana',
+  'merlo:doble': 'icons/gota', 'merlo:torrente': 'icons/mano', 'merlo:recarga': 'icons/reloj', 'merlo:arcano': 'icons/arcano', 'merlo:erudito': 'icons/mejorar',
+  'brann:lluvia': 'icons/fuego', 'brann:gran': 'icons/explosion', 'brann:recarga': 'icons/reloj', 'brann:fragua': 'icons/espadas', 'brann:botin': 'icons/moneda',
+  'nyx:larga': 'icons/arcano', 'nyx:profunda': 'icons/calavera', 'nyx:recarga': 'icons/reloj', 'nyx:sombras': 'icons/chispas', 'nyx:pacto': 'icons/gota',
+  'sol:largo': 'icons/escudo', 'sol:sanadora': 'ui/vida', 'sol:recarga': 'icons/reloj', 'sol:bendicion': 'icons/estrella', 'sol:muralla': 'icons/casa',
+  'morgana:fino': 'icons/chispas', 'morgana:chatarra': 'icons/gota', 'morgana:recarga': 'icons/reloj', 'morgana:engranajes': 'icons/engranaje', 'morgana:taller': 'icons/moneda',
+  'torvald:maestra': 'icons/mejorar', 'torvald:yunque': 'icons/rapido', 'torvald:veterania': 'icons/estrella', 'torvald:arsenal': 'icons/espadas', 'torvald:metal': 'icons/engranaje'
+};
 // ramas elegidas que valen a este nivel de comandante
 function cmdTreeActive(k, lv, picks) {
   var out = [];
