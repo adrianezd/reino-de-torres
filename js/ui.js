@@ -435,7 +435,7 @@ function showMissions() {
         '<span class="ms-body"><b>' + esc(missionText(m.k, m.goal)) + '</b>' +
         '<span class="ubar' + (done ? ' ok' : '') + '"><span style="width:' + (m.prog / m.goal * 100) + '%"></span><em>' + m.prog + '/' + m.goal + '</em></span>' +
         '<span class="ms-prize">' + prizeChips(0, m.gold, m.gems) + '</span></span>' +
-        (m.got ? '<i class="ms-ok">✔</i>' : '<button class="btn btn-green ms-claim" data-ms="' + i + '"' + (done ? '' : ' disabled') + '>Cobrar</button>') + '</div>';
+        (m.got ? '<i class="ms-ok">✔</i>' : '<button class="btn btn-green ms-claim" data-ms="' + i + '"' + (done ? '' : ' disabled') + '>Reclamar</button>') + '</div>';
     }).join('') +
     '<div class="ms-row ms-bonus' + (d.bonus ? ' got' : bonus ? ' ready' : '') + '"><span class="ms-ico"><img src="' + chestPic(DAILY_BONUS) + '" alt=""></span>' +
     '<span class="ms-body"><b>Premio del día</b><small>' + gotN + '/' + d.list.length + ' misiones cobradas</small></span>' +
@@ -1029,14 +1029,14 @@ function showChestInfo(k, slot) {
     (ch.legendOnly ? '' : '<div class="ci-loot"><span><b>' + ch.cards + '</b>cartas</span><span><b>' + ch.gold[0] + ' a ' + ch.gold[1] + '</b>🪙 oro</span><span><b>' + ch.gems[0] + ' a ' + ch.gems[1] + '</b>💎 gemas</span></div>') +
     (ch.legendOnly
       ? (function (ls) {
-        return '<h3 class="ci-t">Una carta legendaria</h3>' + ls.map(function (id) {
-          return row(RARITY.legendaria.color, UNITS[id].name, meta.cards[id] ? 'Nivel ' + meta.cards[id].lv : 'Aún no la tienes', '1 de ' + ls.length).replace('<i></i>', '<img class="ci-face" src="' + unitIcon(id, 0, 64) + '" alt="">');
+        return ls.map(function (id) {
+          return row(RARITY.legendaria.color, UNITS[id].name, meta.cards[id] ? 'Nivel ' + meta.cards[id].lv : 'Aún no la tienes', '').replace('<i></i>', '<img class="ci-face" src="' + unitIcon(id, 0, 64) + '" alt="">');
         }).join('') + '<p class="ci-note">Solo trae una carta, siempre legendaria y al azar.</p>';
       })(UNIT_ORDER.filter(function (id) { return UNITS[id].rarity === 'legendaria'; }))
       : ch.cmd
       // el de comandante: qué comandantes pueden tocar, con su nivel
-      ? '<h3 class="ci-t">Cartas de comandante</h3>' + COMMANDER_ORDER.map(function (c) {
-        return row(COMMANDERS[c].color, COMMANDERS[c].name, cmdOwned(c) ? 'Nivel ' + cmdLevel(c) : 'Aún no lo tienes', '1 de ' + COMMANDER_ORDER.length);
+      ? COMMANDER_ORDER.map(function (c) {
+        return row(COMMANDERS[c].color, COMMANDERS[c].name, cmdOwned(c) ? 'Nivel ' + cmdLevel(c) : 'Aún no lo tienes', '').replace('<i></i>', '<img class="ci-face" src="' + COMMANDERS[c].pic + '" alt="">');
       }).join('') + '<p class="ci-note">Trae ' + CHESTS.comandante.cards + ' cartas, todas de un mismo comandante al azar. Con ellas subes su nivel.</p>'
       : '<h3 class="ci-t">Probabilidad por cofre</h3>' +
       row(RARITY.rara.color, 'Rara', '', chestOdds(ch.rare, ch.cards)) +

@@ -7,8 +7,16 @@
    La ventana sale sola al entrar con una versión nueva (meta.lastSeenVersion)
    y también desde Opciones.
    ========================================================= */
-var APP_VERSION = '1.16.2';
+var APP_VERSION = '1.16.3';
 var APP_PATCH_NOTES = [
+  {
+    version: '1.16.3',
+    summary: 'Misiones con Reclamar y fichas de cofre más limpias',
+    items: [
+      'En las misiones diarias, el botón ahora dice Reclamar.',
+      'La ficha del cofre de comandante y la del legendario enseñan solo quién puede tocar, con su retrato y su nivel.'
+    ]
+  },
   {
     version: '1.16.2',
     summary: 'Morgana se carga antes y Brann bien colocado',
