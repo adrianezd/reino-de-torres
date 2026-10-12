@@ -37,6 +37,8 @@ Tres cartas con mecánica propia (arte recortado de `assets/eco-set-imagenes-1.j
 - **Oria**, la Banquera (épica, ⚙️, `interest`): no ataca. Cada 5 s da un 3 % del maná guardado (más con el rango), con tope de 12 por rango (`interestAmount`).
 - **Garra**, Domadora de Lobos (mítica, 🌿, `wolves`, solo en el cofre de oro): en vez de disparar suelta un lobo al final del camino que corre hacia la entrada y muerde una vez a cada monstruo que se cruza (3 mordiscos, uno más cada dos rangos; un jefe gasta dos). Si las imágenes del lobo aún no han cargado, se dibuja por código (`drawWolf` en `js/art.js`).
 
+**Guía de tropas:** qué tropas hacen más daño, cuáles son las mejores de apoyo y cuánto pesa cada nivel, con cifras, en [docs/guia-tropas.md](docs/guia-tropas.md).
+
 ## Lo que lo hace distinto
 
 - **Próxima oleada**: con un solo tablero, una franja arriba dice cuántos monstruos quedan y qué trae la siguiente oleada (monstruos, jefe y evento).
