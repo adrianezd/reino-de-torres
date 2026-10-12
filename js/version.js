@@ -7,8 +7,18 @@
    La ventana sale sola al entrar con una versión nueva (meta.lastSeenVersion)
    y también desde Opciones.
    ========================================================= */
-var APP_VERSION = '1.16.0';
+var APP_VERSION = '1.16.1';
 var APP_PATCH_NOTES = [
+  {
+    version: '1.16.1',
+    summary: 'Tablero del rival más grande y talentos más claros',
+    items: [
+      'En el 1 contra 1 y en Co-op, el tablero de arriba aprovecha todo el hueco: sale más grande y con su marco a lo ancho de la pantalla, en todos los mapas.',
+      'En los árboles de talentos y de habilidades ves lo que hace cada rama aunque aún no esté abierta. Toca una casilla cerrada para leerla.',
+      'Al elegir un talento, la ficha se queda donde estaba.',
+      'Los cofres que abres desde tus huecos ya no se ven borrosos al crecer.'
+    ]
+  },
   {
     version: '1.16.0',
     summary: 'Efectos de los comandantes nuevos, árboles ilustrados y repaso visual',

@@ -586,15 +586,16 @@ function bindMenu() {
   m.querySelectorAll('[data-ctree]').forEach(function (b) {
     b.onclick = function () {
       var t = +b.dataset.ctree.split(':')[0], id = b.dataset.ctree.split(':')[1], k = meta.commander;
+      var cn = CMD_TREE[k][t].filter(function (o) { return o.id === id; })[0];
+      if (cmdLevel(k) < CMD_TREE_LV[t]) { sfx('tap'); toast(cn.name + ': ' + cn.desc + ' Se abre en el nivel ' + CMD_TREE_LV[t] + '.'); return; }
       if (!meta.cmdTree) meta.cmdTree = {};
       var picks = (meta.cmdTree[k] || []).map(function (x) { return (x || []).slice(); });
       var mine = picks[t] || [], at = mine.indexOf(id);
       if (at !== -1) mine.splice(at, 1);
       else { mine.push(id); while (mine.length > CMD_TREE_PICK[t]) mine.shift(); }  // con el piso lleno, cambia la más antigua
       picks[t] = mine; meta.cmdTree[k] = picks; saveMeta();
-      var cn = CMD_TREE[k][t].filter(function (o) { return o.id === id; })[0];
       toast(cn.name + ': ' + cn.desc);
-      sfx('power'); renderMenu('commanders');
+      sfx('power'); renderMenu('commanders');   // misma pantalla: se queda donde estaba
     };
   });
   m.querySelectorAll('[data-cmd]').forEach(function (b) {
@@ -688,6 +689,27 @@ function talentTreeHtml(id) {
     return { lv: TALENT_LV[t], n: 1, open: lv >= TALENT_LV[t], picked: picks[t] ? [picks[t]] : [], nodes: tier, owner: id, attr: 'data-tal' };
   }), 'Cada piso se abre con el nivel de la carta. Elige una rama en cada uno; puedes cambiarla cuando quieras.');
 }
+// casillas del árbol de talentos de la ficha: las bloqueadas solo dicen qué
+// hacen; al elegir se repinta solo el árbol, sin mover la ficha
+function bindTalents(id) {
+  document.querySelectorAll('[data-tal]').forEach(function (b) {
+    b.onclick = function () {
+      var t = +b.dataset.tal.split(':')[0], k = b.dataset.tal.split(':')[1];
+      var tn = TALENTS[id][t].filter(function (o) { return o.id === k; })[0];
+      if (meta.cards[id].lv < TALENT_LV[t]) { sfx('tap'); toast(tn.name + ': ' + tn.desc + ' Se abre en el nivel ' + TALENT_LV[t] + '.'); return; }
+      if (!meta.talents) meta.talents = {};
+      var picks = (meta.talents[id] || [null, null, null]).slice();
+      picks[t] = k; meta.talents[id] = picks; saveMeta();
+      toast(tn.name + ': ' + tn.desc);
+      sfx('power');
+      var pane = document.querySelector('[data-ucp="talents"]');
+      if (pane) { pane.innerHTML = icons(talentTreeHtml(id)); bindTalents(id); }
+      var dot = document.querySelector('[data-uct="talents"] .tab-dot');
+      if (dot && !talentPending(id)) dot.remove();
+      renderMenu(currentScreen);
+    };
+  });
+}
 /* Árbol con la ilustración de assets/ui/arbol-* (sin texto): las casillas de
    cada piso, de abajo arriba, en píxeles de la imagen (box: lado de la
    casilla). En cada una, el icono de su rama; en el rombo, el nivel. */
@@ -702,17 +724,18 @@ function treeHtml(g, tiers, note) {
     var geo = g.tiers[t];
     tr.nodes.forEach(function (o, k) {
       var at = geo.at[k], on = tr.picked.indexOf(o.id) !== -1;
-      html += '<button class="tree-node' + (on ? ' on' : '') + '" ' + tr.attr + '="' + t + ':' + o.id + '"' + (tr.open ? '' : ' disabled') +
+      html += '<button class="tree-node' + (on ? ' on' : '') + (tr.open ? '' : ' locked') + '" ' + tr.attr + '="' + t + ':' + o.id + '"' +
         ' style="left:' + pc(at[0], g.w) + ';top:' + pc(at[1], g.h) + ';width:' + pc(g.box, g.w) + ';height:' + pc(g.box, g.h) + '" aria-label="' + esc(o.name) + '">' +
         '<img src="assets/' + (TREE_ICO[tr.owner + ':' + o.id] || 'icons/estrella') + '.webp" alt=""></button>';
     });
     html += '<span class="tree-lv' + (tr.open ? '' : ' locked') + '" style="left:' + pc(geo.badge[0], g.w) + ';top:' + pc(geo.badge[1], g.h) + '">' + tr.lv + '</span>';
   });
   html += '</div><div class="tree-list">' + tiers.map(function (tr) {
-    var chosen = tr.nodes.filter(function (o) { return tr.picked.indexOf(o.id) !== -1; });
-    var head = '<b>Nivel ' + tr.lv + '</b> · elige ' + tr.n + ' de ' + tr.nodes.length;
-    if (!tr.open) return '<p class="locked">🔒 ' + head + '</p>';
-    return '<p>' + head + (chosen.length ? chosen.map(function (o) { return '<span><em>' + esc(o.name) + ':</em> ' + esc(o.desc) + '</span>'; }).join('') : '<span class="tree-none">Toca una casilla para elegir</span>') + '</p>';
+    var head = (tr.open ? '' : '🔒 ') + '<b>Nivel ' + tr.lv + '</b> · ' + (tr.open ? 'elige ' + tr.n + ' de ' + tr.nodes.length : 'se abre en el nivel ' + tr.lv);
+    return '<p class="' + (tr.open ? '' : 'locked') + '">' + head + tr.nodes.map(function (o) {
+      var on = tr.picked.indexOf(o.id) !== -1;
+      return '<span class="' + (on ? 'on' : '') + '"><img src="assets/' + (TREE_ICO[tr.owner + ':' + o.id] || 'icons/estrella') + '.webp" alt=""><i><em>' + esc(o.name) + (on ? ' ✔' : '') + ':</em> ' + esc(o.desc) + '</i></span>';
+    }).join('') + '</p>';
   }).reverse().join('') + '</div>' + (note ? '<p class="tal-note">' + note + '</p>' : '');
   return html;
 }
@@ -776,17 +799,7 @@ function showCardModal(id, tab) {
   openOverlay(html);
   startCardDemo($('ucDemo'), id);
   bindUcTabs();
-  document.querySelectorAll('[data-tal]').forEach(function (b) {
-    b.onclick = function () {
-      var t = +b.dataset.tal.split(':')[0], k = b.dataset.tal.split(':')[1];
-      if (!meta.talents) meta.talents = {};
-      var picks = (meta.talents[id] || [null, null, null]).slice();
-      picks[t] = k; meta.talents[id] = picks; saveMeta();
-      var tn = TALENTS[id][t].filter(function (o) { return o.id === k; })[0];
-      toast(tn.name + ': ' + tn.desc);
-      sfx('power'); showCardModal(id, 'talents'); renderMenu(currentScreen);
-    };
-  });
+  bindTalents(id);
   var up = $('mcUp');
   if (up) up.onclick = function () {
     var prev = $('mcPrev');
@@ -1143,7 +1156,9 @@ function showChest(r, from) {
   fx.className = 'chest-fx';
   fx.style.setProperty('--cc', CHESTS[r.type].color);
   fx.innerHTML = '<div class="cfx-dim"></div>' +
-    '<div class="cfx-at" style="left:' + cx + 'px;top:' + cy + 'px;width:' + size + 'px">' +
+    // se dibuja ya al tamaño grande (size2) y empieza reducido sobre el hueco:
+    // así al crecer no se ve borroso
+    '<div class="cfx-at" style="left:' + cx + 'px;top:' + cy + 'px;width:' + size2 + 'px;transform:translate(-50%, -50%) scale(' + (size / size2) + ')">' +
     '<div class="cfx-rays"><img src="assets/chests/destello.webp" alt=""></div>' +
     // portal de luz del cofre (assets/chests/portal-<tipo>): aparece debajo al abrirse
     '<img class="cfx-portal" src="assets/chests/portal-' + r.type + '.webp" alt="">' +
@@ -1201,7 +1216,7 @@ function showChest(r, from) {
     chest.classList.remove('shake');
     chest.classList.add('opened');
     fx.classList.add('open');
-    spot.style.transform = 'translate(-50%, -50%) translate(' + (cx2 - cx) + 'px,' + (cy2 - cy) + 'px) scale(' + size2 / size + ')';
+    spot.style.transform = 'translate(-50%, -50%) translate(' + (cx2 - cx) + 'px,' + (cy2 - cy) + 'px) scale(1)';
     sfx('chest'); buzz(35);
   });
   at((rect ? 620 : 460) + midT, next);

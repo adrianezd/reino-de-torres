@@ -2208,3 +2208,11 @@ x-ico.off { filter: grayscale(1) brightness(0.45); opacity: 0.75; }
 /* oleada en la barra de arriba: sin la palabra «Oleada» cuando no cabe */
 @media (max-width: 430px) { .wv-w { display: none; } }
 .back-bar h2.long { font-size: clamp(0.95rem, 4.3vw, 1.3rem); overflow-wrap: normal; }
+
+/* árbol: casillas aún cerradas, en gris (se pueden tocar para leerlas) */
+.tree-node.locked img { opacity: 0.35; filter: grayscale(1); }
+.tree-list span { display: flex; align-items: flex-start; gap: 6px; margin-top: 4px; color: var(--muted); }
+.tree-list span img { width: 18px; height: 18px; object-fit: contain; flex: none; margin-top: 1px; }
+.tree-list span.on { color: #fff; }
+.tree-list p.locked span { opacity: 0.75; }
+.tree-list span i { font-style: normal; }

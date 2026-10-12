@@ -465,9 +465,13 @@ function resizeCanvas() {
   var gm = battle ? battle.player.geo : VECTOR_GEO;
   if (battle && battle.other) {
     var go = battle.other.geo;
-    // arriba, la cabecera del rival o aliado (RIVAL_HEAD_H) y su tablero
-    var topH = h * 0.35;
+    // arriba, la cabecera del rival o aliado (RIVAL_HEAD_H) y su tablero.
+    // Tu tablero se queda con lo que necesita a todo el ancho y lo que sobra
+    // es para el de arriba (entre el 35 y el 45 % del alto), así no quedan
+    // franjas vacías ni arriba ni abajo
     var pw = go.image ? 0 : pad;
+    var needMain = gm.H * (w - pw * 2) / gm.W + pad + 6;
+    var topH = Math.max(h * 0.35, Math.min(h * 0.45, h - needMain));
     var s2 = Math.min((w - pw * 2) / go.W, (topH - RIVAL_HEAD_H - 6) / go.H);
     layout.other = { sc: s2, ox: (w - go.W * s2) / 2, oy: RIVAL_HEAD_H + 4, g: go };
     var s1 = Math.min((w - pw * 2) / gm.W, (h - topH - pad - 6) / gm.H);
@@ -709,16 +713,17 @@ function drawBoard(b, L, now, isMain) {
   var G = b.geo;
   var pic = G.image ? art(G.image) : null;
   var dual = !!battle.other;
-  // con dos tableros, tu tablero «over» se pinta entero hasta los lados de
-  // la pantalla, por debajo del separador; el del rival o aliado se recorta
-  // a su zona de juego (los monstruos entran por el camino desde el borde)
-  var wide = pic && G.px.over && (!dual || b === battle.player);
+  // con dos tableros, los dos tableros «over» se pintan enteros hasta los
+  // lados de la pantalla: el tuyo por debajo del separador y el del rival o
+  // aliado por encima, así su marco llena la franja de arriba en vez de
+  // quedar un hueco a los lados
+  var wide = pic && G.px.over;
   if (pic && dual) {
     ctx.beginPath();
-    if (wide) {
-      var Lo = layout.other, sepY = Lo.oy + Lo.g.H * Lo.sc + 4;
-      ctx.rect(-L.ox / sc, (sepY - L.oy) / sc, layout.w / sc, (layout.h - sepY) / sc);
-    } else ctx.rect(0, 0, G.W, G.H);
+    var Lo = layout.other, sepY = Lo.oy + Lo.g.H * Lo.sc + 4;
+    if (wide && b === battle.player) ctx.rect(-L.ox / sc, (sepY - L.oy) / sc, layout.w / sc, (layout.h - sepY) / sc);
+    else if (wide) ctx.rect(-L.ox / sc, -L.oy / sc, layout.w / sc, sepY / sc);
+    else ctx.rect(0, 0, G.W, G.H);
     ctx.clip();
   }
   if (pic) {
