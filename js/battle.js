@@ -176,21 +176,9 @@ function endDuelIntro() {
   updateHud(true);
 }
 
-/* ---------- habilidades de comandante (modificador «skills») ----------
-   Al empezar las oleadas de CMD_SKILL_WAVES la partida se para: eliges entre
-   las que te ofrece (showChoice) y el rival elige las suyas al azar. */
-function skillOffer(bd, n) {
-  return shuffleArr(CMD_SKILL_ORDER.filter(function (k) { return bd.skills.indexOf(k) === -1; })).slice(0, n);
-}
+/* ---------- ventajas del roguelike ----------
+   Cada ROGUE_PICK_EVERY segundos la partida se para y eliges una (showChoice). */
 function skillOption(k, cmd) { return { kind: 'skill', id: k, name: CMD_SKILLS[k].name, pic: 'assets/' + CMD_SKILLS[k].pic + '.webp', desc: cmdSkillDesc(k, cmd) }; }
-function offerSkills(step) {
-  var b = battle, p = b.player;
-  skillOffer(b.other, step.offer).slice(0, step.pick).forEach(function (k) { b.other.applySkill(k); });
-  b.picking = true;
-  showChoice({ title: 'Habilidades de ' + COMMANDERS[p.commander].name, face: COMMANDERS[p.commander],
-    options: skillOffer(p, step.offer).map(function (k) { return skillOption(k, p.commander); }), n: step.pick,
-    have: p.skills.map(function (k) { return CMD_SKILLS[k].name; }) }, finishPick);
-}
 // roguelike: 1 de 3 entre habilidades, reliquias y modificadores que aún no tengas
 function offerRogue() {
   var b = battle, p = b.player;
@@ -280,10 +268,6 @@ function startWave() {
   showBanner('Oleada ' + b.wave + (b.maxWaves !== Infinity ? ' / ' + b.maxWaves : ''), sub, b.event ? b.event.pic : null);
   sfx('wave');
   updateHud(true);
-  if (b.mod && b.mod.id === 'skills') {
-    var step = CMD_SKILL_WAVES.filter(function (s) { return s.wave === b.wave; })[0];
-    if (step) offerSkills(step);
-  }
 }
 /* ---------- tutorial de la primera partida ----------
    Pasos: invocar dos tropas (la oleada espera), fusionar, mejorar una carta

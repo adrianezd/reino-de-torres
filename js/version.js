@@ -7,8 +7,15 @@
    La ventana sale sola al entrar con una versión nueva (meta.lastSeenVersion)
    y también desde Opciones.
    ========================================================= */
-var APP_VERSION = '1.15.0';
+var APP_VERSION = '1.15.1';
 var APP_PATCH_NOTES = [
+  {
+    version: '1.15.1',
+    summary: 'Fuera el modificador Comandantes con habilidades',
+    items: [
+      'La ruleta del 1 contra 1 ya no saca Comandantes con habilidades: ahora cada comandante tiene su propio árbol de habilidades permanente, en la pestaña Comandante.'
+    ]
+  },
   {
     version: '1.15.0',
     summary: 'Árbol de habilidades de comandante, Co-op con camino compartido y comandantes nuevos ilustrados',

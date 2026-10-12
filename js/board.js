@@ -193,7 +193,7 @@ Board.prototype.addMana = function (n) {
 Board.prototype.powerCost = function (id) {
   return Math.round(POWER_COSTS[this.power[id] || 1] * this.powerCostMult);
 };
-// habilidad de comandante (modificador «Comandantes con habilidades»)
+// habilidad de comandante elegida como ventaja en el roguelike (CMD_SKILLS)
 Board.prototype.applySkill = function (k) {
   this.skills.push(k);
   if (k === 'recarga') this.chargeMult *= 1.4;

@@ -529,7 +529,6 @@ var WAVE_EVENTS = [
    en todas sus oleadas de jefe. El torneo no lleva ruleta. */
 var DUEL_MODS = [
   { id: 'mana2',     name: 'Doble de maná',  pic: 'assets/icons/gota.webp',     desc: 'Empezáis con el doble y todo el maná que ganáis vale el doble.' },
-  { id: 'skills',    name: 'Comandantes con habilidades', pic: 'assets/icons/corona.webp', desc: 'En la oleada 5 eliges 1 habilidad de 2 y en la 15, 2 de 3.' },
   { id: 'rebajas',   name: 'Mejoras a mitad', pic: 'assets/icons/mejorar.webp', desc: 'Mejorar tropas en la partida cuesta la mitad.' },
   { id: 'veteranos', name: 'Veteranos',      pic: 'assets/icons/estrella.webp', desc: 'Cada tropa invocada tiene un 25% de salir con rango 2.' },
   { id: 'carga',     name: 'Carga rápida',   pic: 'assets/icons/rapido.webp',   desc: 'Los comandantes se cargan el doble de rápido.' },
@@ -554,10 +553,7 @@ var DUEL_MODS = [
   { id: 'r_suerte',     relic: true,         name: 'Trébol de la suerte', pic: 'assets/icons/critico.webp',  desc: 'Todas las tropas tienen un 10% de golpe crítico doble.' },
   { id: 'r_caliz',      relic: true,         name: 'Cáliz de vida',      pic: 'assets/ui/vida.webp',         desc: 'Cada jefe derrotado devuelve una vida.' }
 ];
-/* Modificador «Comandantes con habilidades»: al empezar estas oleadas, cada
-   uno ve `offer` habilidades al azar (que aún no tenga) y se queda `pick`.
-   Los duelos suelen acabar entre la oleada 15 y la 20. */
-var CMD_SKILL_WAVES = [{ wave: 5, offer: 2, pick: 1 }, { wave: 15, offer: 3, pick: 2 }];
+/* Habilidades de comandante que se pueden elegir como ventaja en el roguelike. */
 var CMD_SKILLS = {
   recarga:   { name: 'Recarga',   pic: 'icons/reloj',    desc: 'Tu comandante se carga un 40% más rápido.' },
   maestria:  { name: 'Maestría',  pic: 'icons/chispas',  desc: '{a} con un 50% más de fuerza.' },
