@@ -1992,3 +1992,72 @@ x-ico.off { filter: grayscale(1) brightness(0.45); opacity: 0.75; }
 }
 @keyframes cfxShine { 0% { left: -60%; } 60%, 100% { left: 130%; } }
 @media (prefers-reduced-motion: reduce) { .cfx-left.legend, .cfx-lrays.on, .cfx-left.legend::after { animation: none; } }
+
+/* ---------- deslizar entre pestañas ---------- */
+.menu.slide-l { animation: slideL 0.24s ease-out; }
+.menu.slide-r { animation: slideR 0.24s ease-out; }
+@keyframes slideL { from { transform: translateX(28%); opacity: 0.3; } to { transform: none; opacity: 1; } }
+@keyframes slideR { from { transform: translateX(-28%); opacity: 0.3; } to { transform: none; opacity: 1; } }
+
+/* ---------- 1 contra 1: modificador y jefe final ---------- */
+.b-wave-row { display: flex; align-items: center; justify-content: center; gap: 4px; max-width: 100%; min-width: 0; }
+.b-mod { flex: none; display: flex; padding: 1px 3px; gap: 1px; border-radius: 9px; border: 2px solid var(--gold); background: rgba(10,12,40,0.75); cursor: pointer; }
+.b-mod img { width: 18px; height: 18px; object-fit: contain; display: block; }
+.pause-mod { display: block; margin-top: 4px; font-size: 0.72rem; color: var(--gold); line-height: 1.3; }
+
+.roulette {
+  position: absolute; inset: 0; z-index: 8; display: flex; flex-direction: column; justify-content: center; gap: 14px;
+  background: rgba(8,10,30,0.66); backdrop-filter: blur(2px); cursor: pointer; animation: rlIn 0.25s ease-out;
+}
+.roulette.out { opacity: 0; transition: opacity 0.3s; }
+@keyframes rlIn { from { opacity: 0; } to { opacity: 1; } }
+.rl-title { margin: 0; text-align: center; font-size: clamp(1.2rem, 6vw, 1.6rem); color: #fff; -webkit-text-stroke: 1.5px var(--ink); text-shadow: 0 3px 0 var(--ink); }
+.rl-row h3 { margin: 0 0 4px; text-align: center; font-size: 1rem; color: var(--gold); text-shadow: 0 2px 0 var(--ink); }
+.rl-track {
+  position: relative; height: 104px; overflow: hidden;
+  background: linear-gradient(180deg, #2a1a0c, #4a2e14 50%, #2a1a0c);
+  border-top: 3px solid var(--ui-gold); border-bottom: 3px solid var(--ui-gold);
+  box-shadow: inset 0 0 18px rgba(0,0,0,0.6);
+}
+.rl-track::before, .rl-track::after { content: ''; position: absolute; top: 0; bottom: 0; width: 18%; z-index: 2; pointer-events: none; }
+.rl-track::before { left: 0; background: linear-gradient(90deg, rgba(20,12,4,0.95), transparent); }
+.rl-track::after { right: 0; background: linear-gradient(-90deg, rgba(20,12,4,0.95), transparent); }
+.rl-strip { display: flex; height: 100%; align-items: center; will-change: transform; }
+/* RL_W de js/ui.js = ancho + márgenes (84 + 4 + 4) */
+.rl-card {
+  flex: none; width: 84px; height: 90px; margin: 0 4px; border-radius: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
+  background: linear-gradient(180deg, #2f4192, #1a245e); border: 3px solid var(--ink); box-shadow: 0 3px 0 rgba(0,0,0,0.45);
+}
+.rl-card.boss { background: linear-gradient(180deg, #7a2a3a, #3c1020); }
+.rl-card img { width: 46px; height: 46px; object-fit: contain; }
+.rl-card b { font-size: 0.68rem; line-height: 1.05; text-align: center; padding: 0 3px; color: #fff; }
+.rl-card.win { border-color: var(--gold); box-shadow: 0 0 0 3px var(--ink), 0 0 18px 4px rgba(255,209,102,0.85); animation: rlWin 0.45s ease-out; }
+@keyframes rlWin { 0% { transform: scale(1); } 50% { transform: scale(1.16); } 100% { transform: scale(1.08); } }
+.rl-row.done .rl-card.win { transform: scale(1.08); }
+.rl-mark { position: absolute; left: 50%; top: -3px; bottom: -3px; width: 96px; transform: translateX(-50%); z-index: 3; pointer-events: none; border-left: 3px solid var(--gold); border-right: 3px solid var(--gold); }
+.rl-mark::before, .rl-mark::after { content: ''; position: absolute; left: 50%; transform: translateX(-50%); border: 9px solid transparent; }
+.rl-mark::before { top: 0; border-top-color: var(--gold); }
+.rl-mark::after { bottom: 0; border-bottom-color: var(--gold); }
+.rl-desc { min-height: 1.3em; margin: 6px 16px 0; text-align: center; font-size: 0.82rem; color: #fff; text-shadow: 0 1px 0 var(--ink); }
+.rl-skip { text-align: center; color: var(--muted); font-size: 0.8rem; }
+
+.skill-pick { position: absolute; inset: 0; z-index: 8; display: grid; place-items: center; padding: 16px; background: rgba(8,10,30,0.7); animation: rlIn 0.25s ease-out; }
+.skill-pick.out { opacity: 0; transition: opacity 0.35s; }
+.sp-card { width: 100%; max-width: 420px; background: var(--ui-panel-bg); border: 3px solid var(--cc, var(--gold)); border-radius: 18px; padding: 12px; box-shadow: 0 0 0 3px var(--ink), 0 0 30px rgba(0,0,0,0.5); }
+.sp-head { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+.sp-head img { width: 54px; height: 54px; border-radius: 50%; border: 3px solid var(--cc, var(--gold)); background: #16215a; object-fit: cover; }
+.sp-head b { display: block; font-family: 'Lilita One'; font-weight: 400; font-size: 1.15rem; text-shadow: 0 2px 0 var(--ink); }
+.sp-head small { color: var(--gold); font-size: 0.85rem; }
+.sp-list { display: flex; flex-direction: column; gap: 8px; }
+.sp-opt {
+  display: flex; align-items: center; gap: 10px; width: 100%; text-align: left; padding: 8px 10px; border-radius: 14px; cursor: pointer;
+  font: inherit; color: #fff; background: linear-gradient(180deg, #2f4192, #1d2a6e); border: 3px solid var(--ink); box-shadow: 0 4px 0 var(--ink);
+}
+.sp-opt:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--ink); }
+.sp-opt img { width: 42px; height: 42px; object-fit: contain; flex: none; }
+.sp-opt b { display: block; font-family: 'Lilita One'; font-weight: 400; font-size: 1.05rem; }
+.sp-opt small { display: block; font-size: 0.78rem; color: var(--muted); line-height: 1.25; }
+.sp-opt.on { border-color: var(--gold); background: linear-gradient(180deg, #4a7a2a, #23531a); box-shadow: 0 0 0 2px var(--ink), 0 0 14px rgba(255,209,102,0.7); }
+.sp-opt:disabled { cursor: default; }
+.sp-have { margin: 10px 0 0; font-size: 0.75rem; color: var(--muted); text-align: center; }
+@media (prefers-reduced-motion: reduce) { .menu.slide-l, .menu.slide-r, .rl-card.win { animation: none; } }

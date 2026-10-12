@@ -140,6 +140,13 @@ function Board(opts) {
   this.event = null;
   this.shake = 0;
   this.orbs = [];                        // gotas de maná camino del contador
+  // modificador del 1 contra 1 y habilidades de comandante (ver applySkill)
+  this.manaMult = 1;                     // cada gota que ganas vale por esto
+  this.chargeMult = 1; this.cmdPowerMult = 1; this.refuerzo = false;
+  this.dmgMult = 1; this.bossDmgMult = 1; this.killBonus = 0;
+  this.summonStep = 10; this.rank2 = 0; this.powerCostMult = 1; this.slowMult = 1;
+  this.rewardMult = 1; this.mergeBoost = 0; this.affMult = 1;
+  this.skills = [];
 }
 function shuffleArr(a) {
   for (var i = a.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)); var t = a[i]; a[i] = a[j]; a[j] = t; }
@@ -151,7 +158,30 @@ Board.prototype.cc = function (i) { return geoCell(this.geo, i); };
 Board.prototype.pos = function (d) { return geoPos(this.geo, d); };
 Board.prototype.cardMult = function (id) { return 1 + CARD_BONUS * ((this.cardLv[id] || 1) - 1); };
 Board.prototype.unitPower = function (id) {
-  return (1 + POWER_BONUS * ((this.power[id] || 1) - 1)) * this.cardMult(id);
+  return (1 + POWER_BONUS * ((this.power[id] || 1) - 1)) * this.cardMult(id) * this.dmgMult;
+};
+// todo el maná que se gana pasa por aquí (con «Doble de maná» vale el doble); devuelve lo ganado
+Board.prototype.addMana = function (n) {
+  n *= this.manaMult;
+  this.mana += n;
+  return n;
+};
+Board.prototype.powerCost = function (id) {
+  return Math.round(POWER_COSTS[this.power[id] || 1] * this.powerCostMult);
+};
+// habilidad de comandante (modificador «Comandantes con habilidades»)
+Board.prototype.applySkill = function (k) {
+  this.skills.push(k);
+  if (k === 'recarga') this.chargeMult *= 1.4;
+  else if (k === 'maestria') this.cmdPowerMult *= 1.5;
+  else if (k === 'refuerzo') this.refuerzo = true;
+  else if (k === 'botin') this.killBonus += 3;
+  else if (k === 'arsenal') this.dmgMult *= 1.15;
+  else if (k === 'cazajefes') this.bossDmgMult *= 1.4;
+  else if (k === 'reclutas') this.summonStep = Math.floor(this.summonStep / 2);
+  else if (k === 'veterania') this.rank2 += 0.2;
+  else if (k === 'escarcha') this.slowMult *= 0.88;
+  else if (k === 'muralla') { this.lives.max++; this.lives.v++; }
 };
 // maná que reparte una tropa de maná y velocidad que da una de apoyo (suben con el rango, la mejora de la partida y el nivel de carta)
 Board.prototype.manaAmount = function (u) {
@@ -201,7 +231,7 @@ Board.prototype.placeScore = function (i) {
 };
 Board.prototype.unitDamage = function (i) {
   var u = this.cells[i], d = UNITS[u.id];
-  var m = RANK_MULT[u.rank] * this.unitPower(u.id) * (1 + AFFINITY_BONUS * this.affinity(i)) * (1 + this.posBonus(i));
+  var m = RANK_MULT[u.rank] * this.unitPower(u.id) * (1 + AFFINITY_BONUS * this.affMult * this.affinity(i)) * (1 + this.posBonus(i));
   if (this.tiles[i] === 'altar') m *= 1 + TILES.altar.dmg;
   return (d.dmg || 0) * m;
 };
@@ -221,16 +251,20 @@ Board.prototype.freeCells = function () {
   for (var i = 0; i < this.cells.length; i++) if (!this.cells[i]) out.push(i);
   return out;
 };
-Board.prototype.summon = function () {
-  if (this.mana < this.summonCost) return 'mana';
+Board.prototype.summon = function (gratis) {
+  if (!gratis && this.mana < this.summonCost) return 'mana';
   var free = this.freeCells();
   if (!free.length) return 'full';
   var i = pick(free), id = pick(this.deck), d = UNITS[id];
-  this.mana -= this.summonCost;
-  this.summonCost += 10;
+  if (!gratis) {
+    this.mana -= this.summonCost;
+    this.summonCost += this.summonStep;
+  }
   this.summons++;
+  var rank = Math.random() < this.rank2 ? 2 : 1;
+  this.maxRank = Math.max(this.maxRank, rank);
   // cae desde arriba; el anillo y el polvo salen al tocar suelo (landFx)
-  this.cells[i] = { id: id, rank: 1, cd: Math.random(), frozen: 0, anim: 0, gen: 0, drop: 1 };
+  this.cells[i] = { id: id, rank: rank, cd: Math.random(), frozen: 0, anim: 0, gen: 0, drop: 1 };
   if (this.isAI && (d.twin || d.mixed || d.edge || d.lone || d.buff)) {
     // la máquina coloca las cartas de posición donde más rinden (y las de
     // apoyo, donde tengan más tropas que ataquen alrededor)
@@ -265,6 +299,7 @@ Board.prototype.merge = function (from, to, start) {
   v.ecoFx = echo;
   v.rank++;
   if (echo && v.rank < MAX_RANK && Math.random() < this.echoChance()) { v.rank++; v.echoed = true; }
+  else if (v.rank < MAX_RANK && Math.random() < this.mergeBoost) { v.rank++; v.echoed = true; }
   this.merges++;
   this.maxRank = Math.max(this.maxRank, v.rank);
   v.anim = 0; v.drop = 0;
@@ -304,7 +339,7 @@ Board.prototype.mergeArriveFx = function (i, u) {
 Board.prototype.powerUp = function (id) {
   var lv = this.power[id] || 1;
   if (lv >= POWER_MAX) return 'max';
-  var cost = POWER_COSTS[lv];
+  var cost = this.powerCost(id);
   if (this.mana < cost) return 'mana';
   this.mana -= cost;
   this.power[id] = lv + 1;
@@ -316,14 +351,13 @@ Board.prototype.useCommander = function () {
   if (this.charge < 1) return false;
   this.charge = 0;
   this.cmds++;
-  var cmd = this.commander, pw = cmdPower(cmd, this.cmdLv);
+  var cmd = this.commander, pw = cmdPower(cmd, this.cmdLv) * this.cmdPowerMult;
   if (cmd === 'aria') {
     this.enemies.forEach(function (e) { e.stun = Math.max(e.stun, pw); e.stunIce = true; });
     this.addFx('flash', { x: this.geo.W / 2, y: this.geo.H / 2 }, '#bfefff');
     this.addSweep('fx/ventisca');
   } else if (cmd === 'merlo') {
-    var gain = Math.round(pw);
-    this.mana += gain;
+    var gain = this.addMana(Math.round(pw));
     this.addText(this.geo.W / 2, this.geo.H / 2, '+' + gain + ' 💧', GAME_PALETTE.manaBlue, true);
     this.addFx('flash', { x: this.geo.W / 2, y: this.geo.H / 2 }, '#b26bff');
     this.addSweep('fx/marea');
@@ -337,6 +371,7 @@ Board.prototype.useCommander = function () {
       this.fx.push({ type: 'fall', key: 'fx/meteoro', x: e.x, y: e.y, size: 0.95, life: t, max: t });
     }, this);
   }
+  if (this.refuerzo) this.summon(true);
   return true;
 };
 
@@ -365,6 +400,7 @@ Board.prototype.hit = function (e, dmg, unitDef, kind) {
   var crit = false;
   if (unitDef && unitDef.crit && Math.random() < unitDef.crit.chance) { dmg *= unitDef.crit.mult; crit = true; }
   if (unitDef && unitDef.bossMult && e.boss) dmg *= unitDef.bossMult;
+  if (unitDef && e.boss) dmg *= this.bossDmgMult;
   if (!(unitDef && unitDef.pierce)) dmg *= 1 - e.armor;
   var src = unitDef ? unitDef.id : 'cmd';
   this.dmgBy[src] = (this.dmgBy[src] || 0) + Math.min(dmg, Math.max(0, e.hp));
@@ -385,7 +421,7 @@ Board.prototype.hit = function (e, dmg, unitDef, kind) {
     this.addText(e.x, e.y - 0.5, '¡Remate!', '#c9b8ff', true);
   }
   if (e.hp <= 0) {
-    if (unitDef && unitDef.bounty) { this.mana += unitDef.bounty; this.addText(e.x, e.y - 0.25, '+' + unitDef.bounty + ' 💧', GAME_PALETTE.goldYellow); }
+    if (unitDef && unitDef.bounty) { var bn = this.addMana(unitDef.bounty); this.addText(e.x, e.y - 0.25, '+' + bn + ' 💧', GAME_PALETTE.goldYellow); }
     this.kill(e);
   }
 };
@@ -394,8 +430,7 @@ Board.prototype.kill = function (e) {
   e.dead = true;
   this.kills++;
   if (e.boss) this.bossKills++;
-  var reward = (e.boss ? 100 : ENEMIES[e.kind].reward) * (this.event === 'lluvia' ? 2 : 1);
-  this.mana += reward;
+  var reward = this.addMana(Math.round((e.boss ? 100 : ENEMIES[e.kind].reward) * (this.event === 'lluvia' ? 2 : 1) * this.rewardMult) + this.killBonus);
   this.deathFx(e);
   if (e.boss) {
     this.addText(e.x, e.y - 0.5, '+' + reward + ' 💧', GAME_PALETTE.manaBlue, true);
@@ -546,7 +581,7 @@ Board.prototype.addText = function (x, y, text, color, big) {
 /* ---------- bucle ---------- */
 Board.prototype.update = function (dt) {
   var i, k;
-  this.charge = Math.min(1, this.charge + dt / COMMANDERS[this.commander].cd);
+  this.charge = Math.min(1, this.charge + dt * this.chargeMult / COMMANDERS[this.commander].cd);
   if (this.shake > 0) this.shake = Math.max(0, this.shake - dt);
 
   // tropas
@@ -567,14 +602,13 @@ Board.prototype.update = function (dt) {
     if (u.recoil > 0) u.recoil = Math.max(0, u.recoil - dt * 4);
     if (u.atk > 0) u.atk = Math.max(0, u.atk - dt);
     if (u.frozen > 0) { u.frozen -= dt; continue; }
-    if (this.tiles[i] === 'fuente') this.mana += TILES.fuente.mana * dt * u.rank;
+    if (this.tiles[i] === 'fuente') this.addMana(TILES.fuente.mana * dt * u.rank);
     var d = UNITS[u.id];
     if (d.manaGen) {
       u.gen += dt;
       if (u.gen >= d.manaGen.every) {
         u.gen = 0;
-        var amt = this.manaAmount(u);
-        this.mana += amt;
+        var amt = this.addMana(this.manaAmount(u));
         u.atk = 0.5; u.recoil = 1; // pose de ataque y rebote al repartir el maná
         var p = this.cc(i);
         this.addText(p.x, p.y - 0.5, '+' + amt + ' 💧', GAME_PALETTE.manaBlue);
@@ -588,7 +622,7 @@ Board.prototype.update = function (dt) {
         u.gen = 0;
         var gain = this.interestAmount(u);
         if (gain > 0) {
-          this.mana += gain;
+          gain = this.addMana(gain);
           u.atk = 0.5; u.recoil = 1;
           var pi = this.cc(i);
           this.addText(pi.x, pi.y - 0.5, '+' + gain + ' 💧', GAME_PALETTE.goldYellow);
@@ -629,7 +663,7 @@ Board.prototype.update = function (dt) {
   }
 
   // monstruos
-  var evSpeed = this.event === 'eclipse' ? 1.25 : this.event === 'calma' ? 0.8 : 1;
+  var evSpeed = (this.event === 'eclipse' ? 1.25 : this.event === 'calma' ? 0.8 : 1) * this.slowMult;
   for (k = 0; k < this.enemies.length; k++) {
     var e = this.enemies[k];
     if (e.dead) continue;
@@ -778,7 +812,7 @@ Board.prototype.think = function (dt) {
   var best = Object.keys(counts).sort(function (x, y) { return counts[y] - counts[x]; })[0];
   if (best && lvl > 0) {
     var lv = this.power[best] || 1;
-    if (lv < POWER_MAX && this.mana >= POWER_COSTS[lv] + 20) this.powerUp(best);
+    if (lv < POWER_MAX && this.mana >= this.powerCost(best) + 20) this.powerUp(best);
   }
 };
 

@@ -7,7 +7,7 @@ Tower defense de fusión para móvil y escritorio, gratis y sin anuncios. Invoca
 ## Modos
 
 - **🗺️ Campaña**: 30 fases con jefe final y estrellas según las vidas que conserves. No da tropas: las tropas nuevas solo salen en cofres y en la tienda. Cada fase empieza con algo más de maná y su dureza llega poco a poco: la primera oleada viene al 55 % y la última al 100 %. La primera partida trae un tutorial paso a paso (invocar, fusionar, mejorar y comandante), y los monstruos esperan a que tengas dos tropas. Las fases van en tres zonas de 10 (`CAMPAIGN_ZONES` en `js/data.js`): arriba de la lista hay un mapa con el camino de cada zona, tus estrellas y tu comandante sobre la fase que toca (tocar una fase baja a su placa). El cofre de la victoria depende de la zona (madera, plata y oro) y sube uno (`CHEST_UP`) si sacas estrellas nuevas.
-- **⚔️ Duelo 1 contra 1**: tú y un rival (IA fácil, normal o difícil) recibís los mismos monstruos. Gana quien aguante más; si caéis a la vez es empate. El rival fácil lleva cartas 2 niveles por debajo de las tuyas y el difícil, 2 por encima (`DUEL_CARD_OFFSET` en `js/battle.js`). Da trofeos (fácil 25, normal 30, difícil 35; pierdes 15). Se juega en el tablero de tu arena y cada arena suma 20 de oro por victoria (`ARENAS` y `ARENA_GOLD` en `js/data.js`).
+- **⚔️ Duelo 1 contra 1**: tú y un rival (IA fácil, normal o difícil) recibís los mismos monstruos. Gana quien aguante más; si caéis a la vez es empate. El rival fácil lleva cartas 2 niveles por debajo de las tuyas y el difícil, 2 por encima (`DUEL_CARD_OFFSET` en `js/battle.js`). Da trofeos (fácil 25, normal 30, difícil 35; pierdes 15). Se juega en el tablero de tu arena y cada arena suma 20 de oro por victoria (`ARENAS` y `ARENA_GOLD` en `js/data.js`). Antes de empezar, una ruleta cruza el mapa y elige un **modificador** para los dos (16, `DUEL_MODS`: doble de maná, comandantes con habilidades, muerte súbita, enjambre, noche de jefes…) y el **jefe final**, que sale en todas las oleadas de jefe. Con «Comandantes con habilidades», en las oleadas 5 y 15 (`CMD_SKILL_WAVES`) eliges 1 de 2 y luego 2 de 3 habilidades de `CMD_SKILLS`; el rival elige las suyas al azar. El torneo no lleva ruleta.
 - **🤝 2 contra la máquina**: tú y un aliado (IA) compartís vidas contra oleadas infinitas. Récord de oleadas.
 
 ## Tropas
@@ -63,7 +63,7 @@ Oro, gemas, cartas con 10 niveles, cofres de madera, plata y oro, cofre gratis c
 
 La ficha de cada tropa tiene dos pestañas: Vídeo (una mini partida con la tropa en acción) y Stats (daño, velocidad y rasgos). Mejorar va en dos toques: el primero enseña lo que gana en cada stat al subir de nivel y el segundo lo confirma. Las tropas bloqueadas también tienen ficha, con lo que hacen y cómo conseguirlas.
 
-**Navegación:** barra de pestañas abajo con Tienda, Mazo (tropas y comandante), Jugar y Equipos (bloqueado, llegará pronto).
+**Navegación:** barra de pestañas abajo con Tienda, Mazo (tropas y comandante), Jugar y Equipos (bloqueado, llegará pronto). También se pasa entre Tienda, Mazo y Jugar deslizando a los lados (`bindSwipe` en `js/ui.js`).
 
 **🎟️ Códigos:** en el inicio se canjean códigos de regalo (oro, gemas o cofres), una vez cada uno. Se definen en `CODES` de `js/data.js`.
 

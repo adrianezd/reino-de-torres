@@ -72,6 +72,59 @@ function showScreen(name) {
   document.querySelectorAll('[data-tab]').forEach(function (b) { b.classList.toggle('on', b.dataset.tab === tab); });
   if (name !== 'battle') renderMenu(name);
 }
+/* Deslizar a los lados cambia de pestaña (Tienda, Mazo y Jugar), como en
+   los juegos de móvil. Solo con gestos claramente horizontales y rápidos, y
+   nunca si empiezan sobre algo que se desplaza a lo ancho (filtros, mapas). */
+var SWIPE_TABS = ['shop', 'collection', 'home'];
+function swipeTab() { var t = currentScreen === 'commanders' ? 'collection' : currentScreen; return SWIPE_TABS.indexOf(t); }
+function scrollsSideways(el, stop) {
+  for (; el && el !== stop; el = el.parentNode) {
+    if (el.nodeType !== 1) continue;
+    var ox = getComputedStyle(el).overflowX;
+    if ((ox === 'auto' || ox === 'scroll') && el.scrollWidth > el.clientWidth + 2) return true;
+  }
+  return false;
+}
+function bindSwipe() {
+  var m = $('menu'), g = null;
+  m.addEventListener('touchstart', function (e) {
+    g = null;
+    if (e.touches.length !== 1 || swipeTab() < 0 || !$('overlay').hidden || scrollsSideways(e.target, m)) return;
+    var t = e.touches[0];
+    g = { x: t.clientX, y: t.clientY, t: Date.now(), side: false };
+  }, { passive: true });
+  m.addEventListener('touchmove', function (e) {
+    if (!g) return;
+    var t = e.touches[0], dx = t.clientX - g.x, dy = t.clientY - g.y;
+    if (!g.side) {
+      if (Math.abs(dy) > 14 && Math.abs(dy) > Math.abs(dx)) { g = null; return; } // es desplazamiento vertical
+      if (Math.abs(dx) > 14) g.side = true;
+    }
+    if (g.side) {
+      // sin pestaña a ese lado, se resiste más
+      var to = swipeTab() - Math.sign(dx), k = to >= 0 && to < SWIPE_TABS.length ? 0.35 : 0.12;
+      m.style.transform = 'translateX(' + dx * k + 'px)';
+      g.dx = dx;
+    }
+  }, { passive: true });
+  var end = function () {
+    if (!g) return;
+    var sideways = g.side, dx = g.dx || 0, fast = Date.now() - g.t < 700;
+    g = null;
+    m.style.transition = 'transform 0.18s ease-out'; m.style.transform = '';
+    setTimeout(function () { m.style.transition = ''; }, 200);
+    if (!sideways || Math.abs(dx) < (fast ? 50 : 110)) return;
+    var to = swipeTab() - Math.sign(dx);
+    if (to < 0 || to >= SWIPE_TABS.length) return;
+    sfx('tap');
+    showScreen(SWIPE_TABS[to]);
+    m.scrollTop = 0;
+    m.classList.remove('slide-l', 'slide-r'); void m.offsetWidth;
+    m.classList.add(dx < 0 ? 'slide-l' : 'slide-r');
+  };
+  m.addEventListener('touchend', end);
+  m.addEventListener('touchcancel', end);
+}
 // centro de cada aro del banner del mazo (assets/ui/banner-mazo.webp), en % del ancho
 var DECK_RINGS = [13.66, 31.83, 49.95, 68.06, 86.24];
 function topBar() {
@@ -123,7 +176,7 @@ function renderMenu(name, arg) {
   } else if (name === 'duelPick') {
     // una fila por rival: su monstruo, el nivel de sus cartas y el premio en chapas
     html = backBar('1 contra 1') +
-      '<p class="lead">Los mismos monstruos para los dos. Gana quien aguante más.</p>' +
+      '<p class="lead">Los mismos monstruos para los dos. Gana quien aguante más. Antes de empezar, la ruleta elige un modificador y el jefe final.</p>' +
       arenaStrip() +
       '<div class="rival-list">' + ['Fácil', 'Normal', 'Difícil'].map(function (n, i) {
         return '<button class="rival-row d' + i + '" data-duel="' + i + '">' +
@@ -1109,9 +1162,10 @@ function buildBattleHud() {
   }).join('');
   deck.querySelectorAll('[data-power]').forEach(function (btn) {
     btn.onclick = function () {
+      if (battleBusy()) return;
       var r = b.player.powerUp(btn.dataset.power);
       if (r === 'ok') { sfx('power'); buzz(20); toast(UNITS[btn.dataset.power].name + ' mejorada a ' + b.player.power[btn.dataset.power]); }
-      else if (r === 'mana') { sfx('no'); toast('Necesitas ' + POWER_COSTS[b.player.power[btn.dataset.power]] + ' 💧'); }
+      else if (r === 'mana') { sfx('no'); toast('Necesitas ' + b.player.powerCost(btn.dataset.power) + ' 💧'); }
       else toast('Mejora máxima');
       updateHud(true);
     };
@@ -1120,6 +1174,10 @@ function buildBattleHud() {
   $('cmdBtn').parentNode.style.setProperty('--cc', c.color); // el aro y sus rayos
   $('cmdIco').innerHTML = '<img src="' + c.pic + '" alt="' + esc(c.name) + '"><i>' + c.icon + '</i>';
   $('cmdBtn').title = c.ability + ': ' + c.desc;
+  // modificador y jefe final del 1 contra 1, junto a la oleada
+  ['roulette', 'skillPick'].forEach(function (id) { var el = $(id); if (el) el.remove(); });
+  $('bMod').hidden = !b.mod;
+  $('bMod').innerHTML = b.mod ? '<img src="' + b.mod.pic + '" alt="' + esc(b.mod.name) + '"><img src="' + enemyIcon(b.boss, true) + '" alt="' + esc(BOSSES[b.boss].name) + '">' : '';
   $('unitInfo').hidden = true;
   hideCoach();
   updateHud(true);
@@ -1153,9 +1211,9 @@ function updateHud(force) {
   p.deck.forEach(function (id) {
     var lv = p.power[id] || 1;
     setTxt('dlv_' + id, String(lv));
-    setHtml('dcost_' + id, lv >= POWER_MAX ? 'MÁX' : POWER_COSTS[lv] + MANA_ICO);
+    setHtml('dcost_' + id, lv >= POWER_MAX ? 'MÁX' : p.powerCost(id) + MANA_ICO);
     var el = document.querySelector('[data-power="' + id + '"]');
-    if (el) el.classList.toggle('poor', lv >= POWER_MAX || p.mana < POWER_COSTS[lv]);
+    if (el) el.classList.toggle('poor', lv >= POWER_MAX || p.mana < p.powerCost(id));
   });
   var wi = $('waveInfo'), showWi = !b.other && $('coach').hidden;
   wi.hidden = !showWi;
@@ -1219,6 +1277,129 @@ function refreshUnitInfo() {
   box.innerHTML = icons('<img src="' + unitIcon(u.id, u.rank, 72) + '" alt=""><div><b>' + esc(d.name) + ' · Rango ' + u.rank + '</b><small>' + esc(d.role) + ' · ' + bits.join(' · ') + '</small><small class="hint">Toca otra igual para fusionar o una casilla vacía para moverla</small></div>');
   box.hidden = false;
 }
+/* ---------- 1 contra 1: ruleta del modificador y del jefe final ----------
+   Dos franjas cruzan el mapa de lado a lado: primero gira la del modificador
+   y se para en el que ha tocado (battle.mod), luego la del jefe (battle.boss).
+   Tocar la salta. La partida espera (battle.intro) hasta que termina. */
+var RL_W = 92; // ancho de cada casilla de la franja, con su hueco (.rl-card en style.css)
+function showDuelRoulette() {
+  var b = battle;
+  var rows = [
+    { title: 'Modificador', items: DUEL_MODS.map(function (m) { return { pic: m.pic, name: m.name }; }), win: DUEL_MODS.indexOf(b.mod), desc: b.mod.desc, dur: 2600 },
+    { title: 'Jefe final', items: BOSS_ORDER.map(function (k) { return { pic: enemyIcon(k, true), name: BOSSES[k].name, boss: true }; }), win: BOSS_ORDER.indexOf(b.boss), desc: BOSSES[b.boss].desc, dur: 2300 }
+  ];
+  var REPS = 9;
+  var el = document.createElement('div');
+  el.id = 'roulette'; el.className = 'roulette';
+  el.innerHTML = '<h2 class="rl-title">' + esc('Contra ' + b.other.name) + '</h2>' + rows.map(function (r, ri) {
+    var cards = '';
+    for (var k = 0; k < r.items.length * REPS; k++) {
+      var it = r.items[k % r.items.length];
+      cards += '<span class="rl-card' + (it.boss ? ' boss' : '') + '"><img src="' + it.pic + '" alt=""><b>' + esc(it.name) + '</b></span>';
+    }
+    return '<div class="rl-row" id="rlRow' + ri + '"><h3>' + r.title + '</h3><div class="rl-track"><div class="rl-strip">' + cards + '</div><i class="rl-mark"></i></div><p class="rl-desc"></p></div>';
+  }).join('') + '<small class="rl-skip">Toca para saltar</small>';
+  $('arena').appendChild(el);
+  rows.forEach(function (r, ri) {
+    r.row = $('rlRow' + ri);
+    r.track = r.row.querySelector('.rl-track');
+    r.strip = r.row.querySelector('.rl-strip');
+    r.from = Math.floor(Math.random() * r.items.length);
+    r.to = r.items.length * (REPS - 2) + r.win;
+    r.at = -1;
+    place(r, r.from);
+  });
+  function alive() { return battle === b && !b.ended && el.isConnected; }
+  // deja la casilla k (con decimales mientras gira) bajo la marca del centro
+  function place(r, k) {
+    r.strip.style.transform = 'translateX(' + (r.track.clientWidth / 2 - (k * RL_W + RL_W / 2)) + 'px)';
+    var cur = Math.round(k);
+    if (cur !== r.at) { r.at = cur; if (r.spinning) tone(700 + (cur % 3) * 60, 0.03, 'square', 0.04); }
+  }
+  function land(r) {
+    r.spinning = false; r.done = true;
+    place(r, r.to);
+    r.strip.children[r.to].classList.add('win');
+    r.row.classList.add('done');
+    r.row.querySelector('.rl-desc').textContent = r.desc;
+  }
+  var idx = 0, finished = false, endTimer = null;
+  function spin(r) {
+    var t0 = performance.now();
+    r.spinning = true;
+    function step(now) {
+      if (!alive() || r.done) return;
+      var t = Math.min(1, (now - t0) / r.dur), e = 1 - Math.pow(1 - t, 4);
+      place(r, r.from + (r.to - r.from) * e);
+      if (t < 1) { requestAnimationFrame(step); return; }
+      land(r); sfx(idx === 0 ? 'power' : 'boss'); next();
+    }
+    requestAnimationFrame(step);
+  }
+  function next() {
+    idx++;
+    if (idx < rows.length) { setTimeout(function () { if (alive()) spin(rows[idx]); }, 450); return; }
+    finish();
+  }
+  function finish() {
+    if (finished) return;
+    finished = true;
+    el.querySelector('.rl-skip').textContent = '¡A jugar!';
+    endTimer = setTimeout(close, 1900);
+  }
+  function close() {
+    clearTimeout(endTimer);
+    if (!alive()) return;
+    el.classList.add('out');
+    setTimeout(function () { el.remove(); }, 300);
+    endDuelIntro();
+  }
+  el.onclick = function () {
+    if (finished) { close(); return; }
+    rows.forEach(function (r) { if (!r.done) land(r); });
+    idx = rows.length;
+    sfx('boss');
+    finish();
+  };
+  spin(rows[0]);
+}
+
+/* Elección de habilidades de comandante: `n` de las ofrecidas. */
+function showSkillPick(offer, n) {
+  var b = battle, p = b.player, cmd = COMMANDERS[p.commander], chosen = [];
+  var el = document.createElement('div');
+  el.id = 'skillPick'; el.className = 'skill-pick';
+  var sub = function () { return n === 1 ? 'Elige 1 de ' + offer.length : 'Elige ' + n + ' de ' + offer.length + ' · llevas ' + chosen.length; };
+  el.innerHTML = '<div class="sp-card" style="--cc:' + cmd.color + '">' +
+    '<div class="sp-head"><img src="' + cmd.pic + '" alt=""><span><b>Habilidades de ' + esc(cmd.name) + '</b><small id="spSub">' + sub() + '</small></span></div>' +
+    '<div class="sp-list">' + offer.map(function (k) {
+      var s = CMD_SKILLS[k];
+      return '<button class="sp-opt" data-sk="' + k + '"><img src="assets/' + s.pic + '.webp" alt=""><span><b>' + esc(s.name) + '</b><small>' + esc(cmdSkillDesc(k, p.commander)) + '</small></span></button>';
+    }).join('') + '</div>' +
+    (p.skills.length ? '<p class="sp-have">Ya tienes: ' + p.skills.map(function (k) { return esc(CMD_SKILLS[k].name); }).join(', ') + '</p>' : '') +
+    '</div>';
+  $('arena').appendChild(el);
+  sfx('chest');
+  el.querySelectorAll('[data-sk]').forEach(function (btn) {
+    btn.onclick = function () {
+      if (chosen.length >= n || chosen.indexOf(btn.dataset.sk) !== -1 || b.paused) return;
+      chosen.push(btn.dataset.sk);
+      btn.classList.add('on'); btn.disabled = true;
+      sfx('power'); buzz(20);
+      $('spSub').textContent = sub();
+      if (chosen.length < n) return;
+      el.classList.add('out');
+      setTimeout(function () { el.remove(); if (battle === b) finishSkillPick(chosen); }, 380);
+    };
+  });
+}
+// mientras gira la ruleta o eliges habilidades no se puede jugar
+function battleBusy() { return !!(battle && (battle.intro || battle.picking)); }
+function modInfo(b) {
+  return b.mod.name + ': ' + b.mod.desc + ' Jefe final: ' + BOSSES[b.boss].name + '.' +
+    (b.player.skills.length ? ' Habilidades: ' + b.player.skills.map(function (k) { return CMD_SKILLS[k].name; }).join(', ') + '.' : '');
+}
+
 var bannerTimer = null;
 function showBanner(title, sub, pic) {
   var el = $('banner');
@@ -1267,6 +1448,7 @@ function confirmQuit() {
   var b = battle, p = b.player;
   var where = b.mode === 'campaign' ? '🗺️ Fase ' + b.stage.id + ' · ' + esc(b.stage.name)
     : b.mode === 'duel' ? (b.opts.tourney ? 'Torneo contra ' : '⚔️ Duelo contra ') + esc(b.other.name) : '🤝 Con ' + esc(b.other.name) + ' contra la horda';
+  if (b.mod) where += '<small class="pause-mod">' + esc(modInfo(b)) + '</small>';
   var wave = b.wave ? b.wave + (b.maxWaves !== Infinity ? '<small>/' + b.maxWaves + '</small>' : '') : '—';
   var prog = b.maxWaves !== Infinity ? Math.min(1, b.wave / b.maxWaves) : 0;
   function stat(ico, val, lbl) { return '<div class="ps-stat"><i>' + ico + '</i><b>' + val + '</b><small>' + lbl + '</small></div>'; }
@@ -1361,7 +1543,7 @@ function initGame() {
   window.addEventListener('resize', resizeCanvas);
   if (window.ResizeObserver) new ResizeObserver(resizeCanvas).observe($('arena'));
   $('summonBtn').onclick = function () {
-    if (!battle) return;
+    if (!battle || battleBusy()) return;
     var r = battle.player.summon();
     if (r === 'ok') { sfx('summon'); buzz(15); }
     else if (r === 'mana') { sfx('no'); toast('Necesitas ' + battle.player.summonCost + ' 💧'); }
@@ -1369,7 +1551,7 @@ function initGame() {
     updateHud();
   };
   $('cmdBtn').onclick = function () {
-    if (!battle) return;
+    if (!battle || battleBusy()) return;
     if (battle.player.useCommander()) { sfx('cmd'); buzz(60); toast(COMMANDERS[battle.player.commander].ability + '!'); }
     else toast('El comandante aún se está cargando');
   };
@@ -1380,6 +1562,7 @@ function initGame() {
     toast(battle.moveCd > 0 ? '⏱ Podrás recolocar una tropa en ' + Math.ceil(battle.moveCd) + ' s' : '↔ Ya puedes recolocar una tropa: arrástrala a otra casilla');
   };
   $('bQuit').onclick = confirmQuit;
+  $('bMod').onclick = function () { if (battle && battle.mod) { sfx('tap'); toast(modInfo(battle)); } };
   $('overlay').addEventListener('click', function (e) { if (e.target === this && !(battle && !battle.ended && battle.paused === false)) { /* los modales se cierran con sus botones */ } });
   // nada de zoom: ni pellizcando (Safari no hace caso al viewport), ni con doble toque, ni con Ctrl + rueda
   ['gesturestart', 'gesturechange', 'dblclick'].forEach(function (ev) { document.addEventListener(ev, function (e) { e.preventDefault(); }, { passive: false }); });
@@ -1405,6 +1588,7 @@ function initGame() {
       sfx('tap'); closeOverlay(); showScreen(b.dataset.tab);
     };
   });
+  bindSwipe();
   showScreen('home');
   // versión nueva desde la última visita: enseña las novedades
   if (meta.lastSeenVersion !== APP_VERSION) showPatchNotes();

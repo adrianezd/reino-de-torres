@@ -4,6 +4,8 @@
    Modos:
     - campaign: tu tablero contra oleadas, con jefe final.
     - duel: 1 contra 1 frente a un rival (IA). Gana quien aguante más.
+      Antes de empezar, una ruleta elige un modificador para los dos
+      (DUEL_MODS) y el jefe final, que sale en todas las oleadas de jefe.
       Con opts.tourney es el torneo: las cartas y los comandantes de los dos,
       a nivel de torneo (TOURNEY_LV), y el rival puede llevar cualquier tropa.
     - coop: tú y un aliado (IA) contra oleadas infinitas, vidas compartidas.
@@ -65,6 +67,14 @@ function startBattle(mode, opts) {
     battle.other = new Board({ name: pick(ALLY_NAMES), ai: true, aiLevel: 2, deck: allyDeck, cardLv: allyCard, commander: pick(COMMANDER_ORDER), cmdLv: myCmdLv, lives: lives, biome: biome, geo: geo });
   }
   if (battle.other) { battle.boards.push(battle.other); battle.other.battle = battle; }
+  // 1 contra 1 (no el torneo): modificador y jefe final al azar; la partida
+  // espera a que la ruleta los enseñe (showDuelRoulette)
+  if (mode === 'duel' && !tourney) {
+    battle.mod = pick(DUEL_MODS);
+    battle.boss = pick(BOSS_ORDER);
+    battle.boards.forEach(function (bd) { applyDuelMod(bd, battle.mod.id); });
+    battle.intro = true;
+  }
   player.battle = battle;
   player.onLeak = function () { sfx('leak'); buzz(80); };
   player.onKill = function (e) { if (e.boss) sfx('boss'); };
@@ -72,8 +82,60 @@ function startBattle(mode, opts) {
   showScreen('battle');
   buildBattleHud();
   resizeCanvas();
+  if (battle.intro) { showDuelRoulette(); return; }
   showBanner(mode === 'campaign' ? 'Fase ' + stage.id + ': ' + stage.name : tourney ? 'Torneo contra ' + battle.other.name : mode === 'duel' ? '⚔️ Duelo contra ' + battle.other.name : '🤝 Con ' + battle.other.name + ' contra la horda', 'Prepárate…');
   sfx('start');
+}
+function applyDuelMod(bd, id) {
+  if (id === 'mana2') { bd.manaMult = 2; bd.mana *= 2; }
+  else if (id === 'rebajas') bd.powerCostMult = 0.5;
+  else if (id === 'veteranos') bd.rank2 = 0.25;
+  else if (id === 'carga') bd.chargeMult = 2;
+  else if (id === 'subita') { bd.lives.v = 1; bd.lives.max = 1; }
+  else if (id === 'gigantes') bd.rewardMult = 2;
+  else if (id === 'estampida') bd.slowMult = 1.3;
+  else if (id === 'fusion') bd.mergeBoost = 0.2;
+  else if (id === 'fijo') { bd.summonCost = 20; bd.summonStep = 0; }
+  else if (id === 'lazos') bd.affMult = 3;
+  else if (id === 'casillas') {
+    var spots = shuffleArr(Array.from({ length: COLS * ROWS }, function (_, i) { return i; }).filter(function (i) { return !bd.tiles[i]; }));
+    ['altar', 'fuente', 'atalaya'].forEach(function (t, k) { bd.tiles[spots[k]] = t; });
+  }
+}
+// vida de los monstruos según el modificador del duelo
+function modHp() {
+  var m = battle.mod && battle.mod.id;
+  return m === 'gigantes' ? 1.5 : m === 'enjambre' ? 0.5 : m === 'estampida' ? 0.75 : 1;
+}
+// al acabar la ruleta empieza de verdad el duelo
+function endDuelIntro() {
+  var b = battle;
+  if (!b || !b.intro) return;
+  b.intro = false;
+  showBanner('⚔️ Duelo contra ' + b.other.name, b.mod.name + ' · Jefe final: ' + BOSSES[b.boss].name);
+  sfx('start');
+  updateHud(true);
+}
+
+/* ---------- habilidades de comandante (modificador «skills») ----------
+   Al empezar las oleadas de CMD_SKILL_WAVES la partida se para: eliges entre
+   las que te ofrece (showSkillPick) y el rival elige las suyas al azar. */
+function skillOffer(bd, n) {
+  return shuffleArr(CMD_SKILL_ORDER.filter(function (k) { return bd.skills.indexOf(k) === -1; })).slice(0, n);
+}
+function offerSkills(step) {
+  var b = battle;
+  skillOffer(b.other, step.offer).slice(0, step.pick).forEach(function (k) { b.other.applySkill(k); });
+  b.picking = true;
+  showSkillPick(skillOffer(b.player, step.offer), step.pick);
+}
+function finishSkillPick(chosen) {
+  var b = battle;
+  if (!b || !b.picking) return;
+  chosen.forEach(function (k) { b.player.applySkill(k); });
+  b.picking = false;
+  showBanner('Oleada ' + b.wave, chosen.map(function (k) { return CMD_SKILLS[k].name; }).join(' y '));
+  updateHud(true);
 }
 
 /* ---------- oleadas ---------- */
@@ -89,17 +151,18 @@ function hpScale() {
   }
   if (b.mode === 'duel' && w > 12) s *= Math.pow(1.22, w - 12);
   if (b.event && b.event.id === 'horda') s *= 0.7;
-  return s;
+  return s * modHp();
 }
 function isBossWave(w) {
   if (battle.mode === 'campaign') return w === battle.maxWaves;
-  return w % 5 === 0;
+  return w % (battle.mod && battle.mod.id === 'jefes' ? 3 : 5) === 0;
 }
 // Se decide una oleada antes de que llegue, para poder anunciar la siguiente.
 function planWave(w) {
   var b = battle;
-  var event = w >= 3 && Math.random() < 0.4 ? pick(WAVE_EVENTS) : null;
-  var count = Math.round((9 + w * 2) * (event && event.id === 'horda' ? 1.4 : 1));
+  var caos = b.mod && b.mod.id === 'caos';
+  var event = w >= (caos ? 2 : 3) && (caos || Math.random() < 0.4) ? pick(WAVE_EVENTS) : null;
+  var count = Math.round((9 + w * 2) * (event && event.id === 'horda' ? 1.4 : 1) * (b.mod && b.mod.id === 'enjambre' ? 2 : 1));
   var mix = ['blob', 'blob', 'blob'];
   if (w >= 2) mix.push('imp');
   if (w >= 3) mix.push('brute');
@@ -111,7 +174,7 @@ function planWave(w) {
   var queue = [];
   for (var i = 0; i < count; i++) queue.push({ kind: pick(mix) });
   if (isBossWave(w)) {
-    var boss = b.stage ? b.stage.boss : BOSS_ORDER[(w / 5 - 1) % BOSS_ORDER.length];
+    var boss = b.stage ? b.stage.boss : b.boss || BOSS_ORDER[(w / 5 - 1) % BOSS_ORDER.length];
     queue.push({ kind: boss, boss: true });
   }
   return { wave: w, event: event, queue: queue, count: count };
@@ -131,6 +194,10 @@ function startWave() {
   showBanner('Oleada ' + b.wave + (b.maxWaves !== Infinity ? ' / ' + b.maxWaves : ''), sub, b.event ? b.event.pic : null);
   sfx('wave');
   updateHud(true);
+  if (b.mod && b.mod.id === 'skills') {
+    var step = CMD_SKILL_WAVES.filter(function (s) { return s.wave === b.wave; })[0];
+    if (step) offerSkills(step);
+  }
 }
 /* ---------- tutorial de la primera partida ----------
    Pasos: invocar dos tropas (la oleada espera), fusionar, mejorar una carta
@@ -175,7 +242,7 @@ function spawnNext() {
 
 function updateBattle(dt) {
   var b = battle;
-  if (!b || b.ended || b.paused) return;
+  if (!b || b.ended || b.paused || b.intro || b.picking) return;
   b.time += dt;
   if (b.moveCd > 0) b.moveCd = Math.max(0, b.moveCd - dt / (b.speed || 1));
   if (b.tutorial) updateCoach(dt);
@@ -263,6 +330,8 @@ function endBattle(won, draw) {
       meta.duelLosses++;
       res.lines.push(b.other.name + ' aguantó más que tú.');
     }
+    if (b.mod && b.mod.id === 'oro' && won && !draw) res.gold *= 2;
+    if (b.mod) res.lines.push(b.mod.name + ' · Jefe final: ' + BOSSES[b.boss].name);
     var arena0 = arenaIndex();
     addTrophies(res.trophies);
     if (arenaIndex() > arena0) res.lines.push('¡Nueva arena: ' + ARENAS[arenaIndex()].name + '!');

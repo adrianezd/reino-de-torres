@@ -7,8 +7,19 @@
    La ventana sale sola al entrar con una versión nueva (meta.lastSeenVersion)
    y también desde Opciones.
    ========================================================= */
-var APP_VERSION = '1.12.1';
+var APP_VERSION = '1.13.0';
 var APP_PATCH_NOTES = [
+  {
+    version: '1.13.0',
+    summary: 'Ruleta de modificadores en el 1 contra 1 y deslizar entre pestañas',
+    items: [
+      'Antes de cada 1 contra 1, una ruleta cruza el mapa y elige un modificador para los dos y el jefe final de la partida, que es el que sale en todas las oleadas de jefe.',
+      'Hay 16 modificadores: Doble de maná, Comandantes con habilidades, Mejoras a mitad, Veteranos, Carga rápida, Muerte súbita, Gigantes, Enjambre, Estampida, Fusión potente, Tierra sagrada, Precio fijo, Noche de jefes, Caos, Lazos elementales y Botín de guerra.',
+      'Con Comandantes con habilidades, en la oleada 5 eliges 1 habilidad de 2 y en la 15, 2 de 3. El rival también elige las suyas.',
+      'El modificador y el jefe se ven junto a la oleada; tócalos para leer qué hacen y qué habilidades llevas.',
+      'Ahora puedes deslizar a los lados para pasar entre Tienda, Mazo y Jugar.'
+    ]
+  },
   {
     version: '1.12.1',
     summary: 'Eco, Oria y Garra estrenan sus ilustraciones',

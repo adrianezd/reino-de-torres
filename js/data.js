@@ -434,3 +434,43 @@ var WAVE_EVENTS = [
   { id: 'horda',   name: 'Horda', pic: 'assets/events/horda.webp',          icon: '👹', desc: 'Llegan un 40% más de monstruos, más débiles.' },
   { id: 'calma',   name: 'Calma', pic: 'assets/events/calma.webp',          icon: '🍃', desc: 'Monstruos más lentos esta oleada.' }
 ];
+
+/* 1 contra 1 con su toque de roguelike: antes de empezar, una ruleta elige un
+   modificador para los dos (DUEL_MODS) y el jefe final de la partida, que sale
+   en todas sus oleadas de jefe. El torneo no lleva ruleta. */
+var DUEL_MODS = [
+  { id: 'mana2',     name: 'Doble de maná',  pic: 'assets/icons/gota.webp',     desc: 'Empezáis con el doble y todo el maná que ganáis vale el doble.' },
+  { id: 'skills',    name: 'Comandantes con habilidades', pic: 'assets/icons/corona.webp', desc: 'En la oleada 5 eliges 1 habilidad de 2 y en la 15, 2 de 3.' },
+  { id: 'rebajas',   name: 'Mejoras a mitad', pic: 'assets/icons/mejorar.webp', desc: 'Mejorar tropas en la partida cuesta la mitad.' },
+  { id: 'veteranos', name: 'Veteranos',      pic: 'assets/icons/estrella.webp', desc: 'Cada tropa invocada tiene un 25% de salir con rango 2.' },
+  { id: 'carga',     name: 'Carga rápida',   pic: 'assets/icons/rapido.webp',   desc: 'Los comandantes se cargan el doble de rápido.' },
+  { id: 'subita',    name: 'Muerte súbita',  pic: 'assets/icons/calavera.webp', desc: 'Una sola vida para cada uno.' },
+  { id: 'gigantes',  name: 'Gigantes',       pic: 'assets/icons/escudo.webp',   desc: 'Los monstruos tienen un 50% más de vida, pero dan el doble de maná.' },
+  { id: 'enjambre',  name: 'Enjambre',       pic: 'assets/events/horda.webp',   desc: 'Llegan el doble de monstruos, con la mitad de vida.' },
+  { id: 'estampida', name: 'Estampida',      pic: 'assets/events/eclipse.webp', desc: 'Los monstruos corren un 30% más, pero tienen un 25% menos de vida.' },
+  { id: 'fusion',    name: 'Fusión potente', pic: 'assets/icons/chispas.webp',  desc: 'Al fusionar, un 20% de las veces la tropa sube dos rangos.' },
+  { id: 'casillas',  name: 'Tierra sagrada', pic: 'assets/icons/hoja.webp',     desc: 'El doble de casillas especiales: dos altares, dos fuentes y dos atalayas.' },
+  { id: 'fijo',      name: 'Precio fijo',    pic: 'assets/icons/moneda.webp',   desc: 'Invocar cuesta siempre 20 de maná.' },
+  { id: 'jefes',     name: 'Noche de jefes', pic: 'assets/icons/corona.webp',   desc: 'Llega un jefe cada 3 oleadas en vez de cada 5.' },
+  { id: 'caos',      name: 'Caos',           pic: 'assets/icons/dado.webp',     desc: 'Desde la oleada 2, todas traen un evento.' },
+  { id: 'lazos',     name: 'Lazos elementales', pic: 'assets/icons/vecinas.webp', desc: 'La afinidad entre tropas del mismo elemento vale el triple.' },
+  { id: 'oro',       name: 'Botín de guerra', pic: 'assets/icons/trofeo.webp',  desc: 'Si ganas, te llevas el doble de oro.' }
+];
+/* Modificador «Comandantes con habilidades»: al empezar estas oleadas, cada
+   uno ve `offer` habilidades al azar (que aún no tenga) y se queda `pick`.
+   Los duelos suelen acabar entre la oleada 15 y la 20. */
+var CMD_SKILL_WAVES = [{ wave: 5, offer: 2, pick: 1 }, { wave: 15, offer: 3, pick: 2 }];
+var CMD_SKILLS = {
+  recarga:   { name: 'Recarga',   pic: 'icons/reloj',    desc: 'Tu comandante se carga un 40% más rápido.' },
+  maestria:  { name: 'Maestría',  pic: 'icons/chispas',  desc: '{a} con un 50% más de fuerza.' },
+  refuerzo:  { name: 'Refuerzo',  pic: 'icons/mano',     desc: 'Al usar {a}, invocas una tropa gratis.' },
+  botin:     { name: 'Botín',     pic: 'icons/gota',     desc: 'Cada baja te da 3 de maná más.' },
+  arsenal:   { name: 'Arsenal',   pic: 'icons/espadas',  desc: 'Todas tus tropas hacen un 15% más de daño.' },
+  cazajefes: { name: 'Cazajefes', pic: 'icons/diana',    desc: 'Tus tropas hacen un 40% más de daño a los jefes.' },
+  reclutas:  { name: 'Reclutas',  pic: 'icons/moneda',   desc: 'Invocar sube de precio la mitad de rápido.' },
+  veterania: { name: 'Veteranía', pic: 'icons/estrella', desc: 'Tus tropas invocadas tienen un 20% de salir con rango 2.' },
+  escarcha:  { name: 'Escarcha',  pic: 'icons/hielo',    desc: 'Los monstruos de tu tablero van un 12% más lentos.' },
+  muralla:   { name: 'Muralla',   pic: 'ui/vida',        desc: 'Ganas una vida más.' }
+};
+var CMD_SKILL_ORDER = Object.keys(CMD_SKILLS);
+function cmdSkillDesc(k, cmd) { return CMD_SKILLS[k].desc.replace('{a}', COMMANDERS[cmd].ability); }
