@@ -2216,3 +2216,6 @@ x-ico.off { filter: grayscale(1) brightness(0.45); opacity: 0.75; }
 .tree-list span.on { color: #fff; }
 .tree-list p.locked span { opacity: 0.75; }
 .tree-list span i { font-style: normal; }
+
+/* avisos largos (talentos, modificadores): en varias líneas dentro de la pantalla */
+.toast { white-space: normal; width: max-content; max-width: calc(100vw - 32px); text-align: center; line-height: 1.3; border-radius: 18px; }

@@ -15,7 +15,8 @@ var APP_PATCH_NOTES = [
     items: [
       'Morgana se carga en 30 segundos en vez de 45.',
       'Brann ya no sale demasiado arriba en su tarjeta.',
-      'Morgana y Torvald ya no llevan la etiqueta Héroe.'
+      'Morgana y Torvald ya no llevan la etiqueta Héroe.',
+      'Los avisos largos, como el de un talento al elegirlo, se leen enteros en varias líneas y duran algo más.'
     ]
   },
   {

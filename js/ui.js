@@ -57,7 +57,7 @@ function sfx(k) {
 function buzz(ms) { if (navigator.vibrate) try { navigator.vibrate(ms); } catch (e) {} }
 function toast(msg) {
   var t = $('toast'); t.innerHTML = icons(esc(msg)); t.classList.add('show');
-  clearTimeout(toast._h); toast._h = setTimeout(function () { t.classList.remove('show'); }, 1700);
+  clearTimeout(toast._h); toast._h = setTimeout(function () { t.classList.remove('show'); }, Math.max(1700, String(msg).length * 55));  // los largos duran más, para leerlos
 }
 
 /* ---------- pantallas ---------- */
