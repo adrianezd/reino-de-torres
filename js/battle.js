@@ -9,6 +9,8 @@
       Con opts.tourney es el torneo: las cartas y los comandantes de los dos,
       a nivel de torneo (TOURNEY_LV), y el rival puede llevar cualquier tropa.
     - coop: tú y un aliado (IA) contra oleadas infinitas, vidas compartidas.
+    - rogue: tú solo contra ROGUE_WAVES oleadas y un jefe final elegido por la
+      ruleta; cada ROGUE_PICK_EVERY segundos eliges 1 de 3 ventajas.
    ========================================================= */
 
 var battle = null;
@@ -24,7 +26,13 @@ function startBattle(mode, opts) {
   var tourney = mode === 'duel' && !!opts.tourney;
   var lv = tourney ? tourneyLevels() : cardLevels();
   var myCmdLv = tourney ? TOURNEY_CMD_LV : cmdLevel(meta.commander);
-  var lives = mode === 'campaign' ? { v: 5, max: 5 } : mode === 'duel' ? { v: 3, max: 3 } : { v: 6, max: 6 };
+  var lives = mode === 'campaign' || mode === 'rogue' ? { v: 5, max: 5 } : mode === 'duel' ? { v: 3, max: 3 } : { v: 6, max: 6 };
+  // torneo con mazo prestado o con cartas al azar: el mazo de los dos cambia
+  var tmode = tourney ? opts.tmode || 'clasico' : null, aiPreset = null, lent = null;
+  if (tmode === 'prestado') {
+    var two = shuffleArr(TOURNEY_DECKS.slice());
+    lent = two[0]; deck = two[0].deck.slice(); aiPreset = two[1].deck.slice();
+  } else if (tmode === 'azar') { deck = randomDeck(); aiPreset = randomDeck(); }
   // tablero ilustrado (al azar entre los que ya han cargado): la campaña usa
   // uno de su bioma; el duelo y el cooperativo, cualquiera, con un bioma
   // que le pegue para el decorado de alrededor
@@ -38,11 +46,11 @@ function startBattle(mode, opts) {
     if (fits.length) biome = pick(fits);
   }
   var geo = fid ? FIELD_GEOS[fid] : VECTOR_GEO;
-  var player = new Board({ name: 'Tú', deck: deck, cardLv: lv, commander: meta.commander, cmdLv: myCmdLv, lives: lives, biome: biome, geo: geo, mana: stage ? stage.mana : 100 });
+  var player = new Board({ name: 'Tú', deck: deck, cardLv: lv, commander: meta.commander, cmdLv: myCmdLv, lives: lives, biome: biome, geo: geo, mana: stage ? stage.mana : 100, talents: myTalents(lv) });
   battle = {
-    mode: mode, stage: stage, opts: opts,
+    mode: mode, stage: stage, opts: opts, tmode: tmode, lent: lent,
     boards: [player], player: player, other: null,
-    wave: 0, maxWaves: stage ? stage.waves : Infinity,
+    wave: 0, maxWaves: stage ? stage.waves : mode === 'rogue' ? ROGUE_WAVES : Infinity,
     queue: [], spawnT: 0, spawnInterval: 1, gap: 3, waveTime: 0,
     event: null, ended: false, paused: false, speed: 1, time: 0,
     selected: null, drag: null, result: null,
@@ -52,14 +60,14 @@ function startBattle(mode, opts) {
   battle.next = planWave(1);
   if (mode === 'duel') {
     var aiLv = tourney ? 1 : opts.level == null ? 1 : opts.level;
-    var aiDeck = shuffleArr((tourney ? UNIT_ORDER : AI_UNITS).slice()).filter(function (id) { return id !== 'melodia' || aiLv > 0; }).slice(0, 5);
-    if (aiDeck.indexOf('doblon') === -1 && aiLv > 0) aiDeck[4] = 'doblon';
+    var aiDeck = aiPreset || shuffleArr((tourney ? UNIT_ORDER : AI_UNITS).slice()).filter(function (id) { return id !== 'melodia' || aiLv > 0; }).slice(0, 5);
+    if (!aiPreset && aiDeck.indexOf('doblon') === -1 && aiLv > 0) aiDeck[4] = 'doblon';
     var aiCard = {};
     var avg = Math.round(Object.keys(lv).reduce(function (s, k) { return s + lv[k]; }, 0) / Math.max(1, Object.keys(lv).length));
     UNIT_ORDER.forEach(function (id) { aiCard[id] = Math.max(1, avg + DUEL_CARD_OFFSET[aiLv]); });
     if (tourney) aiCard = tourneyLevels();
     var aiCmdLv = tourney ? TOURNEY_CMD_LV : Math.max(1, Math.min(CMD_MAX, myCmdLv + DUEL_CARD_OFFSET[aiLv]));
-    battle.other = new Board({ name: pick(RIVAL_NAMES), ai: true, aiLevel: aiLv, deck: aiDeck, cardLv: aiCard, commander: pick(COMMANDER_ORDER), cmdLv: aiCmdLv, lives: { v: 3, max: 3 }, biome: biome, geo: geo });
+    battle.other = new Board({ name: pick(RIVAL_NAMES), ai: true, aiLevel: aiLv, deck: aiDeck, cardLv: aiCard, commander: pick(COMMANDER_ORDER), cmdLv: aiCmdLv, lives: { v: 3, max: 3 }, biome: biome, geo: geo, talents: aiTalents(aiCard) });
   } else if (mode === 'coop') {
     var allyDeck = shuffleArr(AI_UNITS.slice()).slice(0, 5);
     var allyCard = {};
@@ -75,13 +83,26 @@ function startBattle(mode, opts) {
     battle.boards.forEach(function (bd) { applyDuelMod(bd, battle.mod.id); });
     battle.intro = true;
   }
+  // roguelike: la ruleta solo elige el jefe final; las ventajas llegan cada ROGUE_PICK_EVERY s
+  if (mode === 'rogue') {
+    battle.boss = pick(BOSS_ORDER);
+    battle.nextPick = ROGUE_PICK_EVERY;
+    player.rogueMods = [];
+    battle.intro = true;
+  }
   player.battle = battle;
-  player.onLeak = function () { sfx('leak'); buzz(80); };
+  player.onLeak = function (e, loss) { if (!loss) return; sfx('leak'); buzz(80); aiEmote(pick(['😂', '😮']), 0.3); };
+  if (mode === 'duel') {
+    battle.other.onLeak = function (e, loss) { if (loss) aiEmote(pick(['😡', '😮']), 0.35); };
+    battle.other.onKill = function (e) { if (e.boss) aiEmote(pick(['👑', '🔥', '👍']), 0.5); };
+  }
+  player.onCombo = function (n) { sfx('merge'); if (n >= 3) buzz(30); };
   player.onKill = function (e) { if (e.boss) sfx('boss'); };
 
   showScreen('battle');
   buildBattleHud();
   resizeCanvas();
+  resetReplay();
   if (battle.intro) { showDuelRoulette(); return; }
   showBanner(mode === 'campaign' ? 'Fase ' + stage.id + ': ' + stage.name : tourney ? 'Torneo contra ' + battle.other.name : mode === 'duel' ? '⚔️ Duelo contra ' + battle.other.name : '🤝 Con ' + battle.other.name + ' contra la horda', 'Prepárate…');
   sfx('start');
@@ -97,6 +118,10 @@ function applyDuelMod(bd, id) {
   else if (id === 'fusion') bd.mergeBoost = 0.2;
   else if (id === 'fijo') { bd.summonCost = 20; bd.summonStep = 0; }
   else if (id === 'lazos') bd.affMult = 3;
+  else if (id === 'directa') bd.directed = true;
+  else if (id === 'r_suerte') bd.luck += 0.1;
+  else if (id === 'r_caliz') bd.caliz = true;
+  else if (id.indexOf('r_') === 0) { var el = id.slice(2); bd.elemBonus[el] = (bd.elemBonus[el] || 0) + 0.35; }
   else if (id === 'casillas') {
     var spots = shuffleArr(Array.from({ length: COLS * ROWS }, function (_, i) { return i; }).filter(function (i) { return !bd.tiles[i]; }));
     ['altar', 'fuente', 'atalaya'].forEach(function (t, k) { bd.tiles[spots[k]] = t; });
@@ -107,40 +132,86 @@ function modHp() {
   var m = battle.mod && battle.mod.id;
   return m === 'gigantes' ? 1.5 : m === 'enjambre' ? 0.5 : m === 'estampida' ? 0.75 : 1;
 }
-// al acabar la ruleta empieza de verdad el duelo
+// mazo de cinco tropas al azar de entre todas (torneo «Cartas al azar»), con al menos tres que ataquen
+function randomDeck() {
+  for (var t = 0; t < 50; t++) {
+    var d = shuffleArr(UNIT_ORDER.slice()).slice(0, 5);
+    if (d.filter(function (id) { return UNITS[id].dmg; }).length >= 3) return d;
+  }
+  return d;
+}
+// tus talentos, solo los pisos que abre el nivel de la carta en esta partida
+function myTalents(lv) {
+  var o = {};
+  Object.keys(TALENTS).forEach(function (id) {
+    var picks = (meta.talents || {})[id];
+    if (picks) o[id] = picks.map(function (k, t) { return (lv[id] || 1) >= TALENT_LV[t] ? k : null; });
+  });
+  return o;
+}
+// la máquina elige sus talentos al azar
+function aiTalents(lv) {
+  var o = {};
+  Object.keys(TALENTS).forEach(function (id) {
+    o[id] = TALENTS[id].map(function (tier, t) { return (lv[id] || 1) >= TALENT_LV[t] ? pick(tier).id : null; });
+  });
+  return o;
+}
+// al acabar la ruleta empieza de verdad la partida
 function endDuelIntro() {
   var b = battle;
   if (!b || !b.intro) return;
   b.intro = false;
-  showBanner('⚔️ Duelo contra ' + b.other.name, b.mod.name + ' · Jefe final: ' + BOSSES[b.boss].name);
+  if (b.mode === 'rogue') showBanner('Modo roguelike', 'Jefe final en la oleada ' + b.maxWaves + ': ' + BOSSES[b.boss].name);
+  else showBanner('⚔️ Duelo contra ' + b.other.name, b.mod.name + ' · Jefe final: ' + BOSSES[b.boss].name);
   sfx('start');
   updateHud(true);
 }
 
 /* ---------- habilidades de comandante (modificador «skills») ----------
    Al empezar las oleadas de CMD_SKILL_WAVES la partida se para: eliges entre
-   las que te ofrece (showSkillPick) y el rival elige las suyas al azar. */
+   las que te ofrece (showChoice) y el rival elige las suyas al azar. */
 function skillOffer(bd, n) {
   return shuffleArr(CMD_SKILL_ORDER.filter(function (k) { return bd.skills.indexOf(k) === -1; })).slice(0, n);
 }
+function skillOption(k, cmd) { return { kind: 'skill', id: k, name: CMD_SKILLS[k].name, pic: 'assets/' + CMD_SKILLS[k].pic + '.webp', desc: cmdSkillDesc(k, cmd) }; }
 function offerSkills(step) {
-  var b = battle;
+  var b = battle, p = b.player;
   skillOffer(b.other, step.offer).slice(0, step.pick).forEach(function (k) { b.other.applySkill(k); });
   b.picking = true;
-  showSkillPick(skillOffer(b.player, step.offer), step.pick);
+  showChoice({ title: 'Habilidades de ' + COMMANDERS[p.commander].name, face: COMMANDERS[p.commander],
+    options: skillOffer(p, step.offer).map(function (k) { return skillOption(k, p.commander); }), n: step.pick,
+    have: p.skills.map(function (k) { return CMD_SKILLS[k].name; }) }, finishPick);
 }
-function finishSkillPick(chosen) {
+// roguelike: 1 de 3 entre habilidades, reliquias y modificadores que aún no tengas
+function offerRogue() {
+  var b = battle, p = b.player;
+  var pool = CMD_SKILL_ORDER.filter(function (k) { return p.skills.indexOf(k) === -1; }).map(function (k) { return skillOption(k, p.commander); })
+    .concat(ROGUE_MODS.filter(function (id) { return p.rogueMods.indexOf(id) === -1; }).map(function (id) {
+      var m = DUEL_MODS.filter(function (x) { return x.id === id; })[0];
+      return { kind: 'mod', id: id, name: m.name, pic: m.pic, desc: m.desc, relic: !!m.relic };
+    }));
+  if (!pool.length) return;
+  b.picking = true;
+  showChoice({ title: 'Elige una ventaja', face: COMMANDERS[p.commander], options: shuffleArr(pool).slice(0, 3), n: 1,
+    have: p.skills.map(function (k) { return CMD_SKILLS[k].name; }).concat(p.rogueMods.map(function (id) { return DUEL_MODS.filter(function (x) { return x.id === id; })[0].name; })) }, finishPick);
+}
+function finishPick(chosen) {
   var b = battle;
   if (!b || !b.picking) return;
-  chosen.forEach(function (k) { b.player.applySkill(k); });
+  chosen.forEach(function (o) {
+    if (o.kind === 'skill') b.player.applySkill(o.id);
+    else { applyDuelMod(b.player, o.id); b.player.rogueMods.push(o.id); }
+  });
   b.picking = false;
-  showBanner('Oleada ' + b.wave, chosen.map(function (k) { return CMD_SKILLS[k].name; }).join(' y '));
+  showBanner(b.wave ? 'Oleada ' + b.wave : '¡A por ellos!', chosen.map(function (o) { return o.name; }).join(' y '));
   updateHud(true);
 }
 
 /* ---------- oleadas ---------- */
 // cartas del rival del duelo respecto a la media de las tuyas (fácil, normal, difícil)
 var DUEL_CARD_OFFSET = [-2, 0, 2];
+var ROGUE_LATE = 1.11;
 function hpScale() {
   var b = battle, w = Math.max(1, b.wave);
   var s = 42 * Math.pow(1.17, w - 1);
@@ -150,6 +221,8 @@ function hpScale() {
     s *= 1 + (b.stage.hp - 1) * ramp;
   }
   if (b.mode === 'duel' && w > 12) s *= Math.pow(1.22, w - 12);
+  // roguelike: a partir de la 15 aprieta más, que las ventajas se acumulan
+  if (b.mode === 'rogue' && w > 15) s *= Math.pow(ROGUE_LATE, w - 15);
   if (b.event && b.event.id === 'horda') s *= 0.7;
   return s * modHp();
 }
@@ -174,8 +247,10 @@ function planWave(w) {
   var queue = [];
   for (var i = 0; i < count; i++) queue.push({ kind: pick(mix) });
   if (isBossWave(w)) {
-    var boss = b.stage ? b.stage.boss : b.boss || BOSS_ORDER[(w / 5 - 1) % BOSS_ORDER.length];
-    queue.push({ kind: boss, boss: true });
+    var rot = BOSS_ORDER[(w / 5 - 1) % BOSS_ORDER.length];
+    // roguelike: rotan los jefes y el de la ruleta llega en la última oleada
+    var boss = b.stage ? b.stage.boss : b.mode === 'rogue' ? (w === b.maxWaves ? b.boss : rot) : b.boss || rot;
+    queue.push({ kind: boss, boss: true, final: b.mode === 'rogue' && w === b.maxWaves });
   }
   return { wave: w, event: event, queue: queue, count: count };
 }
@@ -231,19 +306,20 @@ function spawnNext() {
   var sc = hpScale();
   b.boards.forEach(function (bd) {
     if (spec.boss) {
-      var hp = sc * BOSSES[spec.kind].hp * (1 + b.wave * 0.04);
+      var hp = sc * BOSSES[spec.kind].hp * (1 + b.wave * 0.04) * (spec.final ? ROGUE_FINAL_HP : 1);
       bd.spawn(spec.kind, hp, { boss: true });
     } else {
       bd.spawn(spec.kind, sc * ENEMIES[spec.kind].hp);
     }
   });
-  if (spec.boss) { showBanner('👑 ' + BOSSES[spec.kind].name, BOSSES[spec.kind].desc); sfx('boss'); }
+  if (spec.boss) { showBanner((spec.final ? '👑 Jefe final: ' : '👑 ') + BOSSES[spec.kind].name, BOSSES[spec.kind].desc); sfx('boss'); }
 }
 
 function updateBattle(dt) {
   var b = battle;
   if (!b || b.ended || b.paused || b.intro || b.picking) return;
   b.time += dt;
+  if (b.mode === 'rogue' && b.time >= b.nextPick) { b.nextPick += ROGUE_PICK_EVERY; offerRogue(); if (b.picking) return; }
   if (b.moveCd > 0) b.moveCd = Math.max(0, b.moveCd - dt / (b.speed || 1));
   if (b.tutorial) updateCoach(dt);
   if (b.gap > 0) {
@@ -336,6 +412,13 @@ function endBattle(won, draw) {
     addTrophies(res.trophies);
     if (arenaIndex() > arena0) res.lines.push('¡Nueva arena: ' + ARENAS[arenaIndex()].name + '!');
     if (roadPending()) res.lines.push('Tienes premios en el camino de trofeos.');
+  } else if (b.mode === 'rogue') {
+    res.gold = 20 + b.wave * 10;
+    res.gems = Math.floor(b.wave / 5) + (won ? 5 : 0);
+    res.chest = won ? 'oro' : b.wave >= 20 ? 'plata' : b.wave >= 10 ? 'madera' : null;
+    if (b.wave > (meta.rogueBest || 0)) { meta.rogueBest = b.wave; res.lines.push('¡Nuevo récord!'); }
+    res.lines.push(won ? '¡Has vencido a ' + BOSSES[b.boss].name + ' en la oleada final!' : 'Caíste en la oleada ' + b.wave + ' de ' + b.maxWaves + '.');
+    res.lines.push((b.player.skills.length + b.player.rogueMods.length) + ' ventajas reunidas.');
   } else {
     res.gold = 20 + b.wave * 12;
     res.gems = Math.floor(b.wave / 5);
@@ -1142,6 +1225,7 @@ function onDown(ev) {
   if (!battle || battle.ended) return;
   var p = canvasXY(ev);
   var i = screenToCell(p.x, p.y);
+  if (battle.targeting) { battle.drag = null; battle.downCell = i; return; } // eligiendo tropas para el héroe
   battle.drag = (i >= 0 && battle.player.cells[i]) ? { from: i, x: p.x, y: p.y, sx: p.x, sy: p.y, moved: false } : null;
   battle.downCell = i;
   try { canvas.setPointerCapture(ev.pointerId); } catch (e) {}
@@ -1158,6 +1242,7 @@ function onUp(ev) {
   var i = screenToCell(p.x, p.y);
   var d = battle.drag, b = battle.player;
   battle.drag = null;
+  if (battle.targeting) { heroTap(i); return; }
   if (d && d.moved) { dropUnit(d.from, i, { x: (p.x - layout.main.ox) / layout.main.sc, y: (p.y - layout.main.oy) / layout.main.sc }); return; }
   if (i < 0) { battle.selected = null; refreshUnitInfo(); return; }
   var sel = battle.selected;

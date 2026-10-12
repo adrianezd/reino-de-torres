@@ -1994,10 +1994,8 @@ x-ico.off { filter: grayscale(1) brightness(0.45); opacity: 0.75; }
 @media (prefers-reduced-motion: reduce) { .cfx-left.legend, .cfx-lrays.on, .cfx-left.legend::after { animation: none; } }
 
 /* ---------- deslizar entre pestañas ---------- */
-.menu.slide-l { animation: slideL 0.24s ease-out; }
-.menu.slide-r { animation: slideR 0.24s ease-out; }
-@keyframes slideL { from { transform: translateX(28%); opacity: 0.3; } to { transform: none; opacity: 1; } }
-@keyframes slideR { from { transform: translateX(-28%); opacity: 0.3; } to { transform: none; opacity: 1; } }
+/* al deslizar, la pestaña entra de lado sin el saltito de entrada de sus cartas */
+.menu.no-intro * { animation-duration: 0s !important; animation-delay: 0s !important; }
 
 /* ---------- 1 contra 1: modificador y jefe final ---------- */
 .b-wave-row { display: flex; align-items: center; justify-content: center; gap: 4px; max-width: 100%; min-width: 0; }
@@ -2060,4 +2058,77 @@ x-ico.off { filter: grayscale(1) brightness(0.45); opacity: 0.75; }
 .sp-opt.on { border-color: var(--gold); background: linear-gradient(180deg, #4a7a2a, #23531a); box-shadow: 0 0 0 2px var(--ink), 0 0 14px rgba(255,209,102,0.7); }
 .sp-opt:disabled { cursor: default; }
 .sp-have { margin: 10px 0 0; font-size: 0.75rem; color: var(--muted); text-align: center; }
-@media (prefers-reduced-motion: reduce) { .menu.slide-l, .menu.slide-r, .rl-card.win { animation: none; } }
+@media (prefers-reduced-motion: reduce) { .rl-card.win { animation: none; } }
+
+/* ---------- modo roguelike (inicio y su pantalla) ---------- */
+.rogue-btn {
+  display: flex; align-items: center; gap: 10px; width: min(100%, 380px); margin: 8px auto 0; padding: 8px 14px; cursor: pointer; text-align: left;
+  font: inherit; color: #fff; border-radius: 16px; border: 3px solid var(--ink);
+  background: linear-gradient(180deg, #7b4be0, #3d1f8a); box-shadow: 0 0 0 2px #c9a8ff inset, 0 5px 0 var(--ink);
+}
+.rogue-btn:active { transform: translateY(3px); box-shadow: 0 0 0 2px #c9a8ff inset, 0 2px 0 var(--ink); }
+.rogue-btn img { width: 40px; height: 40px; object-fit: contain; flex: none; filter: drop-shadow(0 2px 0 rgba(0,0,0,0.4)); }
+.rogue-btn b { display: block; font-family: 'Lilita One'; font-weight: 400; font-size: 1.2rem; text-shadow: 0 2px 0 var(--ink); }
+.rogue-btn small { display: block; font-size: 0.75rem; color: #e3d6ff; }
+.rg-panel { display: flex; align-items: center; gap: 10px; }
+.rg-panel img { width: 46px; height: 46px; object-fit: contain; flex: none; }
+.rg-panel b { display: block; }
+.rg-panel small { color: var(--muted); font-size: 0.8rem; }
+
+/* ---------- torneo: formas de jugarlo ---------- */
+.tn-modes { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; margin: 8px 0; }
+.tn-mode { font: inherit; color: #fff; cursor: pointer; padding: 8px 6px; border-radius: 12px; border: 3px solid var(--ink); background: var(--panel2); box-shadow: 0 4px 0 var(--ink); text-align: center; }
+.tn-mode b { display: block; font-family: 'Lilita One'; font-weight: 400; font-size: 0.95rem; }
+.tn-mode small { display: block; font-size: 0.68rem; color: var(--muted); line-height: 1.2; margin-top: 2px; }
+.tn-mode.on { background: linear-gradient(180deg, #ffd34d, #f08a24); color: #3a1d00; }
+.tn-mode.on small { color: #5a3000; }
+.tn-decks { margin: 0 0 8px; font-size: 0.78rem; color: var(--muted); text-align: center; }
+
+/* ---------- comandantes nuevos (sin ilustración) y héroes ---------- */
+.cmd-card.gen { background: radial-gradient(circle at 50% 40%, color-mix(in srgb, var(--cc) 55%, #1d2a6e), #141c4c 75%); border: 3px solid var(--cc); border-radius: 14px; }
+.cmd-card.gen .cmd-body { bottom: 22%; height: 60%; }
+.cmd-hero { position: absolute; top: 6px; left: 6px; padding: 1px 6px; border-radius: 8px; font-size: 0.62rem; font-weight: 800; background: var(--cc); color: #1a1430; border: 2px solid var(--ink); }
+.cmd-btn.aiming { animation: cmdAim 0.6s ease-in-out infinite; }
+@keyframes cmdAim { 50% { transform: scale(1.12); } }
+.hero-hint { position: absolute; left: 50%; top: 38%; transform: translateX(-50%); z-index: 6; pointer-events: none; text-align: center; padding: 6px 12px; border-radius: 12px; background: rgba(10,12,40,0.88); border: 2px solid var(--gold); font-size: 0.9rem; white-space: nowrap; }
+.hero-hint small { display: block; font-size: 0.7rem; color: var(--muted); }
+
+/* ---------- ventajas del roguelike: las reliquias, en dorado ---------- */
+.sp-opt.relic { background: linear-gradient(180deg, #6a4a12, #3a2606); border-color: #2a1a04; }
+.sp-opt.relic b { color: var(--gold); }
+
+/* ---------- emojis rápidos ---------- */
+.emote-btn { position: absolute; right: 6px; top: calc(35% + 6px); z-index: 6; width: 38px; height: 38px; border-radius: 50%; font-size: 1.3rem; line-height: 1; border: 3px solid var(--ink); background: var(--panel2); box-shadow: 0 3px 0 var(--ink); cursor: pointer; }
+.emote-bar { position: absolute; right: 50px; top: calc(35% + 2px); z-index: 6; display: flex; gap: 4px; padding: 4px; border-radius: 14px; background: rgba(10,12,40,0.9); border: 2px solid var(--gold); }
+.emote-bar button { width: 36px; height: 36px; font-size: 1.3rem; border: 0; border-radius: 10px; background: rgba(255,255,255,0.08); cursor: pointer; }
+.emote-bubble { position: absolute; z-index: 7; font-size: 2.2rem; padding: 4px 10px; border-radius: 18px; background: #fff; border: 3px solid var(--ink); box-shadow: 0 4px 0 var(--ink); pointer-events: none; animation: emoteIn 2.2s ease forwards; }
+.emote-bubble x-ico { width: 2.2rem; height: 2.2rem; }
+.emote-bubble.me { left: 12px; bottom: 16px; }
+.emote-bubble.foe { left: 50px; top: 44px; }
+@keyframes emoteIn { 0% { transform: scale(0.3); opacity: 0; } 12% { transform: scale(1.15); opacity: 1; } 20% { transform: scale(1); } 85% { opacity: 1; } 100% { opacity: 0; transform: translateY(-10px); } }
+
+/* ---------- repetición ---------- */
+.replay-card { max-width: 380px; width: 100%; }
+.rp-view { border-radius: 12px; overflow: hidden; border: 3px solid var(--ink); background: #000; }
+.rp-view img { display: block; width: 100%; height: auto; min-height: 120px; }
+.rp-bar { height: 6px; margin: 8px 0 4px; border-radius: 3px; background: rgba(255,255,255,0.15); overflow: hidden; }
+.rp-bar i { display: block; height: 100%; width: 0; background: var(--gold); }
+
+/* ---------- talentos ---------- */
+.uc-tabs { grid-template-columns: none; grid-auto-flow: column; grid-auto-columns: 1fr; }
+.uc-tabs button { position: relative; }
+.tab-dot { position: absolute; top: -4px; right: -4px; width: 12px; height: 12px; border-radius: 50%; background: var(--red); border: 2px solid var(--ink); }
+.tal-tree { display: flex; flex-direction: column; align-items: stretch; margin-top: 8px; }
+.tal-tier { display: flex; flex-direction: column; gap: 4px; }
+.tal-lv { align-self: center; padding: 1px 10px; border-radius: 8px; font-size: 0.72rem; font-weight: 800; background: var(--gold); color: #3a1d00; border: 2px solid var(--ink); }
+.tal-tier.locked .tal-lv { background: var(--panel2); color: var(--muted); }
+.tal-pair { display: grid; grid-template-columns: 1fr auto 1fr; gap: 4px; align-items: stretch; }
+.tal-or { align-self: center; font-style: normal; font-size: 0.75rem; color: var(--muted); }
+.tal-node { font: inherit; color: #fff; text-align: center; cursor: pointer; padding: 6px; border-radius: 12px; border: 3px solid var(--ink); background: var(--panel2); box-shadow: 0 3px 0 var(--ink); }
+.tal-node b { display: block; font-size: 0.85rem; }
+.tal-node small { display: block; font-size: 0.68rem; color: var(--muted); line-height: 1.2; }
+.tal-node.on { background: linear-gradient(180deg, #5fcf5a, #23853a); box-shadow: 0 0 0 2px var(--gold), 0 3px 0 var(--ink); }
+.tal-node.on small { color: #e6ffe0; }
+.tal-node:disabled { opacity: 0.45; cursor: default; }
+.tal-link { display: block; width: 4px; height: 12px; margin: 2px auto; background: var(--gold); border-radius: 2px; }
+.tal-note { font-size: 0.72rem; color: var(--muted); text-align: center; margin: 8px 0 0; }

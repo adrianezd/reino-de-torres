@@ -54,13 +54,13 @@ var FIELDS = {
   // no, se encaja la zona de juego y el marco se sale por los bordes
   // (ver resizeCanvas y drawBoard)
   hielo: { image: 'boards/hielo', iw: 1024, ih: 572, cx: 195, cy: 62, cw: 635, ch: 470, portal: true, over: true, frame: [107, 20, 917, 552],
-    gx0: 333, gy0: 178, gx1: 690, gy1: 393,
+    gx0: 306, gy0: 170, gx1: 718, gy1: 410,
     way: [[322, 505], [300, 445], [255, 385], [245, 300], [250, 215], [290, 150], [380, 118], [640, 118], [730, 150], [772, 215], [778, 300], [770, 385], [725, 445], [700, 505]] },
   roca: { image: 'boards/roca', iw: 1024, ih: 572, cx: 188, cy: 70, cw: 650, ch: 420, portal: true, over: true, frame: [168, 29, 852, 534],
-    gx0: 323, gy0: 175, gx1: 700, gy1: 397,
+    gx0: 298, gy0: 166, gx1: 725, gy1: 410,
     way: [[395, 452], [300, 440], [250, 390], [238, 290], [255, 185], [320, 130], [420, 113], [605, 113], [705, 130], [770, 185], [788, 290], [775, 390], [725, 440], [628, 452]] },
   veneno: { image: 'boards/veneno', iw: 1024, ih: 572, cx: 262, cy: 105, cw: 502, ch: 412, portal: true, over: true, frame: [176, 58, 848, 518],
-    gx0: 362, gy0: 193, gx1: 660, gy1: 378,
+    gx0: 338, gy0: 180, gx1: 684, gy1: 384,
     way: [[400, 500], [400, 440], [320, 390], [305, 300], [320, 190], [380, 148], [640, 148], [700, 190], [718, 300], [705, 390], [625, 440], [625, 500]] }
 };
 // con varios tableros para un bioma se elige uno al azar en cada partida
@@ -147,7 +147,19 @@ function Board(opts) {
   this.summonStep = 10; this.rank2 = 0; this.powerCostMult = 1; this.slowMult = 1;
   this.rewardMult = 1; this.mergeBoost = 0; this.affMult = 1;
   this.skills = [];
+  // reliquias: +daño por elemento, crítico para todas, vida por jefe; invocación dirigida
+  this.elemBonus = {}; this.luck = 0; this.caliz = false; this.directed = false;
+  // Maldición de Nyx y Escudo divino de Sol (segundos que les quedan)
+  this.curseT = 0; this.guardT = 0;
+  // combos de fusión: fusiones seguidas en menos de COMBO_TIME
+  this.combo = 0; this.comboT = 0;
+  // tropas con talentos (opts.talents: { id: [rama de cada piso] })
+  this.defs = {};
+  Object.keys(opts.talents || {}).forEach(function (id) { if (TALENTS[id]) this.defs[id] = talentDef(id, opts.talents[id]); }, this);
 }
+var COMBO_TIME = 2;
+// datos de una tropa en este tablero (con sus talentos, si tiene)
+Board.prototype.def = function (id) { return this.defs[id] || UNITS[id]; };
 function shuffleArr(a) {
   for (var i = a.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)); var t = a[i]; a[i] = a[j]; a[j] = t; }
   return a;
@@ -158,7 +170,7 @@ Board.prototype.cc = function (i) { return geoCell(this.geo, i); };
 Board.prototype.pos = function (d) { return geoPos(this.geo, d); };
 Board.prototype.cardMult = function (id) { return 1 + CARD_BONUS * ((this.cardLv[id] || 1) - 1); };
 Board.prototype.unitPower = function (id) {
-  return (1 + POWER_BONUS * ((this.power[id] || 1) - 1)) * this.cardMult(id) * this.dmgMult;
+  return (1 + POWER_BONUS * ((this.power[id] || 1) - 1)) * this.cardMult(id) * this.dmgMult * (1 + (this.elemBonus[UNITS[id].element] || 0));
 };
 // todo el maná que se gana pasa por aquí (con «Doble de maná» vale el doble); devuelve lo ganado
 Board.prototype.addMana = function (n) {
@@ -213,7 +225,7 @@ function isEdgeCell(i) { var c = i % COLS, r = Math.floor(i / COLS); return c ==
 Board.prototype.posBonus = function (i) {
   var u = this.cells[i];
   if (!u) return 0;
-  var d = UNITS[u.id], b = 0;
+  var d = this.def(u.id), b = 0;
   if (d.twin || d.mixed) neighbors(i).forEach(function (j) {
     var v = this.cells[j];
     if (v) b += v.id === u.id ? (d.twin || 0) : (d.mixed || 0);
@@ -230,7 +242,7 @@ Board.prototype.placeScore = function (i) {
   return this.posBonus(i);
 };
 Board.prototype.unitDamage = function (i) {
-  var u = this.cells[i], d = UNITS[u.id];
+  var u = this.cells[i], d = this.def(u.id);
   var m = RANK_MULT[u.rank] * this.unitPower(u.id) * (1 + AFFINITY_BONUS * this.affMult * this.affinity(i)) * (1 + this.posBonus(i));
   if (this.tiles[i] === 'altar') m *= 1 + TILES.altar.dmg;
   return (d.dmg || 0) * m;
@@ -251,13 +263,14 @@ Board.prototype.freeCells = function () {
   for (var i = 0; i < this.cells.length; i++) if (!this.cells[i]) out.push(i);
   return out;
 };
-Board.prototype.summon = function (gratis) {
-  if (!gratis && this.mana < this.summonCost) return 'mana';
+Board.prototype.summon = function (gratis, forceId) {
+  var cost = this.summonCost * (forceId ? 2 : 1);
+  if (!gratis && this.mana < cost) return 'mana';
   var free = this.freeCells();
   if (!free.length) return 'full';
-  var i = pick(free), id = pick(this.deck), d = UNITS[id];
+  var i = pick(free), id = forceId || pick(this.deck), d = UNITS[id];
   if (!gratis) {
-    this.mana -= this.summonCost;
+    this.mana -= cost;
     this.summonCost += this.summonStep;
   }
   this.summons++;
@@ -302,6 +315,14 @@ Board.prototype.merge = function (from, to, start) {
   else if (v.rank < MAX_RANK && Math.random() < this.mergeBoost) { v.rank++; v.echoed = true; }
   this.merges++;
   this.maxRank = Math.max(this.maxRank, v.rank);
+  // combo: otra fusión antes de COMBO_TIME segundos da maná, más cuanto más larga la racha
+  this.combo = this.comboT > 0 ? this.combo + 1 : 1;
+  this.comboT = COMBO_TIME;
+  if (this.combo >= 2) {
+    var cg = this.addMana(10 * (this.combo - 1));
+    this.addText(p.x, p.y - 0.75, '¡Combo x' + this.combo + '! +' + cg + ' 💧', GAME_PALETTE.goldYellow, true);
+    if (this.onCombo) this.onCombo(this.combo);
+  }
   v.anim = 0; v.drop = 0;
   v.pop = 1 + MERGE_FLY / MERGE_POP_TIME; // espera a que llegue y entonces rebota
   v.frozen = 0;
@@ -347,11 +368,55 @@ Board.prototype.powerUp = function (id) {
   for (var i = 0; i < this.cells.length; i++) if (this.cells[i] && this.cells[i].id === id) { this.cells[i].anim = 0.8; this.addFx('ring', this.cc(i), '#7dffb0'); }
   return 'ok';
 };
-Board.prototype.useCommander = function () {
+var FORGE_MAX = 5; // Forja de Torvald: hasta este rango
+// héroes: ¿valen estas casillas para su habilidad? (Morgana: dos del mismo
+// rango; Torvald: una que pueda subir)
+Board.prototype.heroValid = function (picks) {
+  var c = COMMANDERS[this.commander], a = this.cells[picks[0]], b = this.cells[picks[1]];
+  if (!a || a.rank >= MAX_RANK) return false;
+  if (c.hero === 1) return picks.length === 1 && a.rank < FORGE_MAX;
+  if (picks.length === 1) return true;
+  return picks[0] !== picks[1] && b && b.rank === a.rank;
+};
+// la máquina elige por su cuenta las tropas de su héroe
+Board.prototype.heroPicks = function () {
+  var c = COMMANDERS[this.commander], list = [];
+  this.cells.forEach(function (u, i) { if (u && u.rank < (c.hero === 1 ? FORGE_MAX : MAX_RANK) && UNITS[u.id].dmg) list.push(i); });
+  if (c.hero === 1) {
+    list.sort(function (x, y) { return this.cells[y].rank - this.cells[x].rank; }.bind(this));
+    return list.length ? [list[0]] : null;
+  }
+  for (var x = 0; x < list.length; x++) for (var y = x + 1; y < list.length; y++) {
+    var p = [list[x], list[y]];
+    if (this.heroValid(p) && !this.canMerge(p[0], p[1])) return p;
+  }
+  return null;
+};
+Board.prototype.useCommander = function (picks) {
   if (this.charge < 1) return false;
+  var cmd = this.commander, pw = cmdPower(cmd, this.cmdLv) * this.cmdPowerMult;
+  if (COMMANDERS[cmd].hero) {
+    if (!picks || !this.heroValid(picks)) return false;
+    this.charge = 0; this.cmds++;
+    var u = this.cells[picks[picks.length - 1]];
+    if (picks.length === 2) {
+      // Transmutación: la primera vuela a la segunda y se funden en esta
+      var src = this.cells[picks[0]], a0 = this.cc(picks[0]), p1 = this.cc(picks[1]);
+      this.cells[picks[0]] = null;
+      this.fx.push({ type: 'fly', id: src.id, rank: src.rank, x1: a0.x, y1: a0.y, x2: p1.x, y2: p1.y, life: MERGE_FLY, max: MERGE_FLY });
+      u.pop = 1 + MERGE_FLY / MERGE_POP_TIME;
+      this.merges++;
+    } else u.pop = 1;
+    u.rank++; u.frozen = 0; u.anim = 0;
+    this.maxRank = Math.max(this.maxRank, u.rank);
+    var pu = this.cc(picks[picks.length - 1]);
+    this.addFx('flash', pu, COMMANDERS[cmd].color);
+    this.addText(pu.x, pu.y - 0.6, picks.length === 2 ? '¡Transmutación!' : '¡Forja! +1 rango', COMMANDERS[cmd].color, true);
+    if (this.refuerzo) this.summon(true);
+    return true;
+  }
   this.charge = 0;
   this.cmds++;
-  var cmd = this.commander, pw = cmdPower(cmd, this.cmdLv) * this.cmdPowerMult;
   if (cmd === 'aria') {
     this.enemies.forEach(function (e) { e.stun = Math.max(e.stun, pw); e.stunIce = true; });
     this.addFx('flash', { x: this.geo.W / 2, y: this.geo.H / 2 }, '#bfefff');
@@ -370,6 +435,15 @@ Board.prototype.useCommander = function () {
       this.meteors.push({ e: e, x: e.x, y: e.y, t: t, dmg: dmg });
       this.fx.push({ type: 'fall', key: 'fx/meteoro', x: e.x, y: e.y, size: 0.95, life: t, max: t });
     }, this);
+  }
+  else if (cmd === 'nyx') {
+    this.curseT = pw;
+    this.addFx('flash', { x: this.geo.W / 2, y: this.geo.H / 2 }, '#c04bff');
+    this.addText(this.geo.W / 2, this.geo.H / 2, '¡Maldición!', '#e0a8ff', true);
+  } else if (cmd === 'sol') {
+    this.guardT = pw;
+    this.addFx('flash', { x: this.geo.W / 2, y: this.geo.H / 2 }, '#ffe08a');
+    this.addText(this.geo.W / 2, this.geo.H / 2, '¡Escudo divino!', '#ffe08a', true);
   }
   if (this.refuerzo) this.summon(true);
   return true;
@@ -399,6 +473,8 @@ Board.prototype.hit = function (e, dmg, unitDef, kind) {
   if (dodge && kind !== 'meteor' && Math.random() < dodge) { this.addText(e.x, e.y - 0.4, 'Fallo', '#b6a6ff'); return; }
   var crit = false;
   if (unitDef && unitDef.crit && Math.random() < unitDef.crit.chance) { dmg *= unitDef.crit.mult; crit = true; }
+  else if (unitDef && this.luck && Math.random() < this.luck) { dmg *= 2; crit = true; }
+  if (this.curseT > 0) dmg *= 1.6;
   if (unitDef && unitDef.bossMult && e.boss) dmg *= unitDef.bossMult;
   if (unitDef && e.boss) dmg *= this.bossDmgMult;
   if (!(unitDef && unitDef.pierce)) dmg *= 1 - e.armor;
@@ -411,9 +487,9 @@ Board.prototype.hit = function (e, dmg, unitDef, kind) {
   var hcx = this.geo.W / 2, hcy = this.geo.H / 2, hd = Math.hypot(e.x - hcx, e.y - hcy) || 1;
   e.kbx = (e.x - hcx) / hd * 0.05; e.kby = (e.y - hcy) / hd * 0.05;
   if (crit) this.addText(e.x, e.y - 0.5, '¡' + fmtNum(dmg) + '!', GAME_PALETTE.damageRed, true);
-  if (crit && !unitDef.critPic) e.critT = 0.55;
+  if (crit && !(unitDef && unitDef.critPic)) e.critT = 0.55;
   if (unitDef && unitDef.pierce && e.armor > 0) e.breakT = 0.55;
-  if (crit && unitDef.critPic) this.fx.push({ type: 'pic', key: unitDef.critPic, x: e.x, y: e.y - 0.3, size: 0.75, rot: 0, grow: 0.4, life: 0.55, max: 0.55 });
+  if (crit && unitDef && unitDef.critPic) this.fx.push({ type: 'pic', key: unitDef.critPic, x: e.x, y: e.y - 0.3, size: 0.75, rot: 0, grow: 0.4, life: 0.55, max: 0.55 });
   // remate (Seren): un monstruo que no sea jefe y quede por debajo del umbral cae al instante
   if (unitDef && unitDef.execute && !e.boss && e.hp > 0 && e.hp <= e.maxHp * unitDef.execute) {
     this.dmgBy[src] += e.hp;
@@ -435,6 +511,7 @@ Board.prototype.kill = function (e) {
   if (e.boss) {
     this.addText(e.x, e.y - 0.5, '+' + reward + ' 💧', GAME_PALETTE.manaBlue, true);
     this.shake = 0.4;
+    if (this.caliz && this.lives.v < this.lives.max) { this.lives.v++; this.addText(e.x, e.y - 0.9, '+1 vida', GAME_PALETTE.healthGreen, true); }
     if (BOSSES[e.kind].ability === 'split') {
       for (var k = 0; k < 4; k++) this.spawn('blob', e.maxHp * 0.08, { d: Math.max(0, e.d - k * 0.35) });
     }
@@ -457,7 +534,7 @@ Board.prototype.findTarget = function (mode, exclude) {
 // los destellos que tapan mucho a la tropa van más pequeños
 var FLASH_SIZE = { holy: 0.3, shadow: 0.36, bullet: 0.5 };
 Board.prototype.fire = function (i, u) {
-  var d = UNITS[u.id];
+  var d = this.def(u.id);
   if (d.wolves) return this.releaseWolf(i, u);
   var target = this.findTarget(d.target);
   if (!target) return false;
@@ -493,7 +570,7 @@ Board.prototype.fire = function (i, u) {
 // Garra suelta un lobo al final del camino, que corre hacia la entrada
 Board.prototype.releaseWolf = function (i, u) {
   if (!this.enemies.length) return false;
-  var d = UNITS[u.id], p = this.cc(i), start = this.geo.len - 0.15, at = this.pos(start);
+  var d = this.def(u.id), p = this.cc(i), start = this.geo.len - 0.15, at = this.pos(start);
   u.aim = Math.atan2(at.y - p.y, at.x - p.x);
   u.recoil = 1;
   u.atk = 0.5;
@@ -581,7 +658,10 @@ Board.prototype.addText = function (x, y, text, color, big) {
 /* ---------- bucle ---------- */
 Board.prototype.update = function (dt) {
   var i, k;
-  this.charge = Math.min(1, this.charge + dt * this.chargeMult / COMMANDERS[this.commander].cd);
+  this.charge = Math.min(1, this.charge + dt * this.chargeMult / cmdCd(this.commander, this.cmdLv));
+  if (this.curseT > 0) this.curseT -= dt;
+  if (this.guardT > 0) this.guardT -= dt;
+  if (this.comboT > 0) this.comboT -= dt;
   if (this.shake > 0) this.shake = Math.max(0, this.shake - dt);
 
   // tropas
@@ -603,7 +683,7 @@ Board.prototype.update = function (dt) {
     if (u.atk > 0) u.atk = Math.max(0, u.atk - dt);
     if (u.frozen > 0) { u.frozen -= dt; continue; }
     if (this.tiles[i] === 'fuente') this.addMana(TILES.fuente.mana * dt * u.rank);
-    var d = UNITS[u.id];
+    var d = this.def(u.id);
     if (d.manaGen) {
       u.gen += dt;
       if (u.gen >= d.manaGen.every) {
@@ -687,7 +767,8 @@ Board.prototype.update = function (dt) {
     if (e.boss) this.bossAbility(e, dt);
     if (e.d >= this.geo.len) {
       e.dead = true;
-      var loss = e.boss ? 2 : 1;
+      var loss = this.guardT > 0 ? 0 : e.boss ? 2 : 1;
+      if (!loss) this.addText(e.x, e.y - 0.4, '¡Protegido!', '#ffe08a', true);
       this.lives.v = Math.max(0, this.lives.v - loss);
       this.leaked += loss;
       this.shake = 0.35;
@@ -787,7 +868,8 @@ Board.prototype.think = function (dt) {
   if (this.aiTimer > 0) return;
   var lvl = this.aiLevel;
   this.aiTimer = [1.5, 0.9, 0.5][lvl] * rnd(0.7, 1.3);
-  if (this.charge >= 1 && this.enemies.length > 4 && Math.random() < [0.3, 0.6, 0.9][lvl]) { this.useCommander(); return; }
+  if (this.charge >= 1 && COMMANDERS[this.commander].hero) { var hp = this.heroPicks(); if (hp && Math.random() < [0.3, 0.6, 0.9][lvl]) { this.useCommander(hp); return; } }
+  else if (this.charge >= 1 && this.enemies.length > 4 && Math.random() < [0.3, 0.6, 0.9][lvl]) { this.useCommander(); return; }
 
   // 1) fusionar parejas (de rango bajo primero; los apoyos se guardan si hay sitio)
   var free = this.freeCells();

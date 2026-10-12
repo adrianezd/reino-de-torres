@@ -7,8 +7,25 @@
    La ventana sale sola al entrar con una versión nueva (meta.lastSeenVersion)
    y también desde Opciones.
    ========================================================= */
-var APP_VERSION = '1.13.0';
+var APP_VERSION = '1.14.0';
 var APP_PATCH_NOTES = [
+  {
+    version: '1.14.0',
+    summary: 'Modo roguelike, héroes, talentos, torneos nuevos y repeticiones',
+    items: [
+      'Modo roguelike: 30 oleadas tú solo y, cada 30 segundos, eliges una ventaja de tres que se acumula hasta el final. La ruleta elige el jefe final. Está debajo de las cartas de modo.',
+      'Dos comandantes nuevos, Nyx (Maldición: los monstruos reciben más daño) y Sol (Escudo divino: un rato sin perder vidas), y dos héroes que usan su habilidad sobre el tablero: Morgana fusiona dos tropas cualesquiera del mismo rango y Torvald sube un rango a la que elijas. Por ahora llevan un dibujo provisional.',
+      'Talentos: Lyra, Brasa y Nívea tienen un árbol de tres pisos que se abre con los niveles 3, 6 y 9 de su carta. En cada piso eliges una de dos ramas, en la pestaña Talentos de su ficha.',
+      'Combos de fusión: dos fusiones en menos de 2 segundos dan maná extra, y más si sigues la racha.',
+      'Reliquias en la ruleta del 1 contra 1 y en el roguelike: más daño para un elemento, críticos para todas las tropas o una vida por cada jefe. Nuevo modificador Invocación dirigida: mantén pulsada una carta para invocar esa tropa por el doble de maná.',
+      'Torneo con tres formas de jugar: con tu mazo, con un mazo prestado o con cartas al azar.',
+      'Emojis rápidos en el duelo, y el rival a veces contesta.',
+      'Repetición: al terminar una partida puedes ver sus últimos 30 segundos.',
+      'Los tableros de hielo, roca y veneno tienen las casillas más grandes, así las tropas se ven mejor.',
+      'El cofre de comandante trae 10 cartas, todas de un mismo comandante. El cofre de oro reparte sus cartas entre menos tropas y la mitad de las veces trae además 4 cartas de comandante, que salen las primeras.',
+      'Deslizar entre pestañas ya no da un tirón doble.'
+    ]
+  },
   {
     version: '1.13.0',
     summary: 'Ruleta de modificadores en el 1 contra 1 y deslizar entre pestañas',

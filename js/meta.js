@@ -22,6 +22,9 @@ function defaultMeta() {
     coopBest: 0,
     duelWins: 0, duelLosses: 0,
     tourneyWins: 0, tourneyLosses: 0,
+    tourneyMode: 'clasico',  // forma de jugar el torneo (TOURNEY_MODES)
+    rogueBest: 0,            // récord de oleadas del modo roguelike
+    talents: {},             // tropa -> rama elegida en cada piso de su árbol (TALENTS)
     freeChestAt: 0,         // cuándo está listo el siguiente cofre gratis (ms)
     slots: [null, null, null, null],   // cofres ganados: { type, unlockAt } (unlockAt: cuándo se abre; 0 si no se ha empezado)
     settings: { sound: true },
@@ -120,10 +123,12 @@ function openChest(type) {
   var gems = Math.round(ch.gems[0] + Math.random() * (ch.gems[1] - ch.gems[0]));
   var byRarity = { comun: [], rara: [], epica: [], mitica: [], legendaria: [] };
   UNIT_ORDER.forEach(function (id) { byRarity[UNITS[id].rarity].push(id); });
+  // pocas tropas distintas: de cada rareza solo pueden tocar unas cuantas
+  if (ch.types) Object.keys(byRarity).forEach(function (r) { if (ch.types[r]) byRarity[r] = shuffleArr(byRarity[r].slice()).slice(0, ch.types[r]); });
   var got = {};
-  // cofre de comandante: cada carta, de un comandante al azar
+  // cofre de comandante: todas las cartas, de un mismo comandante al azar
   if (ch.cmd) {
-    for (var j = 0; j < ch.cards; j++) { var k = pick(COMMANDER_ORDER); got[k] = (got[k] || 0) + 1; }
+    got[pick(COMMANDER_ORDER)] = ch.cards;
     Object.keys(got).forEach(function (k) { meta.cmdCards[k].n += got[k]; });
     meta.gold += gold;
     meta.gems += gems;
@@ -141,6 +146,13 @@ function openChest(type) {
     var id = pool[Math.floor(Math.random() * pool.length)];
     got[id] = (got[id] || 0) + 1;
   }
+  // cartas de comandante (salen antes que las tropas, ver chestItems)
+  var cmdGot = {};
+  if (ch.cmdChance && Math.random() < ch.cmdChance) {
+    var ck = pick(COMMANDER_ORDER);
+    cmdGot[ck] = ch.cmdCards;
+    meta.cmdCards[ck].n += ch.cmdCards;
+  }
   meta.gold += gold;
   meta.gems += gems;
   missionAdd('chest', 1);
@@ -151,7 +163,7 @@ function openChest(type) {
     fresh.push(id);
   });
   saveMeta();
-  return { type: type, gold: gold, gems: gems, cards: got, fresh: fresh };
+  return { type: type, gold: gold, gems: gems, cards: got, cmdCards: cmdGot, fresh: fresh };
 }
 
 /* ---------- huecos de cofre ----------

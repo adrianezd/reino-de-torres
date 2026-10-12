@@ -283,9 +283,12 @@ var BIOMES = {
 var CHESTS = {
   madera: { name: 'Cofre de madera', gold: [40, 80],   gems: [0, 2],  cards: 6,  rare: 0.15, epic: 0.03, legend: 0,    myth: 0,     color: '#a0663a', price: 15, time: 300 },
   plata:  { name: 'Cofre de plata',  gold: [90, 160],  gems: [1, 4],  cards: 12, rare: 0.3,  epic: 0.08, legend: 0,    myth: 0,     color: '#c9d4e6', price: 40, time: 3600 },
-  oro:    { name: 'Cofre de oro',    gold: [200, 320], gems: [4, 10], cards: 24, rare: 0.4,  epic: 0.15, legend: 0.012, myth: 0.04, color: '#ffd166', price: 90, time: 10800 },
-  // de comandante: pocas cartas, cada una de un comandante al azar (cmd: true)
-  comandante: { name: 'Cofre de comandante', gold: [30, 60], gems: [0, 1], cards: 3, cmd: true, rare: 0, epic: 0, legend: 0, myth: 0, color: '#a35bff', price: 60, time: 7200 }
+  // oro: las cartas se reparten entre pocas tropas (types: cuántas de cada rareza
+  // pueden tocar) y, con cmdChance, trae también cmdCards cartas de un comandante
+  oro:    { name: 'Cofre de oro',    gold: [200, 320], gems: [4, 10], cards: 24, rare: 0.4,  epic: 0.15, legend: 0.012, myth: 0.04, color: '#ffd166', price: 90, time: 10800,
+    types: { comun: 2, rara: 2, epica: 1, mitica: 1, legendaria: 1 }, cmdChance: 0.5, cmdCards: 4 },
+  // de comandante: muchas cartas, todas de un mismo comandante al azar (cmd: true)
+  comandante: { name: 'Cofre de comandante', gold: [30, 60], gems: [0, 1], cards: 10, cmd: true, rare: 0, epic: 0, legend: 0, myth: 0, color: '#a35bff', price: 60, time: 7200 }
 };
 var CHEST_ORDER = ['madera', 'plata', 'oro', 'comandante'];
 var CHEST_SLOTS = 4;          // huecos de cofre de la pantalla principal
@@ -407,9 +410,17 @@ var TILES = {
 var COMMANDERS = {
   aria:  { name: 'Aria',  title: 'Capitana de Escarcha', color: '#7fd6ff', icon: '🌨️', pic: 'assets/commanders/aria.webp?v=2', ability: 'Ventisca',  desc: 'Congela a todos los enemigos 3 segundos.', power: 3, cd: 30 },
   merlo: { name: 'Merlo', title: 'Archimago',            color: '#b26bff', icon: '✨', pic: 'assets/commanders/merlo.webp?v=2', ability: 'Marea de maná', desc: 'Te da 120 de maná al instante.', power: 120, cd: 35 },
-  brann: { name: 'Brann', title: 'General Enano',        color: '#ff8f3c', icon: '☄️', pic: 'assets/commanders/brann.webp?v=2', ability: 'Meteoro',   desc: 'Un meteorito golpea a los enemigos más adelantados.', power: 520, cd: 28 }
+  brann: { name: 'Brann', title: 'General Enano',        color: '#ff8f3c', icon: '☄️', pic: 'assets/commanders/brann.webp?v=2', ability: 'Meteoro',   desc: 'Un meteorito golpea a los enemigos más adelantados.', power: 520, cd: 28 },
+  // sin ilustración todavía (gen: su retrato y su figura se dibujan con su icono, ver art.js)
+  nyx:   { name: 'Nyx',   title: 'Bruja del Eclipse',    color: '#c04bff', icon: '🌑', gen: true, ability: 'Maldición', desc: 'Los monstruos reciben un 60% más de daño durante 6 segundos.', power: 6, cd: 32 },
+  sol:   { name: 'Sol',   title: 'Sacerdotisa del Alba', color: '#ffc83a', icon: '☀️', gen: true, ability: 'Escudo divino', desc: 'Durante 5 segundos no pierdes vidas.', power: 5, cd: 40 },
+  // héroes: su habilidad se usa sobre el tablero eligiendo tropas (hero: cuántas);
+  // con nivel se cargan antes en vez de tener más fuerza
+  morgana: { name: 'Morgana', title: 'Transmutadora', color: '#2fd6a0', icon: '⚗️', gen: true, hero: 2, ability: 'Transmutación', desc: 'Eliges dos tropas del mismo rango, aunque sean distintas, y se fusionan.', power: 1, cd: 45 },
+  torvald: { name: 'Torvald', title: 'Maestro Herrero', color: '#ff7a3c', icon: '🔨', gen: true, hero: 1, ability: 'Forja', desc: 'Eliges una tropa y sube un rango, hasta el 5.', power: 1, cd: 110 }
 };
-var COMMANDER_ORDER = ['aria', 'merlo', 'brann'];
+var COMMANDER_ORDER = ['aria', 'merlo', 'brann', 'nyx', 'sol', 'morgana', 'torvald'];
+COMMANDER_ORDER.forEach(function (k) { var c = COMMANDERS[k]; c.body = c.gen ? '' : 'assets/commanders/' + k + '-cuerpo.webp'; });
 // niveles de comandante: cada nivel, +CMD_BONUS de fuerza en su habilidad.
 // Sus cartas salen solo en el cofre de comandante (pocas), por eso piden menos.
 var CMD_MAX = 10;
@@ -419,8 +430,13 @@ function cmdCardsNeeded(lv) { return [0, 1, 2, 3, 4, 5, 7, 9, 12, 15][lv] || 999
 function cmdUpgradeGold(lv) { return [0, 100, 250, 500, 900, 1400, 2100, 3000, 4200, 6000][lv] || 99999; }
 // fuerza de la habilidad a un nivel, y su texto
 function cmdPower(k, lv) { return COMMANDERS[k].power * cmdMult(lv); }
+// segundos de carga: los héroes se cargan antes con cada nivel
+function cmdCd(k, lv) { var c = COMMANDERS[k]; return c.hero ? Math.round(c.cd / cmdMult(lv)) : c.cd; }
 function cmdDesc(k, lv) {
-  var p = cmdPower(k, lv);
+  var p = cmdPower(k, lv), sec = String(Math.round(p * 10) / 10).replace('.', ',');
+  if (COMMANDERS[k].hero) return COMMANDERS[k].desc;
+  if (k === 'nyx') return 'Los monstruos reciben un 60% más de daño durante ' + sec + ' segundos.';
+  if (k === 'sol') return 'Durante ' + sec + ' segundos no pierdes vidas.';
   if (k === 'aria') return 'Congela a todos los enemigos ' + String(Math.round(p * 10) / 10).replace('.', ',') + ' segundos.';
   if (k === 'merlo') return 'Te da ' + Math.round(p) + ' de maná al instante.';
   return 'Un meteorito golpea a los enemigos más adelantados con un ' + Math.round(cmdMult(lv) * 100) + '% de fuerza.';
@@ -454,7 +470,16 @@ var DUEL_MODS = [
   { id: 'jefes',     name: 'Noche de jefes', pic: 'assets/icons/corona.webp',   desc: 'Llega un jefe cada 3 oleadas en vez de cada 5.' },
   { id: 'caos',      name: 'Caos',           pic: 'assets/icons/dado.webp',     desc: 'Desde la oleada 2, todas traen un evento.' },
   { id: 'lazos',     name: 'Lazos elementales', pic: 'assets/icons/vecinas.webp', desc: 'La afinidad entre tropas del mismo elemento vale el triple.' },
-  { id: 'oro',       name: 'Botín de guerra', pic: 'assets/icons/trofeo.webp',  desc: 'Si ganas, te llevas el doble de oro.' }
+  { id: 'oro',       name: 'Botín de guerra', pic: 'assets/icons/trofeo.webp',  desc: 'Si ganas, te llevas el doble de oro.' },
+  { id: 'directa',   name: 'Invocación dirigida', pic: 'assets/icons/mano.webp', desc: 'Mantén pulsada una carta de abajo para invocar esa tropa por el doble de maná.' },
+  // reliquias: ventajas para un tipo de tropa o para toda la partida
+  { id: 'r_fuego',      relic: 'fuego',      name: 'Corona de fuego',    pic: 'assets/icons/fuego.webp',     desc: 'Las tropas de fuego hacen un 35% más de daño.' },
+  { id: 'r_hielo',      relic: 'hielo',      name: 'Cristal de escarcha', pic: 'assets/icons/hielo.webp',    desc: 'Las tropas de hielo hacen un 35% más de daño.' },
+  { id: 'r_naturaleza', relic: 'naturaleza', name: 'Raíz ancestral',     pic: 'assets/icons/hoja.webp',      desc: 'Las tropas de naturaleza hacen un 35% más de daño.' },
+  { id: 'r_arcano',     relic: 'arcano',     name: 'Orbe arcano',        pic: 'assets/icons/arcano.webp',    desc: 'Las tropas arcanas hacen un 35% más de daño.' },
+  { id: 'r_metal',      relic: 'metal',      name: 'Engranaje dorado',   pic: 'assets/icons/engranaje.webp', desc: 'Las tropas de metal hacen un 35% más de daño.' },
+  { id: 'r_suerte',     relic: true,         name: 'Trébol de la suerte', pic: 'assets/icons/critico.webp',  desc: 'Todas las tropas tienen un 10% de golpe crítico doble.' },
+  { id: 'r_caliz',      relic: true,         name: 'Cáliz de vida',      pic: 'assets/ui/vida.webp',         desc: 'Cada jefe derrotado devuelve una vida.' }
 ];
 /* Modificador «Comandantes con habilidades»: al empezar estas oleadas, cada
    uno ve `offer` habilidades al azar (que aún no tenga) y se queda `pick`.
@@ -473,4 +498,74 @@ var CMD_SKILLS = {
   muralla:   { name: 'Muralla',   pic: 'ui/vida',        desc: 'Ganas una vida más.' }
 };
 var CMD_SKILL_ORDER = Object.keys(CMD_SKILLS);
+
+/* Talentos: árbol de tres pisos para las tres primeras comunes. Cada piso se
+   abre con el nivel de carta de TALENT_LV y en él eliges una de dos ramas
+   (meta.talents[id][piso]). mul: multiplica el dato de la tropa · set: lo
+   cambia · add: lo suma. Se aplican al empezar la partida (Board.defs). */
+var TALENT_LV = [3, 6, 9];
+var TALENTS = {
+  lyra: [
+    [{ id: 'arco', name: 'Arco largo', desc: '+20% de daño.', mul: { dmg: 1.2 } },
+     { id: 'rafaga', name: 'Ráfaga', desc: '+20% de velocidad de ataque.', mul: { rate: 1.2 } }],
+    [{ id: 'acero', name: 'Punta de acero', desc: 'Sus flechas atraviesan la armadura.', set: { pierce: true } },
+     { id: 'certero', name: 'Ojo certero', desc: '15% de golpe crítico que hace ×2,5.', set: { crit: { chance: 0.15, mult: 2.5 } } }],
+    [{ id: 'caza', name: 'Flecha de caza', desc: '×2,5 de daño a los jefes.', set: { bossMult: 2.5 } },
+     { id: 'explosiva', name: 'Flecha explosiva', desc: 'Sus flechas salpican a los monstruos de alrededor.', set: { splash: 0.35 } }]
+  ],
+  brasa: [
+    [{ id: 'llama', name: 'Llama viva', desc: '+20% de daño.', mul: { dmg: 1.2 } },
+     { id: 'granbola', name: 'Gran bola', desc: 'Su explosión es un 35% más grande.', mul: { splash: 1.35 } }],
+    [{ id: 'ascuas', name: 'Ascuas', desc: 'Deja a los monstruos ardiendo.', set: { poison: { dps: 12, dur: 3 } } },
+     { id: 'chispa', name: 'Chispa rápida', desc: '+20% de velocidad de ataque.', mul: { rate: 1.2 } }],
+    [{ id: 'lava', name: 'Lava', desc: 'Frena un 10% por golpe, hasta un 30%.', set: { slow: { pct: 0.1, max: 0.3, dur: 2 } } },
+     { id: 'fatuo', name: 'Fuego fatuo', desc: '12% de aturdir 0,8 segundos.', set: { stun: { chance: 0.12, dur: 0.8 } } }]
+  ],
+  nivea: [
+    [{ id: 'afilado', name: 'Hielo afilado', desc: '+20% de daño.', mul: { dmg: 1.2 } },
+     { id: 'gemelas', name: 'Gemelas', desc: 'Con otra Nívea al lado pega un 90% más en vez de un 60%.', set: { twin: 0.9 } }],
+    [{ id: 'intenso', name: 'Frío intenso', desc: 'Frena el doble por golpe y hasta un 65%.', set: { slow: { pct: 0.24, max: 0.65, dur: 2.5 } } },
+     { id: 'carambano', name: 'Carámbano', desc: 'Sus golpes salpican a los de alrededor.', set: { splash: 0.35 } }],
+    [{ id: 'congela', name: 'Congelación', desc: '10% de congelar 1,2 segundos.', set: { stun: { chance: 0.1, dur: 1.2 } } },
+     { id: 'corazon', name: 'Corazón helado', desc: '×2 de daño a los jefes.', set: { bossMult: 2 } }]
+  ]
+};
+// copia de la tropa con los talentos elegidos (picks: id de rama por piso)
+function talentDef(id, picks) {
+  var d = Object.assign({}, UNITS[id]);
+  (TALENTS[id] || []).forEach(function (tier, t) {
+    var tl = tier.filter(function (o) { return picks && o.id === picks[t]; })[0];
+    if (!tl) return;
+    Object.keys(tl.mul || {}).forEach(function (k) { d[k] = (d[k] || 0) * tl.mul[k]; });
+    Object.keys(tl.set || {}).forEach(function (k) { d[k] = tl.set[k]; });
+    Object.keys(tl.add || {}).forEach(function (k) { d[k] = (d[k] || 0) + tl.add[k]; });
+  });
+  return d;
+}
+
+/* Torneo: tres formas de jugarlo (meta.tourneyMode). */
+var TOURNEY_MODES = [
+  { id: 'clasico',  name: 'Clásico',        desc: 'Tu mazo, con las cartas a nivel de torneo.' },
+  { id: 'prestado', name: 'Mazo prestado',  desc: 'Juegas con uno de los mazos del torneo y el rival con otro.' },
+  { id: 'azar',     name: 'Cartas al azar', desc: 'Cinco tropas al azar para cada uno, de entre todas.' }
+];
+var TOURNEY_DECKS = [
+  { name: 'Tormenta',    deck: ['volta', 'aurora', 'melodia', 'doblon', 'sombra'] },
+  { name: 'Hielo eterno', deck: ['nivea', 'boreas', 'ulric', 'melodia', 'doblon'] },
+  { name: 'Cazadores',   deck: ['kaia', 'halcon', 'lyra', 'midas', 'oria'] },
+  { name: 'Fuego',       deck: ['brasa', 'rocco', 'fenix', 'mirra', 'doblon'] },
+  { name: 'Manada',      deck: ['garra', 'titan', 'seren', 'cronos', 'eco'] }
+];
+
+/* Modo roguelike: tú solo contra ROGUE_WAVES oleadas, con un jefe final
+   elegido por la ruleta (ROGUE_FINAL_HP veces más vida). Cada ROGUE_PICK_EVERY
+   segundos de partida eliges 1 de 3 ventajas que se acumulan: habilidades de
+   comandante, reliquias y modificadores que te favorecen (ROGUE_MODS). */
+var ROGUE_WAVES = 30;
+var ROGUE_PICK_EVERY = 30;
+var ROGUE_FINAL_HP = 2.5;
+var ROGUE_MODS = ['mana2', 'rebajas', 'veteranos', 'carga', 'fusion', 'casillas', 'lazos', 'directa', 'r_fuego', 'r_hielo', 'r_naturaleza', 'r_arcano', 'r_metal', 'r_suerte', 'r_caliz'];
+
+/* Emojis rápidos del duelo (el rival a veces contesta). */
+var EMOTES = ['👍', '😂', '😮', '😡', '🔥', '👑'];
 function cmdSkillDesc(k, cmd) { return CMD_SKILLS[k].desc.replace('{a}', COMMANDERS[cmd].ability); }

@@ -78,6 +78,38 @@ Object.keys(IMG_LIST).forEach(function (dir) {
   im.src = 'assets/tablero.' + exts[0];
 })(['webp', 'png', 'jpg', 'jpeg']);
 function art(key) { var im = IMG[key]; return im && im.ready ? im : null; }
+/* Comandantes sin ilustración todavía (gen en COMMANDERS): su retrato y su
+   figura se dibujan con su icono sobre su color, hasta que tengan arte propio. */
+(function genCommanderArt() {
+  var EMOJI_FONT = '"Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif';
+  COMMANDER_ORDER.forEach(function (k) {
+    var c = COMMANDERS[k];
+    if (!c.gen) return;
+    try {
+      var cv = document.createElement('canvas'); cv.width = cv.height = 192;
+      var g = cv.getContext('2d');
+      var rg = g.createRadialGradient(76, 64, 8, 96, 96, 120);
+      rg.addColorStop(0, shade(c.color, 55)); rg.addColorStop(1, shade(c.color, -70));
+      g.fillStyle = rg; g.fillRect(0, 0, 192, 192);
+      g.textAlign = 'center'; g.textBaseline = 'middle'; g.font = '112px ' + EMOJI_FONT;
+      g.fillText(c.icon, 96, 104);
+      c.pic = cv.toDataURL();
+      var bv = document.createElement('canvas'); bv.width = 192; bv.height = 256;
+      var h = bv.getContext('2d');
+      var hg = h.createRadialGradient(96, 140, 10, 96, 140, 96);
+      hg.addColorStop(0, alpha(c.color, 0.85)); hg.addColorStop(1, alpha(c.color, 0));
+      h.fillStyle = hg; h.fillRect(0, 0, 192, 256);
+      h.fillStyle = 'rgba(0,0,0,0.3)'; h.beginPath(); h.ellipse(96, 238, 62, 12, 0, 0, Math.PI * 2); h.fill();
+      h.textAlign = 'center'; h.textBaseline = 'middle'; h.font = '150px ' + EMOJI_FONT;
+      h.fillText(c.icon, 96, 150);
+      c.body = bv.toDataURL();
+      var im = new Image();
+      im.onload = function () { im.ready = true; };
+      im.src = c.pic;
+      IMG['commanders/' + k] = im;
+    } catch (e) {}
+  });
+})();
 // lobos de Garra (assets/fx/garra-lobo y garra-lobo-2, los dos mirando a la
 // derecha); si aún no han cargado, se dibuja uno por código
 ['garra-lobo', 'garra-lobo-2'].forEach(function (k) {

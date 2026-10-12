@@ -81,6 +81,18 @@ Hay tres cosas que suben la fuerza de una tropa. Se multiplican entre sí.
 - En Melodía, solo +10% por nivel: mejor gastar el maná en invocar o en mejorar a sus vecinas.
 - En Eco, +50% de probabilidad de resonar por nivel: con la mejora al 5 y la carta al 10, resuena la mitad de las veces.
 
+## 4 bis. Talentos de Lyra, Brasa y Nívea
+
+Con la carta a nivel 3, 6 y 9 se abre un piso de su árbol, con dos ramas a elegir (`TALENTS` en `js/data.js`):
+
+| Tropa | Nivel 3 | Nivel 6 | Nivel 9 |
+|---|---|---|---|
+| Lyra | +20% daño **o** +20% velocidad | Atraviesa armadura **o** 15% de crítico ×2,5 | ×2,5 a jefes **o** flechas que salpican |
+| Brasa | +20% daño **o** explosión un 35% mayor | Deja ardiendo **o** +20% velocidad | Frena hasta un 30% **o** 12% de aturdir |
+| Nívea | +20% daño **o** +90% con otra Nívea al lado | Frena el doble, hasta un 65% **o** salpica | 10% de congelar **o** ×2 a jefes |
+
+Con talentos, Lyra puede hacer de cazajefes (Flecha de caza) y Nívea de tropa de área (Carámbano), así que cambian el papel de las comunes en el mazo.
+
 ## 5. Otros multiplicadores del tablero
 
 | Qué | Efecto |

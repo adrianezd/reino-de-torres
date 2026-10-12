@@ -111,16 +111,24 @@ function bindSwipe() {
     if (!g) return;
     var sideways = g.side, dx = g.dx || 0, fast = Date.now() - g.t < 700;
     g = null;
-    m.style.transition = 'transform 0.18s ease-out'; m.style.transform = '';
-    setTimeout(function () { m.style.transition = ''; }, 200);
-    if (!sideways || Math.abs(dx) < (fast ? 50 : 110)) return;
     var to = swipeTab() - Math.sign(dx);
-    if (to < 0 || to >= SWIPE_TABS.length) return;
+    var go = sideways && Math.abs(dx) >= (fast ? 50 : 110) && to >= 0 && to < SWIPE_TABS.length;
+    if (!go) {
+      // vuelve a su sitio
+      if (!dx) return;
+      m.style.transition = 'transform 0.18s ease-out'; m.style.transform = '';
+      setTimeout(function () { m.style.transition = ''; }, 200);
+      return;
+    }
+    // la pestaña nueva entra desde el lado del gesto en un solo movimiento
+    // (sin volver antes a su sitio, que daba un tirón doble)
+    m.style.transition = ''; m.style.transform = '';
     sfx('tap');
     showScreen(SWIPE_TABS[to]);
     m.scrollTop = 0;
-    m.classList.remove('slide-l', 'slide-r'); void m.offsetWidth;
-    m.classList.add(dx < 0 ? 'slide-l' : 'slide-r');
+    m.classList.add('no-intro');
+    if (m.animate) m.animate([{ transform: 'translateX(' + (dx < 0 ? 22 : -22) + '%)', opacity: 0.4 }, { transform: 'none', opacity: 1 }], { duration: 220, easing: 'ease-out' });
+    setTimeout(function () { m.classList.remove('no-intro'); }, 700);
   };
   m.addEventListener('touchend', end);
   m.addEventListener('touchcancel', end);
@@ -148,7 +156,7 @@ function renderMenu(name, arg) {
       // mazo: banner del comandante (figura a la izquierda, nombre en el hueco)
       // y debajo las cinco tropas, cada retrato en un aro del banner
       '<div class="deck-panel">' +
-      '<button class="cmd-banner" data-go="commanders" style="--cc:' + cmd.color + '"><img src="assets/commanders/' + meta.commander + '-cuerpo.webp" alt=""><span class="cb-txt"><small>Habilidad</small><b>' + esc(cmd.ability) + '</b></span><span class="cb-slot">' + esc(cmd.name) + '</span></button>' +
+      '<button class="cmd-banner" data-go="commanders" style="--cc:' + cmd.color + '"><img src="' + cmd.body + '" alt=""><span class="cb-txt"><small>Habilidad</small><b>' + esc(cmd.ability) + '</b></span><span class="cb-slot">' + esc(cmd.name) + '</span></button>' +
       '<button class="deck-preview" data-go="collection" aria-label="Mazo actual">' + meta.deck.map(function (id, i) { return '<img src="' + unitIcon(id, 0, 96) + '" alt="' + esc(UNITS[id].name) + '" style="left:' + DECK_RINGS[i] + '%">'; }).join('') + '</button>' +
       '</div>' +
       // cuatro cartas de modo (assets/ui/modo-*, de assets/botones_jugar.jpg;
@@ -160,6 +168,7 @@ function renderMenu(name, arg) {
       '<button class="mode-card" data-go="coop" aria-label="2 contra la máquina"><img src="assets/ui/modo-coop.webp" alt=""></button>' +
       '<button class="mode-card" data-go="tourney" aria-label="Torneo"><img src="assets/ui/modo-torneo.webp" alt=""></button>' +
       '</div>' +
+      '<button class="rogue-btn" data-go="rogue"><img src="assets/icons/dado.webp" alt=""><span><b>Roguelike</b><small>' + ROGUE_WAVES + ' oleadas · una ventaja cada ' + ROGUE_PICK_EVERY + ' s' + (meta.rogueBest ? ' · récord ' + meta.rogueBest : '') + '</small></span></button>' +
       // huecos de cofre abajo del todo, debajo de los botones de jugar
       '<div class="slots" id="chestSlots">' + slotsInner() + '</div>';
   } else if (name === 'campaign') {
@@ -185,12 +194,24 @@ function renderMenu(name, arg) {
           '<span class="rv-prize"><img class="rv-chest" src="' + chestPic(i >= 2 ? 'oro' : 'plata') + '" alt=""><span class="rv-chips">' + prizeChips(25 + i * 5, 60 + i * 40 + arenaIndex() * ARENA_GOLD, 0) + '</span></span></button>';
       }).join('') + '</div>' +
       recordChips(meta.duelWins, meta.duelLosses);
+  } else if (name === 'rogue') {
+    html = backBar('Roguelike') +
+      '<p class="lead">Tú solo contra ' + ROGUE_WAVES + ' oleadas. Cada ' + ROGUE_PICK_EVERY + ' segundos eliges 1 de 3 ventajas: habilidades de comandante, reliquias y modificadores. Se acumulan hasta el final.</p>' +
+      '<div class="tn-panel rg-panel"><img src="assets/icons/dado.webp" alt=""><span><b>Jefe final al azar</b><small>La ruleta lo elige al empezar y llega en la oleada ' + ROGUE_WAVES + ' con ' + String(ROGUE_FINAL_HP).replace('.', ',') + ' veces más vida.</small></span></div>' +
+      '<div class="tn-panel tn-prize"><img src="' + chestPic('oro') + '" alt=""><span><b>Premio</b><small>Oro y gemas según la oleada a la que llegues. Cofre de madera en la 10, de plata en la 20 y de oro si vences al jefe final.</small></span></div>' +
+      '<button class="btn btn-green tn-go" data-rogue="1">Jugar</button>' +
+      '<p class="muted">Récord: ' + (meta.rogueBest ? 'oleada ' + meta.rogueBest : 'aún ninguno') + '</p>';
   } else if (name === 'road') {
     html = backBar('Camino de trofeos') + roadHtml();
   } else if (name === 'tourney') {
     // torneo: el nivel de cada rareza, el de los comandantes, el premio y a jugar
+    var tm = meta.tourneyMode || 'clasico';
     html = backBar('Torneo') +
       '<p class="lead">Tus cartas y las del rival, al mismo nivel. Solo cuenta cómo juegas.</p>' +
+      '<div class="tn-modes">' + TOURNEY_MODES.map(function (t) {
+        return '<button class="tn-mode' + (t.id === tm ? ' on' : '') + '" data-tmode="' + t.id + '"><b>' + esc(t.name) + '</b><small>' + esc(t.desc) + '</small></button>';
+      }).join('') + '</div>' +
+      (tm === 'prestado' ? '<p class="tn-decks">Mazos: ' + TOURNEY_DECKS.map(function (d) { return esc(d.name); }).join(', ') + '</p>' : '') +
       '<div class="tn-panel"><h3>Nivel de torneo</h3><div class="tn-levels">' + Object.keys(RARITY).map(function (k) {
         return '<span class="tn-lv r-' + k + '" style="--rc:' + RARITY[k].color + '"><small>Nivel</small><b>' + TOURNEY_LV[k] + '</b><em>' + RARITY[k].name + '</em></span>';
       }).join('') + '</div>' +
@@ -211,16 +232,19 @@ function renderMenu(name, arg) {
     var cs = COMMANDERS[meta.commander], cc = meta.cmdCards[meta.commander];
     var cNeed = cmdCardsNeeded(cc.lv), cGold = cmdUpgradeGold(cc.lv), cMax = cc.lv >= CMD_MAX;
     var cWhy = cMax ? '' : cc.n < cNeed ? (cNeed - cc.n === 1 ? 'Falta 1 carta' : 'Faltan ' + (cNeed - cc.n) + ' cartas') : meta.gold < cGold ? 'Te faltan ' + (cGold - meta.gold) + ' 🪙' : '';
-    html = backBar('Mazo', true) + deckTabs('commanders') + '<p class="lead">Su habilidad se carga durante la partida. Pulsa su retrato para usarla.</p>' +
+    html = backBar('Mazo', true) + deckTabs('commanders') + '<p class="lead">Su habilidad se carga durante la partida. Pulsa su retrato para usarla. Los héroes la usan sobre el tablero: eliges las tropas.</p>' +
       '<div class="cmd-cards">' + COMMANDER_ORDER.map(function (k, i) {
         var c = COMMANDERS[k];
-        return '<button class="cmd-card' + (meta.commander === k ? ' sel' : '') + '" data-cmd="' + k + '" style="--cc:' + c.color + '" aria-label="' + esc(c.name) + '">' +
-          '<img class="cmd-body" src="assets/commanders/' + k + '-cuerpo.webp" alt=""><span class="cmd-frame"></span><b>' + esc(c.name) + '</b>' +
+        // las tres primeras van en su tarjeta ilustrada (con un medallón por
+        // comandante); las nuevas, en una tarjeta dibujada con su color
+        return '<button class="cmd-card' + (meta.commander === k ? ' sel' : '') + (c.gen ? ' gen' : '') + '" data-cmd="' + k + '" style="--cc:' + c.color + '" aria-label="' + esc(c.name) + '">' +
+          '<img class="cmd-body" src="' + c.body + '" alt="">' + (c.gen ? '' : '<span class="cmd-frame"></span>') + '<b>' + esc(c.name) + '</b>' +
+          (c.hero ? '<span class="cmd-hero">Héroe</span>' : '') +
           '<span class="cmd-lv' + (canUpgradeCmd(k) ? ' ready' : '') + '">Nv ' + cmdLevel(k) + '</span>' +
-          COMMANDER_ORDER.map(function (o, j) { return j === i ? '' : '<i class="cmd-dim" style="left:' + [26, 50.8, 75.8][j] + '%"></i>'; }).join('') + '</button>';
+          (c.gen ? '' : [0, 1, 2].map(function (j) { return j === i ? '' : '<i class="cmd-dim" style="left:' + [26, 50.8, 75.8][j] + '%"></i>'; }).join('')) + '</button>';
       }).join('') + '</div>' +
-      '<div class="cmd-detail" style="--cc:' + cs.color + '"><img src="assets/fx/' + CMD_FX[meta.commander] + '.webp" alt=""><div><b>' + esc(cs.name) + ' · ' + esc(cs.title) + '</b>' +
-      '<small><em>' + esc(cs.ability) + ':</em> ' + esc(cmdDesc(meta.commander, cc.lv)) + '</small><small>' + ico('icons/reloj') + ' Se carga en ' + cs.cd + ' s</small></div></div>' +
+      '<div class="cmd-detail" style="--cc:' + cs.color + '"><img src="' + cmdFxPic(meta.commander) + '" alt=""><div><b>' + esc(cs.name) + ' · ' + esc(cs.title) + '</b>' +
+      '<small><em>' + esc(cs.ability) + ':</em> ' + esc(cmdDesc(meta.commander, cc.lv)) + '</small><small>' + ico('icons/reloj') + ' Se carga en ' + cmdCd(meta.commander, cc.lv) + ' s' + (cs.hero ? ' · con cada nivel, antes' : '') + '</small></div></div>' +
       // nivel del comandante: sus cartas salen en el cofre de comandante
       '<div class="uc-level cmd-level"><span class="uc-lvmedal">' + cc.lv + '</span><div class="uc-lvbody"><div class="uc-lvtop"><b>' + (cMax ? 'Nivel máximo' : 'Nivel ' + cc.lv) + '</b>' +
       (cMax ? '' : '<span class="uc-gain">💪 ' + Math.round(cmdMult(cc.lv) * 100) + '% → <b>' + Math.round(cmdMult(cc.lv + 1) * 100) + '%</b></span>') + '</div>' +
@@ -238,7 +262,10 @@ function renderMenu(name, arg) {
       '<p><b>🔥❄️🌿🔮⚙️ Afinidad:</b> cada tropa vecina del mismo elemento da +12% de daño.</p>' +
       '<p><b>⬆ Mejora</b> un tipo de tropa en plena partida tocando su carta abajo: afecta a todas las de ese tipo.</p>' +
       '<p><b>👑 Comandante:</b> cuando su retrato esté cargado, tócalo para usar su habilidad. Sube de nivel con las cartas del cofre de comandante y su habilidad es más fuerte.</p>' +
-      '<p><b>🏆 Torneo:</b> un duelo con tus cartas y las del rival al mismo nivel: común 8, rara 6, épica 4, mítica 2 y legendaria 1. Si ganas, cofre de comandante.</p>' +
+      '<p><b>🏆 Torneo:</b> un duelo con tus cartas y las del rival al mismo nivel: común 8, rara 6, épica 4, mítica 2 y legendaria 1. Se juega con tu mazo, con un mazo prestado o con cartas al azar. Si ganas, cofre de comandante.</p>' +
+      '<p><b>🎲 Roguelike:</b> ' + ROGUE_WAVES + ' oleadas tú solo; cada ' + ROGUE_PICK_EVERY + ' segundos eliges una ventaja de tres. La ruleta elige el jefe final.</p>' +
+      '<p><b>⚡ Combos:</b> dos fusiones en menos de 2 segundos dan maná extra, y más si sigues la racha.</p>' +
+      '<p><b>🌳 Talentos:</b> Lyra, Brasa y Nívea tienen un árbol de tres pisos que se abre con los niveles 3, 6 y 9 de su carta. Míralo en la pestaña Talentos de su ficha.</p>' +
       '<p><b>🎯 Misiones:</b> cada día hay tres. Cóbralas en el botón Misiones del inicio y, con las tres, abre un cofre de plata.</p>' +
       '<p><b>🏆 Camino de trofeos:</b> ganar duelos da trofeos. Cada parada del camino tiene un premio y algunas abren una arena nueva, con su tablero y más oro por victoria.</p>' +
       '<p><b>🗺️ Cofres de campaña:</b> cada zona da su cofre (madera, plata y oro) y uno mejor si sacas estrellas nuevas.</p>' +
@@ -424,6 +451,7 @@ function showMissions() {
 
 // efecto ilustrado de la habilidad de cada comandante (assets/fx)
 var CMD_FX = { aria: 'ventisca', merlo: 'marea', brann: 'meteoro' };
+function cmdFxPic(k) { return CMD_FX[k] ? 'assets/fx/' + CMD_FX[k] + '.webp' : COMMANDERS[k].pic; }
 // Pestañas dentro de Mazo: tropas y comandante.
 function deckTabs(on) {
   return '<div class="sub-tabs"><button data-go="collection" class="' + (on === 'collection' ? 'on' : '') + '">Tropas</button>' +
@@ -528,7 +556,9 @@ function bindMenu() {
   });
   m.querySelectorAll('[data-road]').forEach(function (b) { b.onclick = function () { claimRoadStop(+b.dataset.road); }; });
   m.querySelectorAll('[data-duel]').forEach(function (b) { b.onclick = function () { startBattle('duel', { level: +b.dataset.duel }); }; });
-  m.querySelectorAll('[data-tourney]').forEach(function (b) { b.onclick = function () { startBattle('duel', { tourney: true, level: 1 }); }; });
+  m.querySelectorAll('[data-tourney]').forEach(function (b) { b.onclick = function () { startBattle('duel', { tourney: true, level: 1, tmode: meta.tourneyMode || 'clasico' }); }; });
+  m.querySelectorAll('[data-tmode]').forEach(function (b) { b.onclick = function () { meta.tourneyMode = b.dataset.tmode; saveMeta(); sfx('tap'); renderMenu('tourney'); }; });
+  m.querySelectorAll('[data-rogue]').forEach(function (b) { b.onclick = function () { startBattle('rogue'); }; });
   var cu = $('cmdUp');
   if (cu) cu.onclick = function () {
     var k = meta.commander;
@@ -598,10 +628,32 @@ function unitSources(id) {
 }
 // Pestañas de la ficha de tropa: primero el vídeo (mini partida) y luego las stats.
 function ucTabs(id, statsHtml, tab) {
-  var u = UNITS[id], on = tab === 'stats' ? 'stats' : 'video';
-  return '<div class="uc-tabs"><button data-uct="video" class="' + (on === 'video' ? 'on' : '') + '">Vídeo</button><button data-uct="stats" class="' + (on === 'stats' ? 'on' : '') + '">Stats</button></div>' +
+  var u = UNITS[id], tal = TALENTS[id] && meta.cards[id];
+  var on = tab === 'stats' || (tab === 'talents' && tal) ? tab : 'video';
+  return '<div class="uc-tabs"><button data-uct="video" class="' + (on === 'video' ? 'on' : '') + '">Vídeo</button><button data-uct="stats" class="' + (on === 'stats' ? 'on' : '') + '">Stats</button>' +
+    (tal ? '<button data-uct="talents" class="' + (on === 'talents' ? 'on' : '') + '">Talentos' + (talentPending(id) ? '<i class="tab-dot"></i>' : '') + '</button>' : '') + '</div>' +
     '<div class="uc-pane" data-ucp="video"' + (on === 'video' ? '' : ' hidden') + '><div class="uc-demo"><canvas id="ucDemo" aria-label="' + esc(u.name) + ' en acción"></canvas><span>En acción</span></div></div>' +
-    '<div class="uc-pane" data-ucp="stats"' + (on === 'stats' ? '' : ' hidden') + '>' + statsHtml + '</div>';
+    '<div class="uc-pane" data-ucp="stats"' + (on === 'stats' ? '' : ' hidden') + '>' + statsHtml + '</div>' +
+    (tal ? '<div class="uc-pane" data-ucp="talents"' + (on === 'talents' ? '' : ' hidden') + '>' + talentTreeHtml(id) + '</div>' : '');
+}
+/* Árbol de talentos: un piso por nivel de TALENT_LV con dos ramas; la
+   elegida brilla y se puede cambiar cuando quieras. */
+function talentPicks(id) { return (meta.talents && meta.talents[id]) || []; }
+function talentPending(id) {
+  var lv = meta.cards[id] ? meta.cards[id].lv : 0, picks = talentPicks(id);
+  return TALENT_LV.some(function (need, t) { return lv >= need && !picks[t]; });
+}
+function talentTreeHtml(id) {
+  var lv = meta.cards[id].lv, picks = talentPicks(id);
+  return '<div class="tal-tree">' + TALENTS[id].map(function (tier, t) {
+    var open = lv >= TALENT_LV[t];
+    return '<div class="tal-tier' + (open ? '' : ' locked') + '"><span class="tal-lv">' + (open ? 'Nv ' + TALENT_LV[t] : '🔒 Nv ' + TALENT_LV[t]) + '</span>' +
+      '<div class="tal-pair">' + tier.map(function (o) {
+        var on = picks[t] === o.id;
+        return '<button class="tal-node' + (on ? ' on' : '') + '" data-tal="' + t + ':' + o.id + '"' + (open ? '' : ' disabled') + '><b>' + esc(o.name) + '</b><small>' + esc(o.desc) + '</small></button>';
+      }).join('<i class="tal-or">o</i>') + '</div></div>';
+  }).join('<i class="tal-link"></i>') + '</div>' +
+    '<p class="tal-note">Cada piso se abre con el nivel de la carta. Elige una rama en cada uno; puedes cambiarla cuando quieras.</p>';
 }
 function bindUcTabs() {
   document.querySelectorAll('[data-uct]').forEach(function (b) {
@@ -662,6 +714,15 @@ function showCardModal(id, tab) {
   openOverlay(html);
   startCardDemo($('ucDemo'), id);
   bindUcTabs();
+  document.querySelectorAll('[data-tal]').forEach(function (b) {
+    b.onclick = function () {
+      var t = +b.dataset.tal.split(':')[0], k = b.dataset.tal.split(':')[1];
+      if (!meta.talents) meta.talents = {};
+      var picks = (meta.talents[id] || [null, null, null]).slice();
+      picks[t] = k; meta.talents[id] = picks; saveMeta();
+      sfx('power'); showCardModal(id, 'talents'); renderMenu(currentScreen);
+    };
+  });
   var up = $('mcUp');
   if (up) up.onclick = function () {
     var prev = $('mcPrev');
@@ -890,13 +951,14 @@ function showChestInfo(k, slot) {
       // el de comandante: qué comandantes pueden tocar, con su nivel
       ? '<h3 class="ci-t">Cartas de comandante</h3>' + COMMANDER_ORDER.map(function (c) {
         return row(COMMANDERS[c].color, COMMANDERS[c].name, 'Nivel ' + cmdLevel(c), '1 de ' + COMMANDER_ORDER.length);
-      }).join('') + '<p class="ci-note">Cada carta es de un comandante al azar. Con ellas subes su nivel.</p>'
+      }).join('') + '<p class="ci-note">Trae ' + CHESTS.comandante.cards + ' cartas, todas de un mismo comandante al azar. Con ellas subes su nivel.</p>'
       : '<h3 class="ci-t">Probabilidad por cofre</h3>' +
       row(RARITY.rara.color, 'Rara', '', chestOdds(ch.rare, ch.cards)) +
       row(RARITY.epica.color, 'Épica', '', chestOdds(ch.epic, ch.cards)) +
       row(RARITY.mitica.color, 'Mítica', ch.myth ? '' : 'Solo en el cofre de oro', chestOdds(ch.myth || 0, ch.cards)) +
       row(RARITY.legendaria.color, 'Legendaria', ch.legend ? '' : 'Solo en el cofre de oro', chestOdds(ch.legend, ch.cards)) +
-      '<p class="ci-note">Puede tocarte cualquier tropa, aunque aún no la tengas.</p>') +
+      '<p class="ci-note">Puede tocarte cualquier tropa, aunque aún no la tengas.' +
+      (ch.types ? ' Las cartas se reparten entre pocas tropas y la mitad de las veces trae además ' + ch.cmdCards + ' cartas de un comandante.' : '') + '</p>') +
     (inSlot ? slotButtons(slot) : '<button class="btn chest-ok' + (poor ? ' poor' : '') + '" id="ciOpen">Abrir<span>💎 ' + ch.price + '</span></button>') +
     '<button class="btn btn-ghost" id="ciX">Cerrar</button></div>');
   $('ciX').onclick = closeOverlay;
@@ -981,14 +1043,14 @@ setInterval(function () {
   if (left) { var s = meta.slots[+left.dataset.slot]; if (s) left.textContent = fmtDur(slotLeft(s)); }
 }, 1000);
 
-// lo que sale del cofre, en orden: el oro y luego las cartas de menor a mayor rareza
+// lo que sale del cofre, en orden: el oro, las cartas de comandante y luego
+// las tropas de menor a mayor rareza
 function chestItems(r) {
   var items = [{ gold: r.gold, gems: r.gems }];
+  Object.keys(r.cmdCards || {}).forEach(function (k) { items.push({ cmd: k, n: r.cmdCards[k] }); });
   Object.keys(r.cards).sort(function (a, b) {
     return RARITY_RANK.indexOf(UNITS[a].rarity) - RARITY_RANK.indexOf(UNITS[b].rarity) || r.cards[a] - r.cards[b];
   }).forEach(function (id) { items.push({ id: id, n: r.cards[id], fresh: (r.fresh || []).indexOf(id) !== -1 }); });
-  // cartas de comandante (cofre de comandante)
-  Object.keys(r.cmdCards || {}).forEach(function (k) { items.push({ cmd: k, n: r.cmdCards[k] }); });
   return items;
 }
 // from: imagen del cofre de la que sale (ficha del cofre); sin ella, sale en el centro
@@ -1113,7 +1175,7 @@ function chestItemIn(fx, it, x, y, tx, ty) {
     var cm = COMMANDERS[it.cmd], cc = meta.cmdCards[it.cmd], cmax = cc.lv >= CMD_MAX, cneed = cmdCardsNeeded(cc.lv);
     el.className = 'cfx-card cfx-cmd';
     el.style.setProperty('--rc', cm.color);
-    el.innerHTML = '<span class="cfx-rar">Comandante</span><img src="assets/commanders/' + it.cmd + '-cuerpo.webp" alt=""><b>' + esc(cm.name) + '</b><small>×' + it.n + '</small>' +
+    el.innerHTML = '<span class="cfx-rar">Comandante</span><img src="' + COMMANDERS[it.cmd].body + '" alt=""><b>' + esc(cm.name) + '</b><small>×' + it.n + '</small>' +
       '<div class="cfx-bar' + (!cmax && cc.n >= cneed ? ' full' : '') + '"><span style="width:' + (cmax ? 100 : Math.min(100, cc.n / cneed * 100)) + '%"></span><em>' + (cmax ? 'MÁX' : 'Nv ' + cc.lv + ' · ' + cc.n + '/' + cneed) + '</em></div>';
   } else if (!it.id) {
     el.className = 'cfx-card cfx-gold';
@@ -1161,7 +1223,25 @@ function buildBattleHud() {
     return '<button class="dcard" data-power="' + id + '" style="--rc:' + RARITY[UNITS[id].rarity].color + '"><img src="' + unitIcon(id, 0, 96) + '" alt=""><span class="dlv" id="dlv_' + id + '">1</span><span class="dcost" id="dcost_' + id + '">100</span></button>';
   }).join('');
   deck.querySelectorAll('[data-power]').forEach(function (btn) {
+    // invocación dirigida: mantener pulsada la carta invoca esa tropa (el doble de maná)
+    var hold = null;
+    btn.onpointerdown = function () {
+      clearTimeout(hold); btn._held = false;
+      if (!b.player.directed) return;
+      hold = setTimeout(function () {
+        btn._held = true;
+        if (battleBusy()) return;
+        var id = btn.dataset.power, r = b.player.summon(false, id);
+        if (r === 'ok') { sfx('summon'); buzz(30); toast(UNITS[id].name + ' invocada'); }
+        else if (r === 'mana') { sfx('no'); toast('Necesitas ' + b.player.summonCost * 2 + ' 💧 para elegirla'); }
+        else { sfx('no'); toast('Tablero lleno: fusiona tropas'); }
+        updateHud(true);
+      }, 450);
+    };
+    btn.onpointerup = btn.onpointerleave = btn.onpointercancel = function () { clearTimeout(hold); };
+    btn.oncontextmenu = function (e) { e.preventDefault(); };
     btn.onclick = function () {
+      if (btn._held) { btn._held = false; return; }
       if (battleBusy()) return;
       var r = b.player.powerUp(btn.dataset.power);
       if (r === 'ok') { sfx('power'); buzz(20); toast(UNITS[btn.dataset.power].name + ' mejorada a ' + b.player.power[btn.dataset.power]); }
@@ -1176,6 +1256,12 @@ function buildBattleHud() {
   $('cmdBtn').title = c.ability + ': ' + c.desc;
   // modificador y jefe final del 1 contra 1, junto a la oleada
   ['roulette', 'skillPick'].forEach(function (id) { var el = $(id); if (el) el.remove(); });
+  $('heroHint').hidden = true;
+  // emojis rápidos: solo contra un rival
+  $('emoteBtn').hidden = b.mode !== 'duel';
+  $('emoteBar').hidden = true;
+  $('emoteBar').innerHTML = EMOTES.map(function (e) { return '<button data-emo="' + e + '">' + e + '</button>'; }).join('');
+  $('emoteBar').querySelectorAll('[data-emo]').forEach(function (eb) { eb.onclick = function () { sendEmote(eb.dataset.emo); }; });
   $('bMod').hidden = !b.mod;
   $('bMod').innerHTML = b.mod ? '<img src="' + b.mod.pic + '" alt="' + esc(b.mod.name) + '"><img src="' + enemyIcon(b.boss, true) + '" alt="' + esc(BOSSES[b.boss].name) + '">' : '';
   $('unitInfo').hidden = true;
@@ -1221,6 +1307,7 @@ function updateHud(force) {
   var cb = $('cmdBtn');
   cb.style.setProperty('--charge', (p.charge * 360) + 'deg');
   cb.classList.toggle('ready', p.charge >= 1);
+  cb.classList.toggle('aiming', !!b.targeting);
   setTxt('bSpeed', 'x' + b.speed);
   // espera para recolocar tropas: anillo que se llena y segundos que faltan
   var cd = b.moveCd > 0 ? b.moveCd : 0, mv = $('bMove');
@@ -1285,13 +1372,14 @@ var RL_W = 92; // ancho de cada casilla de la franja, con su hueco (.rl-card en 
 function showDuelRoulette() {
   var b = battle;
   var rows = [
-    { title: 'Modificador', items: DUEL_MODS.map(function (m) { return { pic: m.pic, name: m.name }; }), win: DUEL_MODS.indexOf(b.mod), desc: b.mod.desc, dur: 2600 },
+    { title: 'Modificador', items: DUEL_MODS.map(function (m) { return { pic: m.pic, name: m.name }; }), win: DUEL_MODS.indexOf(b.mod), desc: b.mod && b.mod.desc, dur: 2600 },
     { title: 'Jefe final', items: BOSS_ORDER.map(function (k) { return { pic: enemyIcon(k, true), name: BOSSES[k].name, boss: true }; }), win: BOSS_ORDER.indexOf(b.boss), desc: BOSSES[b.boss].desc, dur: 2300 }
   ];
+  if (!b.mod) rows.shift();
   var REPS = 9;
   var el = document.createElement('div');
   el.id = 'roulette'; el.className = 'roulette';
-  el.innerHTML = '<h2 class="rl-title">' + esc('Contra ' + b.other.name) + '</h2>' + rows.map(function (r, ri) {
+  el.innerHTML = '<h2 class="rl-title">' + esc(b.other ? 'Contra ' + b.other.name : 'Modo roguelike') + '</h2>' + rows.map(function (r, ri) {
     var cards = '';
     for (var k = 0; k < r.items.length * REPS; k++) {
       var it = r.items[k % r.items.length];
@@ -1332,7 +1420,7 @@ function showDuelRoulette() {
       var t = Math.min(1, (now - t0) / r.dur), e = 1 - Math.pow(1 - t, 4);
       place(r, r.from + (r.to - r.from) * e);
       if (t < 1) { requestAnimationFrame(step); return; }
-      land(r); sfx(idx === 0 ? 'power' : 'boss'); next();
+      land(r); sfx(r.items[0].boss ? 'boss' : 'power'); next();
     }
     requestAnimationFrame(step);
   }
@@ -1364,37 +1452,130 @@ function showDuelRoulette() {
   spin(rows[0]);
 }
 
-/* Elección de habilidades de comandante: `n` de las ofrecidas. */
-function showSkillPick(offer, n) {
-  var b = battle, p = b.player, cmd = COMMANDERS[p.commander], chosen = [];
+/* Elección entre varias opciones (habilidades de comandante en el duelo,
+   ventajas del roguelike): o.options [{ id, name, pic, desc }], se eligen o.n
+   y al terminar se llama a done(elegidas). La partida espera mientras. */
+function showChoice(o, done) {
+  var b = battle, chosen = [], n = o.n, offer = o.options, face = o.face;
   var el = document.createElement('div');
   el.id = 'skillPick'; el.className = 'skill-pick';
   var sub = function () { return n === 1 ? 'Elige 1 de ' + offer.length : 'Elige ' + n + ' de ' + offer.length + ' · llevas ' + chosen.length; };
-  el.innerHTML = '<div class="sp-card" style="--cc:' + cmd.color + '">' +
-    '<div class="sp-head"><img src="' + cmd.pic + '" alt=""><span><b>Habilidades de ' + esc(cmd.name) + '</b><small id="spSub">' + sub() + '</small></span></div>' +
-    '<div class="sp-list">' + offer.map(function (k) {
-      var s = CMD_SKILLS[k];
-      return '<button class="sp-opt" data-sk="' + k + '"><img src="assets/' + s.pic + '.webp" alt=""><span><b>' + esc(s.name) + '</b><small>' + esc(cmdSkillDesc(k, p.commander)) + '</small></span></button>';
+  el.innerHTML = '<div class="sp-card" style="--cc:' + face.color + '">' +
+    '<div class="sp-head"><img src="' + face.pic + '" alt=""><span><b>' + esc(o.title) + '</b><small id="spSub">' + sub() + '</small></span></div>' +
+    '<div class="sp-list">' + offer.map(function (op, i) {
+      return '<button class="sp-opt' + (op.relic ? ' relic' : '') + '" data-op="' + i + '"><img src="' + op.pic + '" alt=""><span><b>' + esc(op.name) + '</b><small>' + esc(op.desc) + '</small></span></button>';
     }).join('') + '</div>' +
-    (p.skills.length ? '<p class="sp-have">Ya tienes: ' + p.skills.map(function (k) { return esc(CMD_SKILLS[k].name); }).join(', ') + '</p>' : '') +
+    (o.have && o.have.length ? '<p class="sp-have">Ya tienes: ' + o.have.map(esc).join(', ') + '</p>' : '') +
     '</div>';
   $('arena').appendChild(el);
   sfx('chest');
-  el.querySelectorAll('[data-sk]').forEach(function (btn) {
+  el.querySelectorAll('[data-op]').forEach(function (btn) {
     btn.onclick = function () {
-      if (chosen.length >= n || chosen.indexOf(btn.dataset.sk) !== -1 || b.paused) return;
-      chosen.push(btn.dataset.sk);
+      var op = offer[+btn.dataset.op];
+      if (chosen.length >= n || chosen.indexOf(op) !== -1 || b.paused) return;
+      chosen.push(op);
       btn.classList.add('on'); btn.disabled = true;
       sfx('power'); buzz(20);
       $('spSub').textContent = sub();
       if (chosen.length < n) return;
       el.classList.add('out');
-      setTimeout(function () { el.remove(); if (battle === b) finishSkillPick(chosen); }, 380);
+      setTimeout(function () { el.remove(); if (battle === b) done(chosen); }, 380);
     };
   });
 }
 // mientras gira la ruleta o eliges habilidades no se puede jugar
 function battleBusy() { return !!(battle && (battle.intro || battle.picking)); }
+
+/* ---------- héroes: su habilidad se usa eligiendo tropas del tablero ---------- */
+function startHeroTarget() {
+  var b = battle, c = COMMANDERS[b.player.commander];
+  if (b.targeting) { cancelHeroTarget(); return; }
+  b.targeting = { picks: [] };
+  b.selected = null; refreshUnitInfo();
+  heroHint(c.hero === 2 ? 'Toca la primera tropa' : 'Toca la tropa que quieres subir');
+  sfx('tap');
+}
+function cancelHeroTarget() { if (battle) battle.targeting = null; $('heroHint').hidden = true; }
+function heroHint(t) { var h = $('heroHint'); h.innerHTML = icons(esc(t) + ' <small>Toca el retrato para cancelar</small>'); h.hidden = false; }
+// toque en una casilla mientras se elige: devuelve true si lo ha usado
+function heroTap(i) {
+  var b = battle, t = b.targeting, p = b.player, c = COMMANDERS[p.commander];
+  if (!t) return false;
+  if (i < 0 || !p.cells[i]) return true;
+  var picks = t.picks.concat([i]);
+  if (!p.heroValid(picks)) { sfx('no'); toast(picks.length === 2 ? 'Tiene que ser otra tropa del mismo rango' : 'Esa tropa ya está al máximo'); return true; }
+  if (picks.length < c.hero) { t.picks = picks; b.selected = i; heroHint('Ahora otra tropa de rango ' + p.cells[i].rank); sfx('tap'); return true; }
+  b.selected = null;
+  cancelHeroTarget();
+  if (p.useCommander(picks)) { sfx('merge'); sfx('cmd'); buzz(60); }
+  return true;
+}
+
+/* ---------- emojis rápidos ---------- */
+function sendEmote(e) {
+  var b = battle;
+  if (!b || !b.other) return;
+  $('emoteBar').hidden = true;
+  if (b.emoteCd > performance.now()) { toast('Espera un momento'); return; }
+  b.emoteCd = performance.now() + 2500;
+  emoteBubble(e, 'me'); sfx('tap');
+  // el rival contesta a veces
+  if (Math.random() < 0.6) setTimeout(function () { if (battle === b && !b.ended) emoteBubble(pick(EMOTES), 'foe'); }, 700 + Math.random() * 1200);
+}
+function emoteBubble(e, who) {
+  var el = document.createElement('div');
+  el.className = 'emote-bubble ' + who;
+  el.innerHTML = icons(e);
+  $('arena').appendChild(el);
+  setTimeout(function () { el.remove(); }, 2200);
+}
+// la máquina también reacciona a lo que pasa en la partida
+function aiEmote(e, chance) {
+  var b = battle;
+  if (!b || b.mode !== 'duel' || Math.random() > chance) return;
+  if (b.foeEmoteAt && performance.now() - b.foeEmoteAt < 6000) return;
+  b.foeEmoteAt = performance.now();
+  emoteBubble(e, 'foe');
+}
+
+/* ---------- repetición: los últimos 30 segundos ----------
+   Mientras se juega se guarda una foto pequeña del tablero REPLAY_FPS veces
+   por segundo (en JPEG, unos 10 KB cada una); al terminar se pueden ver en
+   bucle desde el resultado. */
+var REPLAY_FPS = 6, REPLAY_SECS = 30, REPLAY_W = 260;
+var replay = { frames: [], at: 0, cv: null, busy: false };
+function resetReplay() { replay.frames = []; replay.at = 0; }
+function recordReplay(t) {
+  if (!canvas || replay.busy || t - replay.at < 1000 / REPLAY_FPS) return;
+  replay.at = t;
+  if (!replay.cv) replay.cv = document.createElement('canvas');
+  var w = REPLAY_W, h = Math.round(w * canvas.height / Math.max(1, canvas.width)), rc = replay.cv;
+  if (rc.width !== w || rc.height !== h) { rc.width = w; rc.height = h; }
+  var g = rc.getContext('2d');
+  if (!g || !rc.toBlob) return;
+  g.drawImage(canvas, 0, 0, w, h);
+  replay.busy = true;
+  rc.toBlob(function (bl) {
+    replay.busy = false;
+    if (!bl) return;
+    replay.frames.push(bl);
+    if (replay.frames.length > REPLAY_FPS * REPLAY_SECS) replay.frames.shift();
+  }, 'image/jpeg', 0.6);
+}
+function showReplay(res) {
+  var urls = replay.frames.map(function (bl) { return URL.createObjectURL(bl); });
+  if (!urls.length) { toast('No hay repetición'); return; }
+  openOverlay('<div class="modal-card replay-card"><h2>Repetición</h2><div class="rp-view"><img id="rpImg" alt="Repetición de la partida"></div>' +
+    '<div class="rp-bar"><i id="rpBar"></i></div><small class="muted">Los últimos ' + Math.round(urls.length / REPLAY_FPS) + ' segundos</small>' +
+    '<button class="btn btn-ghost" id="rpBack">Volver</button></div>');
+  var k = 0, img = $('rpImg');
+  var tick = setInterval(function () {
+    if (!img.isConnected) { clearInterval(tick); return; }
+    img.src = urls[k]; $('rpBar').style.width = ((k + 1) / urls.length * 100) + '%';
+    k = (k + 1) % urls.length;
+  }, 1000 / REPLAY_FPS);
+  $('rpBack').onclick = function () { clearInterval(tick); urls.forEach(URL.revokeObjectURL); closeOverlay(); showResult(res); };
+}
 function modInfo(b) {
   return b.mod.name + ': ' + b.mod.desc + ' Jefe final: ' + BOSSES[b.boss].name + '.' +
     (b.player.skills.length ? ' Habilidades: ' + b.player.skills.map(function (k) { return CMD_SKILLS[k].name; }).join(', ') + '.' : '');
@@ -1419,14 +1600,16 @@ function showResult(res) {
     '<p class="res-gold">+' + res.gold + ' 🪙' + (res.gems ? ' · +' + res.gems + ' 💎' : '') + (res.trophies ? ' · ' + (res.trophies > 0 ? '+' : '') + res.trophies + ' 🏆' : '') + '</p>' + chest + unlock +
     '<p class="muted">Bajas ' + res.kills + ' · Daño ' + fmtNum(res.damage) + '</p>' + dmgSummary(res) +
     '<button class="btn btn-green" id="resAgain">' + (res.mode === 'campaign' && res.won && battle.stage.id < CAMPAIGN.length ? 'Siguiente fase ▶' : 'Otra vez') + '</button>' +
+    (replay.frames.length ? '<button class="btn btn-ghost" id="resReplay">Repetición</button>' : '') +
     '<button class="btn btn-ghost" id="resMenu">Menú</button></div>');
+  if ($('resReplay')) $('resReplay').onclick = function () { sfx('tap'); showReplay(res); };
   $('resAgain').onclick = function () {
     closeOverlay();
     var b = battle;
     if (b.mode === 'campaign') startBattle('campaign', { stage: res.won && b.stage.id < CAMPAIGN.length ? b.stage.id + 1 : b.stage.id });
     else startBattle(b.mode, b.opts);
   };
-  $('resMenu').onclick = function () { closeOverlay(); battle = null; showScreen(res.mode === 'campaign' ? 'campaign' : 'home'); };
+  $('resMenu').onclick = function () { closeOverlay(); battle = null; resetReplay(); showScreen(res.mode === 'campaign' ? 'campaign' : res.mode === 'rogue' ? 'rogue' : 'home'); };
 }
 /* Daño de cada tropa en la partida, en barras (la mayor, llena). */
 function dmgSummary(res) {
@@ -1447,7 +1630,10 @@ function confirmQuit() {
   sfx('tap');
   var b = battle, p = b.player;
   var where = b.mode === 'campaign' ? '🗺️ Fase ' + b.stage.id + ' · ' + esc(b.stage.name)
+    : b.mode === 'rogue' ? 'Roguelike · Jefe final: ' + esc(BOSSES[b.boss].name)
     : b.mode === 'duel' ? (b.opts.tourney ? 'Torneo contra ' : '⚔️ Duelo contra ') + esc(b.other.name) : '🤝 Con ' + esc(b.other.name) + ' contra la horda';
+  if (b.mode === 'rogue' && (b.player.skills.length || b.player.rogueMods.length)) where += '<small class="pause-mod">Ventajas: ' + esc(b.player.skills.map(function (k) { return CMD_SKILLS[k].name; }).concat(b.player.rogueMods.map(function (id) { return DUEL_MODS.filter(function (x) { return x.id === id; })[0].name; })).join(', ')) + '</small>';
+  if (b.lent) where += '<small class="pause-mod">Mazo prestado: ' + esc(b.lent.name) + '</small>';
   if (b.mod) where += '<small class="pause-mod">' + esc(modInfo(b)) + '</small>';
   var wave = b.wave ? b.wave + (b.maxWaves !== Infinity ? '<small>/' + b.maxWaves + '</small>' : '') : '—';
   var prog = b.maxWaves !== Infinity ? Math.min(1, b.wave / b.maxWaves) : 0;
@@ -1524,7 +1710,10 @@ function loop(t) {
     if (!battle.paused && !battle.ended) {
       for (var s = 0; s < battle.speed; s++) updateBattle(dt);
     }
-    if (battle) { drawBattle(t); updateHud(false); }
+    if (battle) {
+      drawBattle(t); updateHud(false);
+      if (!battle.ended && !battle.paused && !battle.intro) recordReplay(t);
+    }
   }
   requestAnimationFrame(loop);
 }
@@ -1552,6 +1741,13 @@ function initGame() {
   };
   $('cmdBtn').onclick = function () {
     if (!battle || battleBusy()) return;
+    if (COMMANDERS[battle.player.commander].hero) {
+      if (battle.targeting) { cancelHeroTarget(); return; }
+      if (battle.player.charge < 1) { toast('El héroe aún se está cargando'); return; }
+      if (!battle.player.heroPicks() && !battle.player.cells.some(function (u) { return u && u.rank < MAX_RANK; })) { toast('No tienes tropas que elegir'); return; }
+      startHeroTarget();
+      return;
+    }
     if (battle.player.useCommander()) { sfx('cmd'); buzz(60); toast(COMMANDERS[battle.player.commander].ability + '!'); }
     else toast('El comandante aún se está cargando');
   };
@@ -1562,6 +1758,7 @@ function initGame() {
     toast(battle.moveCd > 0 ? '⏱ Podrás recolocar una tropa en ' + Math.ceil(battle.moveCd) + ' s' : '↔ Ya puedes recolocar una tropa: arrástrala a otra casilla');
   };
   $('bQuit').onclick = confirmQuit;
+  $('emoteBtn').onclick = function () { if (battle && !battleBusy()) { sfx('tap'); $('emoteBar').hidden = !$('emoteBar').hidden; } };
   $('bMod').onclick = function () { if (battle && battle.mod) { sfx('tap'); toast(modInfo(battle)); } };
   $('overlay').addEventListener('click', function (e) { if (e.target === this && !(battle && !battle.ended && battle.paused === false)) { /* los modales se cierran con sus botones */ } });
   // nada de zoom: ni pellizcando (Safari no hace caso al viewport), ni con doble toque, ni con Ctrl + rueda
