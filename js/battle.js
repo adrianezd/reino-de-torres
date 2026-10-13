@@ -13,22 +13,51 @@
       los dos disparáis a los mismos monstruos; el maná de cada baja es para los dos.
     - rogue: tú solo contra ROGUE_WAVES oleadas y un jefe final elegido por la
       ruleta; cada ROGUE_PICK_EVERY segundos eliges 1 de 3 ventajas.
+    - reto: reto con amigos. Supervivencia con semilla (opts.seed): oleadas,
+      eventos, casillas, tablero, modificador y jefe salen igual para quien
+      juegue el mismo reto. Mazo y comandante del reto, a nivel de torneo.
    ========================================================= */
 
 var battle = null;
 var canvas, ctx, dpr = 1;
-var RIVAL_NAMES = ['Barón Gruñón', 'Lady Cenizas', 'Capitán Bigotes', 'La Duquesa', 'Fray Tormenta', 'Sir Tuercas', 'Reina Escarcha', 'Maese Trueno'];
 var ALLY_NAMES = ['Pip el Valiente', 'Tula', 'Bram', 'Nora'];
+// azar con semilla (mulberry32): en los retos, lo que tiene que salir igual
+// para todos sale de aquí (battle.rng); en el resto de modos, Math.random
+function seededRng(seed) {
+  var a = seed >>> 0;
+  return function () {
+    a = (a + 0x6D2B79F5) >>> 0;
+    var t = a;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+function brand() { return battle && battle.rng ? battle.rng() : Math.random(); }
+function bpick(arr) { return arr[Math.floor(brand() * arr.length)]; }
+// mazo de un rival: hasta tres tropas de su elemento favorito, al menos tres
+// que ataquen y, si va al ahorro, Doblón y Oria
+function rivalDeck(rv, pool) {
+  var fav = shuffleArr(pool.filter(function (id) { return UNITS[id].element === rv.element; })).slice(0, 3);
+  var deck = fav.concat(shuffleArr(pool.filter(function (id) { return fav.indexOf(id) === -1; }))).slice(0, 5);
+  if (rv.style === 'ahorro') ['doblon', 'oria'].forEach(function (id, k) { if (pool.indexOf(id) !== -1 && deck.indexOf(id) === -1) deck[4 - k] = id; });
+  var attackers = function () { return deck.filter(function (id) { return UNITS[id].dmg; }).length; };
+  var extra = shuffleArr(pool.filter(function (id) { return UNITS[id].dmg && deck.indexOf(id) === -1; }));
+  for (var i = deck.length - 1; i >= 0 && attackers() < 3 && extra.length; i--) if (!UNITS[deck[i]].dmg && !(rv.style === 'ahorro' && (deck[i] === 'doblon' || deck[i] === 'oria'))) deck[i] = extra.pop();
+  return deck;
+}
 
 function startBattle(mode, opts) {
   opts = opts || {};
+  var reto = mode === 'reto', rng = reto ? seededRng(opts.seed) : null;
   var stage = mode === 'campaign' ? CAMPAIGN[opts.stage - 1] : null;
   var biome = stage ? stage.biome : pick(Object.keys(BIOMES));
-  var deck = meta.deck.slice();
+  var deck = reto ? opts.deck.slice() : meta.deck.slice();
   var tourney = mode === 'duel' && !!opts.tourney;
-  var lv = tourney ? tourneyLevels() : cardLevels();
-  var myCmdLv = tourney ? TOURNEY_CMD_LV : cmdLevel(meta.commander);
-  var lives = mode === 'campaign' || mode === 'rogue' ? { v: 5, max: 5 } : mode === 'duel' ? { v: 3, max: 3 } : { v: 6, max: 6 };
+  var lv = tourney || reto ? tourneyLevels() : cardLevels();
+  var myCmd = reto ? opts.cmd : meta.commander;
+  var myCmdLv = tourney || reto ? TOURNEY_CMD_LV : cmdLevel(meta.commander);
+  var lives = mode === 'campaign' || mode === 'rogue' ? { v: 5, max: 5 } : reto ? { v: RETO_LIVES, max: RETO_LIVES } : mode === 'duel' ? { v: 3, max: 3 } : { v: 6, max: 6 };
   // torneo con mazo prestado o con cartas al azar: el mazo de los dos cambia
   var tmode = tourney ? opts.tmode || 'clasico' : null, aiPreset = null, lent = null;
   if (tmode === 'prestado') {
@@ -44,14 +73,30 @@ function startBattle(mode, opts) {
   var choices = stage ? [].concat(BIOME_FIELD[biome] || 'prado') : mode === 'duel' && !opts.tourney ? [ARENAS[arenaIndex()].field] : Object.keys(FIELD_GEOS);
   var ready = choices.filter(loaded);
   var fid = ready.length ? pick(ready) : loaded('prado') ? 'prado' : null;
+  if (reto) {
+    // el tablero y su decorado, de la semilla (siempre se tira el dado, aunque no haya cargado)
+    var want = choices[Math.floor(rng() * choices.length)], bio = rng();
+    fid = loaded(want) ? want : loaded('prado') ? 'prado' : null;
+    biome = Object.keys(BIOMES)[Math.floor(bio * Object.keys(BIOMES).length)];
+  }
   if (!stage && fid) {
     var fits = Object.keys(BIOME_FIELD).filter(function (bk) { return [].concat(BIOME_FIELD[bk]).indexOf(fid) !== -1; });
-    if (fits.length) biome = pick(fits);
+    if (fits.length && fits.indexOf(biome) === -1) biome = reto ? fits[0] : pick(fits);
   }
   var geo = fid ? FIELD_GEOS[fid] : VECTOR_GEO;
   var floorTile = floorTileFor(geo.field);
-  var player = new Board({ name: 'Tú', deck: deck, cardLv: lv, commander: meta.commander, cmdLv: myCmdLv, lives: lives, biome: biome, geo: geo, floorTile: floorTile, mana: stage ? stage.mana : 100, talents: myTalents(lv), cmdNodes: cmdTreeActive(meta.commander, myCmdLv, (meta.cmdTree || {})[meta.commander]) });
+  if (reto) { var ft = FIELD_TILES[geo.field], fr = rng(); if (ft) floorTile = ft.set + '-' + (1 + Math.floor(fr * ft.n)); }
+  var player = new Board({ name: 'Tú', deck: deck, cardLv: lv, commander: myCmd, cmdLv: myCmdLv, lives: lives, biome: biome, geo: geo, floorTile: floorTile, mana: stage ? stage.mana : 100,
+    talents: reto ? {} : myTalents(lv), cmdNodes: reto ? [] : cmdTreeActive(myCmd, myCmdLv, (meta.cmdTree || {})[myCmd]) });
+  if (reto) {
+    // casillas especiales de la semilla
+    var spots = Array.from({ length: COLS * ROWS }, function (_, i) { return i; });
+    for (var si = spots.length - 1; si > 0; si--) { var sj = Math.floor(rng() * (si + 1)), sw = spots[si]; spots[si] = spots[sj]; spots[sj] = sw; }
+    player.tiles = {};
+    ['altar', 'fuente', 'atalaya'].forEach(function (t, k) { player.tiles[spots[k]] = t; });
+  }
   battle = {
+    rng: rng,
     mode: mode, stage: stage, opts: opts, tmode: tmode, lent: lent,
     boards: [player], player: player, other: null,
     wave: 0, maxWaves: stage ? stage.waves : mode === 'rogue' ? ROGUE_WAVES : Infinity,
@@ -61,18 +106,29 @@ function startBattle(mode, opts) {
     // primera partida de campaña: consejos paso a paso (ver updateCoach)
     tutorial: mode === 'campaign' && !meta.seenTutorial, coachStep: 0, coachT: 0
   };
+  // reto: modificador y jefe final de la semilla, antes de planear la primera oleada
+  if (reto) {
+    var modId = RETO_MODS[Math.floor(rng() * RETO_MODS.length)];
+    battle.mod = DUEL_MODS.filter(function (m) { return m.id === modId; })[0];
+    battle.boss = BOSS_ORDER[Math.floor(rng() * BOSS_ORDER.length)];
+    applyDuelMod(player, battle.mod.id);
+    battle.intro = true;
+  }
   battle.next = planWave(1);
   if (mode === 'duel') {
     var aiLv = tourney ? 1 : opts.level == null ? 1 : opts.level;
-    var aiDeck = aiPreset || shuffleArr((tourney ? UNIT_ORDER : AI_UNITS).slice()).filter(function (id) { return id !== 'melodia' || aiLv > 0; }).slice(0, 5);
-    if (!aiPreset && aiDeck.indexOf('doblon') === -1 && aiLv > 0) aiDeck[4] = 'doblon';
+    // cada rival juega a su manera y lleva tropas de su elemento favorito
+    var rv = pick(RIVALS);
+    battle.rival = rv;
+    var aiDeck = aiPreset || rivalDeck(rv, (tourney ? UNIT_ORDER : AI_UNITS).filter(function (id) { return id !== 'melodia' || aiLv > 0; }));
+    if (!aiPreset && rv.style !== 'ahorro' && aiDeck.indexOf('doblon') === -1 && aiLv > 0) aiDeck[4] = 'doblon';
     var aiCard = {};
     var avg = Math.round(Object.keys(lv).reduce(function (s, k) { return s + lv[k]; }, 0) / Math.max(1, Object.keys(lv).length));
     UNIT_ORDER.forEach(function (id) { aiCard[id] = Math.max(1, avg + DUEL_CARD_OFFSET[aiLv]); });
     if (tourney) aiCard = tourneyLevels();
     var aiCmdLv = tourney ? TOURNEY_CMD_LV : Math.max(1, Math.min(CMD_MAX, myCmdLv + DUEL_CARD_OFFSET[aiLv]));
     var aiCmd = pick(COMMANDER_ORDER);
-    battle.other = new Board({ name: pick(RIVAL_NAMES), ai: true, aiLevel: aiLv, deck: aiDeck, cardLv: aiCard, commander: aiCmd, cmdLv: aiCmdLv, lives: { v: 3, max: 3 }, biome: biome, geo: geo, floorTile: floorTile, talents: aiTalents(aiCard), cmdNodes: cmdTreeActive(aiCmd, aiCmdLv, aiCmdTree(aiCmd)) });
+    battle.other = new Board({ name: rv.name, style: rv.style, ai: true, aiLevel: aiLv, deck: aiDeck, cardLv: aiCard, commander: aiCmd, cmdLv: aiCmdLv, lives: { v: 3, max: 3 }, biome: biome, geo: geo, floorTile: floorTile, talents: aiTalents(aiCard), cmdNodes: cmdTreeActive(aiCmd, aiCmdLv, aiCmdTree(aiCmd)) });
   } else if (mode === 'coop') {
     var allyDeck = shuffleArr(AI_UNITS.slice()).slice(0, 5);
     var allyCard = {};
@@ -114,14 +170,16 @@ function startBattle(mode, opts) {
     battle.other.onKill = function (e) { if (e.boss) aiEmote(pick(['👑', '🔥', '👍']), 0.5); };
   }
   player.onCombo = function (n) { sfx('merge'); if (n >= 3) buzz(30); };
-  player.onKill = function (e) { if (e.boss) sfx('boss'); };
+  player.onKill = function (e) { if (e.boss) sfx('boss'); bestiaryAdd(e.kind, e.boss, true); };
 
   showScreen('battle');
   buildBattleHud();
   resizeCanvas();
   resetReplay();
+  musicFor(battle);
   if (battle.intro) { showDuelRoulette(); return; }
-  showBanner(mode === 'campaign' ? 'Fase ' + stage.id + ': ' + stage.name : tourney ? 'Torneo contra ' + battle.other.name : mode === 'duel' ? '⚔️ Duelo contra ' + battle.other.name : '🤝 Con ' + battle.other.name + ' contra la horda', 'Prepárate…');
+  showBanner(mode === 'campaign' ? 'Fase ' + stage.id + ': ' + stage.name : tourney ? 'Torneo contra ' + battle.other.name : mode === 'duel' ? '⚔️ Duelo contra ' + battle.other.name : '🤝 Con ' + battle.other.name + ' contra la horda',
+    tourney ? 'Juega a ' + RIVAL_STYLES[battle.rival.style].name.toLowerCase() : 'Prepárate…');
   sfx('start');
 }
 function applyDuelMod(bd, id) {
@@ -184,6 +242,7 @@ function endDuelIntro() {
   if (!b || !b.intro) return;
   b.intro = false;
   if (b.mode === 'rogue') showBanner('Modo roguelike', 'Jefe final en la oleada ' + b.maxWaves + ': ' + BOSSES[b.boss].name);
+  else if (b.mode === 'reto') showBanner(b.opts.from ? 'Reto de ' + b.opts.from : 'Reto nuevo', b.opts.from ? 'Supera la oleada ' + b.opts.target : 'Aguanta todo lo que puedas');
   else showBanner('⚔️ Duelo contra ' + b.other.name, b.mod.name + ' · Jefe final: ' + BOSSES[b.boss].name);
   sfx('start');
   updateHud(true);
@@ -230,7 +289,7 @@ function hpScale() {
     var ramp = b.maxWaves > 1 ? 0.55 + 0.45 * (w - 1) / (b.maxWaves - 1) : 1;
     s *= 1 + (b.stage.hp - 1) * ramp;
   }
-  if (b.mode === 'duel' && w > 12) s *= Math.pow(1.22, w - 12);
+  if ((b.mode === 'duel' || b.mode === 'reto') && w > 12) s *= Math.pow(1.22, w - 12);
   // roguelike: a partir de la 15 aprieta más, que las ventajas se acumulan
   if (b.mode === 'rogue' && w > 15) s *= Math.pow(ROGUE_LATE, w - 15);
   if (b.event && b.event.id === 'horda') s *= 0.7;
@@ -246,7 +305,8 @@ function isBossWave(w) {
 function planWave(w) {
   var b = battle;
   var caos = b.mod && b.mod.id === 'caos';
-  var event = w >= (caos ? 2 : 3) && (caos || Math.random() < 0.4) ? pick(WAVE_EVENTS) : null;
+  var roll = brand(), evPick = brand();
+  var event = w >= (caos ? 2 : 3) && (caos || roll < 0.4) ? WAVE_EVENTS[Math.floor(evPick * WAVE_EVENTS.length)] : null;
   var count = Math.round((9 + w * 2) * (event && event.id === 'horda' ? 1.4 : 1) * (b.mod && b.mod.id === 'enjambre' ? 2 : 1));
   var mix = ['blob', 'blob', 'blob'];
   if (w >= 2) mix.push('imp');
@@ -257,7 +317,7 @@ function planWave(w) {
   if (w >= 6) mix.push('rocoso');
   if (w >= 8) mix.push('brute', 'ghost', 'rocoso', 'escarcha');
   var queue = [];
-  for (var i = 0; i < count; i++) queue.push({ kind: pick(mix) });
+  for (var i = 0; i < count; i++) queue.push({ kind: bpick(mix) });
   if (isBossWave(w)) {
     var rot = BOSS_ORDER[(w / 5 - 1) % BOSS_ORDER.length];
     // roguelike: rotan los jefes y el de la ruleta llega en la última oleada
@@ -312,6 +372,7 @@ function updateCoach(dt) {
 function spawnNext() {
   var b = battle, spec = b.queue.shift();
   var sc = hpScale();
+  bestiaryAdd(spec.kind, !!spec.boss, false);
   // en el cooperativo, un solo camino: el de tu tablero
   (b.mode === 'coop' ? [b.player] : b.boards).forEach(function (bd) {
     if (spec.boss) {
@@ -403,14 +464,14 @@ function endBattle(won, draw) {
       res.gold = 40;
       res.lines.push(b.other.name + ' y tú caísteis a la vez.');
     } else if (won) {
-      res.trophies = 25 + b.opts.level * 5;
+      res.trophies = duelTrophies(b.opts.level, arenaIndex());
       res.gold = 60 + b.opts.level * 40 + arenaIndex() * ARENA_GOLD;
       res.gems = 2 + b.opts.level * 2;
       res.chest = b.opts.level >= 2 ? 'oro' : 'plata';
       meta.duelWins++;
       res.lines.push(b.other.name + ' no pudo con tu defensa.');
     } else {
-      res.trophies = -Math.min(meta.trophies, 15);
+      res.trophies = -Math.min(meta.trophies, duelLoss(arenaIndex()));
       res.gold = 20;
       meta.duelLosses++;
       res.lines.push(b.other.name + ' aguantó más que tú.');
@@ -421,6 +482,24 @@ function endBattle(won, draw) {
     addTrophies(res.trophies);
     if (arenaIndex() > arena0) res.lines.push('¡Nueva arena: ' + ARENAS[arenaIndex()].name + '!');
     if (roadPending()) res.lines.push('Tienes premios en el camino de trofeos.');
+  } else if (b.mode === 'reto') {
+    var o = b.opts, rec = retoRecord(o);
+    res.gold = 20 + b.wave * 8;
+    res.gems = Math.floor(b.wave / 5);
+    res.reto = { wave: b.wave };
+    var better = b.wave > (rec.best || 0);
+    rec.best = Math.max(rec.best || 0, b.wave);
+    if (o.from) {
+      res.won = b.wave > o.target;
+      res.lines.push(res.won ? '¡Has superado a ' + o.from + '! Llegó a la oleada ' + o.target + '.' : o.from + ' sigue por delante: llegó a la oleada ' + o.target + '.');
+      // la primera vez que ganas un reto, cofre de plata
+      if (res.won && !rec.won) { rec.won = true; meta.stats.retosWon = (meta.stats.retosWon || 0) + 1; res.chest = 'plata'; }
+    } else {
+      res.won = b.wave >= 10;
+      res.lines.push('Has llegado a la oleada ' + b.wave + '. Reta a un amigo a superarlo.');
+    }
+    if (better && rec.best > 1) res.lines.push('Tu mejor marca en este reto: oleada ' + rec.best + '.');
+    won = res.won;
   } else if (b.mode === 'rogue') {
     res.gold = 20 + b.wave * 10;
     res.gems = Math.floor(b.wave / 5) + (won ? 5 : 0);
@@ -447,6 +526,7 @@ function endBattle(won, draw) {
   if (b.mode === 'duel' && res.won) missionAdd('duel', 1);
   if (b.mode === 'campaign' && res.won && res.stars === 3) missionAdd('stars', 1);
   if (b.mode === 'coop') missionAdd('coop', b.wave);
+  addGameStats(p, res.won, b.time);
   meta.gold += res.gold;
   meta.gems += res.gems;
   if (res.chest) res.chestSlot = addChestSlot(res.chest);   // se guarda en los huecos de cofre
@@ -469,7 +549,7 @@ function resizeCanvas() {
   if (!canvas) return;
   var wrap = canvas.parentNode;
   var w = wrap.clientWidth, h = wrap.clientHeight;
-  dpr = Math.min(2, window.devicePixelRatio || 1);
+  dpr = Math.min(meta.settings.saver ? 1.25 : 2, window.devicePixelRatio || 1);
   canvas.width = Math.round(w * dpr);
   canvas.height = Math.round(h * dpr);
   canvas.style.width = w + 'px';
@@ -671,6 +751,7 @@ function drawBattle(now) {
     drawBoard(battle.player, layout.main, now, true);
     drawBoard(battle.other, layout.other, now, false);
     drawRivalHeader(battle.other, { oy: layout.other.headY });
+    drawAmbient(now);
     return;
   }
   if (battle.other) {
@@ -688,6 +769,59 @@ function drawBattle(now) {
     }
   }
   drawBoard(battle.player, layout.main, now, true);
+  drawAmbient(now);
+}
+/* Decorado animado de cada bioma, por encima de todo y muy suave: hojas en
+   el prado y el bosque, nieve en el hielo, brasas que suben (y el suelo que
+   late) en el volcán y la cripta, burbujas y luciérnagas en el pantano y
+   polvo en las ruinas y el desierto. Con el ahorro de batería no sale. */
+var AMBIENT = { prado: 'hojas', bosque: 'hojas', hielo: 'nieve', volcan: 'brasas', cripta: 'brasas', pantano: 'burbujas', ruinas: 'polvo', desierto: 'polvo' };
+var amb = { key: '', parts: [], last: 0 };
+function ambPart(kind, w, h, anywhere) {
+  var p = { x: Math.random() * w, y: anywhere ? Math.random() * h : 0, s: 0.6 + Math.random() * 0.8, ph: Math.random() * 6.3, t: Math.random() };
+  if (kind === 'nieve' || kind === 'hojas') { if (!anywhere) p.y = -10; p.vy = (kind === 'nieve' ? 22 : 16) + Math.random() * 22; }
+  else if (kind === 'brasas' || kind === 'burbujas') { if (!anywhere) p.y = h + 10; p.vy = -(14 + Math.random() * 30); }
+  else { p.vx = 8 + Math.random() * 18; p.vy = (Math.random() - 0.5) * 4; if (!anywhere) p.x = -10; }
+  return p;
+}
+function drawAmbient(now) {
+  var kind = AMBIENT[battle.player.biome] || 'polvo', n = meta.settings.saver ? 0 : kind === 'polvo' ? 22 : 26;
+  var w = layout.w, h = layout.h, key = kind + w + 'x' + h;
+  var dt = amb.last ? Math.min(0.05, (now - amb.last) / 1000) : 0;
+  amb.last = now;
+  if (battle.paused || battle.ended) dt = 0;
+  if (!n) return;
+  if (amb.key !== key) { amb.key = key; amb.parts = []; for (var i = 0; i < n; i++) amb.parts.push(ambPart(kind, w, h, true)); }
+  ctx.save();
+  if (kind === 'brasas') {
+    // el suelo del volcán late con luz naranja
+    var lg = ctx.createLinearGradient(0, h, 0, h * 0.55);
+    lg.addColorStop(0, 'rgba(255,100,30,' + (0.13 + 0.07 * Math.sin(now / 700)) + ')'); lg.addColorStop(1, 'rgba(255,100,30,0)');
+    ctx.fillStyle = lg; ctx.fillRect(0, h * 0.55, w, h * 0.45);
+  }
+  amb.parts.forEach(function (p, k) {
+    p.ph += dt * (kind === 'hojas' ? 2.2 : 1.4);
+    var sway = Math.sin(p.ph) * (kind === 'hojas' ? 26 : kind === 'nieve' ? 14 : 6);
+    p.y += p.vy * dt; p.x += (p.vx || 0) * dt + sway * dt;
+    if (p.y > h + 12 || p.y < -14 || p.x > w + 12 || p.x < -14) amb.parts[k] = ambPart(kind, w, h, false);
+    var x = p.x, y = p.y, s = p.s;
+    if (kind === 'nieve') {
+      ctx.globalAlpha = 0.75; ctx.fillStyle = '#ffffff'; circle(ctx, x, y, 1.3 + s * 1.6); ctx.fill();
+    } else if (kind === 'hojas') {
+      ctx.globalAlpha = 0.8; ctx.save(); ctx.translate(x, y); ctx.rotate(p.ph);
+      ctx.fillStyle = k % 3 ? '#7fcf4a' : '#f2c14a';
+      ctx.beginPath(); ctx.ellipse(0, 0, 4 * s + 1.5, 2 * s + 0.8, 0, 0, Math.PI * 2); ctx.fill(); ctx.restore();
+    } else if (kind === 'brasas') {
+      ctx.globalAlpha = 0.5 + 0.4 * Math.sin(p.ph * 3);
+      glow(ctx, x, y, 5 * s + 2, '#ff7a1a', 0.7); ctx.fillStyle = '#ffd38a'; circle(ctx, x, y, 0.8 + s); ctx.fill();
+    } else if (kind === 'burbujas') {
+      if (k % 3) { ctx.globalAlpha = 0.45; ctx.strokeStyle = '#c8f59a'; ctx.lineWidth = 1.2; circle(ctx, x, y, 1.5 + s * 2.5); ctx.stroke(); }
+      else { ctx.globalAlpha = 0.45 + 0.45 * Math.sin(p.ph * 2); glow(ctx, x, y, 7, '#e8ff7a', 0.8); }
+    } else {
+      ctx.globalAlpha = 0.35; ctx.fillStyle = '#f3e2b8'; circle(ctx, x, y, 0.8 + s * 1.2); ctx.fill();
+    }
+  });
+  ctx.restore();
 }
 /* Fondo de los tableros «over»: su propia zona de juego muy desenfocada
    (reducida a 40 px y ampliada) y oscurecida, a pantalla completa, para
@@ -961,7 +1095,7 @@ function drawBoard(b, L, now, isMain) {
   // textos en coordenadas de pantalla (nítidos)
   var toS = function (x, y) { return { x: L.ox + x * sc, y: L.oy + y * sc }; };
   ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-  (ally ? [] : b.enemies).forEach(function (e) {
+  (ally || !meta.settings.dmgNums ? [] : b.enemies).forEach(function (e) {
     if (dual && pic && e.y > G.H + 0.1) return; // aún fuera del mapa
     var p = toS(e.x, e.y - (e.boss ? 0.92 : ENEMIES[e.kind].size + 0.16));
     // el número da un saltito al recibir un golpe
@@ -971,6 +1105,7 @@ function drawBoard(b, L, now, isMain) {
   });
   if (isMain || sc > 30) {
     b.texts.forEach(function (t) {
+      if (t.dmg && !meta.settings.dmgNums) return;
       var p = toS(t.x, t.y);
       ctx.globalAlpha = Math.min(1, t.life / t.max * 1.6);
       var fs = Math.max(10, sc * (t.big ? 0.3 : 0.22));

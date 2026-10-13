@@ -6,8 +6,8 @@ Tower defense de fusión para móvil y escritorio, gratis y sin anuncios. Invoca
 
 ## Modos
 
-- **🗺️ Campaña**: 30 fases con jefe final y estrellas según las vidas que conserves. No da tropas: las tropas nuevas solo salen en cofres y en la tienda. Cada fase empieza con algo más de maná y su dureza llega poco a poco: la primera oleada viene al 55 % y la última al 100 %. La primera partida trae un tutorial paso a paso (invocar, fusionar, mejorar y comandante), y los monstruos esperan a que tengas dos tropas. Las fases van en tres zonas de 10 (`CAMPAIGN_ZONES` en `js/data.js`): arriba de la lista hay un mapa con el camino de cada zona, tus estrellas y tu comandante sobre la fase que toca (tocar una fase baja a su placa). El cofre de la victoria depende de la zona (madera, plata y oro) y sube uno (`CHEST_UP`) si sacas estrellas nuevas.
-- **⚔️ Duelo 1 contra 1**: tú y un rival (IA fácil, normal o difícil) recibís los mismos monstruos. Gana quien aguante más; si caéis a la vez es empate. El rival fácil lleva cartas 2 niveles por debajo de las tuyas y el difícil, 2 por encima (`DUEL_CARD_OFFSET` en `js/battle.js`). Da trofeos (fácil 25, normal 30, difícil 35; pierdes 15). Se juega en el tablero de tu arena y cada arena suma 20 de oro por victoria (`ARENAS` y `ARENA_GOLD` en `js/data.js`). Antes de empezar, una ruleta cruza el mapa y elige un **modificador** para los dos (`DUEL_MODS`: doble de maná, muerte súbita, enjambre, noche de jefes…) y el **jefe final**, que sale en todas las oleadas de jefe. Hay también reliquias (+35% de daño a un elemento, crítico para todas, una vida por jefe) y la **Invocación dirigida** (mantener pulsada una carta de abajo invoca esa tropa por el doble de maná). El torneo no lleva ruleta. En el duelo hay **emojis rápidos** (`EMOTES`) y el rival contesta o reacciona a veces.
+- **🗺️ Campaña**: 40 fases con jefe final y estrellas según las vidas que conserves. No da tropas: las tropas nuevas solo salen en cofres y en la tienda. Cada fase empieza con algo más de maná y su dureza llega poco a poco: la primera oleada viene al 55 % y la última al 100 %. La primera partida trae un tutorial paso a paso (invocar, fusionar, mejorar y comandante), y los monstruos esperan a que tengas dos tropas. Las fases van en cuatro zonas de 10 (la cuarta, Tierras del Eclipse, de la 31 a la 40) (`CAMPAIGN_ZONES` en `js/data.js`): arriba de la lista hay un mapa con el camino de cada zona, tus estrellas y tu comandante sobre la fase que toca (tocar una fase baja a su placa). El cofre de la victoria depende de la zona (madera, plata y oro) y sube uno (`CHEST_UP`) si sacas estrellas nuevas.
+- **⚔️ Duelo 1 contra 1**: tú y un rival (IA fácil, normal o difícil) recibís los mismos monstruos. Cada rival (`RIVALS` en `js/data.js`) tiene su forma de jugar (`RIVAL_STYLES`: al ataque, ahorro, fusiones o táctica, que recoloca tropas en el altar y la atalaya; ver `Board.think` y `aiReposition`) y lleva hasta tres tropas de su elemento favorito (`rivalDeck`). Los trofeos dependen de tu arena (`duelTrophies` y `duelLoss`): el fácil da cada vez menos. Gana quien aguante más; si caéis a la vez es empate. El rival fácil lleva cartas 2 niveles por debajo de las tuyas y el difícil, 2 por encima (`DUEL_CARD_OFFSET` en `js/battle.js`). Da trofeos (fácil 25, normal 30, difícil 35; pierdes 15). Se juega en el tablero de tu arena y cada arena suma 20 de oro por victoria (`ARENAS` y `ARENA_GOLD` en `js/data.js`). Antes de empezar, una ruleta cruza el mapa y elige un **modificador** para los dos (`DUEL_MODS`: doble de maná, muerte súbita, enjambre, noche de jefes…) y el **jefe final**, que sale en todas las oleadas de jefe. Hay también reliquias (+35% de daño a un elemento, crítico para todas, una vida por jefe) y la **Invocación dirigida** (mantener pulsada una carta de abajo invoca esa tropa por el doble de maná). El torneo no lleva ruleta. En el duelo hay **emojis rápidos** (`EMOTES`) y el rival contesta o reacciona a veces.
 - **🤝 Co-op**: tú y un aliado (IA) compartís vidas contra oleadas infinitas en **un solo camino**, el de tu tablero. La cuadrícula del aliado se pinta encima de tu tablero, sobre una placa (`drawAllyPanel`), en las mismas coordenadas (su `geo` es la tuya con otro `y0`), así sus disparos caen sobre tus monstruos: el aliado no mueve monstruos (`feed`) y su lista de monstruos es la tuya. El maná de cada baja es para los dos (`shareWith`), y la Maldición de Nyx y el Escudo de Sol de cualquiera valen para los dos (`partner`, `guarded`). Los monstruos tienen `COOP_HP` veces más vida. Récord de oleadas.
 - **🎲 Roguelike**: tú solo contra 30 oleadas (`ROGUE_WAVES`). La ruleta elige el jefe final, que llega en la última con 2,5 veces más vida. Cada 30 s de partida (`ROGUE_PICK_EVERY`) eliges 1 de 3 ventajas que se acumulan: habilidades de comandante (`CMD_SKILLS`) y reliquias y modificadores de `ROGUE_MODS`. Desde la oleada 15 aprieta más (`ROGUE_LATE` en `js/battle.js`). Quinta carta de la fila de modos (`assets/ui/modo-roguelike.webp`, la de 1 contra 1 en rojo y sin el texto; el nombre va escrito encima, igual que en Co-op con `modo-coop-limpio.webp`); récord en `meta.rogueBest`.
 
@@ -69,13 +69,25 @@ Oro, gemas, cartas con 10 niveles, cofres de madera, plata y oro, cofre gratis c
 
 La ficha de cada tropa tiene dos pestañas: Vídeo (una mini partida con la tropa en acción) y Stats (daño, velocidad y rasgos). Mejorar va en dos toques: el primero enseña lo que gana en cada stat al subir de nivel y el segundo lo confirma. Las tropas bloqueadas también tienen ficha, con lo que hacen y cómo conseguirlas.
 
-**Navegación:** barra de pestañas abajo con Tienda, Mazo (tropas y comandante), Jugar y Equipos (bloqueado, llegará pronto). También se pasa entre Tienda, Mazo y Jugar deslizando a los lados (`bindSwipe` en `js/ui.js`).
+**Navegación:** barra de pestañas abajo con Tienda, Mazo (tropas y comandante), Jugar y Retos. También se pasa entre Tienda, Mazo y Jugar deslizando a los lados (`bindSwipe` en `js/ui.js`).
 
 **🎟️ Códigos:** en el inicio se canjean códigos de regalo (oro, gemas o cofres), una vez cada uno. Se definen en `CODES` de `js/data.js`.
 
 **🎁 Huecos de cofre:** los cofres que ganas en batalla se guardan en 4 huecos de la pantalla principal. Se desbloquean de uno en uno (madera 5 min, plata 1 h, oro 3 h; `time` en `CHESTS`) o se abren ya pagando 1 gema por cada 6 minutos que falten. Con los 4 llenos, el cofre de la batalla se pierde.
 
-**♻️ Restablecer juego:** en Opciones (atajo del inicio, junto al sonido); tras confirmarlo, borra todo el progreso (solo conserva el ajuste de sonido).
+**🎯 Retos con amigos** (pestaña Retos, modo `reto` en `js/battle.js`): supervivencia con semilla (`seededRng`, `battle.rng`): oleadas, eventos, casillas, tablero, modificador (`RETO_MODS`) y jefe salen igual para todos. Se juega con el mazo y el comandante de quien crea el reto, a nivel de torneo y sin talentos. Al terminar, «Retar a un amigo» comparte un enlace `?reto=` con tu nombre y tu oleada (`encodeReto`); al abrirlo se guarda en `meta.retos` y se ofrece jugarlo. Superar por primera vez el reto de un amigo da un cofre de plata.
+
+**👤 Perfil** (botón Perfil del inicio, donde antes estaban los Códigos, que pasan a Opciones): cifras de todas las partidas (`meta.stats`, `addGameStats`), récords de cada modo, tropas más usadas, **logros** (`ACHIEVEMENTS`, se cobran una vez) y **bestiario** (`meta.seen`: cada monstruo y jefe, oculto hasta que sale).
+
+**🃏 Mazos guardados:** tres mazos, cada uno con su comandante (`meta.decks`, `switchDeck`); el activo es `meta.deck`.
+
+**🛡️ Garantía del cofre de oro:** como mucho cada `PITY_GOLD` (8) cofres de oro sale una mítica (`meta.pity`); la ficha del cofre dice cuántos faltan.
+
+**💾 Copia de seguridad** en Opciones: toda la partida en un código `RT1:` (`exportSave` / `importSave`) para copiar, descargar o cargar en otro móvil. Al entrar se pide al navegador que no borre la partida (`askPersist`) y en Opciones hay botón para instalar el juego.
+
+**⚙️ Opciones:** sonido, música, vibración, números en partida (vida de los monstruos y críticos) y ahorro de batería (unos 30 fotogramas por segundo, menos trocitos, sin grabar la repetición, sin decorado animado y menos resolución).
+
+**♻️ Restablecer juego:** en Opciones (atajo del inicio); tras confirmarlo, borra todo el progreso (solo conserva los ajustes y el nombre sonido).
 
 ## Arte
 
@@ -104,7 +116,9 @@ HTML, CSS y JavaScript sin dependencias ni build. Dibujo vectorial en canvas y s
 - `js/art.js`: dibujo de personajes y monstruos.
 - `js/board.js`: tablero, combate e IA.
 - `js/battle.js`: modos, oleadas, dibujo y controles.
-- `js/meta.js`: progreso y cofres. `js/ui.js`: menús y bucle.
+- `js/meta.js`: progreso y cofres. `js/ui.js`: menús y bucle. `js/music.js`: música sintetizada (un tema por bioma, otro para el menú y otro para los jefes; `MUSIC_THEMES`).
+- Decorado animado de cada bioma por encima del tablero (`drawAmbient` en `js/battle.js`) y transición corta al cambiar de pantalla (`showScreen`).
+- `sw.js`: al instalar guarda solo `CORE` (cada archivo por su cuenta) y el arte (`EXTRA`) después, de 6 en 6.
 
 Juego original. Inspirado en el género de tower defense de fusión; no está afiliado a ningún juego comercial ni usa sus nombres, personajes ni gráficos.
 

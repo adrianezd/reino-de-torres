@@ -29,9 +29,18 @@ function defaultMeta() {
     cmdTree: {},             // comandante -> ramas elegidas en cada piso de su árbol (CMD_TREE)
     freeChestAt: 0,         // cuándo está listo el siguiente cofre gratis (ms)
     slots: [null, null, null, null],   // cofres ganados: { type, unlockAt } (unlockAt: cuándo se abre; 0 si no se ha empezado)
-    settings: { sound: true },
+    // vibra: vibración · saver: ahorro de batería · dmgNums: vida de los monstruos y golpes críticos en números
+    settings: { sound: true, music: true, vibra: true, saver: false, dmgNums: true },
     seenTutorial: false,
-    lastSeenVersion: ''   // última versión cuyas novedades se han visto (js/version.js)
+    lastSeenVersion: '',  // última versión cuyas novedades se han visto (js/version.js)
+    name: '',             // nombre de quien juega (perfil y retos con amigos)
+    decks: null,          // mazos guardados: [{ deck, cmd }] (DECK_SLOTS); el activo es meta.deck
+    deckSlot: 0,
+    stats: {},            // totales de todas las partidas (ver addGameStats)
+    seen: {},             // bestiario: monstruo o jefe ('B' + clave) -> veces derrotado (0: solo visto)
+    achieved: [],         // logros cobrados
+    pity: 0,              // cofres de oro seguidos sin mítica ni legendaria (PITY_GOLD)
+    retos: []             // retos de amigos recibidos: { code, from, wave, best, won }
   };
 }
 function defaultCmdCards() {
@@ -42,42 +51,181 @@ function defaultCmdCards() {
 function loadMeta() {
   try {
     var raw = localStorage.getItem(SAVE_KEY);
-    if (!raw) return defaultMeta();
-    var m = Object.assign(defaultMeta(), JSON.parse(raw));
-    // saneado básico
-    m.deck = (m.deck || []).filter(function (id) { return UNITS[id] && m.cards[id]; });
-    STARTER_UNITS.forEach(function (id) { if (!m.cards[id]) m.cards[id] = { lv: 1, n: 0 }; });
-    while (m.deck.length < 5) {
-      var extra = Object.keys(m.cards).find(function (id) { return m.deck.indexOf(id) === -1; });
-      if (!extra) break;
-      m.deck.push(extra);
-    }
-    if (!COMMANDERS[m.commander]) m.commander = 'aria';
-    if (!Array.isArray(m.road)) m.road = [];
-    m.trophyBest = Math.max(m.trophyBest || 0, m.trophies || 0);
-    if (!m.cmdCards) m.cmdCards = {};
-    COMMANDER_ORDER.forEach(function (k) { if (!m.cmdCards[k]) m.cmdCards[k] = { lv: 1, n: 0 }; });
-    // partidas de antes de los comandantes bloqueados: se quedan los que ya
-    // tenían cartas, subidos o elegidos
-    if (!Array.isArray(m.cmdOwned)) m.cmdOwned = COMMANDER_ORDER.filter(function (k) {
-      var c = m.cmdCards[k];
-      return !COMMANDERS[k].locked || k === m.commander || c.lv > 1 || c.n > 0;
-    });
-    if (m.cmdOwned.indexOf(m.commander) === -1) m.commander = 'aria';
-    var slots = Array.isArray(m.slots) ? m.slots : [];
-    m.slots = [];
-    for (var i = 0; i < CHEST_SLOTS; i++) m.slots.push(slots[i] && CHESTS[slots[i].type] ? slots[i] : null);
-    return m;
-  } catch (e) { return defaultMeta(); }
+    return fixMeta(raw ? JSON.parse(raw) : {});
+  } catch (e) { return fixMeta({}); }
+}
+// completa y sanea una partida guardada (también la de una copia de seguridad)
+function fixMeta(saved) {
+  var m = Object.assign(defaultMeta(), saved);
+  m.settings = Object.assign(defaultMeta().settings, saved.settings || {});
+  ['stats', 'seen'].forEach(function (k) { if (!m[k] || typeof m[k] !== 'object') m[k] = {}; });
+  ['achieved', 'retos'].forEach(function (k) { if (!Array.isArray(m[k])) m[k] = []; });
+  // saneado básico
+  m.deck = (m.deck || []).filter(function (id) { return UNITS[id] && m.cards[id]; });
+  STARTER_UNITS.forEach(function (id) { if (!m.cards[id]) m.cards[id] = { lv: 1, n: 0 }; });
+  while (m.deck.length < 5) {
+    var extra = Object.keys(m.cards).find(function (id) { return m.deck.indexOf(id) === -1; });
+    if (!extra) break;
+    m.deck.push(extra);
+  }
+  if (!COMMANDERS[m.commander]) m.commander = 'aria';
+  if (!Array.isArray(m.road)) m.road = [];
+  m.trophyBest = Math.max(m.trophyBest || 0, m.trophies || 0);
+  if (!m.cmdCards) m.cmdCards = {};
+  COMMANDER_ORDER.forEach(function (k) { if (!m.cmdCards[k]) m.cmdCards[k] = { lv: 1, n: 0 }; });
+  // partidas de antes de los comandantes bloqueados: se quedan los que ya
+  // tenían cartas, subidos o elegidos
+  if (!Array.isArray(m.cmdOwned)) m.cmdOwned = COMMANDER_ORDER.filter(function (k) {
+    var c = m.cmdCards[k];
+    return !COMMANDERS[k].locked || k === m.commander || c.lv > 1 || c.n > 0;
+  });
+  if (m.cmdOwned.indexOf(m.commander) === -1) m.commander = 'aria';
+  var slots = Array.isArray(m.slots) ? m.slots : [];
+  m.slots = [];
+  for (var i = 0; i < CHEST_SLOTS; i++) m.slots.push(slots[i] && CHESTS[slots[i].type] ? slots[i] : null);
+  // mazos guardados: el activo es meta.deck; los demás, saneados igual
+  if (!Array.isArray(m.decks)) m.decks = [];
+  for (var d = 0; d < DECK_SLOTS; d++) {
+    var dk = m.decks[d];
+    var ids = dk && Array.isArray(dk.deck) ? dk.deck.filter(function (id) { return UNITS[id] && m.cards[id]; }) : [];
+    m.decks[d] = ids.length === 5 ? { deck: ids, cmd: m.cmdOwned.indexOf(dk.cmd) !== -1 ? dk.cmd : m.commander } : null;
+  }
+  m.deckSlot = Math.max(0, Math.min(DECK_SLOTS - 1, m.deckSlot | 0));
+  m.decks[m.deckSlot] = { deck: m.deck.slice(), cmd: m.commander };
+  return m;
 }
 var meta = loadMeta();
-function saveMeta() { try { localStorage.setItem(SAVE_KEY, JSON.stringify(meta)); } catch (e) {} }
-// empieza de cero (solo se conserva si el sonido está activado)
+function saveMeta() {
+  // el mazo activo también queda en su hueco de mazos guardados
+  if (meta.decks) meta.decks[meta.deckSlot] = { deck: meta.deck.slice(), cmd: meta.commander };
+  try { localStorage.setItem(SAVE_KEY, JSON.stringify(meta)); } catch (e) {}
+}
+// empieza de cero (solo se conservan los ajustes y el nombre)
 function resetMeta() {
-  var sound = meta.settings.sound;
-  meta = defaultMeta();
-  meta.settings.sound = sound;
+  var settings = meta.settings, name = meta.name;
+  meta = fixMeta({});
+  meta.settings = settings; meta.name = name;
   saveMeta();
+}
+
+/* ---------- copia de seguridad ----------
+   Toda la partida en un código de texto (RT1: y el JSON en base64) que se
+   puede copiar, guardar en un archivo y cargar en otro móvil. */
+function exportSave() {
+  saveMeta();
+  var json = JSON.stringify(meta);
+  return 'RT1:' + btoa(unescape(encodeURIComponent(json)));
+}
+// carga una copia; devuelve false si el código no vale
+function importSave(code) {
+  try {
+    code = String(code || '').trim().replace(/\s+/g, '');
+    if (code.indexOf('RT1:') !== 0) return false;
+    var saved = JSON.parse(decodeURIComponent(escape(atob(code.slice(4)))));
+    if (!saved || typeof saved !== 'object' || !saved.cards || !Array.isArray(saved.deck)) return false;
+    var m = fixMeta(saved);
+    m.lastSeenVersion = meta.lastSeenVersion;
+    meta = m;
+    saveMeta();
+    return true;
+  } catch (e) { return false; }
+}
+// pide al navegador que no borre la partida aunque falte espacio o pase tiempo sin entrar
+function askPersist() {
+  try { if (navigator.storage && navigator.storage.persist) navigator.storage.persist(); } catch (e) {}
+}
+
+/* ---------- retos con amigos ----------
+   Un reto es una semilla con un mazo y un comandante (ver el modo reto en
+   js/battle.js). Se pasan por enlace (?reto=...) con el nombre de quien reta
+   y la oleada a la que llegó. meta.retos guarda los retos jugados o recibidos
+   con tu mejor oleada en cada uno. */
+function retoKey(o) { return o.seed + '|' + o.deck.join(',') + '|' + o.cmd; }
+function retoRecord(o) {
+  var k = retoKey(o), r = meta.retos.filter(function (x) { return x.key === k; })[0];
+  if (!r) {
+    r = { key: k, seed: o.seed, deck: o.deck.slice(), cmd: o.cmd, from: o.from || null, target: o.target || 0, best: 0, won: false, at: Date.now() };
+    meta.retos.unshift(r);
+    if (meta.retos.length > 20) meta.retos.length = 20;
+  }
+  return r;
+}
+// las opciones de partida de un reto guardado
+function retoOpts(r) { return { seed: r.seed, deck: r.deck.slice(), cmd: r.cmd, from: r.from, target: r.target }; }
+function newRetoOpts() { return { seed: Math.floor(Math.random() * 4294967296), deck: meta.deck.slice(), cmd: meta.commander }; }
+function b64url(s) { return btoa(unescape(encodeURIComponent(s))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''); }
+function unb64url(s) { s = s.replace(/-/g, '+').replace(/_/g, '/'); while (s.length % 4) s += '='; return decodeURIComponent(escape(atob(s))); }
+// código del enlace: tu nombre y tu oleada en ese reto
+function encodeReto(o, wave) {
+  return b64url(JSON.stringify({ s: o.seed, d: o.deck, c: o.cmd, n: (meta.name || 'Alguien').slice(0, 20), w: wave }));
+}
+function decodeReto(code) {
+  try {
+    var d = JSON.parse(unb64url(String(code)));
+    if (!d || typeof d.s !== 'number' || !Array.isArray(d.d) || d.d.length !== 5 || !COMMANDERS[d.c]) return null;
+    if (!d.d.every(function (id) { return UNITS[id]; })) return null;
+    var w = Math.max(0, Math.min(999, Math.floor(+d.w || 0)));
+    return { seed: d.s >>> 0, deck: d.d.slice(), cmd: d.c, from: String(d.n || 'Alguien').slice(0, 20), target: w };
+  } catch (e) { return null; }
+}
+// guarda un reto que llega por enlace (si ya lo tenías, se queda tu mejor marca)
+function receiveReto(o) {
+  var r = retoRecord(o);
+  r.from = o.from; r.target = o.target; r.won = r.best > r.target; r.at = Date.now();
+  meta.retos.splice(meta.retos.indexOf(r), 1); meta.retos.unshift(r);
+  saveMeta();
+  return r;
+}
+
+/* ---------- mazos guardados ---------- */
+function switchDeck(i) {
+  if (i === meta.deckSlot || i < 0 || i >= DECK_SLOTS) return;
+  meta.decks[meta.deckSlot] = { deck: meta.deck.slice(), cmd: meta.commander };
+  // un hueco vacío empieza como copia del mazo de ahora
+  var d = meta.decks[i] || { deck: meta.deck.slice(), cmd: meta.commander };
+  meta.deckSlot = i;
+  meta.deck = d.deck.slice();
+  if (cmdOwned(d.cmd)) meta.commander = d.cmd;
+  saveMeta();
+}
+
+/* ---------- estadísticas, bestiario y logros ---------- */
+// al terminar cada partida se suman las cifras de tu tablero
+function addGameStats(p, won, time) {
+  var s = meta.stats;
+  var add = function (k, v) { s[k] = (s[k] || 0) + (v || 0); };
+  add('games', 1); if (won) add('wins', 1);
+  add('kills', p.kills); add('bossKills', p.bossKills); add('merges', p.merges); add('summons', p.summons);
+  add('cmds', p.cmds); add('time', Math.round(time || 0));
+  s.bestCombo = Math.max(s.bestCombo || 0, p.bestCombo || 0);
+  s.maxRank = Math.max(s.maxRank || 0, p.maxRank || 0);
+  if (!s.used) s.used = {};
+  if (!s.dmg) s.dmg = {};
+  Object.keys(p.summonedBy || {}).forEach(function (id) { s.used[id] = (s.used[id] || 0) + p.summonedBy[id]; });
+  Object.keys(p.dmgBy || {}).forEach(function (id) { if (id !== 'cmd') s.dmg[id] = Math.round((s.dmg[id] || 0) + p.dmgBy[id]); });
+}
+function bestiaryKey(kind, boss) { return (boss ? 'B' : '') + kind; }
+// visto (kill false) o derrotado (kill true)
+function bestiaryAdd(kind, boss, kill) {
+  var k = bestiaryKey(kind, boss);
+  meta.seen[k] = (meta.seen[k] || 0) + (kill ? 1 : 0);
+}
+function bestiarySeen() {
+  return Object.keys(ENEMIES).filter(function (k) { return meta.seen[k] != null; }).length +
+    BOSS_ORDER.filter(function (k) { return meta.seen['B' + k] != null; }).length;
+}
+function achValue(a) { return Math.min(a.goal, a.get()); }
+function achClaimed(a) { return meta.achieved.indexOf(a.id) !== -1; }
+function achReady(a) { return !achClaimed(a) && a.get() >= a.goal; }
+function achPending() { return ACHIEVEMENTS.filter(achReady).length; }
+function claimAch(id) {
+  var a = ACHIEVEMENTS.filter(function (x) { return x.id === id; })[0];
+  if (!a || !achReady(a)) return null;
+  meta.achieved.push(a.id);
+  meta.gold += a.gold || 0;
+  meta.gems += a.gems || 0;
+  saveMeta();
+  return a;
 }
 
 function isUnlocked(id) { return !!meta.cards[id]; }
@@ -158,6 +306,20 @@ function openChest(type) {
     var id = pool[Math.floor(Math.random() * pool.length)];
     got[id] = (got[id] || 0) + 1;
   }
+  // garantía del cofre de oro: tras PITY_GOLD seguidos sin mítica ni
+  // legendaria, una común se cambia por una mítica
+  var pity = false;
+  if (ch.myth > 0) {
+    var top = Object.keys(got).some(function (k) { var r = UNITS[k].rarity; return r === 'mitica' || r === 'legendaria'; });
+    if (top) meta.pity = 0;
+    else if ((meta.pity || 0) + 1 >= PITY_GOLD && byRarity.mitica.length) {
+      var low = Object.keys(got).filter(function (k) { return UNITS[k].rarity === 'comun'; })[0] || Object.keys(got)[0];
+      if (--got[low] <= 0) delete got[low];
+      var my = pick(byRarity.mitica);
+      got[my] = (got[my] || 0) + 1;
+      meta.pity = 0; pity = true;
+    } else meta.pity = (meta.pity || 0) + 1;
+  }
   // cartas de comandante (salen antes que las tropas, ver chestItems)
   var cmdGot = {}, cmdNew = [];
   if (ch.cmdChance && Math.random() < ch.cmdChance) {
@@ -175,7 +337,7 @@ function openChest(type) {
     fresh.push(id);
   });
   saveMeta();
-  return { type: type, gold: gold, gems: gems, cards: got, cmdCards: cmdGot, fresh: fresh, cmdFresh: cmdNew };
+  return { type: type, gold: gold, gems: gems, cards: got, cmdCards: cmdGot, fresh: fresh, cmdFresh: cmdNew, pity: pity };
 }
 
 /* ---------- huecos de cofre ----------

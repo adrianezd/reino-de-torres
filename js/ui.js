@@ -14,7 +14,10 @@ var ICON_FILES = { '🪙': 'icons/moneda', '💎': 'icons/gema', '🏆': 'icons/
   '⚡': 'icons/rayo', '🗡': 'icons/critico', '🛡': 'icons/perfora', '🎵': 'icons/musica', '🎯': 'icons/diana', '📈': 'icons/grafico', '📍': 'icons/vecinas',
   '✨': 'icons/chispas', '💀': 'icons/calavera', '🌊': 'icons/ola', '🙂': 'icons/rival-facil', '😠': 'icons/rival-normal', '😈': 'icons/rival-dificil',
   '🔊': 'icons/sonido', '🔇': 'icons/silencio', '⏩': 'icons/rapido', '↻': 'icons/reiniciar', '🏠': 'icons/casa', '⚠': 'icons/aviso', '👇': 'icons/mano',
-  '🎲': 'icons/dado', '↔': 'icons/recolocar', '⬆': 'icons/mejorar' };
+  '🎲': 'icons/dado', '↔': 'icons/recolocar', '⬆': 'icons/mejorar',
+  // los que quedaban como emoji: atalaya, lobos, mejora, novedades y los iconos de los comandantes
+  '💪': 'icons/mejorar', '🐺': 'units/garra', '🏹': 'tiles/atalaya', '📣': 'icons/pergamino',
+  '🌨': 'fx/ventisca', '☄': 'fx/meteoro', '☀': 'fx/sol-escudo', '🧮': 'fx/torvald-forja' };
 var ICON_RE = new RegExp('(' + Object.keys(ICON_FILES).join('|') + ')️?', 'g');
 // tres estrellas de fase: las que no se han ganado, apagadas
 function starRow(n) { var s = ''; for (var i = 0; i < 3; i++) s += '<x-ico class="' + (i < n ? '' : 'off') + '" style="background-image:url(assets/icons/estrella.webp)"></x-ico>'; return s; }
@@ -54,7 +57,8 @@ function sfx(k) {
     case 'chest': [440, 554, 659, 880, 1109].forEach(function (f, i) { tone(f, 0.18, 'triangle', 0.1, i * 0.07); }); break;
   }
 }
-function buzz(ms) { if (navigator.vibrate) try { navigator.vibrate(ms); } catch (e) {} }
+function buzz(ms) { if (meta.settings.vibra && navigator.vibrate) try { navigator.vibrate(ms); } catch (e) {} }
+function reducedMotion() { return !!(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches); }
 function toast(msg) {
   var t = $('toast'); t.innerHTML = icons(esc(msg)); t.classList.add('show');
   clearTimeout(toast._h); toast._h = setTimeout(function () { t.classList.remove('show'); }, Math.max(1700, String(msg).length * 55));  // los largos duran más, para leerlos
@@ -63,20 +67,27 @@ function toast(msg) {
 /* ---------- pantallas ---------- */
 var currentScreen = 'home';
 function showScreen(name) {
+  var was = currentScreen;
   $('menu').hidden = name === 'battle';
   $('battleScreen').hidden = name !== 'battle';
   $('navbar').hidden = name === 'battle';
   if (name === 'battle') renderedScreen = '';
   currentScreen = name;
   // pestaña activa de la barra de abajo
-  var tab = name === 'shop' ? 'shop' : name === 'collection' || name === 'commanders' ? 'collection' : 'home';
+  var tab = name === 'shop' ? 'shop' : name === 'collection' || name === 'commanders' ? 'collection' : name === 'friends' ? 'friends' : 'home';
   document.querySelectorAll('[data-tab]').forEach(function (b) { b.classList.toggle('on', b.dataset.tab === tab); });
-  if (name !== 'battle') renderMenu(name);
+  if (name !== 'battle') { renderMenu(name); musicPlay('menu'); }
+  // transición corta al cambiar de pantalla (al deslizar ya entra de lado)
+  var el = name === 'battle' ? $('battleScreen') : $('menu');
+  if (was !== name && el.animate && !reducedMotion() && !$('menu').classList.contains('no-intro')) {
+    el.animate(name === 'battle' ? [{ opacity: 0, transform: 'scale(1.05)' }, { opacity: 1, transform: 'none' }] : [{ opacity: 0, transform: 'translateY(12px)' }, { opacity: 1, transform: 'none' }],
+      { duration: name === 'battle' ? 340 : 220, easing: 'cubic-bezier(0.2, 0.8, 0.3, 1)' });
+  }
 }
 /* Deslizar a los lados cambia de pestaña (Tienda, Mazo y Jugar), como en
    los juegos de móvil. Solo con gestos claramente horizontales y rápidos, y
    nunca si empiezan sobre algo que se desplaza a lo ancho (filtros, mapas). */
-var SWIPE_TABS = ['shop', 'collection', 'home'];
+var SWIPE_TABS = ['shop', 'collection', 'home', 'friends'];
 function swipeTab() { var t = currentScreen === 'commanders' ? 'collection' : currentScreen; return SWIPE_TABS.indexOf(t); }
 function scrollsSideways(el, stop) {
   for (; el && el !== stop; el = el.parentNode) {
@@ -125,9 +136,9 @@ function bindSwipe() {
     // (sin volver antes a su sitio, que daba un tirón doble)
     m.style.transition = ''; m.style.transform = '';
     sfx('tap');
+    m.classList.add('no-intro');
     showScreen(SWIPE_TABS[to]);
     m.scrollTop = 0;
-    m.classList.add('no-intro');
     if (m.animate) m.animate([{ transform: 'translateX(' + (dx < 0 ? 22 : -22) + '%)', opacity: 0.4 }, { transform: 'none', opacity: 1 }], { duration: 220, easing: 'ease-out' });
     setTimeout(function () { m.classList.remove('no-intro'); }, 700);
   };
@@ -151,11 +162,11 @@ function renderMenu(name, arg) {
     var free = freeChestReady(), cmd = COMMANDERS[meta.commander];
     // badge: cuántas cosas hay por cobrar (punto rojo con la cifra)
     var side = function (go, pic, label, cls, badge) { return '<button class="side-btn ' + (cls || '') + '" data-go="' + go + '"><img src="assets/' + pic + '.webp" alt=""><span>' + label + '</span>' + (badge ? '<i class="side-dot">' + badge + '</i>' : '') + '</button>'; };
-    var msN = dailyPending(), rdN = roadPending();
+    var msN = dailyPending(), rdN = roadPending(), acN = achPending();
     html = topBar() +
       // título con los atajos a los lados, como las ofertas del género
       '<div class="home-top">' +
-      '<div class="side-col">' + side('freeChest', 'chests/madera', freeChestLabel(), free ? 'glow' : '') + side('missions', 'ui/misiones', 'Misiones', msN ? 'glow' : '', msN) + side('codes', 'icons/ticket', 'Códigos') + '</div>' +
+      '<div class="side-col">' + side('freeChest', 'chests/madera', freeChestLabel(), free ? 'glow' : '') + side('missions', 'ui/misiones', 'Misiones', msN ? 'glow' : '', msN) + side('profile', 'icons/corona', 'Perfil', acN ? 'glow' : '', acN) + '</div>' +
       '<div class="logo"><h1><img src="assets/ui/titulo.webp" alt="Reino de Torres"></h1></div>' +
       '<div class="side-col">' + side('road', 'icons/trofeo', 'Trofeos', rdN ? 'glow' : '', rdN) + side('howto', 'icons/pergamino', 'Ayuda') + side('options', 'icons/engranaje', 'Opciones') + '</div>' +
       '</div>' +
@@ -197,7 +208,7 @@ function renderMenu(name, arg) {
         return '<button class="rival-row d' + i + '" data-duel="' + i + '">' +
           '<span class="rv-face"><img src="assets/enemies/' + ['blob', 'orco', 'dragon'][i] + '.webp" alt=""></span>' +
           '<span class="rv-info"><b>' + n + '</b><small>' + rivalCardsText(DUEL_CARD_OFFSET[i]) + '</small></span>' +
-          '<span class="rv-prize"><img class="rv-chest" src="' + chestPic(i >= 2 ? 'oro' : 'plata') + '" alt=""><span class="rv-chips">' + prizeChips(25 + i * 5, 60 + i * 40 + arenaIndex() * ARENA_GOLD, 0) + '</span></span></button>';
+          '<span class="rv-prize"><img class="rv-chest" src="' + chestPic(i >= 2 ? 'oro' : 'plata') + '" alt=""><span class="rv-chips">' + prizeChips(duelTrophies(i, arenaIndex()), 60 + i * 40 + arenaIndex() * ARENA_GOLD, 0) + '</span></span></button>';
       }).join('') + '</div>' +
       recordChips(meta.duelWins, meta.duelLosses);
   } else if (name === 'rogue') {
@@ -230,7 +241,7 @@ function renderMenu(name, arg) {
       '<button class="btn btn-green tn-go" data-tourney="1">Jugar</button>' +
       recordChips(meta.tourneyWins || 0, meta.tourneyLosses || 0);
   } else if (name === 'collection') {
-    html = backBar('Mazo', true, 'mazo') + deckTabs('collection') +
+    html = backBar('Mazo', true, 'mazo') + deckTabs('collection') + deckSlots() +
       '<div class="deck-tray"><div class="tc-row">' + meta.deck.map(function (id) { return cardHtml(id); }).join('') + '</div></div>' +
       '<div class="coll-head"><h3>Colección <small>' + UNIT_ORDER.filter(isUnlocked).length + '/' + UNIT_ORDER.length + '</small></h3>' + sortSwitch() + '</div>' +
       (collSort === 'tipo' ? elementFilters() : rarityFilters()) + collectionGrid();
@@ -238,6 +249,10 @@ function renderMenu(name, arg) {
     html = backBar('Mazo', true, 'comandante') + deckTabs('commanders') + commandersHtml();
   } else if (name === 'shop') {
     html = backBar('Tienda', true, 'tienda') + shopHtml();
+  } else if (name === 'profile') {
+    html = backBar('Perfil', false, 'perfil') + profTabs() + (profTab === 'logros' ? achievementsHtml() : profTab === 'bestiario' ? bestiaryHtml() : profileHtml());
+  } else if (name === 'friends') {
+    html = backBar('Retos', true, 'retos') + friendsHtml();
   } else if (name === 'howto') {
     html = backBar('Cómo jugar') + '<div class="help-grid">' + HELP.map(function (h) {
       return '<div class="help-card"><span class="help-ico">' + ico(h[0]) + '</span><span><b>' + h[1] + '</b><small>' + h[2] + '</small></span></div>';
@@ -265,8 +280,144 @@ var HELP = [
   ['icons/gota', 'Maná', 'Se gana derrotando monstruos, con Doblón, Oria y la Fuente.'],
   ['events/eclipse', 'Eventos', 'Algunas oleadas traen Eclipse, Lluvia de maná, Niebla, Horda o Calma.'],
   ['icons/estrella', 'Talentos', 'Lyra, Brasa y Nívea abren ramas en los niveles 3, 6 y 9.'],
-  ['icons/gema', 'Gemas', 'Salen en cofres, estrellas nuevas, duelos y Co-op. Se gastan en la tienda.']
+  ['icons/gema', 'Gemas', 'Salen en cofres, estrellas nuevas, duelos y Co-op. Se gastan en la tienda.'],
+  ['icons/diana', 'Retos', 'Juega un reto y manda el enlace: tus amigos se enfrentan a los mismos monstruos.']
 ];
+/* ---------- mazos guardados ---------- */
+function deckSlots() {
+  return '<div class="sub-tabs three deck-slots">' + meta.decks.map(function (d, i) {
+    var c = d ? COMMANDERS[d.cmd] : null;
+    return '<button data-dslot="' + i + '" class="' + (i === meta.deckSlot ? 'on' : '') + '">' + (c ? '<img src="' + c.pic + '" alt="">' : '') + 'Mazo ' + (i + 1) + '</button>';
+  }).join('') + '</div>';
+}
+
+/* ---------- perfil: datos, logros y bestiario ---------- */
+var profTab = 'perfil';
+function profTabs() {
+  var n = achPending();
+  return '<div class="sub-tabs three">' + [['perfil', 'Perfil'], ['logros', 'Logros'], ['bestiario', 'Bestiario']].map(function (t) {
+    return '<button data-ptab="' + t[0] + '" class="' + (profTab === t[0] ? 'on' : '') + '">' + t[1] + (t[0] === 'logros' && n ? '<i class="tab-dot"></i>' : '') + '</button>';
+  }).join('') + '</div>';
+}
+function fmtPlay(sec) { var h = Math.floor(sec / 3600), m = Math.floor(sec % 3600 / 60); return h ? h + ' h ' + m + ' min' : m + ' min'; }
+function profileHtml() {
+  var s = meta.stats, c = COMMANDERS[meta.commander];
+  var tile = function (icon, v, l) { return '<span>' + ico(icon) + '<b>' + v + '</b><small>' + l + '</small></span>'; };
+  var top = function (obj) { return Object.keys(obj || {}).filter(function (k) { return UNITS[k]; }).sort(function (a, b) { return obj[b] - obj[a]; }).slice(0, 3); };
+  var bars = function (title, obj, fmt) {
+    var ids = top(obj);
+    if (!ids.length) return '';
+    var max = obj[ids[0]];
+    return '<div class="res-dmg"><h3>' + title + '</h3>' + ids.map(function (id) {
+      return '<div class="rd-row"><img src="' + unitIcon(id, 0, 64) + '" alt=""><span class="rd-bar"><i style="width:' + Math.max(4, obj[id] / max * 100) + '%"></i><b>' + esc(UNITS[id].name) + '</b><em>' + fmt(obj[id]) + '</em></span></div>';
+    }).join('') + '</div>';
+  };
+  return '<div class="tn-panel prof-head"><img src="' + c.pic + '" alt="" style="--cc:' + c.color + '">' +
+    '<label class="prof-name"><small>Tu nombre</small><input id="profName" type="text" maxlength="16" autocomplete="off" spellcheck="false" placeholder="Sin nombre" value="' + esc(meta.name || '') + '"></label></div>' +
+    '<div class="stat-tiles">' + tile('icons/espadas', s.games || 0, 'partidas') + tile('icons/corona', s.wins || 0, 'victorias') + tile('icons/reloj', fmtPlay(s.time || 0), 'jugando') +
+    tile('icons/calavera', fmtNum(s.kills || 0), 'bajas') + tile('icons/explosion', s.bossKills || 0, 'jefes') + tile('icons/chispas', fmtNum(s.merges || 0), 'fusiones') +
+    tile('icons/rayo', '×' + (s.bestCombo || 0), 'mejor combo') + tile('icons/grafico', s.maxRank || 1, 'rango máximo') + tile('icons/dado', fmtNum(s.summons || 0), 'invocaciones') + '</div>' +
+    '<div class="tn-panel"><h3>Récords</h3><div class="prof-recs">' +
+      '<span class="rec-chip">' + ico('icons/estrella') + '<b>' + totalStars() + '/' + CAMPAIGN.length * 3 + '</b>campaña</span>' +
+      '<span class="rec-chip">' + ico('icons/trofeo') + '<b>' + (meta.trophyBest || 0) + '</b>trofeos</span>' +
+      '<span class="rec-chip">' + ico('icons/espadas') + '<b>' + (meta.duelWins || 0) + '/' + (meta.duelLosses || 0) + '</b>duelos</span>' +
+      '<span class="rec-chip">' + ico('icons/estrella') + '<b>' + (meta.tourneyWins || 0) + '</b>torneos</span>' +
+      '<span class="rec-chip">' + ico('icons/ola') + '<b>' + (meta.rogueBest || 0) + '/' + ROGUE_WAVES + '</b>roguelike</span>' +
+      '<span class="rec-chip">' + ico('icons/escudo') + '<b>' + (meta.coopBest || 0) + '</b>co-op</span>' +
+      '<span class="rec-chip">' + ico('icons/diana') + '<b>' + (s.retosWon || 0) + '</b>retos</span></div></div>' +
+    bars('Tropas que más invocas', s.used, function (v) { return fmtNum(v) + ' veces'; }) +
+    bars('Tropas que más daño hacen', s.dmg, fmtNum);
+}
+function achievementsHtml() {
+  var got = meta.achieved.length;
+  var order = function (a) { return achReady(a) ? 0 : achClaimed(a) ? 2 : 1; };
+  return '<div class="ach-head"><b>' + got + '/' + ACHIEVEMENTS.length + '</b> logros</div>' +
+    ACHIEVEMENTS.slice().sort(function (a, b) { return order(a) - order(b); }).map(function (a) {
+      var v = achValue(a), ready = achReady(a), done = achClaimed(a);
+      return '<div class="ms-row ach' + (done ? ' got' : ready ? ' ready' : '') + '"><span class="ms-ico">' + ico(a.icon) + '</span>' +
+        '<span class="ms-body"><b>' + esc(a.name) + '</b><small>' + esc(a.text.replace('{n}', fmtNum(a.goal))) + '</small>' +
+        '<span class="ubar' + (v >= a.goal ? ' ok' : '') + '"><span style="width:' + (v / a.goal * 100) + '%"></span><em>' + fmtNum(v) + '/' + fmtNum(a.goal) + '</em></span>' +
+        '<span class="ms-prize">' + prizeChips(0, a.gold || 0, a.gems || 0) + '</span></span>' +
+        (done ? '<i class="ms-ok">✔</i>' : '<button class="btn btn-green ms-claim" data-ach="' + a.id + '"' + (ready ? '' : ' disabled') + '>Cobrar</button>') + '</div>';
+    }).join('');
+}
+// rasgos de un monstruo para el bestiario
+function enemyTraits(d, boss) {
+  var t = ['Vida ×' + String(Math.round(d.hp * 10) / 10).replace('.', ',')];
+  t.push(d.speed >= 1.5 ? 'Muy veloz' : d.speed >= 1.1 ? 'Veloz' : d.speed <= 0.55 ? 'Muy lento' : d.speed < 0.9 ? 'Lento' : 'Paso normal');
+  if (d.armor) t.push('Armadura ' + Math.round(d.armor * 100) + '%');
+  if (d.dodge) t.push('Esquiva ' + Math.round(d.dodge * 100) + '%');
+  if (d.slowRes) t.push('Resiste el frío');
+  if (!boss) t.push('+' + d.reward + ' de maná');
+  return t.join(' · ');
+}
+function bestiaryHtml() {
+  var card = function (kind, boss) {
+    var d = boss ? BOSSES[kind] : ENEMIES[kind], k = bestiaryKey(kind, boss), seen = meta.seen[k] != null;
+    return '<div class="bst-card' + (seen ? '' : ' unseen') + (boss ? ' boss' : '') + '"><img src="' + enemyIcon(kind, boss) + '" alt="">' +
+      '<span><b>' + (seen ? esc(d.name) : '???') + '</b>' +
+      (seen ? '<small>' + esc(enemyTraits(d, boss)) + '</small>' + (boss ? '<small class="bst-ab">' + esc(d.desc) + '</small>' : '') + '<em>' + fmtNum(meta.seen[k]) + ' derrotados</em>' : '<small>Aún no lo has visto</small>') + '</span></div>';
+  };
+  return '<div class="ach-head"><b>' + bestiarySeen() + '/' + (Object.keys(ENEMIES).length + BOSS_ORDER.length) + '</b> descubiertos</div>' +
+    '<h3 class="bst-t">Monstruos</h3><div class="bst-grid">' + Object.keys(ENEMIES).map(function (k) { return card(k, false); }).join('') + '</div>' +
+    '<h3 class="bst-t">Jefes</h3><div class="bst-grid">' + BOSS_ORDER.map(function (k) { return card(k, true); }).join('') + '</div>';
+}
+
+/* ---------- retos con amigos ---------- */
+function friendsHtml() {
+  var list = meta.retos.map(function (r, i) {
+    var c = COMMANDERS[r.cmd];
+    var state = r.from ? (r.won ? '<span class="rt-chip ok">✔ Superado</span>' : '<span class="rt-chip">Supera la oleada ' + r.target + '</span>') : '<span class="rt-chip mine">Tu reto</span>';
+    return '<div class="reto-row' + (r.won ? ' won' : '') + '"><div class="rt-top"><img class="rt-cmd" src="' + c.pic + '" alt="" style="--cc:' + c.color + '">' +
+      '<span class="rt-txt"><b>' + (r.from ? 'Reto de ' + esc(r.from) : 'Reto propio') + '</b>' + state + '</span>' +
+      '<span class="rt-best"><small>Tu mejor</small><b>' + (r.best || '—') + '</b></span></div>' +
+      '<div class="rt-deck">' + r.deck.map(function (id) { return '<img src="' + unitIcon(id, 0, 48) + '" alt="' + esc(UNITS[id].name) + '">'; }).join('') + '</div>' +
+      '<div class="rt-btns"><button class="btn btn-green" data-retoplay="' + i + '">Jugar</button><button class="btn btn-ghost" data-retoshare="' + i + '"' + (r.best ? '' : ' disabled') + '>Retar</button></div></div>';
+  }).join('');
+  return '<div class="mode-hero reto-hero"><img src="assets/ui/modo-duelo.webp" alt=""><span><b>Reta a tus amigos</b><small>Los mismos monstruos para todos. Gana quien llegue más lejos.</small></span></div>' +
+    '<button class="btn btn-green tn-go" data-newreto="1">Nuevo reto</button>' +
+    (list ? '<h3 class="bst-t">Tus retos</h3>' + list : '<div class="coll-empty">' + ico('icons/diana') + '</div>');
+}
+// pide un nombre antes de compartir (sale en el enlace)
+function askName(then) {
+  openOverlay('<div class="modal-card code-modal"><div class="code-ico">' + ico('icons/corona') + '</div><h2>Tu nombre</h2>' +
+    '<input id="nameIn" class="code-in name-in" type="text" maxlength="16" autocomplete="off" spellcheck="false" placeholder="Nombre">' +
+    '<button class="btn btn-green" id="nameOk">Guardar</button><button class="btn btn-ghost" id="nameX">Cancelar</button></div>');
+  var inp = $('nameIn');
+  setTimeout(function () { try { inp.focus(); } catch (e) {} }, 50);
+  var ok = function () { var v = inp.value.trim(); if (!v) { sfx('no'); return; } meta.name = v.slice(0, 16); saveMeta(); closeOverlay(); then(); };
+  $('nameOk').onclick = ok;
+  inp.onkeydown = function (e) { if (e.key === 'Enter') ok(); };
+  $('nameX').onclick = closeOverlay;
+}
+function copyText(t) {
+  if (navigator.clipboard && navigator.clipboard.writeText) return navigator.clipboard.writeText(t).then(function () { return true; }, function () { return copyOld(t); });
+  return Promise.resolve(copyOld(t));
+}
+function copyOld(t) {
+  var ta = document.createElement('textarea'); ta.value = t; ta.style.position = 'fixed'; ta.style.opacity = '0';
+  document.body.appendChild(ta); ta.select();
+  var ok = false; try { ok = document.execCommand('copy'); } catch (e) {}
+  ta.remove(); return ok;
+}
+// manda el reto: con el menú de compartir del móvil o copiando el enlace
+function shareReto(o, wave) {
+  if (!meta.name) { askName(function () { shareReto(o, wave); }); return; }
+  var url = location.origin + location.pathname + '?reto=' + encodeReto(o, wave);
+  var text = meta.name + ' te reta en Reino de Torres: llegó a la oleada ' + wave + '. ¿Puedes superarlo?';
+  if (navigator.share) { navigator.share({ title: 'Reino de Torres', text: text, url: url }).catch(function () {}); return; }
+  copyText(text + ' ' + url).then(function (ok) { toast(ok ? 'Enlace copiado: pégalo a tus amigos' : url); });
+}
+// llega un reto por enlace
+function showRetoInvite(r) {
+  var c = COMMANDERS[r.cmd];
+  openOverlay('<div class="modal-card reto-invite"><img class="ri-cmd" src="' + c.pic + '" alt="" style="--cc:' + c.color + '"><h2>Reto de ' + esc(r.from) + '</h2>' +
+    '<span class="time-chip">' + ico('icons/ola') + 'Llegó a la oleada ' + r.target + '</span>' +
+    '<div class="rt-deck">' + r.deck.map(function (id) { return '<img src="' + unitIcon(id, 0, 48) + '" alt="' + esc(UNITS[id].name) + '">'; }).join('') + '</div>' +
+    '<button class="btn btn-green" id="riGo">Jugar</button><button class="btn btn-ghost" id="riX">Luego</button></div>');
+  $('riGo').onclick = function () { closeOverlay(); startBattle('reto', retoOpts(r)); };
+  $('riX').onclick = function () { closeOverlay(); showScreen('friends'); };
+}
 /* Tienda: ofertas de cartas del día, cofres por gemas y oro por gemas. */
 function shopHtml() {
   var now = new Date(), mid = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
@@ -521,6 +672,19 @@ var INFO = {
   tienda: { title: 'Tienda', rows: [
     ['icons/reloj', 'Las ofertas de cartas cambian cada día.'],
     ['icons/gema', 'Ganas gemas en los cofres, con estrellas nuevas de campaña, en los duelos y en Co-op.']] },
+  perfil: { title: 'Perfil', rows: [
+    ['icons/grafico', 'Tus cifras de todas las partidas y tus récords en cada modo.'],
+    ['icons/corona', 'Los logros se cobran una vez y dan oro o gemas.'],
+    ['icons/pergamino', 'El bestiario se llena con los monstruos y jefes que te encuentras.']] },
+  retos: { title: 'Retos', rows: [
+    ['icons/diana', 'Un reto es una partida de supervivencia con los mismos monstruos para todos.'],
+    ['icons/estrella', 'Se juega con el mazo y el comandante de quien lo crea, todo a nivel de torneo.'],
+    ['icons/ticket', 'Al terminar, toca Retar y manda el enlace. Quien lo abra intentará superar tu oleada.'],
+    ['chests/plata', 'Superar por primera vez el reto de un amigo da un cofre de plata.']] },
+  instalar: { title: 'Instalar el juego', rows: [
+    ['icons/mano', 'En Safari, toca el botón Compartir de abajo.'],
+    ['icons/casa', 'Elige Añadir a pantalla de inicio.'],
+    ['icons/escudo', 'Se abre a pantalla completa y tu partida queda más a salvo.']] },
   campana: { title: 'Campaña', rows: [
     ['icons/estrella', 'Hasta tres estrellas por fase, según las vidas que te queden.'],
     ['chests/madera', 'Cada zona da su cofre, y uno mejor si sacas estrellas nuevas.']] }
@@ -652,6 +816,22 @@ function bindMenu() {
       renderMenu('commanders');
     };
   });
+  m.querySelectorAll('[data-dslot]').forEach(function (b) { b.onclick = function () { switchDeck(+b.dataset.dslot); sfx('merge'); renderMenu('collection'); }; });
+  m.querySelectorAll('[data-ptab]').forEach(function (b) { b.onclick = function () { profTab = b.dataset.ptab; sfx('tap'); renderMenu('profile'); }; });
+  m.querySelectorAll('[data-ach]').forEach(function (b) {
+    b.onclick = function () {
+      var a = claimAch(b.dataset.ach);
+      if (!a) return;
+      sfx('chest'); buzz(25);
+      toast(a.name + ': ' + [a.gold ? '+' + a.gold + ' 🪙' : '', a.gems ? '+' + a.gems + ' 💎' : ''].filter(Boolean).join(' · '));
+      renderMenu('profile');
+    };
+  });
+  var pn = $('profName');
+  if (pn) pn.onchange = function () { meta.name = pn.value.trim().slice(0, 16); saveMeta(); toast(meta.name ? 'Nombre guardado' : 'Sin nombre'); };
+  m.querySelectorAll('[data-newreto]').forEach(function (b) { b.onclick = function () { startBattle('reto', newRetoOpts()); }; });
+  m.querySelectorAll('[data-retoplay]').forEach(function (b) { b.onclick = function () { var r = meta.retos[+b.dataset.retoplay]; if (r) startBattle('reto', retoOpts(r)); }; });
+  m.querySelectorAll('[data-retoshare]').forEach(function (b) { b.onclick = function () { var r = meta.retos[+b.dataset.retoshare]; if (r && r.best) { sfx('tap'); shareReto(retoOpts(r), r.best); } }; });
   m.querySelectorAll('[data-rf]').forEach(function (b) { b.onclick = function () { collFilter = b.dataset.rf; sfx('tap'); renderMenu('collection'); }; });
   m.querySelectorAll('[data-ef]').forEach(function (b) { b.onclick = function () { collEl = b.dataset.ef; sfx('tap'); renderMenu('collection'); }; });
   m.querySelectorAll('[data-sort]').forEach(function (b) { b.onclick = function () { collSort = b.dataset.sort; sfx('tap'); renderMenu('collection'); }; });
@@ -995,24 +1175,81 @@ function closeOverlay() { $('overlay').hidden = true; $('overlay').innerHTML = '
 
 /* Restablecer juego: borra todo el progreso tras confirmarlo. */
 // Opciones: sonido y restablecer el juego
+// instalar como app: Chrome y Android avisan con beforeinstallprompt; en iPhone se explica a mano
+var installEvt = null;
+window.addEventListener('beforeinstallprompt', function (e) { e.preventDefault(); installEvt = e; });
+function isStandalone() { return !!((window.matchMedia && matchMedia('(display-mode: standalone)').matches) || navigator.standalone); }
+function isIOS() { return /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1); }
 function showOptions() {
+  var s = meta.settings;
+  var sw = function (k, icon, label) { return '<label class="opt-row"><span>' + ico(icon) + label + '</span><input type="checkbox" class="switch" data-opt="' + k + '"' + (s[k] ? ' checked' : '') + '></label>'; };
+  var canInstall = !isStandalone() && (installEvt || isIOS());
   openOverlay('<div class="modal-card options"><div class="code-ico">⚙️</div><h2>Opciones</h2>' +
-    '<label class="opt-row"><span>' + ico('icons/sonido') + 'Sonido</span><input type="checkbox" id="soundChk" class="switch" ' + (meta.settings.sound ? 'checked' : '') + '></label>' +
-    '<button class="btn btn-ghost" id="optNews">Novedades</button>' +
+    sw('sound', 'icons/sonido', 'Sonido') + sw('music', 'icons/musica', 'Música') + sw('vibra', 'icons/rayo', 'Vibración') +
+    sw('dmgNums', 'icons/critico', 'Números en partida') + sw('saver', 'icons/reloj', 'Ahorro de batería') +
+    '<div class="opt-btns"><button class="btn btn-ghost" id="optBackup">Copia de seguridad</button><button class="btn btn-ghost" id="optCodes">Códigos</button>' +
+    (canInstall ? '<button class="btn btn-ghost" id="optInstall">Instalar juego</button>' : '') +
+    '<button class="btn btn-ghost" id="optNews">Novedades</button></div>' +
     '<button class="btn btn-red" id="optReset">Restablecer juego</button>' +
     '<button class="btn btn-ghost" id="optX">Cerrar</button>' +
     '<span class="ver-chip">Versión ' + APP_VERSION + '</span></div>');
-  var sc = $('soundChk'); sc.onchange = function () { meta.settings.sound = sc.checked; saveMeta(); sfx('tap'); };
+  document.querySelectorAll('[data-opt]').forEach(function (inp) {
+    inp.onchange = function () {
+      meta.settings[inp.dataset.opt] = inp.checked; saveMeta(); sfx('tap');
+      if (inp.dataset.opt === 'music') { if (inp.checked) musicPlay('menu'); else musicStop(); }
+      if (inp.dataset.opt === 'vibra' && inp.checked) buzz(30);
+    };
+  });
+  $('optBackup').onclick = function () { sfx('tap'); showBackup(); };
+  $('optCodes').onclick = function () { sfx('tap'); showCodes(); };
+  if ($('optInstall')) $('optInstall').onclick = function () {
+    sfx('tap');
+    if (installEvt) { installEvt.prompt(); installEvt.userChoice.then(function () { installEvt = null; closeOverlay(); }); }
+    else showInfo('instalar');
+  };
   $('optNews').onclick = function () { showPatchNotes(); };
   $('optReset').onclick = showReset;
   $('optX').onclick = closeOverlay;
+}
+/* Copia de seguridad: toda la partida en un código para copiarlo o
+   guardarlo en un archivo, y cargarla en otro móvil. */
+function showBackup() {
+  openOverlay('<div class="modal-card backup"><div class="code-ico">' + ico('icons/escudo') + '</div><h2>Copia de seguridad</h2>' +
+    '<textarea id="bkCode" class="code-in bk-code" readonly></textarea>' +
+    '<div class="opt-btns"><button class="btn btn-green" id="bkCopy">Copiar</button><button class="btn btn-ghost" id="bkFile">Descargar</button></div>' +
+    '<h3 class="bk-t">Cargar una copia</h3>' +
+    '<textarea id="bkIn" class="code-in bk-code" placeholder="Pega aquí tu copia"></textarea>' +
+    '<div class="opt-btns"><button class="btn btn-ghost" id="bkOpen">Abrir archivo</button><button class="btn btn-red" id="bkLoad">Cargar copia</button></div>' +
+    '<p class="code-err" id="bkErr" hidden></p><input type="file" id="bkPick" accept=".txt,text/plain" hidden>' +
+    '<button class="btn btn-ghost" id="bkX">Cerrar</button></div>');
+  var code = exportSave(), err = $('bkErr'), armed = false;
+  $('bkCode').value = code;
+  $('bkCopy').onclick = function () { copyText(code).then(function (ok) { sfx('tap'); toast(ok ? 'Copia copiada. Guárdala en tus notas' : 'No se ha podido copiar'); }); };
+  $('bkFile').onclick = function () {
+    var a = document.createElement('a'), d = new Date();
+    a.href = URL.createObjectURL(new Blob([code], { type: 'text/plain' }));
+    a.download = 'reino-de-torres-' + d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate() + '.txt';
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(function () { URL.revokeObjectURL(a.href); }, 4000);
+    sfx('tap');
+  };
+  $('bkOpen').onclick = function () { $('bkPick').click(); };
+  $('bkPick').onchange = function () { var f = this.files[0]; if (f) f.text().then(function (t) { $('bkIn').value = t.trim(); }); };
+  $('bkLoad').onclick = function () {
+    var v = $('bkIn').value.trim();
+    if (!v) { sfx('no'); err.textContent = 'Pega o abre una copia'; err.hidden = false; return; }
+    if (!armed) { armed = true; sfx('no'); buzz(20); err.textContent = 'Toca otra vez: tu partida se cambia por la de la copia'; err.hidden = false; return; }
+    if (!importSave(v)) { sfx('no'); err.textContent = 'Esa copia no vale'; err.hidden = false; armed = false; return; }
+    closeOverlay(); sfx('chest'); showScreen('home'); toast('Copia cargada');
+  };
+  $('bkX').onclick = closeOverlay;
 }
 /* Novedades de la versión (js/version.js): la última con detalle y las
    anteriores, plegadas, con una línea cada una. Sale sola al entrar con
    una versión nueva. */
 function showPatchNotes(older) {
   var last = APP_PATCH_NOTES[0], rest = APP_PATCH_NOTES.slice(1);
-  openOverlay('<div class="modal-card patch-notes"><div class="code-ico">📣</div><h2>Novedades</h2>' +
+  openOverlay('<div class="modal-card patch-notes"><div class="code-ico">' + ico('icons/pergamino') + '</div><h2>Novedades</h2>' +
     '<p class="pn-ver">Versión ' + esc(last.version) + ' · ' + esc(last.summary) + '</p>' +
     '<ul class="pn-list">' + last.items.map(function (t) { return '<li>' + esc(t) + '</li>'; }).join('') + '</ul>' +
     (rest.length ? '<button class="btn btn-ghost" id="pnOld">' + (older ? 'Ocultar' : 'Ver') + ' versiones anteriores</button>' +
@@ -1105,7 +1342,8 @@ function showChestInfo(k, slot) {
       row(RARITY.epica.color, 'Épica', '', chestOdds(ch.epic, ch.cards)) +
       row(RARITY.mitica.color, 'Mítica', ch.myth ? '' : 'Solo en el cofre de oro', chestOdds(ch.myth || 0, ch.cards)) +
       row(RARITY.legendaria.color, 'Legendaria', ch.legend ? '' : 'Solo en el cofre de oro', chestOdds(ch.legend, ch.cards)) +
-      (ch.types ? row(COMMANDERS[meta.commander].color, 'Comandante', 'La mitad de las veces', ch.cmdCards + ' cartas') : '')) +
+      (ch.types ? row(COMMANDERS[meta.commander].color, 'Comandante', 'La mitad de las veces', ch.cmdCards + ' cartas') : '') +
+      (ch.myth ? '<p class="ci-pity">' + ico('icons/estrella') + 'Mítica segura como mucho en <b>' + (PITY_GOLD - (meta.pity || 0)) + (PITY_GOLD - (meta.pity || 0) === 1 ? ' cofre' : ' cofres') + '</b></p>' : '')) +
     (inSlot ? slotButtons(slot) : '<button class="btn chest-ok' + (poor ? ' poor' : '') + '" id="ciOpen">Abrir<span>💎 ' + ch.price + '</span></button>') +
     '<button class="btn btn-ghost" id="ciX">Cerrar</button></div>');
   $('ciX').onclick = closeOverlay;
@@ -1248,7 +1486,7 @@ function showChest(r, from) {
     idx++;
     if (idx >= items.length) { finish(); return; }
     var it = items[idx], rest = items.length - idx - 1;
-    cur = chestItemIn(fx, it, cx2, cy2, vw / 2, cardY);
+    cur = chestItemIn(fx, it, cx2, cy2, vw / 2, cardY, r);
     if (!it.id && !it.cmd) chestCoins(fx, cx2, cy2 - size2 * 0.12, size2);
     else chestBump(chest, fx, it);
     left.querySelector('b').textContent = rest;
@@ -1323,7 +1561,7 @@ function chestCoins(fx, x, y, size) {
 }
 var cfxTf = function (tx, ty, s, rot) { return 'translate(' + tx + 'px,' + ty + 'px) translate(-50%,-50%) scale(' + s + ') rotate(' + rot + 'deg)'; };
 // una carta (o el oro) sale de dentro del cofre y crece hasta el centro
-function chestItemIn(fx, it, x, y, tx, ty) {
+function chestItemIn(fx, it, x, y, tx, ty, r) {
   var el = document.createElement('div');
   if (it.cmd) {
     var cm = COMMANDERS[it.cmd], cc = meta.cmdCards[it.cmd], cmax = cc.lv >= CMD_MAX, cneed = cmdCardsNeeded(cc.lv);
@@ -1366,7 +1604,7 @@ function chestResult(r) {
     if (it.cmd) return '<div class="chest-card" style="--rc:' + COMMANDERS[it.cmd].color + '"><img src="' + COMMANDERS[it.cmd].pic + '" alt=""><b>×' + it.n + '</b><small>' + esc(COMMANDERS[it.cmd].name) + '</small></div>';
     return '<div class="chest-card' + (it.fresh ? ' fresh' : '') + '" style="--rc:' + RARITY[UNITS[it.id].rarity].color + '"><img src="' + unitIcon(it.id, 0, 96) + '" alt=""><b>×' + it.n + '</b><small>' + esc(UNITS[it.id].name) + '</small></div>';
   }).join('');
-  openOverlay('<div class="modal-card chest-modal"><div class="chest-pic"><div class="chest-pic-glow"><img class="chest-pic-rays" src="assets/chests/destello.webp" alt=""><img class="chest-pic-portal" src="assets/chests/portal-' + r.type + '.webp" alt=""></div><img class="chest-pic-img" src="' + chestPic(r.type, true) + '" alt=""></div><h2>' + ch.name + '</h2>' + (r.gold || r.gems ? '<p class="gold-big">+' + r.gold + ' 🪙' + (r.gems ? ' · +' + r.gems + ' 💎' : '') + '</p>' : '') + chestNewHtml(r) + '<div class="chest-cards">' + cards + '</div><button class="btn chest-ok" id="chestOk">¡Genial!</button></div>');
+  openOverlay('<div class="modal-card chest-modal"><div class="chest-pic"><div class="chest-pic-glow"><img class="chest-pic-rays" src="assets/chests/destello.webp" alt=""><img class="chest-pic-portal" src="assets/chests/portal-' + r.type + '.webp" alt=""></div><img class="chest-pic-img" src="' + chestPic(r.type, true) + '" alt=""></div><h2>' + ch.name + '</h2>' + (r.gold || r.gems ? '<p class="gold-big">+' + r.gold + ' 🪙' + (r.gems ? ' · +' + r.gems + ' 💎' : '') + '</p>' : '') + (r.pity ? '<div class="res-unlock secret"><b>¡Garantía: mítica segura!</b></div>' : '') + chestNewHtml(r) + '<div class="chest-cards">' + cards + '</div><button class="btn chest-ok" id="chestOk">¡Genial!</button></div>');
   $('chestOk').onclick = function () { closeOverlay(); renderMenu(currentScreen === 'battle' ? 'home' : currentScreen); };
 }
 
@@ -1407,7 +1645,7 @@ function buildBattleHud() {
   });
   var c = COMMANDERS[b.player.commander];
   $('cmdBtn').parentNode.style.setProperty('--cc', c.color); // el aro y sus rayos
-  $('cmdIco').innerHTML = '<img src="' + c.pic + '" alt="' + esc(c.name) + '"><i>' + c.icon + '</i>';
+  $('cmdIco').innerHTML = '<img src="' + c.pic + '" alt="' + esc(c.name) + '"><i>' + icons(c.icon) + '</i>';
   $('cmdBtn').title = c.ability + ': ' + c.desc;
   // modificador y jefe final del 1 contra 1, junto a la oleada
   ['roulette', 'skillPick'].forEach(function (id) { var el = $(id); if (el) el.remove(); });
@@ -1534,7 +1772,8 @@ function showDuelRoulette() {
   var REPS = 9;
   var el = document.createElement('div');
   el.id = 'roulette'; el.className = 'roulette';
-  el.innerHTML = '<h2 class="rl-title">' + esc(b.other ? 'Contra ' + b.other.name : 'Modo roguelike') + '</h2>' + rows.map(function (r, ri) {
+  var rlTitle = b.mode === 'reto' ? (b.opts.from ? 'Reto de ' + b.opts.from : 'Reto nuevo') : b.other ? 'Contra ' + b.other.name : 'Modo roguelike';
+  el.innerHTML = '<h2 class="rl-title">' + esc(rlTitle) + '</h2>' + (b.rival ? '<p class="rl-style">' + esc(RIVAL_STYLES[b.rival.style].name + ': ' + RIVAL_STYLES[b.rival.style].desc) + '</p>' : '') + rows.map(function (r, ri) {
     var cards = '';
     for (var k = 0; k < r.items.length * REPS; k++) {
       var it = r.items[k % r.items.length];
@@ -1748,7 +1987,9 @@ function showBanner(title, sub, pic) {
 }
 
 function showResult(res) {
-  var title = res.mode === 'coop' ? (res.won ? '¡Gran defensa!' : 'Fin de la partida') : res.draw ? 'Empate' : res.won ? '¡Victoria!' : 'Derrota';
+  var rt = res.mode === 'reto' && battle ? battle.opts : null;
+  var title = rt ? (rt.from ? (res.won ? '¡Reto superado!' : 'Reto no superado') : 'Fin del reto')
+    : res.mode === 'coop' ? (res.won ? '¡Gran defensa!' : 'Fin de la partida') : res.draw ? 'Empate' : res.won ? '¡Victoria!' : 'Derrota';
   var stars = res.mode === 'campaign' && res.won ? '<div class="res-stars">' + starRow(res.stars) + '</div>' : '';
   var chest = !res.chest ? '' : res.chestSlot >= 0
     ? '<div class="res-chest"><img src="' + chestPic(res.chest) + '" alt=""><span><b>' + CHESTS[res.chest].name + '</b><small>Guardado en tus cofres · tarda ' + fmtDur(CHESTS[res.chest].time) + ' en abrirse</small></span></div>'
@@ -1760,17 +2001,19 @@ function showResult(res) {
     '<div class="stat-tiles res-stats"><span>' + ico('icons/ola') + '<b>' + (battle ? battle.wave : 0) + '</b><small>oleada</small></span>' +
     '<span>' + ico('icons/calavera') + '<b>' + fmtNum(res.kills || 0) + '</b><small>bajas</small></span>' +
     '<span>' + ico('icons/espadas') + '<b>' + fmtNum(res.damage || 0) + '</b><small>daño</small></span></div>' + dmgSummary(res) +
-    '<button class="btn btn-green" id="resAgain">' + (res.mode === 'campaign' && res.won && battle.stage.id < CAMPAIGN.length ? 'Siguiente fase ▶' : 'Otra vez') + '</button>' +
+    (rt ? '<button class="btn btn-green" id="resShare">Retar a un amigo</button>' : '') +
+    '<button class="btn ' + (rt ? 'btn-ghost' : 'btn-green') + '" id="resAgain">' + (res.mode === 'campaign' && res.won && battle.stage.id < CAMPAIGN.length ? 'Siguiente fase ▶' : 'Otra vez') + '</button>' +
     (replay.frames.length ? '<button class="btn btn-ghost" id="resReplay">Repetición</button>' : '') +
     '<button class="btn btn-ghost" id="resMenu">Menú</button></div>');
   if ($('resReplay')) $('resReplay').onclick = function () { sfx('tap'); showReplay(res); };
+  if ($('resShare')) $('resShare').onclick = function () { sfx('tap'); shareReto(rt, res.reto.wave); };
   $('resAgain').onclick = function () {
     closeOverlay();
     var b = battle;
     if (b.mode === 'campaign') startBattle('campaign', { stage: res.won && b.stage.id < CAMPAIGN.length ? b.stage.id + 1 : b.stage.id });
     else startBattle(b.mode, b.opts);
   };
-  $('resMenu').onclick = function () { closeOverlay(); battle = null; resetReplay(); showScreen(res.mode === 'campaign' ? 'campaign' : res.mode === 'rogue' ? 'rogue' : 'home'); };
+  $('resMenu').onclick = function () { closeOverlay(); battle = null; resetReplay(); showScreen(res.mode === 'campaign' ? 'campaign' : res.mode === 'rogue' ? 'rogue' : res.mode === 'reto' ? 'friends' : 'home'); };
 }
 /* Daño de cada tropa en la partida, en barras (la mayor, llena). */
 function dmgSummary(res) {
@@ -1792,9 +2035,11 @@ function confirmQuit() {
   var b = battle, p = b.player;
   var where = b.mode === 'campaign' ? '🗺️ Fase ' + b.stage.id + ' · ' + esc(b.stage.name)
     : b.mode === 'rogue' ? 'Roguelike · Jefe final: ' + esc(BOSSES[b.boss].name)
+    : b.mode === 'reto' ? (b.opts.from ? 'Reto de ' + esc(b.opts.from) + ' · supera la oleada ' + b.opts.target : 'Reto nuevo')
     : b.mode === 'duel' ? (b.opts.tourney ? 'Torneo contra ' : '⚔️ Duelo contra ') + esc(b.other.name) : '🤝 Con ' + esc(b.other.name) + ' contra la horda';
   if (b.mode === 'rogue' && (b.player.skills.length || b.player.rogueMods.length)) where += '<small class="pause-mod">Ventajas: ' + esc(b.player.skills.map(function (k) { return CMD_SKILLS[k].name; }).concat(b.player.rogueMods.map(function (id) { return DUEL_MODS.filter(function (x) { return x.id === id; })[0].name; })).join(', ')) + '</small>';
   if (b.lent) where += '<small class="pause-mod">Mazo prestado: ' + esc(b.lent.name) + '</small>';
+  if (b.rival) where += '<small class="pause-mod">' + esc(RIVAL_STYLES[b.rival.style].name + ': ' + RIVAL_STYLES[b.rival.style].desc) + '</small>';
   if (b.mod) where += '<small class="pause-mod">' + esc(modInfo(b)) + '</small>';
   var wave = b.wave ? b.wave + (b.maxWaves !== Infinity ? '<small>/' + b.maxWaves + '</small>' : '') : '—';
   var prog = b.maxWaves !== Infinity ? Math.min(1, b.wave / b.maxWaves) : 0;
@@ -1815,6 +2060,7 @@ function confirmQuit() {
     '<div class="pause-opts">' +
       '<button class="pause-opt' + (meta.settings.sound ? ' on' : '') + '" id="pSound"><i>' + (meta.settings.sound ? '🔊' : '🔇') + '</i>Sonido</button>' +
       '<button class="pause-opt on" id="pSpeed"><i>⏩</i>Velocidad <b>x' + b.speed + '</b></button>' +
+      '<button class="pause-opt' + (meta.settings.music ? ' on' : '') + '" id="pMusic"><i>🎵</i>Música</button>' +
     '</div>' +
     '<button class="btn btn-green pause-resume" id="qResume">▶ Seguir jugando</button>' +
     '<div class="pause-row">' +
@@ -1828,6 +2074,12 @@ function confirmQuit() {
     meta.settings.sound = !meta.settings.sound; saveMeta();
     this.classList.toggle('on', meta.settings.sound);
     this.querySelector('i').innerHTML = icons(meta.settings.sound ? '🔊' : '🔇');
+    sfx('tap');
+  };
+  $('pMusic').onclick = function () {
+    meta.settings.music = !meta.settings.music; saveMeta();
+    this.classList.toggle('on', meta.settings.music);
+    if (meta.settings.music) musicFor(b); else musicStop();
     sfx('tap');
   };
   $('pSpeed').onclick = function () {
@@ -1865,7 +2117,10 @@ function resumeBattle() {
 /* ---------- bucle ---------- */
 var lastT = 0;
 function loop(t) {
-  var dt = lastT ? Math.min(0.05, (t - lastT) / 1000) : 0;
+  // ahorro de batería: unos 30 fotogramas por segundo y sin grabar la repetición
+  var saver = meta.settings.saver;
+  if (saver && lastT && t - lastT < 30) { requestAnimationFrame(loop); return; }
+  var dt = lastT ? Math.min(saver ? 0.07 : 0.05, (t - lastT) / 1000) : 0;
   lastT = t;
   if (battle && currentScreen === 'battle') {
     if (!battle.paused && !battle.ended) {
@@ -1873,7 +2128,8 @@ function loop(t) {
     }
     if (battle) {
       drawBattle(t); updateHud(false);
-      if (!battle.ended && !battle.paused && !battle.intro) recordReplay(t);
+      if (!saver && !battle.ended && !battle.paused && !battle.intro) recordReplay(t);
+      if (!battle.ended) musicFor(battle);
     }
   }
   requestAnimationFrame(loop);
@@ -1923,6 +2179,7 @@ function initGame() {
     toast(battle.moveCd > 0 ? '⏱ Podrás recolocar una tropa en ' + Math.ceil(battle.moveCd) + ' s' : '↔ Ya puedes recolocar una tropa: arrástrala a otra casilla');
   };
   $('bQuit').onclick = confirmQuit;
+  $('emoteBtn').innerHTML = ico('icons/rival-facil');
   $('emoteBtn').onclick = function () { if (battle && !battleBusy()) { sfx('tap'); $('emoteBar').hidden = !$('emoteBar').hidden; } };
   $('bMod').onclick = function () { if (battle && battle.mod) { sfx('tap'); toast(modInfo(battle)); } };
   $('overlay').addEventListener('click', function (e) { if (e.target === this && !(battle && !battle.ended && battle.paused === false)) { /* los modales se cierran con sus botones */ } });
@@ -1946,12 +2203,21 @@ function initGame() {
   });
   document.querySelectorAll('[data-tab]').forEach(function (b) {
     b.onclick = function () {
-      if (b.dataset.tab === 'teams') { sfx('no'); toast('Equipos llegará pronto'); return; }
       sfx('tap'); closeOverlay(); showScreen(b.dataset.tab);
     };
   });
   bindSwipe();
   showScreen('home');
+  askPersist();
+  // reto que llega por enlace (?reto=...): se guarda y se ofrece jugarlo
+  var rq = null;
+  try { rq = new URLSearchParams(location.search).get('reto'); } catch (e) {}
+  if (rq) {
+    try { history.replaceState(null, '', location.pathname); } catch (e) {}
+    var ro = decodeReto(rq);
+    if (ro) { showRetoInvite(receiveReto(ro)); return requestAnimationFrame(loop); }
+    toast('Ese enlace de reto no vale');
+  }
   // versión nueva desde la última visita: enseña las novedades
   if (meta.lastSeenVersion !== APP_VERSION) showPatchNotes();
   requestAnimationFrame(loop);

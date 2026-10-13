@@ -105,6 +105,8 @@ function Board(opts) {
   this.name = opts.name;
   this.isAI = !!opts.ai;
   this.aiLevel = opts.aiLevel || 1;      // 0 fácil · 1 normal · 2 difícil
+  this.aiStyle = opts.style || null;     // forma de jugar de la máquina (RIVAL_STYLES)
+  this.aiMoveT = 5;                      // la táctica recoloca una tropa cada pocos segundos
   this.deck = opts.deck.slice();
   this.cardLv = opts.cardLv || {};
   this.commander = opts.commander || 'aria';
@@ -137,6 +139,7 @@ function Board(opts) {
   this.dmgBy = {};                       // daño por tropa ('cmd': meteoro del comandante)
   this.summons = 0; this.merges = 0; this.powers = 0; this.cmds = 0;
   this.bossKills = 0; this.maxRank = 1;  // para las misiones diarias
+  this.bestCombo = 0; this.summonedBy = {}; // para el perfil (meta.stats)
   this.leaked = 0;
   this.event = null;
   this.shake = 0;
@@ -289,6 +292,7 @@ Board.prototype.summon = function (gratis, forceId) {
     this.summonCost += this.summonStep;
   }
   this.summons++;
+  this.summonedBy[id] = (this.summonedBy[id] || 0) + 1;
   var rank = Math.random() < this.rank2 ? 2 : 1;
   this.maxRank = Math.max(this.maxRank, rank);
   // cae desde arriba; el anillo y el polvo salen al tocar suelo (landFx)
@@ -333,6 +337,7 @@ Board.prototype.merge = function (from, to, start) {
   // combo: otra fusión antes de COMBO_TIME segundos da maná, más cuanto más larga la racha
   this.combo = this.comboT > 0 ? this.combo + 1 : 1;
   this.comboT = COMBO_TIME;
+  this.bestCombo = Math.max(this.bestCombo, this.combo);
   if (this.combo >= 2) {
     var cg = this.addMana(10 * (this.combo - 1));
     this.addText(p.x, p.y - 0.75, '¡Combo x' + this.combo + '! +' + cg + ' 💧', GAME_PALETTE.goldYellow, true);
@@ -518,7 +523,7 @@ Board.prototype.hit = function (e, dmg, unitDef, kind) {
   e.hitT = HIT_TIME;
   var hcx = this.geo.W / 2, hcy = this.geo.H / 2, hd = Math.hypot(e.x - hcx, e.y - hcy) || 1;
   e.kbx = (e.x - hcx) / hd * 0.05; e.kby = (e.y - hcy) / hd * 0.05;
-  if (crit) this.addText(e.x, e.y - 0.5, '¡' + fmtNum(dmg) + '!', GAME_PALETTE.damageRed, true);
+  if (crit) this.addText(e.x, e.y - 0.5, '¡' + fmtNum(dmg) + '!', GAME_PALETTE.damageRed, true, true);
   if (crit && !(unitDef && unitDef.critPic)) e.critT = 0.55;
   if (unitDef && unitDef.pierce && e.armor > 0) e.breakT = 0.55;
   if (crit && unitDef && unitDef.critPic) this.fx.push({ type: 'pic', key: unitDef.critPic, x: e.x, y: e.y - 0.3, size: 0.75, rot: 0, grow: 0.4, life: 0.55, max: 0.55 });
@@ -659,13 +664,16 @@ Board.prototype.applyHit = function (e, dmg, d, u) {
 /* ---------- efectos visuales ---------- */
 // muerte: nube con gotas de maná y una ráfaga de trocitos del color del monstruo
 var MAX_PARTS = 160;
+// con el ahorro de batería, muchos menos trocitos
+function maxParts() { return typeof meta !== 'undefined' && meta.settings.saver ? 40 : MAX_PARTS; }
 Board.prototype.deathFx = function (e) {
   var col = e.boss ? BOSSES[e.kind].color : ENEMIES[e.kind].color, big = e.boss ? 1.8 : 1;
   if (!art('fx/muerte-puf')) this.addFx('pop', { x: e.x, y: e.y }, col);
   else this.fx.push({ type: 'pic', key: 'fx/muerte-puf', x: e.x, y: e.y - 0.08, size: 0.85 * big, rot: 0, grow: 0.45, life: 0.5, max: 0.5 });
   var parts = 0;
   for (var k = 0; k < this.fx.length; k++) if (this.fx[k].type === 'part') parts++;
-  for (var n = 0; n < 10 * big && parts < MAX_PARTS; n++, parts++) {
+  var many = maxParts() < MAX_PARTS ? 4 : 10;
+  for (var n = 0; n < many * big && parts < maxParts(); n++, parts++) {
     var a = Math.random() * Math.PI * 2, v = 1.2 + Math.random() * 1.8;
     this.fx.push({ type: 'part', x: e.x, y: e.y, vx: Math.cos(a) * v, vy: Math.sin(a) * v - 1.2, r: 0.035 + Math.random() * 0.04, color: col, life: 0.45, max: 0.45 });
   }
@@ -686,9 +694,10 @@ Board.prototype.addSweep = function (key) {
 Board.prototype.addFx = function (type, p, color, r) {
   this.fx.push({ type: type, x: p.x, y: p.y, color: color, r: r || 0.6, life: type === 'flash' ? 0.5 : 0.45, max: type === 'flash' ? 0.5 : 0.45 });
 };
-Board.prototype.addText = function (x, y, text, color, big) {
+// dmg: es un número de golpe (se puede quitar en Opciones)
+Board.prototype.addText = function (x, y, text, color, big, dmg) {
   if (this.texts.length > 40) this.texts.shift();
-  this.texts.push({ x: x, y: y, text: text, color: color, big: !!big, life: 0.9, max: 0.9 });
+  this.texts.push({ x: x, y: y, text: text, color: color, big: !!big, dmg: !!dmg, life: 0.9, max: 0.9 });
 };
 
 /* ---------- bucle ---------- */
@@ -900,13 +909,23 @@ Board.prototype.bossAbility = function (e, dt) {
 };
 
 /* ---------- inteligencia artificial ---------- */
+/* Cada rival juega a su manera (aiStyle, de RIVAL_STYLES):
+    ataque: invoca en cuanto puede y usa el comandante con pocos monstruos.
+    ahorro: guarda maná, mejora cartas antes de invocar más.
+    fusiones: fusiona casi siempre que tiene pareja.
+    tactica: además recoloca tropas en el altar y la atalaya. */
 Board.prototype.think = function (dt) {
+  if (this.aiStyle === 'tactica' && this.aiLevel > 0) {
+    this.aiMoveT -= dt;
+    if (this.aiMoveT <= 0) { this.aiMoveT = [7, 6, 4][this.aiLevel]; this.aiReposition(); }
+  }
   this.aiTimer -= dt;
   if (this.aiTimer > 0) return;
-  var lvl = this.aiLevel;
-  this.aiTimer = [1.5, 0.9, 0.5][lvl] * rnd(0.7, 1.3);
+  var lvl = this.aiLevel, st = this.aiStyle;
+  this.aiTimer = [1.5, 0.9, 0.5][lvl] * rnd(0.7, 1.3) * (st === 'ataque' ? 0.8 : 1);
+  var crowd = st === 'ataque' ? 1 : 4;
   if (this.charge >= 1 && COMMANDERS[this.commander].hero) { var hp = this.heroPicks(); if (hp && Math.random() < [0.3, 0.6, 0.9][lvl]) { this.useCommander(hp); return; } }
-  else if (this.charge >= 1 && this.enemies.length > 4 && Math.random() < [0.3, 0.6, 0.9][lvl]) { this.useCommander(); return; }
+  else if (this.charge >= 1 && this.enemies.length > crowd && Math.random() < [0.3, 0.6, 0.9][lvl]) { this.useCommander(); return; }
 
   // 1) fusionar parejas (de rango bajo primero; los apoyos se guardan si hay sitio)
   var free = this.freeCells();
@@ -914,7 +933,8 @@ Board.prototype.think = function (dt) {
   for (var a = 0; a < this.cells.length; a++) for (var b = a + 1; b < this.cells.length; b++) {
     if (this.canMerge(a, b)) pairs.push([a, b]);
   }
-  var wantMerge = pairs.length && (free.length === 0 || Math.random() < [0.25, 0.45, 0.6][lvl]);
+  var mergeP = st === 'fusiones' ? [0.6, 0.8, 0.95][lvl] : [0.25, 0.45, 0.6][lvl];
+  var wantMerge = pairs.length && (free.length === 0 || Math.random() < mergeP);
   if (wantMerge) {
     pairs.sort(function (p, q) { return this.cells[p[0]].rank - this.cells[q[0]].rank; }.bind(this));
     var pr = pairs[0];
@@ -923,15 +943,38 @@ Board.prototype.think = function (dt) {
     this.merge(keep === pr[0] ? pr[1] : pr[0], keep);
     return;
   }
-  // 2) invocar
-  if (free.length && this.mana >= this.summonCost) { this.summon(); return; }
-  // 3) mejorar el tipo más numeroso
+  // el más numeroso, el que se mejora
   var counts = {};
   this.cells.forEach(function (u) { if (u && UNITS[u.id].dmg) counts[u.id] = (counts[u.id] || 0) + u.rank; });
   var best = Object.keys(counts).sort(function (x, y) { return counts[y] - counts[x]; })[0];
-  if (best && lvl > 0) {
-    var lv = this.power[best] || 1;
-    if (lv < POWER_MAX && this.mana >= this.powerCost(best) + 20) this.powerUp(best);
+  var canPower = best && lvl > 0 && (this.power[best] || 1) < POWER_MAX;
+  // ahorro: con el tablero a medias mejora antes de invocar más
+  if (st === 'ahorro' && canPower && free.length < 9 && this.mana >= this.powerCost(best)) { this.powerUp(best); return; }
+  // 2) invocar (el ahorro solo con colchón de maná, salvo al empezar)
+  var cushion = st === 'ahorro' && free.length < 11 ? this.summonCost : 0;
+  if (free.length && this.mana >= this.summonCost + cushion) { this.summon(); return; }
+  // 3) mejorar el tipo más numeroso (al ataque, solo con el tablero lleno)
+  if (st === 'ataque' && free.length) return;
+  if (canPower && this.mana >= this.powerCost(best) + 20) this.powerUp(best);
+};
+// táctica: lleva su mejor tropa de ataque al altar o la atalaya si están libres
+// o tienen una tropa peor encima (como tú, cambia una tropa de sitio)
+Board.prototype.aiReposition = function () {
+  var spots = Object.keys(this.tiles).filter(function (k) { return this.tiles[k] === 'altar' || this.tiles[k] === 'atalaya'; }, this).map(Number);
+  var score = function (u) { return u && UNITS[u.id].dmg && !UNITS[u.id].wolves ? u.rank : 0; };
+  for (var s = 0; s < spots.length; s++) {
+    var to = spots[s], here = score(this.cells[to]), from = -1, bv = here;
+    for (var i = 0; i < this.cells.length; i++) {
+      if (spots.indexOf(i) !== -1) continue;
+      var v = score(this.cells[i]);
+      if (v > bv) { bv = v; from = i; }
+    }
+    if (from < 0) continue;
+    var t = this.cells[to]; this.cells[to] = this.cells[from]; this.cells[from] = t;
+    this.cells[to].anim = 0.4; if (t) t.anim = 0.4;
+    var a = this.cc(from), c = this.cc(to);
+    if (art('fx/mover')) this.fx.push({ type: 'pic', key: 'fx/mover', x: (a.x + c.x) / 2, y: (a.y + c.y) / 2, size: Math.max(1, Math.hypot(c.x - a.x, c.y - a.y) * 0.85), rot: Math.atan2(c.y - a.y, c.x - a.x), grow: 0.5, life: 0.45, max: 0.45 });
+    return;
   }
 };
 

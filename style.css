@@ -2205,3 +2205,65 @@ x-ico.off { filter: grayscale(1) brightness(0.45); opacity: 0.75; }
 .tc.locked .tc-art img { filter: grayscale(1) brightness(0.42) contrast(1.1); }
 .tc.locked .tc-lv::before { background: linear-gradient(180deg, #8a90b0, #4a4f6a); }
 .tc.locked .tc-lv x-ico { width: 12px; height: 12px; }
+
+/* ---------- 1.20: mazos guardados, perfil, logros, bestiario, retos, opciones y copia ---------- */
+.sub-tabs.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.sub-tabs button { position: relative; }
+.deck-slots button { display: flex; align-items: center; justify-content: center; gap: 6px; }
+.deck-slots img { width: 24px; height: 24px; border-radius: 50%; object-fit: cover; border: 2px solid var(--ink); flex: none; }
+.prof-head { display: flex; align-items: center; gap: 12px; }
+.prof-head > img { width: 64px; height: 64px; flex: none; border-radius: 50%; object-fit: cover; background: #16215a; border: 3px solid var(--cc, var(--gold)); box-shadow: 0 3px 0 var(--ink); }
+.prof-name { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; text-align: left; }
+.prof-name small { color: var(--muted); font-size: 0.75rem; }
+.prof-name input { width: 100%; padding: 9px 12px; font: inherit; font-size: 1.1rem; color: #fff; background: #0e1430; border: 3px solid var(--ink); border-radius: 12px; outline: none; user-select: text; -webkit-user-select: text; }
+.prof-name input:focus { border-color: #b48bff; }
+.name-in { text-transform: none; letter-spacing: 0.02em; }
+.prof-recs { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; }
+.prof-recs .rec-chip x-ico { width: 1.4em; height: 1.4em; margin: 0 2px 0 0; }
+.prof-recs .rec-chip b { color: #fff; }
+.tn-panel h3 { margin: 0 0 8px; text-align: center; }
+.ach-head { text-align: center; color: var(--muted); margin: 0 0 4px; font-size: 0.9rem; }
+.ach-head b { color: #fff; font-size: 1.15rem; }
+.bst-t { margin: 14px 0 8px; font-size: 1.05rem; text-align: center; }
+.bst-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.bst-card { display: flex; gap: 8px; align-items: flex-start; min-width: 0; padding: 8px; border-radius: 14px; text-align: left; background: var(--ui-panel-bg); border: 2px solid rgba(255,198,90,0.35); }
+.bst-card.boss { border-color: rgba(255,90,106,0.6); }
+.bst-card img { width: 48px; height: 48px; flex: none; }
+.bst-card > span { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.bst-card b { font-size: 0.9rem; line-height: 1.1; }
+.bst-card small { font-size: 0.68rem; line-height: 1.25; color: var(--muted); }
+.bst-card .bst-ab { color: #ffb3bd; }
+.bst-card em { font-style: normal; font-size: 0.7rem; color: var(--gold); }
+.bst-card.unseen { opacity: 0.75; }
+.bst-card.unseen img { filter: brightness(0) opacity(0.55); }
+@media (max-width: 360px) { .bst-grid { grid-template-columns: 1fr; } }
+.reto-hero img { width: 64px; height: auto; flex: none; }
+.reto-hero span { display: flex; flex-direction: column; gap: 2px; }
+.reto-row { padding: 10px; margin-bottom: 10px; border-radius: 18px; background: var(--ui-panel-bg); border: 2px solid rgba(255,198,90,0.45); box-shadow: 0 4px 0 var(--ink); }
+.reto-row.won { border-color: #8fe08a; }
+.rt-top { display: flex; align-items: center; gap: 10px; }
+.rt-cmd, .ri-cmd { width: 46px; height: 46px; flex: none; border-radius: 50%; object-fit: cover; background: #16215a; border: 3px solid var(--cc, var(--gold)); }
+.ri-cmd { display: block; width: 84px; height: 84px; margin: 0 auto 6px; box-shadow: 0 4px 0 var(--ink); }
+.rt-txt { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: flex-start; gap: 3px; text-align: left; }
+.rt-txt b { font-size: 1rem; }
+.rt-chip { padding: 2px 8px; border-radius: 999px; font-size: 0.72rem; background: rgba(0,0,0,0.35); color: var(--gold); }
+.rt-chip.ok { color: #8dff7a; }
+.rt-chip.mine { color: #9fd6ff; }
+.rt-best { display: flex; flex-direction: column; align-items: center; flex: none; }
+.rt-best small { font-size: 0.65rem; color: var(--muted); }
+.rt-best b { font: 400 1.5rem 'Lilita One', sans-serif; color: #fff; -webkit-text-stroke: 4px var(--ink); paint-order: stroke fill; }
+.rt-deck { display: flex; justify-content: center; gap: 6px; margin: 8px 0; }
+.rt-deck img { width: 42px; height: 42px; border-radius: 10px; border: 2px solid var(--ink); background: rgba(0,0,0,0.3); }
+.rt-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.rt-btns .btn { margin: 0; padding: 8px; font-size: 1rem; }
+.reto-invite .time-chip { margin: 4px auto 4px; }
+.opt-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 6px 0 4px; }
+.opt-btns .btn { margin: 0; padding: 10px 6px; font-size: 0.95rem; }
+.options .opt-row { margin: 6px 0; }
+.bk-code { height: 64px; font-size: 0.62rem; letter-spacing: 0; text-transform: none; text-align: left; word-break: break-all; resize: none; }
+.bk-t { margin: 14px 0 4px; font-size: 1rem; }
+.ci-pity { display: flex; align-items: center; justify-content: center; gap: 6px; margin: 8px 0 0; font-size: 0.8rem; color: var(--gold); }
+.ci-pity x-ico { width: 1.4em; height: 1.4em; margin: 0; }
+.rl-style { margin: -4px 12px 8px; font-size: 0.78rem; text-align: center; color: var(--gold); text-shadow: 0 2px 0 var(--ink); }
+.emote-btn x-ico { width: 26px; height: 26px; margin: 0; vertical-align: middle; }
+.opt-btns .btn:last-child:nth-child(odd) { grid-column: 1 / -1; }

@@ -7,8 +7,26 @@
    La ventana sale sola al entrar con una versión nueva (meta.lastSeenVersion)
    y también desde Opciones.
    ========================================================= */
-var APP_VERSION = '1.19.3';
+var APP_VERSION = '1.20.0';
 var APP_PATCH_NOTES = [
+  {
+    version: '1.20.0',
+    summary: 'Retos con amigos, perfil, logros, zona 4 y música',
+    items: [
+      'Nueva pestaña Retos: juega un reto y manda el enlace. Tus amigos se enfrentan a los mismos monstruos con tu mazo y gana quien llegue más lejos.',
+      'Perfil con tus cifras y récords, 23 logros con premio y un bestiario que se llena con los monstruos que encuentras. Está en el inicio, donde antes estaban los Códigos.',
+      'Zona 4 de la campaña: Tierras del Eclipse, diez fases nuevas hasta el Trono del Rey Dragón.',
+      'Tres mazos guardados, cada uno con su comandante, en la pestaña Mazo.',
+      'Música para el menú, para cada tipo de tablero y para los jefes. Se quita aparte del sonido.',
+      'Los rivales tienen su forma de jugar: al ataque, al ahorro, a fusionar o recolocando tropas, y llevan tropas de su elemento favorito.',
+      'Cofre de oro con garantía: como mucho cada 8 cofres sale una mítica.',
+      'Los trofeos del 1 contra 1 dependen de tu arena: el rival fácil da menos en las arenas altas y perder quita algo más.',
+      'Opciones nuevas: vibración, números en partida y ahorro de batería. Los Códigos ahora están aquí.',
+      'Copia de seguridad en Opciones para no perder la partida y pasarla a otro móvil, y botón para instalar el juego.',
+      'Decorado animado en los tableros: hojas, nieve, brasas, burbujas y polvo, y transiciones suaves entre pantallas.',
+      'El juego se guarda para jugar sin conexión aunque falle alguna imagen, y ya no se cuelga al abrir cartas de comandante en un cofre.'
+    ]
+  },
   {
     version: '1.19.3',
     summary: 'Menú de tropas renovado',

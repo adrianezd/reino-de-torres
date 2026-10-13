@@ -235,9 +235,12 @@ var CAMPAIGN = [];
     'Volcán Dormido', 'Torre Maldita', 'Cripta Profunda', 'Ciudadela Oscura', 'Trono del Caos',
     'Lagos Cristalinos', 'Bosque Sombrío', 'Minas Olvidadas', 'Dunas Ardientes', 'Glaciar Eterno',
     'Ciénaga Maldita', 'Templo Hundido', 'Fortaleza de Hierro', 'Cumbres de Ceniza', 'Abismo Helado',
-    'Jardín de Espinas', 'Catacumbas Reales', 'Puerto Fantasma', 'Cráter del Dragón', 'Corona del Caos'];
+    'Jardín de Espinas', 'Catacumbas Reales', 'Puerto Fantasma', 'Cráter del Dragón', 'Corona del Caos',
+    'Puertas del Eclipse', 'Bosque de Ceniza', 'Lago Negro', 'Santuario Roto', 'Glaciar Sombrío',
+    'Ciudad Hundida', 'Forja del Titán', 'Pantano de las Almas', 'Torre del Eclipse', 'Trono del Rey Dragón'];
   var biomes = ['prado', 'prado', 'bosque', 'hielo', 'prado', 'pantano', 'ruinas', 'desierto', 'desierto', 'hielo', 'volcan', 'ruinas', 'cripta', 'cripta', 'volcan',
-    'hielo', 'bosque', 'ruinas', 'desierto', 'hielo', 'pantano', 'ruinas', 'ruinas', 'volcan', 'hielo', 'bosque', 'cripta', 'cripta', 'volcan', 'volcan'];
+    'hielo', 'bosque', 'ruinas', 'desierto', 'hielo', 'pantano', 'ruinas', 'ruinas', 'volcan', 'hielo', 'bosque', 'cripta', 'cripta', 'volcan', 'volcan',
+    'cripta', 'volcan', 'pantano', 'ruinas', 'hielo', 'ruinas', 'volcan', 'pantano', 'cripta', 'volcan'];
   for (var i = 0; i < names.length; i++) {
     CAMPAIGN.push({
       id: i + 1,
@@ -259,7 +262,8 @@ var CAMPAIGN = [];
 var CAMPAIGN_ZONES = [
   { name: 'Valle del Reino',    from: 1,  to: 10, chest: 'madera', color: '#7fd84a' },
   { name: 'Fronteras Salvajes', from: 11, to: 20, chest: 'plata',  color: '#7fd6ff' },
-  { name: 'Dominios del Caos',  from: 21, to: 30, chest: 'oro',    color: '#ff6a2a' }
+  { name: 'Dominios del Caos',  from: 21, to: 30, chest: 'oro',    color: '#ff6a2a' },
+  { name: 'Tierras del Eclipse', from: 31, to: 40, chest: 'oro',   color: '#c04bff' }
 ];
 var CHEST_UP = { madera: 'plata', plata: 'oro', oro: 'oro' };
 function stageZone(id) { return CAMPAIGN_ZONES.filter(function (z) { return id >= z.from && id <= z.to; })[0] || CAMPAIGN_ZONES[CAMPAIGN_ZONES.length - 1]; }
@@ -294,6 +298,10 @@ var CHESTS = {
   comandante: { name: 'Cofre de comandante', gold: [30, 60], gems: [0, 1], cards: 10, cmd: true, rare: 0, epic: 0, legend: 0, myth: 0, color: '#a35bff', price: 60, time: 7200 }
 };
 var CHEST_ORDER = ['madera', 'plata', 'oro', 'comandante', 'legendario'];
+/* Garantía del cofre de oro: si llevas PITY_GOLD cofres de oro seguidos sin
+   ninguna mítica ni legendaria, el siguiente trae una mítica segura
+   (meta.pity cuenta los que van sin ninguna). */
+var PITY_GOLD = 8;
 var CHEST_SLOTS = 4;          // huecos de cofre de la pantalla principal
 var SKIP_SECONDS = 360;       // abrir ya: 1 gema por cada 6 minutos que falten
 
@@ -337,6 +345,12 @@ var ARENAS = [
   { name: 'Río de Lava',      at: 1800, field: 'lava2' }
 ];
 var ARENA_GOLD = 20;
+/* Trofeos del 1 contra 1 según la arena: contra el rival fácil se gana cada
+   vez menos al subir de arena (si no, se subía sin límite ganando al fácil),
+   el normal baja algo y el difícil siempre da lo mismo. Perder quita más
+   cuanto más alta es la arena. */
+function duelTrophies(level, arena) { return [Math.max(5, 25 - 5 * arena), Math.max(15, 30 - 3 * arena), 35][level]; }
+function duelLoss(arena) { return 15 + 2 * arena; }
 
 /* Camino de trofeos: un premio en cada parada (at: trofeos). Se cobran una
    vez, al llegar a ese récord de trofeos (aunque luego bajes).
@@ -659,3 +673,61 @@ var ROGUE_MODS = ['mana2', 'rebajas', 'veteranos', 'carga', 'fusion', 'casillas'
 /* Emojis rápidos del duelo (el rival a veces contesta). */
 var EMOTES = ['👍', '😂', '😮', '😡', '🔥', '👑'];
 function cmdSkillDesc(k, cmd) { return CMD_SKILLS[k].desc.replace('{a}', COMMANDERS[cmd].ability); }
+
+/* Rivales del 1 contra 1 y del torneo: cada uno con su forma de jugar
+   (style, ver Board.think) y su elemento favorito, del que lleva hasta tres
+   tropas en el mazo. */
+var RIVAL_STYLES = {
+  ataque:   { name: 'Al ataque', desc: 'Invoca sin parar y usa el comandante en cuanto puede.' },
+  ahorro:   { name: 'Ahorro',    desc: 'Guarda maná, lleva tropas de maná y mejora sus cartas pronto.' },
+  fusiones: { name: 'Fusiones',  desc: 'Fusiona todo lo que puede para subir rangos rápido.' },
+  tactica:  { name: 'Táctica',   desc: 'Recoloca sus tropas en el altar y la atalaya.' }
+};
+var RIVALS = [
+  { name: 'Barón Gruñón',    style: 'ahorro',   element: 'metal' },
+  { name: 'Lady Cenizas',    style: 'ataque',   element: 'fuego' },
+  { name: 'Capitán Bigotes', style: 'fusiones', element: 'naturaleza' },
+  { name: 'La Duquesa',      style: 'tactica',  element: 'arcano' },
+  { name: 'Fray Tormenta',   style: 'ataque',   element: 'arcano' },
+  { name: 'Sir Tuercas',     style: 'tactica',  element: 'metal' },
+  { name: 'Reina Escarcha',  style: 'ahorro',   element: 'hielo' },
+  { name: 'Maese Trueno',    style: 'fusiones', element: 'fuego' }
+];
+
+/* Mazos guardados: cada uno con sus cinco tropas y su comandante (meta.decks). */
+var DECK_SLOTS = 3;
+
+/* Retos con amigos: supervivencia con una semilla (los mismos monstruos,
+   eventos, casillas y modificador para quien juegue el reto), con el mazo y
+   el comandante de quien lo crea, todo a nivel de torneo. Se pasan por enlace. */
+var RETO_MODS = ['mana2', 'rebajas', 'veteranos', 'carga', 'gigantes', 'enjambre', 'estampida', 'fusion', 'casillas', 'fijo', 'jefes', 'caos', 'lazos'];
+var RETO_LIVES = 5;
+
+/* Logros: se cobran una vez. get: valor actual (con meta) · goal: meta ·
+   text: {n} es la meta · gold / gems: premio. */
+function statOf(k) { return (meta.stats && meta.stats[k]) || 0; }
+var ACHIEVEMENTS = [
+  { id: 'partidas', name: 'Veteranía',          text: 'Juega {n} partidas',                       goal: 100,   icon: 'icons/espadas',  gold: 800, get: function () { return statOf('games'); } },
+  { id: 'bajas1',   name: 'Primera sangre',     text: 'Derrota a {n} monstruos',                  goal: 100,   icon: 'icons/calavera', gold: 150, get: function () { return statOf('kills'); } },
+  { id: 'bajas2',   name: 'Cazamonstruos',      text: 'Derrota a {n} monstruos',                  goal: 1000,  icon: 'icons/calavera', gems: 20,  get: function () { return statOf('kills'); } },
+  { id: 'bajas3',   name: 'Azote de la horda',  text: 'Derrota a {n} monstruos',                  goal: 10000, icon: 'icons/calavera', gems: 80,  get: function () { return statOf('kills'); } },
+  { id: 'jefes1',   name: 'Matajefes',          text: 'Derrota a {n} jefes',                      goal: 10,    icon: 'icons/corona',   gold: 300, get: function () { return statOf('bossKills'); } },
+  { id: 'jefes2',   name: 'Leyenda del reino',  text: 'Derrota a {n} jefes',                      goal: 100,   icon: 'icons/corona',   gems: 50,  get: function () { return statOf('bossKills'); } },
+  { id: 'fus1',     name: 'Primeras fusiones',  text: 'Fusiona tropas {n} veces',                 goal: 100,   icon: 'icons/chispas',  gold: 200, get: function () { return statOf('merges'); } },
+  { id: 'fus2',     name: 'Maestría en fusión', text: 'Fusiona tropas {n} veces',                 goal: 1000,  icon: 'icons/chispas',  gems: 40,  get: function () { return statOf('merges'); } },
+  { id: 'combo',    name: 'Racha imparable',    text: 'Haz un combo de {n} fusiones',             goal: 5,     icon: 'icons/rayo',     gems: 15,  get: function () { return statOf('bestCombo'); } },
+  { id: 'rango',    name: 'La cumbre',          text: 'Sube una tropa a rango {n}',               goal: 7,     icon: 'icons/grafico',  gems: 25,  get: function () { return statOf('maxRank'); } },
+  { id: 'estr1',    name: 'Defensa del valle',  text: 'Consigue {n} estrellas en la campaña',     goal: 30,    icon: 'icons/estrella', gold: 400, get: function () { return totalStars(); } },
+  { id: 'estr2',    name: 'Gloria del reino',   text: 'Consigue {n} estrellas en la campaña',     goal: 120,   icon: 'icons/estrella', gems: 100, get: function () { return totalStars(); } },
+  { id: 'duel1',    name: 'Duelista',           text: 'Gana {n} duelos 1 contra 1',               goal: 10,    icon: 'icons/espadas',  gold: 400, get: function () { return meta.duelWins || 0; } },
+  { id: 'duel2',    name: 'Reinado en la arena', text: 'Gana {n} duelos 1 contra 1',              goal: 50,    icon: 'icons/espadas',  gems: 60,  get: function () { return meta.duelWins || 0; } },
+  { id: 'lava',     name: 'Río de Lava',        text: 'Llega a {n} trofeos',                      goal: 1800,  icon: 'icons/trofeo',   gems: 50,  get: function () { return meta.trophyBest || 0; } },
+  { id: 'rogue',    name: 'Superviviente',      text: 'Supera las {n} oleadas del Roguelike',     goal: 30,    icon: 'icons/ola',      gems: 60,  get: function () { return meta.rogueBest || 0; } },
+  { id: 'coop',     name: 'Juntos hasta el final', text: 'Llega a la oleada {n} en Co-op',        goal: 25,    icon: 'icons/escudo',   gems: 30,  get: function () { return meta.coopBest || 0; } },
+  { id: 'torneo',   name: 'Gloria de torneo',   text: 'Gana {n} torneos',                         goal: 5,     icon: 'icons/estrella', gold: 600, get: function () { return meta.tourneyWins || 0; } },
+  { id: 'reto',     name: 'Mejor que tus amigos', text: 'Gana {n} retos de amigos',               goal: 3,     icon: 'icons/diana',    gems: 25,  get: function () { return statOf('retosWon'); } },
+  { id: 'tropas',   name: 'Coleccionista',      text: 'Consigue {n} tropas',                      goal: 15,    icon: 'icons/vecinas',  gems: 30,  get: function () { return Object.keys(meta.cards).length; } },
+  { id: 'nivel10',  name: 'Al máximo',          text: 'Sube una carta a nivel {n}',               goal: 10,    icon: 'icons/mejorar',  gems: 40,  get: function () { return Object.keys(meta.cards).reduce(function (m, k) { return Math.max(m, meta.cards[k].lv); }, 0); } },
+  { id: 'cmds',     name: 'Consejo de guerra',  text: 'Consigue los {n} comandantes',             goal: 7,     icon: 'icons/corona',   gems: 60,  get: function () { return meta.cmdOwned.length; } },
+  { id: 'bestia',   name: 'Bestiario completo', text: 'Descubre los {n} monstruos y jefes',       goal: Object.keys(ENEMIES).length + BOSS_ORDER.length, icon: 'icons/pergamino', gems: 30, get: function () { return bestiarySeen(); } }
+];
