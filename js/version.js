@@ -7,8 +7,15 @@
    La ventana sale sola al entrar con una versión nueva (meta.lastSeenVersion)
    y también desde Opciones.
    ========================================================= */
-var APP_VERSION = '1.17.0';
+var APP_VERSION = '1.17.1';
 var APP_PATCH_NOTES = [
+  {
+    version: '1.17.1',
+    summary: 'Garra con aro verde',
+    items: [
+      'El retrato de Garra lleva un aro verde alrededor, como el dorado de Midas.'
+    ]
+  },
   {
     version: '1.17.0',
     summary: 'Losetas nuevas, carteles en el camino y comandantes equilibrados',
