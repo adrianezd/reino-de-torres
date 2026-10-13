@@ -499,12 +499,8 @@ Board.prototype.spawn = function (kind, hp, opt) {
   this.enemies.push(e);
   return e;
 };
-// monstruo que llega del tablero anterior del camino compartido, con la vida que le quede
-Board.prototype.receive = function (e) {
-  var n = this.spawn(e.kind, e.hp, { boss: e.boss });
-  n.maxHp = e.maxHp;
-  return n;
-};
+// Escudo divino de Sol activo (en co-op vale también el del aliado)
+Board.prototype.guarded = function () { return this.guardT > 0 || !!(this.partner && this.partner.guardT > 0); };
 Board.prototype.hit = function (e, dmg, unitDef, kind) {
   if (e.dead) return;
   if (e.shield > 0) { this.addText(e.x, e.y - 0.4, 'Bloqueo', '#c9d4e6'); return; }
@@ -513,7 +509,9 @@ Board.prototype.hit = function (e, dmg, unitDef, kind) {
   var crit = false;
   if (unitDef && unitDef.crit && Math.random() < unitDef.crit.chance) { dmg *= unitDef.crit.mult; crit = true; }
   else if (unitDef && this.luck && Math.random() < this.luck) { dmg *= 2; crit = true; }
-  if (this.curseT > 0) dmg *= this.curseMult;
+  // Maldición de Nyx (en co-op, la de cualquiera de los dos)
+  var cb = this.curseT > 0 ? this : this.partner && this.partner.curseT > 0 ? this.partner : null;
+  if (cb) dmg *= cb.curseMult;
   if (unitDef && unitDef.bossMult && e.boss) dmg *= unitDef.bossMult;
   if (unitDef && e.boss) dmg *= this.bossDmgMult;
   if (!(unitDef && unitDef.pierce)) dmg *= 1 - e.armor;
@@ -785,9 +783,10 @@ Board.prototype.update = function (dt) {
     }
   }
 
-  // monstruos
+  // monstruos (en co-op solo los mueve el tablero dueño del camino; el
+  // aliado, con feed, solo les dispara)
   var evSpeed = (this.event === 'eclipse' ? 1.25 : this.event === 'calma' ? 0.8 : 1) * this.slowMult;
-  for (k = 0; k < this.enemies.length; k++) {
+  for (k = 0; k < (this.feed ? 0 : this.enemies.length); k++) {
     var e = this.enemies[k];
     if (e.dead) continue;
     if (e.hitT > 0) e.hitT = Math.max(0, e.hitT - dt);
@@ -805,14 +804,12 @@ Board.prototype.update = function (dt) {
     if (e.critT > 0) e.critT -= dt;
     if (e.breakT > 0) e.breakT -= dt;
     if (e.stun > 0) { e.stun -= dt; }
-    else e.d += e.speed * evSpeed * (1 - e.slowPct) * (this.guardT > 0 ? SOL_SLOW : 1) * dt;
+    else e.d += e.speed * evSpeed * (1 - e.slowPct) * (this.guarded() ? SOL_SLOW : 1) * dt;
     var p2 = this.pos(e.d); e.x = p2.x; e.y = p2.y;
     if (e.boss) this.bossAbility(e, dt);
     if (e.d >= this.geo.len) {
       e.dead = true;
-      // camino compartido (cooperativo): sigue por el tablero siguiente sin quitar vida
-      if (this.passTo) { this.passTo.receive(e); continue; }
-      var loss = this.guardT > 0 ? 0 : e.boss ? 2 : 1;
+      var loss = this.guarded() ? 0 : e.boss ? 2 : 1;
       if (!loss) this.addText(e.x, e.y - 0.4, '¡Protegido!', '#ffe08a', true);
       this.lives.v = Math.max(0, this.lives.v - loss);
       this.leaked += loss;
@@ -820,7 +817,7 @@ Board.prototype.update = function (dt) {
       if (this.onLeak) this.onLeak(e, loss);
     }
   }
-  this.enemies = this.enemies.filter(function (e) { return !e.dead; });
+  if (!this.feed) this.enemies = this.enemies.filter(function (e) { return !e.dead; });
 
   // lobos de Garra: corren por el camino al revés y muerden una vez a cada
   // monstruo que se cruzan (un jefe gasta dos mordiscos)

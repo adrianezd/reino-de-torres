@@ -9,8 +9,8 @@
       Con opts.tourney es el torneo: las cartas y los comandantes de los dos,
       a nivel de torneo (TOURNEY_LV), y el rival puede llevar cualquier tropa.
     - coop: tú y un aliado (IA) contra oleadas infinitas, vidas compartidas.
-      Camino compartido: los monstruos entran por el tablero del aliado y lo
-      que se le escapa pasa al tuyo; el maná de cada baja es para los dos.
+      Un solo camino, el de tu tablero: la cuadrícula del aliado va encima y
+      los dos disparáis a los mismos monstruos; el maná de cada baja es para los dos.
     - rogue: tú solo contra ROGUE_WAVES oleadas y un jefe final elegido por la
       ruleta; cada ROGUE_PICK_EVERY segundos eliges 1 de 3 ventajas.
    ========================================================= */
@@ -77,10 +77,21 @@ function startBattle(mode, opts) {
     var allyDeck = shuffleArr(AI_UNITS.slice()).slice(0, 5);
     var allyCard = {};
     UNIT_ORDER.forEach(function (id) { allyCard[id] = Math.max(1, (lv[id] || 1)); });
-    battle.other = new Board({ name: pick(ALLY_NAMES), ai: true, aiLevel: 2, deck: allyDeck, cardLv: allyCard, commander: pick(COMMANDER_ORDER), cmdLv: myCmdLv, lives: lives, biome: biome, geo: geo, floorTile: floorTile });
+    // la cuadrícula del aliado va encima de tu tablero, en el mismo espacio
+    // (mismo camino, mismas coordenadas): sus disparos van a tus monstruos
+    var allyGeo = Object.assign({}, geo, { y0: -COOP_GAP - ROWS * geo.ch });
+    battle.other = new Board({ name: pick(ALLY_NAMES), ai: true, aiLevel: 2, deck: allyDeck, cardLv: allyCard, commander: pick(COMMANDER_ORDER), cmdLv: myCmdLv, lives: lives, biome: biome, geo: allyGeo, floorTile: floorTile });
   }
   if (battle.other) { battle.boards.push(battle.other); battle.other.battle = battle; }
-  if (mode === 'coop') { battle.other.passTo = player; battle.other.shareWith = player; player.shareWith = battle.other; }
+  if (mode === 'coop') {
+    // un solo camino: los monstruos son los de tu tablero y el aliado los
+    // ve y les dispara (feed); maná de las bajas, Maldición y Escudo, a medias
+    var ally = battle.other;
+    ally.feed = player;
+    Object.defineProperty(ally, 'enemies', { get: function () { return player.enemies; }, set: function () {} });
+    ally.shareWith = player; player.shareWith = ally;
+    ally.partner = player; player.partner = ally;
+  }
   // 1 contra 1 (no el torneo): modificador y jefe final al azar; la partida
   // espera a que la ruleta los enseñe (showDuelRoulette)
   if (mode === 'duel' && !tourney) {
@@ -223,7 +234,7 @@ function hpScale() {
   // roguelike: a partir de la 15 aprieta más, que las ventajas se acumulan
   if (b.mode === 'rogue' && w > 15) s *= Math.pow(ROGUE_LATE, w - 15);
   if (b.event && b.event.id === 'horda') s *= 0.7;
-  // cooperativo: cada monstruo se las ve con los dos tableros
+  // cooperativo: a cada monstruo le disparan los dos tableros a la vez
   if (b.mode === 'coop') s *= COOP_HP;
   return s * modHp();
 }
@@ -301,8 +312,8 @@ function updateCoach(dt) {
 function spawnNext() {
   var b = battle, spec = b.queue.shift();
   var sc = hpScale();
-  // en el cooperativo solo entran por el tablero del aliado (camino compartido)
-  (b.mode === 'coop' ? [b.other] : b.boards).forEach(function (bd) {
+  // en el cooperativo, un solo camino: el de tu tablero
+  (b.mode === 'coop' ? [b.player] : b.boards).forEach(function (bd) {
     if (spec.boss) {
       var hp = sc * BOSSES[spec.kind].hp * (1 + b.wave * 0.04) * (spec.final ? ROGUE_FINAL_HP : 1);
       bd.spawn(spec.kind, hp, { boss: true });
@@ -465,7 +476,14 @@ function resizeCanvas() {
   canvas.style.height = h + 'px';
   var pad = 8;
   var gm = battle ? battle.player.geo : VECTOR_GEO;
-  if (battle && battle.other) {
+  if (battle && battle.mode === 'coop') {
+    // co-op: un solo tablero y, encima, la cuadrícula del aliado (de y0 del
+    // aliado hacia abajo, todo en las mismas coordenadas); arriba, su cabecera
+    var yTop = battle.other.geo.y0 - COOP_PANEL_PAD, wh = gm.H - yTop, top = RIVAL_HEAD_H + 6;
+    var sc = Math.min(w / gm.W, (h - top - pad) / wh);
+    layout.main = { sc: sc, ox: (w - gm.W * sc) / 2, oy: top - yTop * sc + Math.max(0, (h - top - pad - wh * sc) / 2), g: gm };
+    layout.other = { sc: sc, ox: layout.main.ox, oy: layout.main.oy, g: battle.other.geo, ally: true, headY: top };
+  } else if (battle && battle.other) {
     var go = battle.other.geo;
     // arriba, la cabecera del rival o aliado (RIVAL_HEAD_H) y su tablero.
     // Tu tablero se queda con lo que necesita a todo el ancho y lo que sobra
@@ -648,6 +666,13 @@ function drawBattle(now) {
   } else {
     drawScenery(now);
   }
+  if (battle.mode === 'coop') {
+    // tu tablero con el camino y, por encima, la cuadrícula del aliado
+    drawBoard(battle.player, layout.main, now, true);
+    drawBoard(battle.other, layout.other, now, false);
+    drawRivalHeader(battle.other, { oy: layout.other.headY });
+    return;
+  }
   if (battle.other) {
     drawBoard(battle.other, layout.other, now, false);
     // separador
@@ -713,8 +738,9 @@ function drawBoard(b, L, now, isMain) {
   ctx.scale(sc, sc);
 
   var G = b.geo;
-  var pic = G.image ? art(G.image) : null;
-  var dual = !!battle.other;
+  var ally = !!L.ally; // co-op: solo la cuadrícula del aliado, sin tablero ni camino
+  var pic = G.image && !ally ? art(G.image) : null;
+  var dual = !!battle.other && battle.mode !== 'coop';
   // con dos tableros, los dos tableros «over» se pintan enteros hasta los
   // lados de la pantalla: el tuyo por debajo del separador y el del rival o
   // aliado por encima, así su marco llena la franja de arriba en vez de
@@ -728,7 +754,9 @@ function drawBoard(b, L, now, isMain) {
     else ctx.rect(0, 0, G.W, G.H);
     ctx.clip();
   }
-  if (pic) {
+  if (ally) {
+    drawAllyPanel(b, G, now);
+  } else if (pic) {
     // tablero ilustrado (recortado sin la interfaz de las esquinas)
     var F = G.px, kx = pic.naturalWidth / F.iw, ky = pic.naturalHeight / F.ih;
     if (wide) {
@@ -834,8 +862,10 @@ function drawBoard(b, L, now, isMain) {
   }
 
   // Maldición de Nyx: anillo de runas a los pies de cada monstruo mientras dure
-  if (b.curseT > 0 && art('fx/nyx-maldicion')) {
-    ctx.globalAlpha = Math.min(1, b.curseT / 0.5) * 0.9;
+  // (en co-op, también si la echa el aliado)
+  var curseT = Math.max(b.curseT, b.partner ? b.partner.curseT : 0);
+  if (!ally && curseT > 0 && art('fx/nyx-maldicion')) {
+    ctx.globalAlpha = Math.min(1, curseT / 0.5) * 0.9;
     b.enemies.forEach(function (e) {
       var es = e.boss ? 0.42 : ENEMIES[e.kind].size;
       drawFxPic(ctx, 'fx/nyx-maldicion', e.x, e.y + es * 0.55, es * 2.4, 0);
@@ -843,7 +873,7 @@ function drawBoard(b, L, now, isMain) {
     ctx.globalAlpha = 1;
   }
   // monstruos (los de más atrás primero)
-  var ens = b.enemies.slice().sort(function (p, q) { return p.y - q.y; });
+  var ens = ally ? [] : b.enemies.slice().sort(function (p, q) { return p.y - q.y; });
   ens.forEach(function (e) {
     var d = e.boss ? BOSSES[e.kind] : ENEMIES[e.kind];
     // en el tablero dibujado salen del portal: aparecen creciendo
@@ -855,9 +885,10 @@ function drawBoard(b, L, now, isMain) {
     ctx.globalAlpha = 1;
   });
   // Escudo divino de Sol: esfera de luz tapando la salida mientras dure
-  if (b.guardT > 0 && art('fx/sol-escudo')) {
+  var guardT = Math.max(b.guardT, b.partner ? b.partner.guardT : 0);
+  if (!ally && guardT > 0 && art('fx/sol-escudo')) {
     var gp = b.pos(G.len - 0.35);
-    ctx.globalAlpha = Math.min(1, b.guardT / 0.5) * (0.8 + 0.15 * Math.sin(now / 160));
+    ctx.globalAlpha = Math.min(1, guardT / 0.5) * (0.8 + 0.15 * Math.sin(now / 160));
     drawFxPic(ctx, 'fx/sol-escudo', gp.x, gp.y, 1.25 + 0.05 * Math.sin(now / 220), 0);
     ctx.globalAlpha = 1;
   }
@@ -930,7 +961,7 @@ function drawBoard(b, L, now, isMain) {
   // textos en coordenadas de pantalla (nítidos)
   var toS = function (x, y) { return { x: L.ox + x * sc, y: L.oy + y * sc }; };
   ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-  b.enemies.forEach(function (e) {
+  (ally ? [] : b.enemies).forEach(function (e) {
     if (dual && pic && e.y > G.H + 0.1) return; // aún fuera del mapa
     var p = toS(e.x, e.y - (e.boss ? 0.92 : ENEMIES[e.kind].size + 0.16));
     // el número da un saltito al recibir un golpe
@@ -955,7 +986,7 @@ function drawBoard(b, L, now, isMain) {
     // aún no se puede recolocar: reloj con lo que falta (fusionar sí se puede)
     if (battle.moveCd > 0) drawMoveTimer(drag.x + sc * 0.32, drag.y - sc * 0.42, Math.max(11, sc * 0.17), battle.moveCd / MOVE_COOLDOWN);
   }
-  if (!isMain) drawRivalHeader(b, L);
+  if (!isMain && !ally) drawRivalHeader(b, L);
 }
 
 /* Aura de cada tropa en su casilla (assets/cells/<id>), debajo de todas las
@@ -1135,6 +1166,16 @@ function drawTileFloor(type, cc, G, i, now, b) {
   glow(ctx, cc.x, cc.y, s * 0.45, t.color, 0.35 + pulse * 0.12);
   var w = s * 0.58, h = w * pic.naturalHeight / pic.naturalWidth;
   ctx.drawImage(pic, cc.x - w / 2, cc.y - h / 2, w, h);
+}
+/* Co-op: la cuadrícula del aliado, encima del camino de tu tablero, sobre
+   una placa oscura con borde dorado (sin tablero propio ni camino). */
+var COOP_GAP = 0.25, COOP_PANEL_PAD = 0.22;
+function drawAllyPanel(b, G, now) {
+  var x = G.x0 - COOP_PANEL_PAD, y = G.y0 - COOP_PANEL_PAD, w = COLS * G.cw + COOP_PANEL_PAD * 2, h = ROWS * G.ch + COOP_PANEL_PAD * 2 + 0.12;
+  ctx.fillStyle = 'rgba(8,12,40,0.55)'; rrect(ctx, x, y, w, h, 0.25); ctx.fill();
+  ctx.strokeStyle = 'rgba(245,196,0,0.6)'; ctx.lineWidth = 0.04; ctx.stroke();
+  for (var i = 0; i < COLS * ROWS; i++) drawStoneTile(b, i, b.cc(i), G);
+  for (i = 0; i < COLS * ROWS; i++) if (b.tiles[i]) drawTileFloor(b.tiles[i], b.cc(i), G, i, now, b);
 }
 /* Carteles de entrada y salida de los monstruos (assets/ui/cartel-*,
    de assets/set-salida-entrada-monstruos.jpg), plantados junto a la boca

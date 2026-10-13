@@ -7,8 +7,17 @@
    La ventana sale sola al entrar con una versión nueva (meta.lastSeenVersion)
    y también desde Opciones.
    ========================================================= */
-var APP_VERSION = '1.17.5';
+var APP_VERSION = '1.18.0';
 var APP_PATCH_NOTES = [
+  {
+    version: '1.18.0',
+    summary: 'Co-op con un solo camino',
+    items: [
+      'En Co-op hay un solo camino, el de tu tablero, y los monstruos pasan por él desde el principio.',
+      'Las tropas de tu aliado están encima de tu tablero y disparan a los mismos monstruos que las tuyas.',
+      'La Maldición de Nyx y el Escudo divino de Sol sirven para los dos, los eche quien los eche.'
+    ]
+  },
   {
     version: '1.17.5',
     summary: 'Losetas enteras y tropas encima de ellas',
