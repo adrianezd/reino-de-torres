@@ -2213,3 +2213,37 @@ x-ico.off { filter: grayscale(1) brightness(0.45); opacity: 0.75; }
 .ch-level { display: flex; align-items: center; gap: 10px; margin-top: 12px; }
 .ch-level .uc-lvbody { flex: 1; min-width: 0; }
 .cmd-hero .cmd-upbtn { margin-top: 10px; }
+
+/* figura del comandante encajada en su hueco: entera, sin pasarse del
+   ancho (Brann es el triple de ancho que Morgana) y apoyada abajo */
+.ch-stage { width: 38%; min-height: 0; height: 168px; align-self: center; }
+.ch-body {
+  left: 0; right: 0; bottom: 0; top: 0; width: 100%; height: 100%; max-width: 100%; transform: none;
+  object-fit: contain; object-position: 50% 100%;
+}
+.ch-stage::before { bottom: -2%; }
+
+/* retratos de arriba: chapa de nivel en forma de escudo dorado, centrada
+   abajo; verde con flecha si se puede mejorar; candado en una chapa oscura */
+.cmd-pick { gap: 6px; margin-bottom: 16px; }
+.cp-btn { padding-bottom: 9px; }
+.cp-face { border-width: 2.5px; }
+.cp-lv, .cp-lock {
+  left: 50%; right: auto; top: auto; bottom: -1px; transform: translateX(-50%);
+  min-width: 0; width: 22px; height: 24px; padding: 0 0 3px; border: 0; border-radius: 0;
+  clip-path: polygon(50% 100%, 0 72%, 0 0, 100% 0, 100% 72%);
+  background: linear-gradient(180deg, #5a3a08, #2a1800); /* borde */
+}
+.cp-lv::before, .cp-lock::before {
+  content: ''; position: absolute; inset: 2px 2px 3px; z-index: -1;
+  clip-path: polygon(50% 100%, 0 72%, 0 0, 100% 0, 100% 72%);
+  background: linear-gradient(180deg, #fff1a8 0%, #f5c400 45%, #c98a00 100%);
+}
+.cp-lv { isolation: isolate; color: #3a1d00; font: 400 0.8rem 'Lilita One', sans-serif; -webkit-text-stroke: 0; line-height: 1; animation: none; }
+.cp-lv.ready::before { background: linear-gradient(180deg, #d8ff9a 0%, #6fd83a 50%, #2f9a1a 100%); }
+.cp-lv.ready { color: #123800; }
+.cp-lock { isolation: isolate; }
+.cp-lock::before { background: linear-gradient(180deg, #4a4f6a, #22263c); }
+.cp-lock x-ico { width: 13px; height: 13px; }
+.cp-btn.view .cp-lv::before { background: linear-gradient(180deg, #ffffff 0%, #ffe066 40%, #f5a300 100%); }
+.cp-btn.eq::after { bottom: -7px; width: 40%; height: 3px; }

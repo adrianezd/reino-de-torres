@@ -7,8 +7,16 @@
    La ventana sale sola al entrar con una versión nueva (meta.lastSeenVersion)
    y también desde Opciones.
    ========================================================= */
-var APP_VERSION = '1.19.1';
+var APP_VERSION = '1.19.2';
 var APP_PATCH_NOTES = [
+  {
+    version: '1.19.2',
+    summary: 'Comandantes bien encajados en su ficha',
+    items: [
+      'En la ficha de cada comandante la figura sale entera y ya no tapa el nombre.',
+      'El nivel de cada retrato va en un escudo dorado; verde si puedes mejorarlo.'
+    ]
+  },
   {
     version: '1.19.1',
     summary: 'Comandante y mazo en una placa, y ficha de comandante nueva',
