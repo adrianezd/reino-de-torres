@@ -7,8 +7,17 @@
    La ventana sale sola al entrar con una versión nueva (meta.lastSeenVersion)
    y también desde Opciones.
    ========================================================= */
-var APP_VERSION = '1.21.0';
+var APP_VERSION = '1.21.1';
 var APP_PATCH_NOTES = [
+  {
+    version: '1.21.1',
+    summary: 'Ruleta con tirada gratis en la tienda',
+    items: [
+      'Nueva ruleta arriba de la tienda: una tirada gratis cada día con oro, gemas, cofres, cartas y cartas de comandante.',
+      'Cuando ya la has usado, puedes volver a girar por 10 gemas.',
+      'La pestaña Tienda lleva un punto rojo mientras tengas la tirada gratis sin usar.'
+    ]
+  },
   {
     version: '1.21.0',
     summary: 'Temporada, racha de días y evento de la semana',

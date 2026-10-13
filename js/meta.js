@@ -189,6 +189,43 @@ function receiveReto(o) {
   return r;
 }
 
+/* ---------- ruleta de la tienda ---------- */
+function wheelState() {
+  if (!meta.wheel || meta.wheel.day !== dayKey(0)) meta.wheel = { day: dayKey(0), free: false, spins: 0 };
+  return meta.wheel;
+}
+function wheelFreeReady() { return !wheelState().free; }
+// tira la ruleta (gratis si toca; si no, por gemas): { index, gold, gems, chest, card, cmd } o null
+function spinWheel() {
+  var w = wheelState(), free = !w.free;
+  if (!free && meta.gems < WHEEL_EXTRA_GEMS) return null;
+  if (free) w.free = true; else meta.gems -= WHEEL_EXTRA_GEMS;
+  w.spins++;
+  var total = WHEEL_PRIZES.reduce(function (s, p) { return s + p.w; }, 0), r = Math.random() * total, i = 0;
+  for (; i < WHEEL_PRIZES.length - 1; i++) { r -= WHEEL_PRIZES[i].w; if (r < 0) break; }
+  var p = WHEEL_PRIZES[i], out = { index: i, free: free, gold: p.gold || 0, gems: p.gems || 0 };
+  meta.gold += out.gold; meta.gems += out.gems;
+  if (p.cards) {
+    // una tropa de esa rareza; mejor una que puedas subir
+    var pool = UNIT_ORDER.filter(function (id) { return UNITS[id].rarity === p.cards && !UNITS[id].chestOnly; });
+    var useful = pool.filter(function (id) { return !meta.cards[id] || meta.cards[id].lv < CARD_MAX; });
+    var id = pick(useful.length ? useful : pool);
+    out.card = { id: id, n: p.n, fresh: !meta.cards[id] };
+    if (meta.cards[id]) meta.cards[id].n += p.n; else meta.cards[id] = { lv: 1, n: p.n - 1 };
+    out.surplus = takeSurplus();
+  }
+  if (p.cmd) {
+    var k = pick(COMMANDER_ORDER), fresh = [];
+    addCmdCards(k, p.cmd, fresh);
+    out.cmd = { k: k, n: p.cmd, fresh: fresh.length > 0 };
+    out.surplus = takeSurplus();
+  }
+  addSeasonXp(10);
+  saveMeta();
+  if (p.chest) out.chest = openChest(p.chest);
+  return out;
+}
+
 /* ---------- cartas sobrantes ----------
    Con la tropa (o el comandante) al máximo, las cartas de más pasan a oro.
    Devuelve el oro ganado. */

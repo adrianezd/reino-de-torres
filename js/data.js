@@ -314,6 +314,25 @@ var SHOP_CARDS = {
   mitica:     { n: 1,  gold: 1400, gems: 90 },
   legendaria: { n: 1,  gold: 3000, gems: 160 }
 };
+/* Ruleta de la tienda: una tirada gratis al día y, después, otras por
+   WHEEL_EXTRA_GEMS gemas. w: peso de cada premio (más alto, más fácil) ·
+   cards: cartas de una tropa al azar de esa rareza · cmd: cartas de un
+   comandante al azar · col: color de su casilla. */
+var WHEEL_PRIZES = [
+  { gold: 60,  w: 20, col: '#f2b632' },
+  { gems: 5,   w: 14, col: '#3fb8ff' },
+  { chest: 'madera', w: 12, col: '#a0663a' },
+  { gold: 180, w: 13, col: '#ffcf4a' },
+  { cards: 'rara', n: 3, w: 9, col: '#1f74e0' },
+  { gems: 15,  w: 6,  col: '#58c9ff' },
+  { chest: 'plata', w: 7, col: '#9aa7b8' },
+  { gold: 450, w: 5,  col: '#ffe066' },
+  { cards: 'epica', n: 1, w: 4, col: '#8c6bff' },
+  { cmd: 2,    w: 4,  col: '#c04bff' },
+  { chest: 'oro', w: 2, col: '#ffd700' },
+  { gems: 50,  w: 1.5, col: '#7fe3ff' }
+];
+var WHEEL_EXTRA_GEMS = 10;
 var SHOP_GOLD = [
   { gold: 300,  gems: 25 },
   { gold: 1000, gems: 70 },

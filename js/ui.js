@@ -384,7 +384,7 @@ function ascNote(a) { return a ? 'Monstruos +' + Math.round((rogueAscHp(a) - 1) 
 var _badge = -1;
 function updateBadge() {
   if (!navigator.setAppBadge) return;
-  var n = meta.slots.filter(function (s) { return slotState(s) === 'ready'; }).length + (freeChestReady() ? 1 : 0) + dailyPending() + (loginReady() ? 1 : 0) + seasonPending() + (weekReady() ? 1 : 0);
+  var n = meta.slots.filter(function (s) { return slotState(s) === 'ready'; }).length + (freeChestReady() ? 1 : 0) + (wheelFreeReady() ? 1 : 0) + dailyPending() + (loginReady() ? 1 : 0) + seasonPending() + (weekReady() ? 1 : 0);
   if (n === _badge) return;
   _badge = n;
   try { (n ? navigator.setAppBadge(n) : navigator.clearAppBadge()).catch(function () {}); } catch (e) {}
@@ -561,10 +561,69 @@ function shopHtml() {
   var golds = SHOP_GOLD.map(function (p, i) {
     return '<button class="sh-gold" data-buygold="' + i + '"><img class="sh-gold-pic" src="assets/chests/oro-' + ['monedas', 'saco', 'rebosante'][i] + '.webp" alt=""><b>' + p.gold + ' 🪙</b>' + price('gems', p.gems, meta.gems < p.gems) + '</button>';
   }).join('');
-  return '<div class="sh-head"><h3>Ofertas del día</h3><small>Cambian en ' + left + ' h</small></div>' +
+  return wheelHtml() +
+    '<div class="sh-head"><h3>Ofertas del día</h3><small>Cambian en ' + left + ' h</small></div>' +
     '<div class="sh-offers">' + (offers || '<p class="muted">Desbloquea tropas para ver ofertas</p>') + '</div>' +
     '<div class="sh-head"><h3>Cofres</h3></div><div class="sh-chests">' + chests + '</div>' +
     '<div class="sh-head"><h3>Oro</h3></div><div class="sh-golds">' + golds + '</div>';
+}
+/* ---------- ruleta de la tienda ----------
+   Doce casillas en un disco que gira hasta el premio; la flecha está arriba. */
+var wheelAngle = 0, wheelBusy = false;
+function wheelPrizeLook(p) {
+  if (p.chest) return { pic: chestPic(p.chest), txt: p.chest.charAt(0).toUpperCase() + p.chest.slice(1) };
+  if (p.cards) return { pic: 'assets/ui/fondo-carta-' + p.cards + '.webp', txt: '×' + p.n + ' ' + RARITY[p.cards].name.toLowerCase() };
+  if (p.cmd) return { pic: 'assets/chests/comandante.webp', txt: '×' + p.cmd + ' cmd' };
+  if (p.gems) return { pic: 'assets/icons/gema.webp', txt: String(p.gems) };
+  return { pic: 'assets/icons/moneda.webp', txt: String(p.gold) };
+}
+function wheelHtml() {
+  var n = WHEEL_PRIZES.length, step = 360 / n;
+  var conic = WHEEL_PRIZES.map(function (p, i) { return p.col + ' ' + (i * step) + 'deg ' + ((i + 1) * step) + 'deg'; }).join(', ');
+  var slots = WHEEL_PRIZES.map(function (p, i) {
+    var lk = wheelPrizeLook(p);
+    return '<span class="wh-slot" style="transform:rotate(' + (i * step + step / 2) + 'deg)"><span><img src="' + lk.pic + '" alt=""><b>' + esc(lk.txt) + '</b></span></span>';
+  }).join('');
+  var free = wheelFreeReady();
+  return '<div class="sh-head"><h3>Tirada gratis</h3><small>' + (free ? 'Una al día' : 'Mañana, otra gratis') + '</small></div>' +
+    '<div class="wheel-box"><div class="wheel"><i class="wh-arrow"></i><div class="wh-disc" id="whDisc" style="background:conic-gradient(' + conic + ');transform:rotate(' + wheelAngle + 'deg)">' + slots + '</div><span class="wh-hub"></span></div>' +
+    '<button class="btn ' + (free ? 'btn-green' : 'btn-ghost') + ' wh-go" id="whGo">' + (free ? 'Girar gratis' : 'Otra tirada <span class="wh-cost">💎 ' + WHEEL_EXTRA_GEMS + '</span>') + '</button></div>';
+}
+function bindWheel() {
+  var b = $('whGo');
+  if (!b) return;
+  b.onclick = function () {
+    if (wheelBusy) return;
+    var r = spinWheel();
+    if (!r) { sfx('no'); toast('Te faltan gemas'); return; }
+    wheelBusy = true; b.disabled = true;
+    sfx('tap'); buzz(20);
+    var step = 360 / WHEEL_PRIZES.length, centre = r.index * step + step / 2;
+    // varias vueltas y se para con el premio bajo la flecha (un poco al azar dentro de su casilla)
+    var target = wheelAngle - (wheelAngle % 360) + 360 * 5 + (360 - centre) + (Math.random() - 0.5) * step * 0.6;
+    wheelAngle = target;
+    var disc = $('whDisc'), dur = reducedMotion() ? 0 : 4200;
+    if (disc) { disc.style.transition = 'transform ' + dur + 'ms cubic-bezier(0.15, 0.7, 0.12, 1)'; disc.style.transform = 'rotate(' + target + 'deg)'; }
+    // clics de la ruleta, cada vez más espaciados
+    for (var k = 0, t = 0; k < 26 && t < dur - 300; k++) { t += 40 + k * k * 0.9; tone(700 + (k % 3) * 80, 0.03, 'square', 0.04, t / 1000); }
+    setTimeout(function () { wheelBusy = false; wheelResult(r); }, dur + 250);
+  };
+}
+function wheelResult(r) {
+  sfx('chest'); buzz([20, 40, 20]);
+  var extra = [r.gold ? '+' + r.gold + ' 🪙' : '', r.gems ? '+' + r.gems + ' 💎' : '', r.surplus ? '+' + r.surplus + ' 🪙 por cartas sobrantes' : ''].filter(Boolean).join(' · ');
+  if (r.chest) { showChest(r.chest); return; }
+  if (r.card || r.cmd) {
+    var pic = r.card ? unitIcon(r.card.id, 0, 96) : COMMANDERS[r.cmd.k].pic, name = r.card ? UNITS[r.card.id].name : COMMANDERS[r.cmd.k].name;
+    var col = r.card ? RARITY[UNITS[r.card.id].rarity].color : COMMANDERS[r.cmd.k].color, n = r.card ? r.card.n : r.cmd.n, fresh = r.card ? r.card.fresh : r.cmd.fresh;
+    openOverlay('<div class="modal-card chest-modal"><div class="chest-cards"><div class="chest-card' + (fresh ? ' fresh' : '') + '" style="--rc:' + col + '"><img src="' + pic + '" alt=""><b>×' + n + '</b><small>' + esc(name) + '</small></div></div>' +
+      '<h2>' + (fresh ? (r.card ? '¡Tropa nueva!' : '¡Comandante nuevo!') : '¡Premio!') + '</h2><p class="gold-big">' + n + (n > 1 ? ' cartas' : ' carta') + ' de ' + esc(name) + '</p>' + (extra ? '<p class="surplus">' + extra + '</p>' : '') +
+      '<button class="btn chest-ok" id="chestOk">¡Genial!</button></div>');
+    $('chestOk').onclick = function () { closeOverlay(); renderMenu(currentScreen); };
+    return;
+  }
+  openOverlay('<div class="modal-card chest-modal"><img class="wh-prize" src="' + wheelPrizeLook(WHEEL_PRIZES[r.index]).pic + '" alt=""><h2>¡Premio!</h2><p class="gold-big">' + extra + '</p><button class="btn chest-ok" id="chestOk">¡Genial!</button></div>');
+  $('chestOk').onclick = function () { closeOverlay(); renderMenu(currentScreen); };
 }
 function rivalCardsText(off) {
   if (!off) return 'Cartas a tu nivel';
@@ -1007,6 +1066,10 @@ function bindMenu() {
   });
   var cs = $('chestSlots');
   if (cs) cs.onclick = function (e) { var b = e.target.closest('[data-slot]'); if (b) slotTap(+b.dataset.slot, b); };
+  bindWheel();
+  // punto en la pestaña Tienda mientras la tirada gratis esté sin usar
+  var tb = document.querySelector('[data-tab="shop"]');
+  if (tb) tb.classList.toggle('has-dot', wheelFreeReady());
 }
 
 /* Rasgos de una tropa como etiquetas (icono, nombre, valor). */
