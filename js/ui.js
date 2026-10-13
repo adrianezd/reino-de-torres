@@ -174,14 +174,14 @@ function renderMenu(name, arg) {
       // modo-roguelike, la de 1 contra 1 en rojo) y el nombre escrito encima
       '<button class="mode-card" data-go="coop" aria-label="Co-op"><img src="assets/ui/modo-coop-limpio.webp" alt=""><span class="mode-name">Co-op</span></button>' +
       '<button class="mode-card" data-go="tourney" aria-label="Torneo"><img src="assets/ui/modo-torneo.webp" alt=""></button>' +
-      '<button class="mode-card" data-go="rogue" aria-label="Roguelike"><img src="assets/ui/modo-roguelike.webp" alt=""><span class="mode-name">Roguelike</span>' + (meta.rogueBest ? '<span class="mode-chip">' + meta.rogueBest + '/' + ROGUE_WAVES + '</span>' : '') + '</button>' +
+      '<button class="mode-card" data-go="rogue" aria-label="Roguelike"><img src="assets/ui/modo-roguelike.webp" alt=""><span class="mode-name long">Roguelike</span>' + (meta.rogueBest ? '<span class="mode-chip">' + meta.rogueBest + '/' + ROGUE_WAVES + '</span>' : '') + '</button>' +
       '</div>' +
       // huecos de cofre abajo del todo, debajo de los botones de jugar
       '<div class="slots" id="chestSlots">' + slotsInner() + '</div>';
   } else if (name === 'campaign') {
     // placas de madera con el color de su zona; la siguiente por jugar late
     var nextSt = CAMPAIGN.filter(function (st) { return stageUnlocked(st.id) && !meta.campaign[st.id]; })[0];
-    html = backBar('Campaña') + campaignMap(nextSt) + '<div class="stage-list">' + CAMPAIGN.map(function (st) {
+    html = backBar('Campaña', false, 'campana') + campaignMap(nextSt) + '<div class="stage-list">' + CAMPAIGN.map(function (st) {
       var open = stageUnlocked(st.id), stars = meta.campaign[st.id] || 0, z = stageZone(st.id);
       return (z.from === st.id ? '<h4 class="stage-zone" style="--zc:' + z.color + '"><span>Zona ' + (CAMPAIGN_ZONES.indexOf(z) + 1) + ' · ' + esc(z.name) + '</span><img src="' + chestPic(z.chest) + '" alt=""></h4>' : '') +
         '<button class="stage ' + (open ? '' : 'locked') + (nextSt === st ? ' next' : '') + '" style="--zc:' + (ZONE_COLOR[st.biome] || '#ffd166') + '" ' + (open ? 'data-stage="' + st.id + '"' : 'disabled') + '>' +
@@ -191,9 +191,7 @@ function renderMenu(name, arg) {
     }).join('') + '</div>';
   } else if (name === 'duelPick') {
     // una fila por rival: su monstruo, el nivel de sus cartas y el premio en chapas
-    html = backBar('1 contra 1') +
-      '<p class="lead">Los mismos monstruos para los dos. Gana quien aguante más. Antes de empezar, la ruleta elige un modificador y el jefe final.</p>' +
-      arenaStrip() +
+    html = backBar('1 contra 1', false, 'duelo') + arenaStrip() +
       '<div class="rival-list">' + ['Fácil', 'Normal', 'Difícil'].map(function (n, i) {
         return '<button class="rival-row d' + i + '" data-duel="' + i + '">' +
           '<span class="rv-face"><img src="assets/enemies/' + ['blob', 'orco', 'dragon'][i] + '.webp" alt=""></span>' +
@@ -202,23 +200,27 @@ function renderMenu(name, arg) {
       }).join('') + '</div>' +
       recordChips(meta.duelWins, meta.duelLosses);
   } else if (name === 'rogue') {
-    html = backBar('Roguelike') +
-      '<p class="lead">Tú solo contra ' + ROGUE_WAVES + ' oleadas. Cada ' + ROGUE_PICK_EVERY + ' segundos eliges 1 de 3 ventajas: habilidades de comandante, reliquias y modificadores. Se acumulan hasta el final.</p>' +
-      '<div class="tn-panel rg-panel"><img src="assets/icons/dado.webp" alt=""><span><b>Jefe final al azar</b><small>La ruleta lo elige al empezar y llega en la oleada ' + ROGUE_WAVES + ' con ' + String(ROGUE_FINAL_HP).replace('.', ',') + ' veces más vida.</small></span></div>' +
-      '<div class="tn-panel tn-prize"><img src="' + chestPic('oro') + '" alt=""><span><b>Premio</b><small>Oro y gemas según la oleada a la que llegues. Cofre de madera en la 10, de plata en la 20 y de oro si vences al jefe final.</small></span></div>' +
+    // portada del modo, tres datos y el premio por tramos
+    html = backBar('Roguelike', false, 'rogue') +
+      '<div class="mode-hero"><img src="assets/ui/modo-roguelike.webp" alt=""><span><b>' + ROGUE_WAVES + ' oleadas</b><small>Tú solo, con ventajas que se acumulan</small></span></div>' +
+      '<div class="stat-tiles"><span>' + ico('icons/ola') + '<b>' + ROGUE_WAVES + '</b><small>oleadas</small></span>' +
+      '<span>' + ico('icons/chispas') + '<b>' + ROGUE_PICK_EVERY + ' s</b><small>por ventaja</small></span>' +
+      '<span>' + ico('icons/calavera') + '<b>×' + String(ROGUE_FINAL_HP).replace('.', ',') + '</b><small>jefe final</small></span></div>' +
+      '<div class="tn-panel"><h3>Premios</h3><div class="prize-steps">' +
+      [['madera', 'Oleada 10'], ['plata', 'Oleada 20'], ['oro', 'Jefe final']].map(function (p) {
+        return '<span><img src="' + chestPic(p[0]) + '" alt=""><small>' + p[1] + '</small></span>';
+      }).join('') + '</div></div>' +
       '<button class="btn btn-green tn-go" data-rogue="1">Jugar</button>' +
-      '<p class="muted">Récord: ' + (meta.rogueBest ? 'oleada ' + meta.rogueBest : 'aún ninguno') + '</p>';
+      '<div class="rec-row"><span class="rec-chip">' + ico('icons/trofeo') + '<b>' + (meta.rogueBest || 0) + '</b>récord</span></div>';
   } else if (name === 'road') {
-    html = backBar('Camino de trofeos') + roadHtml();
+    html = backBar('Trofeos', false, 'trofeos') + roadHtml();
   } else if (name === 'tourney') {
     // torneo: el nivel de cada rareza, el de los comandantes, el premio y a jugar
     var tm = meta.tourneyMode || 'clasico';
-    html = backBar('Torneo') +
-      '<p class="lead">Tus cartas y las del rival, al mismo nivel. Solo cuenta cómo juegas.</p>' +
+    html = backBar('Torneo', false, 'torneo') +
       '<div class="tn-modes">' + TOURNEY_MODES.map(function (t) {
         return '<button class="tn-mode' + (t.id === tm ? ' on' : '') + '" data-tmode="' + t.id + '"><b>' + esc(t.name) + '</b><small>' + esc(t.desc) + '</small></button>';
       }).join('') + '</div>' +
-      (tm === 'prestado' ? '<p class="tn-decks">Mazos: ' + TOURNEY_DECKS.map(function (d) { return esc(d.name); }).join(', ') + '</p>' : '') +
       '<div class="tn-panel"><h3>Nivel de torneo</h3><div class="tn-levels">' + Object.keys(RARITY).map(function (k) {
         return '<span class="tn-lv r-' + k + '" style="--rc:' + RARITY[k].color + '"><small>Nivel</small><b>' + TOURNEY_LV[k] + '</b><em>' + RARITY[k].name + '</em></span>';
       }).join('') + '</div>' +
@@ -227,19 +229,17 @@ function renderMenu(name, arg) {
       '<button class="btn btn-green tn-go" data-tourney="1">Jugar</button>' +
       recordChips(meta.tourneyWins || 0, meta.tourneyLosses || 0);
   } else if (name === 'collection') {
-    html = backBar('Mazo', true) + deckTabs('collection') +
-      '<p class="lead">Tu mazo (5 tropas). Toca una carta para verla, cambiarla o mejorarla.</p>' +
+    html = backBar('Mazo', true, 'mazo') + deckTabs('collection') +
       '<div class="deck-slots">' + meta.deck.map(function (id) { return cardHtml(id, true); }).join('') + '</div>' +
       '<div class="coll-head"><h3>Colección</h3>' + sortSwitch() + '</div>' +
-      (collSort === 'tipo' ? elementFilters() : rarityFilters()) + collectionGrid() +
-      '<div class="legend"><b>Afinidad:</b> ' + Object.keys(ELEMENTS).map(function (k) { return ELEMENTS[k].icon + ' ' + ELEMENTS[k].name; }).join(' · ') + '. Dos tropas del mismo elemento juntas se potencian.</div>';
+      (collSort === 'tipo' ? elementFilters() : rarityFilters()) + collectionGrid();
   } else if (name === 'commanders') {
     // tarjetas con el comandante de cuerpo entero; en los medallones de abajo
     // se enciende el suyo. Debajo, la habilidad del elegido con su efecto.
     var cs = COMMANDERS[meta.commander], cc = meta.cmdCards[meta.commander];
     var cNeed = cmdCardsNeeded(cc.lv), cGold = cmdUpgradeGold(cc.lv), cMax = cc.lv >= CMD_MAX;
     var cWhy = cMax ? '' : cc.n < cNeed ? (cNeed - cc.n === 1 ? 'Falta 1 carta' : 'Faltan ' + (cNeed - cc.n) + ' cartas') : meta.gold < cGold ? 'Te faltan ' + (cGold - meta.gold) + ' 🪙' : '';
-    html = backBar('Mazo', true) + deckTabs('commanders') + '<p class="lead">Su habilidad se carga durante la partida. Pulsa su retrato para usarla. Morgana y Torvald la usan sobre el tablero: eliges tú las tropas.</p>' +
+    html = backBar('Mazo', true, 'comandante') + deckTabs('commanders') +
       '<div class="cmd-cards">' + COMMANDER_ORDER.map(function (k, i) {
         var c = COMMANDERS[k];
         var own = cmdOwned(k);
@@ -255,30 +255,13 @@ function renderMenu(name, arg) {
       '<div class="uc-level cmd-level"><span class="uc-lvmedal">' + cc.lv + '</span><div class="uc-lvbody"><div class="uc-lvtop"><b>' + (cMax ? 'Nivel máximo' : 'Nivel ' + cc.lv) + '</b>' +
       (cMax ? '' : '<span class="uc-gain">💪 ' + Math.round(cmdGrow(meta.commander, cc.lv) * 100) + '% → <b>' + Math.round(cmdGrow(meta.commander, cc.lv + 1) * 100) + '%</b></span>') + '</div>' +
       '<div class="ubar' + (canUpgradeCmd(meta.commander) ? ' ok' : '') + '"><span style="width:' + (cMax ? 100 : Math.min(100, cc.n / cNeed * 100)) + '%"></span><em>' + (cMax ? 'MÁX' : cc.n + '/' + cNeed) + '</em></div></div></div>' +
-      (cMax ? '' : '<button class="btn btn-up cmd-upbtn" id="cmdUp" ' + (canUpgradeCmd(meta.commander) ? '' : 'disabled') + '>⬆ Mejorar ' + cGold + ' 🪙</button>' + (cWhy ? '<p class="cmd-why">' + cWhy + '</p>' : '')) +
-      '<p class="muted">🎁 Las cartas de comandante salen en el cofre de comandante: lo ganas en el Torneo y está en la tienda.</p>';
+      (cMax ? '' : '<button class="btn btn-up cmd-upbtn" id="cmdUp" ' + (canUpgradeCmd(meta.commander) ? '' : 'disabled') + '>⬆ Mejorar ' + cGold + ' 🪙</button>' + (cWhy ? '<p class="cmd-why">' + cWhy + '</p>' : ''));
   } else if (name === 'shop') {
-    html = backBar('Tienda', true) + shopHtml();
+    html = backBar('Tienda', true, 'tienda') + shopHtml();
   } else if (name === 'howto') {
-    html = backBar('Cómo jugar') + '<div class="howto">' +
-      '<p><b>🎲 Invoca</b> tropas al azar de tu mazo. Cada invocación cuesta 10 💧 más que la anterior.</p>' +
-      '<p><b>✨ Fusiona</b> dos tropas <i>iguales y del mismo rango</i>: arrastra una sobre otra (o tócalas una tras otra). La tropa sube de rango y hace mucho más daño.</p>' +
-      '<p><b>↔️ Recoloca</b> tus tropas arrastrándolas a una casilla vacía o sobre otra para intercambiarlas.</p>' +
-      '<p><b>⚔️💧🏹 Casillas especiales:</b> Altar (+35% daño), Fuente (maná extra) y Atalaya (+30% velocidad). Cambian en cada partida.</p>' +
-      '<p><b>🔥❄️🌿🔮⚙️ Afinidad:</b> cada tropa vecina del mismo elemento da +12% de daño.</p>' +
-      '<p><b>⬆ Mejora</b> un tipo de tropa en plena partida tocando su carta abajo: afecta a todas las de ese tipo.</p>' +
-      '<p><b>👑 Comandante:</b> cuando su retrato esté cargado, tócalo para usar su habilidad. Sube de nivel con las cartas del cofre de comandante y su habilidad es más fuerte.</p>' +
-      '<p><b>🏆 Torneo:</b> un duelo con tus cartas y las del rival al mismo nivel: común 8, rara 6, épica 4, mítica 2 y legendaria 1. Se juega con tu mazo, con un mazo prestado o con cartas al azar. Si ganas, cofre de comandante.</p>' +
-      '<p><b>🎲 Roguelike:</b> ' + ROGUE_WAVES + ' oleadas tú solo; cada ' + ROGUE_PICK_EVERY + ' segundos eliges una ventaja de tres. La ruleta elige el jefe final.</p>' +
-      '<p><b>⚡ Combos:</b> dos fusiones en menos de 2 segundos dan maná extra, y más si sigues la racha.</p>' +
-      '<p><b>🌳 Talentos:</b> Lyra, Brasa y Nívea tienen un árbol de tres pisos que se abre con los niveles 3, 6 y 9 de su carta. Míralo en la pestaña Talentos de su ficha.</p>' +
-      '<p><b>🎯 Misiones:</b> cada día hay tres. Cóbralas en el botón Misiones del inicio y, con las tres, abre un cofre de plata.</p>' +
-      '<p><b>🏆 Camino de trofeos:</b> ganar duelos da trofeos. Cada parada del camino tiene un premio y algunas abren una arena nueva, con su tablero y más oro por victoria.</p>' +
-      '<p><b>🗺️ Cofres de campaña:</b> cada zona da su cofre (madera, plata y oro) y uno mejor si sacas estrellas nuevas.</p>' +
-      '<p><b>🌑 Eventos:</b> algunas oleadas traen Eclipse, Lluvia de maná, Niebla, Horda o Calma.</p>' +
-      '<p><b>💧 Maná:</b> se gana derrotando monstruos, con el Mercader Doblón y con la Fuente.</p>' +
-      '<p><b>💎 Gemas:</b> salen en los cofres, por cada estrella nueva de la campaña, al ganar duelos y en el cooperativo. Gástalas en la tienda.</p>' +
-      '</div>';
+    html = backBar('Cómo jugar') + '<div class="help-grid">' + HELP.map(function (h) {
+      return '<div class="help-card"><span class="help-ico">' + ico(h[0]) + '</span><span><b>' + h[1] + '</b><small>' + h[2] + '</small></span></div>';
+    }).join('') + '</div>';
   }
   m.innerHTML = icons(html);
   m.scrollTop = keepScroll;
@@ -289,6 +272,21 @@ function renderMenu(name, arg) {
     if (at) at.scrollIntoView({ block: 'center' });
   }
 }
+/* Cómo jugar: icono, título y una frase por ficha. */
+var HELP = [
+  ['icons/dado', 'Invoca', 'Saca una tropa al azar de tu mazo. Cada invocación cuesta 10 de maná más.'],
+  ['icons/chispas', 'Fusiona', 'Arrastra una tropa sobre otra igual y del mismo rango para subirla de rango.'],
+  ['icons/recolocar', 'Recoloca', 'Arrastra una tropa a otra casilla o sobre otra para intercambiarlas.'],
+  ['icons/mejorar', 'Mejora', 'Toca una carta de abajo para mejorar todas las tropas de ese tipo.'],
+  ['icons/vecinas', 'Afinidad', 'Cada vecina del mismo elemento da un 12% más de daño.'],
+  ['tiles/altar', 'Casillas especiales', 'Altar: más daño. Fuente: maná. Atalaya: más velocidad.'],
+  ['icons/corona', 'Comandante', 'Cuando su retrato brilla, tócalo para usar su habilidad.'],
+  ['icons/rayo', 'Combos', 'Dos fusiones seguidas en menos de 2 segundos dan maná extra.'],
+  ['icons/gota', 'Maná', 'Se gana derrotando monstruos, con Doblón, Oria y la Fuente.'],
+  ['events/eclipse', 'Eventos', 'Algunas oleadas traen Eclipse, Lluvia de maná, Niebla, Horda o Calma.'],
+  ['icons/estrella', 'Talentos', 'Lyra, Brasa y Nívea abren ramas en los niveles 3, 6 y 9.'],
+  ['icons/gema', 'Gemas', 'Salen en cofres, estrellas nuevas, duelos y Co-op. Se gastan en la tienda.']
+];
 /* Tienda: ofertas de cartas del día, cofres por gemas y oro por gemas. */
 function shopHtml() {
   var now = new Date(), mid = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
@@ -312,9 +310,8 @@ function shopHtml() {
   }).join('');
   return '<div class="sh-head"><h3>Ofertas del día</h3><small>Cambian en ' + left + ' h</small></div>' +
     '<div class="sh-offers">' + (offers || '<p class="muted">Desbloquea tropas para ver ofertas</p>') + '</div>' +
-    '<div class="sh-head"><h3>Cofres</h3><small>También dan gemas</small></div><div class="sh-chests">' + chests + '</div>' +
-    '<div class="sh-head"><h3>Oro</h3></div><div class="sh-golds">' + golds + '</div>' +
-    '<p class="muted">💎 Ganas gemas en los cofres, con cada estrella nueva de la campaña, al ganar duelos y en el cooperativo.</p>';
+    '<div class="sh-head"><h3>Cofres</h3></div><div class="sh-chests">' + chests + '</div>' +
+    '<div class="sh-head"><h3>Oro</h3></div><div class="sh-golds">' + golds + '</div>';
 }
 function rivalCardsText(off) {
   if (!off) return 'Cartas a tu nivel';
@@ -322,7 +319,7 @@ function rivalCardsText(off) {
 }
 // chapas de premio con su icono (trofeos, oro y gemas; las que sean 0 no salen)
 function prizeChips(trophies, gold, gems) {
-  var chip = function (pic, v) { return v ? '<span class="pz-chip">' + ico(pic) + '<b>' + v + '</b></span>' : ''; };
+  var chip = function (pic, v) { return v ? '<span class="pz-chip' + (v < 0 ? ' neg' : '') + '">' + ico(pic) + '<b>' + v + '</b></span>' : ''; };
   return chip('icons/trofeo', trophies) + chip('icons/moneda', gold) + chip('icons/gema', gems);
 }
 function recordChips(w, l) {
@@ -347,7 +344,7 @@ function campaignMap(nextSt) {
     ids.forEach(function (id, k) { if (meta.campaign[id]) done = k + 1; stars += meta.campaign[id] || 0; });
     return '<div class="cm-zone' + (stageUnlocked(z.from) ? '' : ' locked') + '" style="--zc:' + z.color + '">' +
       '<div class="cm-head"><img src="' + chestPic(z.chest) + '" alt=""><span><b>Zona ' + (zi + 1) + ' · ' + esc(z.name) + '</b>' +
-      '<small>Cofre de ' + z.chest + ', de ' + CHEST_UP[z.chest] + ' con estrellas nuevas</small></span><em>' + ico('icons/estrella') + stars + '/' + n * 3 + '</em></div>' +
+      '<small>Premio: cofre de ' + z.chest + '</small></span><em>' + ico('icons/estrella') + stars + '/' + n * 3 + '</em></div>' +
       '<div class="cm-trail"><svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><path class="cm-path" d="' + curve(pts) + '"/>' +
       (done ? '<path class="cm-path done" d="' + curve(pts.slice(0, done + 1)) + '"/>' : '') + '</svg>' +
       ids.map(function (id, k) {
@@ -398,7 +395,6 @@ function roadHtml() {
   }).join('');
   return '<div class="rd-head"><img src="' + arenaPic(ai) + '" alt=""><span><small>Arena ' + (ai + 1) + ' de ' + ARENAS.length + '</small><b>' + esc(ARENAS[ai].name) + '</b>' +
     '<em>' + ico('icons/trofeo') + meta.trophies + ' trofeos · récord ' + best + '</em></span></div>' +
-    '<p class="lead">Gana duelos 1 contra 1 para sumar trofeos. Cada parada se cobra una vez, aunque luego bajes.</p>' +
     '<div class="road">' + stops + '</div>';
 }
 function claimRoadStop(i) {
@@ -428,7 +424,7 @@ function showMissions() {
   var now = new Date(), mid = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
   var left = Math.max(1, Math.ceil((mid - now) / 3600000));
   openOverlay('<div class="modal-card missions"><img class="ms-medal" src="assets/ui/misiones.webp" alt=""><h2>Misiones diarias</h2>' +
-    '<p class="lead">Tres nuevas cada día. Cobra las tres y abre un ' + CHESTS[DAILY_BONUS].name.toLowerCase() + '.</p>' +
+    '<span class="time-chip">' + ico('icons/reloj') + 'Nuevas en ' + left + ' h</span>' +
     d.list.map(function (m, i) {
       var M = MISSIONS[m.k], done = m.prog >= m.goal;
       return '<div class="ms-row' + (m.got ? ' got' : done ? ' ready' : '') + '"><span class="ms-ico">' + ico(M.icon) + '</span>' +
@@ -440,7 +436,6 @@ function showMissions() {
     '<div class="ms-row ms-bonus' + (d.bonus ? ' got' : bonus ? ' ready' : '') + '"><span class="ms-ico"><img src="' + chestPic(DAILY_BONUS) + '" alt=""></span>' +
     '<span class="ms-body"><b>Premio del día</b><small>' + gotN + '/' + d.list.length + ' misiones cobradas</small></span>' +
     (d.bonus ? '<i class="ms-ok">✔</i>' : '<button class="btn btn-green ms-claim" id="msBonus"' + (bonus ? '' : ' disabled') + '>Abrir</button>') + '</div>' +
-    '<p class="muted ms-left">Misiones nuevas en ' + left + ' h</p>' +
     '<button class="btn btn-ghost" id="msX">Cerrar</button></div>');
   document.querySelectorAll('[data-ms]').forEach(function (b) {
     b.onclick = function () {
@@ -475,8 +470,56 @@ function deckTabs(on) {
   return '<div class="sub-tabs"><button data-go="collection" class="' + (on === 'collection' ? 'on' : '') + '">Tropas</button>' +
     '<button data-go="commanders" class="' + (on === 'commanders' ? 'on' : '') + '">👑 Comandante</button></div>';
 }
-// tab: pantalla de la barra de abajo, sin botón de volver
-function backBar(title, tab) { return '<div class="back-bar">' + (tab ? '' : '<button class="back" data-go="home">‹</button>') + '<h2' + (title.length > 9 ? ' class="long"' : '') + '>' + title + '</h2>' + '<span class="pill gold">🪙 <b>' + meta.gold + '</b></span><span class="pill gem">💎 <b>' + meta.gems + '</b></span></div>'; }
+// tab: pantalla de la barra de abajo, sin botón de volver; info: clave de
+// INFO, que pone el botón «?» junto al título con la explicación de la pantalla
+function backBar(title, tab, info) {
+  return '<div class="back-bar">' + (tab ? '' : '<button class="back" data-go="home">‹</button>') +
+    '<h2' + (title.length > 9 ? ' class="long"' : '') + '>' + title + '</h2>' +
+    (info ? '<button class="info-btn" data-info="' + info + '" aria-label="Cómo funciona">?</button>' : '') +
+    '<span class="pill gold">🪙 <b>' + meta.gold + '</b></span><span class="pill gem">💎 <b>' + meta.gems + '</b></span></div>';
+}
+/* Explicación de cada pantalla, en la ficha del botón «?»: icono y una
+   frase por línea, para que las pantallas no lleven párrafos sueltos. */
+var INFO = {
+  mazo: { title: 'Mazo', rows: [
+    ['icons/espadas', 'Llevas cinco tropas a cada partida. Toca una carta para verla, mejorarla o cambiarla.'],
+    ['icons/vecinas', 'Afinidad: cada vecina del mismo elemento da un 12% más de daño.'],
+    ['icons/mejorar', 'Las cartas repetidas suben de nivel a la tropa.']] },
+  comandante: { title: 'Comandante', rows: [
+    ['icons/reloj', 'Su habilidad se carga durante la partida. Toca su retrato para usarla.'],
+    ['icons/mano', 'Morgana y Torvald la usan sobre el tablero: eliges tú las tropas.'],
+    ['chests/comandante', 'Sus cartas salen en el cofre de comandante, que se gana en el Torneo y está en la tienda.']] },
+  duelo: { title: '1 contra 1', rows: [
+    ['icons/espadas', 'Los mismos monstruos para los dos. Gana quien aguante más.'],
+    ['icons/dado', 'Antes de empezar, la ruleta elige un modificador y el jefe final.'],
+    ['icons/trofeo', 'Cada victoria suma trofeos y abre arenas nuevas.']] },
+  torneo: { title: 'Torneo', rows: [
+    ['icons/estrella', 'Tus cartas y las del rival, al mismo nivel. Solo cuenta cómo juegas.'],
+    ['icons/dado', 'Juega con tu mazo, con un mazo prestado o con cartas al azar.'],
+    ['chests/comandante', 'Si ganas, cofre de comandante.']] },
+  rogue: { title: 'Roguelike', rows: [
+    ['icons/ola', 'Tú solo contra ' + ROGUE_WAVES + ' oleadas.'],
+    ['icons/chispas', 'Cada ' + ROGUE_PICK_EVERY + ' s eliges una ventaja de tres. Se acumulan hasta el final.'],
+    ['icons/calavera', 'El jefe final lo elige la ruleta y llega con ' + String(ROGUE_FINAL_HP).replace('.', ',') + ' veces más vida.']] },
+  trofeos: { title: 'Trofeos', rows: [
+    ['icons/trofeo', 'Gana duelos 1 contra 1 para sumar trofeos.'],
+    ['icons/estrella', 'Cada parada se cobra una vez, aunque luego bajes.'],
+    ['icons/moneda', 'Cada arena nueva da más oro por victoria.']] },
+  tienda: { title: 'Tienda', rows: [
+    ['icons/reloj', 'Las ofertas de cartas cambian cada día.'],
+    ['icons/gema', 'Ganas gemas en los cofres, con estrellas nuevas de campaña, en los duelos y en Co-op.']] },
+  campana: { title: 'Campaña', rows: [
+    ['icons/estrella', 'Hasta tres estrellas por fase, según las vidas que te queden.'],
+    ['chests/madera', 'Cada zona da su cofre, y uno mejor si sacas estrellas nuevas.']] }
+};
+function showInfo(k) {
+  var inf = INFO[k];
+  if (!inf) return;
+  openOverlay('<div class="modal-card info-card"><h2>' + esc(inf.title) + '</h2><div class="info-list">' +
+    inf.rows.map(function (r) { return '<div class="info-row"><span class="info-ico">' + ico(r[0]) + '</span><p>' + r[1] + '</p></div>'; }).join('') +
+    '</div><button class="btn btn-green" id="infoOk">Entendido</button></div>');
+  $('infoOk').onclick = function () { sfx('tap'); closeOverlay(); };
+}
 /* Filtro por rareza de la colección: todas o una rareza, con cuántas tienes de cada. */
 var collFilter = 'all';
 function rarityFilters() {
@@ -561,6 +604,7 @@ function bindMenu() {
       showScreen(g);
     };
   });
+  m.querySelectorAll('[data-info]').forEach(function (b) { b.onclick = function () { sfx('tap'); showInfo(b.dataset.info); }; });
   m.querySelectorAll('[data-stage]').forEach(function (b) { b.onclick = function () { startBattle('campaign', { stage: +b.dataset.stage }); }; });
   // mapa de la campaña: lleva a la placa de la fase y la hace brillar
   m.querySelectorAll('[data-goto]').forEach(function (b) {
@@ -949,12 +993,12 @@ function closeOverlay() { $('overlay').hidden = true; $('overlay').innerHTML = '
 // Opciones: sonido y restablecer el juego
 function showOptions() {
   openOverlay('<div class="modal-card options"><div class="code-ico">⚙️</div><h2>Opciones</h2>' +
-    '<label class="sound-row"><input type="checkbox" id="soundChk" ' + (meta.settings.sound ? 'checked' : '') + '> Sonido</label>' +
+    '<label class="opt-row"><span>' + ico('icons/sonido') + 'Sonido</span><input type="checkbox" id="soundChk" class="switch" ' + (meta.settings.sound ? 'checked' : '') + '></label>' +
     '<button class="btn btn-ghost" id="optNews">Novedades</button>' +
     '<button class="btn btn-red" id="optReset">Restablecer juego</button>' +
     '<button class="btn btn-ghost" id="optX">Cerrar</button>' +
-    '<p class="foot">Versión ' + APP_VERSION + '. Juego original y gratuito, inspirado en los tower defense de fusión. Sin anuncios.</p></div>');
-  var sc = $('soundChk'); sc.onchange = function () { meta.settings.sound = sc.checked; saveMeta(); };
+    '<span class="ver-chip">Versión ' + APP_VERSION + '</span></div>');
+  var sc = $('soundChk'); sc.onchange = function () { meta.settings.sound = sc.checked; saveMeta(); sfx('tap'); };
   $('optNews').onclick = function () { showPatchNotes(); };
   $('optReset').onclick = showReset;
   $('optX').onclick = closeOverlay;
@@ -990,7 +1034,6 @@ function showReset() {
 /* Canjear códigos de regalo. */
 function showCodes() {
   openOverlay('<div class="modal-card code-modal"><div class="code-ico">🎟️</div><h2>Códigos</h2>' +
-    '<p class="lead">Escribe un código de regalo para conseguir oro, gemas o cofres.</p>' +
     '<input id="codeIn" class="code-in" type="text" maxlength="24" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="CÓDIGO">' +
     '<p class="code-err" id="codeErr" hidden></p>' +
     '<button class="btn btn-green" id="codeOk">Canjear</button><button class="btn btn-ghost" id="codeX">Cerrar</button></div>');
@@ -1049,17 +1092,16 @@ function showChestInfo(k, slot) {
     // legendario y de comandante: qué trae, sin decir qué tropa o comandante toca
     (ch.legendOnly
       ? row(RARITY.legendaria.color, 'Legendaria', 'Una tropa legendaria al azar', '1 carta') +
-        '<p class="ci-note">Solo trae una carta, siempre legendaria. Puede ser una que aún no tienes.</p>'
+        ''
       : ch.cmd
       ? row(ch.color, 'Comandante', 'Uno al azar, aunque aún no lo tengas', ch.cards + ' cartas') +
-        '<p class="ci-note">Todas las cartas son de un mismo comandante. Con ellas subes su nivel.</p>'
+        ''
       : '<h3 class="ci-t">Probabilidad por cofre</h3>' +
       row(RARITY.rara.color, 'Rara', '', chestOdds(ch.rare, ch.cards)) +
       row(RARITY.epica.color, 'Épica', '', chestOdds(ch.epic, ch.cards)) +
       row(RARITY.mitica.color, 'Mítica', ch.myth ? '' : 'Solo en el cofre de oro', chestOdds(ch.myth || 0, ch.cards)) +
       row(RARITY.legendaria.color, 'Legendaria', ch.legend ? '' : 'Solo en el cofre de oro', chestOdds(ch.legend, ch.cards)) +
-      '<p class="ci-note">Puede tocarte cualquier tropa, aunque aún no la tengas.' +
-      (ch.types ? ' Las cartas se reparten entre pocas tropas y la mitad de las veces trae además ' + ch.cmdCards + ' cartas de un comandante.' : '') + '</p>') +
+      (ch.types ? row(COMMANDERS[meta.commander].color, 'Comandante', 'La mitad de las veces', ch.cmdCards + ' cartas') : '')) +
     (inSlot ? slotButtons(slot) : '<button class="btn chest-ok' + (poor ? ' poor' : '') + '" id="ciOpen">Abrir<span>💎 ' + ch.price + '</span></button>') +
     '<button class="btn btn-ghost" id="ciX">Cerrar</button></div>');
   $('ciX').onclick = closeOverlay;
@@ -1103,7 +1145,7 @@ function slotsInner() {
   var busy = slotUnlocking();
   return meta.slots.map(function (s, i) {
     var st = slotState(s);
-    if (st === 'empty') return '<button class="slot empty" data-slot="' + i + '"><span>Hueco libre</span></button>';
+    if (st === 'empty') return '<button class="slot empty" data-slot="' + i + '" aria-label="Hueco libre"></button>';
     var ch = CHESTS[s.type];
     var lab = st === 'ready' ? '<b class="slot-go">¡Abrir!</b>'
       : st === 'unlocking' ? '<b>' + fmtDur(slotLeft(s)) + '</b><small>💎 ' + skipCost(i) + '</small>'
@@ -1695,7 +1737,6 @@ function modInfo(b) {
     (b.player.skills.length ? ' Habilidades: ' + b.player.skills.map(function (k) { return CMD_SKILLS[k].name; }).join(', ') + '.' : '');
 }
 
-var bannerTimer = null;
 function showBanner(title, sub, pic) {
   var el = $('banner');
   el.innerHTML = (pic ? '<img class="banner-pic" src="' + pic + '" alt="">' : '') + '<b>' + icons(esc(title)) + '</b>' + (sub ? '<small>' + icons(esc(sub)) + '</small>' : '');
@@ -1710,9 +1751,11 @@ function showResult(res) {
     : '<div class="res-chest full"><img src="' + chestPic(res.chest) + '" alt=""><span><b>Tus cofres están llenos</b><small>Abre alguno para que quepan los próximos</small></span></div>';
   var unlock = res.unlocked ? '<div class="res-unlock"><img src="' + unitIcon(res.unlocked, 0, 96) + '" alt=""><b>¡Nueva tropa: ' + esc(UNITS[res.unlocked].name) + '!</b></div>' : '';
   openOverlay('<div class="modal-card result ' + (res.won ? 'win' : 'lose') + '"><div class="res-emoji">' + (res.won ? '🏆' : res.draw ? '🤝' : ico('icons/derrota')) + '</div><h2>' + title + '</h2>' + stars +
-    '<p>' + res.lines.map(esc).join('<br>') + '</p>' +
-    '<p class="res-gold">+' + res.gold + ' 🪙' + (res.gems ? ' · +' + res.gems + ' 💎' : '') + (res.trophies ? ' · ' + (res.trophies > 0 ? '+' : '') + res.trophies + ' 🏆' : '') + '</p>' + chest + unlock +
-    '<p class="muted">Bajas ' + res.kills + ' · Daño ' + fmtNum(res.damage) + '</p>' + dmgSummary(res) +
+    (res.lines.length ? '<div class="res-lines">' + res.lines.map(function (l) { return '<span>' + esc(l) + '</span>'; }).join('') + '</div>' : '') +
+    '<div class="res-prize">' + prizeChips(res.trophies || 0, res.gold, res.gems) + '</div>' + chest + unlock +
+    '<div class="stat-tiles res-stats"><span>' + ico('icons/ola') + '<b>' + (battle ? battle.wave : 0) + '</b><small>oleada</small></span>' +
+    '<span>' + ico('icons/calavera') + '<b>' + fmtNum(res.kills || 0) + '</b><small>bajas</small></span>' +
+    '<span>' + ico('icons/espadas') + '<b>' + fmtNum(res.damage || 0) + '</b><small>daño</small></span></div>' + dmgSummary(res) +
     '<button class="btn btn-green" id="resAgain">' + (res.mode === 'campaign' && res.won && battle.stage.id < CAMPAIGN.length ? 'Siguiente fase ▶' : 'Otra vez') + '</button>' +
     (replay.frames.length ? '<button class="btn btn-ghost" id="resReplay">Repetición</button>' : '') +
     '<button class="btn btn-ghost" id="resMenu">Menú</button></div>');

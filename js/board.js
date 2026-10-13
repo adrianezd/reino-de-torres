@@ -17,11 +17,6 @@ var WAYPOINTS = [
   { x: BOARD_W - PATH_W / 2, y: PATH_W / 2 },
   { x: BOARD_W - PATH_W / 2, y: ENTRY_Y }
 ];
-var PATH_LEN = (function () {
-  var l = 0;
-  for (var i = 1; i < WAYPOINTS.length; i++) l += Math.hypot(WAYPOINTS[i].x - WAYPOINTS[i - 1].x, WAYPOINTS[i].y - WAYPOINTS[i - 1].y);
-  return l;
-})();
 var BASE_CROSS_TIME = 17; // segundos que tarda un monstruo normal en dar la vuelta
 
 /* Geometría de un tablero: casillas (x0, y0, cw, ch), tamaño (W, H) y

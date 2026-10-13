@@ -81,12 +81,6 @@ function resetMeta() {
 }
 
 function isUnlocked(id) { return !!meta.cards[id]; }
-function unlockUnit(id) {
-  if (meta.cards[id]) return false;
-  meta.cards[id] = { lv: 1, n: 0 };
-  saveMeta();
-  return true;
-}
 function cardLevels() {
   var o = {};
   Object.keys(meta.cards).forEach(function (id) { o[id] = meta.cards[id].lv; });

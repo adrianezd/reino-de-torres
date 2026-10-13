@@ -107,3 +107,5 @@ HTML, CSS y JavaScript sin dependencias ni build. Dibujo vectorial en canvas y s
 - `js/meta.js`: progreso y cofres. `js/ui.js`: menús y bucle.
 
 Juego original. Inspirado en el género de tower defense de fusión; no está afiliado a ningún juego comercial ni usa sus nombres, personajes ni gráficos.
+
+**Interfaz sin párrafos sueltos:** las explicaciones de cada pantalla van en la ficha del botón «?» de su barra (`backBar(título, pestaña, clave)` y `INFO` en `js/ui.js`); Cómo jugar sale de `HELP` (icono, título y una frase). Piezas comunes en `style.css` (bloque «Lavado de cara»): `.stat-tiles`, `.mode-hero`, `.prize-steps`, `.help-card`, `.info-row`, `.time-chip`, `.switch`.

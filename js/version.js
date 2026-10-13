@@ -7,8 +7,20 @@
    La ventana sale sola al entrar con una versión nueva (meta.lastSeenVersion)
    y también desde Opciones.
    ========================================================= */
-var APP_VERSION = '1.18.0';
+var APP_VERSION = '1.19.0';
 var APP_PATCH_NOTES = [
+  {
+    version: '1.19.0',
+    summary: 'Interfaz más limpia',
+    items: [
+      'Fuera los párrafos de explicación de las pantallas: cada una tiene un botón ? junto al título con lo que necesitas saber.',
+      'Cómo jugar, ahora en fichas con icono, título y una frase.',
+      'Roguelike con portada, sus datos en fichas y los premios de cada tramo.',
+      'Final de partida más claro: logros, premio en chapas y oleada, bajas y daño en fichas.',
+      'Opciones con interruptor de sonido, misiones con el tiempo que queda en una chapa y huecos de cofre vacíos sin texto.',
+      'Co-op y Roguelike llevan el nombre con la misma letra que el resto de modos.'
+    ]
+  },
   {
     version: '1.18.0',
     summary: 'Co-op con un solo camino',

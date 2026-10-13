@@ -42,7 +42,7 @@ body {
     linear-gradient(180deg, var(--bg1), var(--bg2));
   user-select: none; -webkit-user-select: none;
 }
-h1, h2, h3, .btn, .mode-btn b, .summon-btn, .logo h1 { font-family: 'Lilita One', 'Nunito', sans-serif; font-weight: 400; letter-spacing: 0.02em; }
+h1, h2, h3, .btn, .summon-btn, .logo h1 { font-family: 'Lilita One', 'Nunito', sans-serif; font-weight: 400; letter-spacing: 0.02em; }
 button { font: inherit; color: inherit; cursor: pointer; touch-action: pan-x pan-y; }
 
 /* ---------- menú ---------- */
@@ -62,33 +62,8 @@ button { font: inherit; color: inherit; cursor: pointer; touch-action: pan-x pan
 .logo p { margin: 4px 0 0; color: var(--muted); }
 .deck-preview { display: flex; justify-content: center; gap: 4px; margin: 4px 0 14px; }
 .deck-preview img { width: 54px; height: 54px; filter: drop-shadow(0 3px 0 rgba(0,0,0,0.35)); }
-.mode-list { display: flex; flex-direction: column; gap: 10px; }
-.mode-btn {
-  display: flex; align-items: center; gap: 12px; text-align: left; width: 100%;
-  padding: 14px 16px; border-radius: 18px; border: 3px solid var(--ink);
-  box-shadow: 0 6px 0 var(--ink), inset 0 -6px 0 rgba(0,0,0,0.18), inset 0 3px 0 rgba(255,255,255,0.3);
-  transition: transform 0.08s;
-}
-.mode-btn:active { transform: translateY(4px); box-shadow: 0 2px 0 var(--ink), inset 0 -6px 0 rgba(0,0,0,0.18); }
-.mode-btn b { display: block; font-size: 1.35rem; text-shadow: 0 2px 0 rgba(0,0,0,0.35); }
-.mode-btn small { display: block; font-size: 0.8rem; opacity: 0.9; }
-.mode-ico { font-size: 2.1rem; }
-.mode-go { margin-left: auto; font-size: 1.2rem; opacity: 0.8; }
-.m-campaign { background: linear-gradient(180deg, #5fd47e, #2a9a4b); }
-.m-duel { background: linear-gradient(180deg, #ff7a6a, #c9304a); }
-.m-coop { background: linear-gradient(180deg, #6aa8ff, #3a5fd0); }
-.home-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 14px; }
-.tile-btn {
-  display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 10px 4px; font-size: 1.6rem;
-  background: var(--panel2); border: 3px solid var(--ink); border-radius: 16px; box-shadow: 0 4px 0 var(--ink);
-}
-.tile-btn span { font-size: 0.66rem; white-space: nowrap; }
-.tile-btn.code { background: linear-gradient(180deg, #b48bff, #6a3fd0); }
-.tile-btn.glow { animation: glow 1.2s ease-in-out infinite; background: linear-gradient(180deg, #ffd166, #f08a24); color: #3a1d00; }
 @keyframes glow { 50% { box-shadow: 0 4px 0 var(--ink), 0 0 18px 4px rgba(255,209,102,0.8); } }
 .sound-row { display: flex; justify-content: center; gap: 6px; margin-top: 14px; color: var(--muted); }
-.reset-btn { display: block; margin: 12px auto 0; padding: 6px 16px; border-radius: 12px; border: 2px solid #c22a44; background: rgba(194,42,68,0.18); color: #ffb3bc; font-size: 0.8rem; }
-.reset-btn:active { transform: translateY(2px); }
 .foot { text-align: center; color: var(--muted); font-size: 0.72rem; font-weight: 700; margin-top: 10px; }
 
 .back-bar { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
@@ -107,19 +82,6 @@ button { font: inherit; color: inherit; cursor: pointer; touch-action: pan-x pan
 .stage-t b { display: block; }
 .stage-t small { color: var(--muted); font-size: 0.74rem; }
 .stage-s { color: var(--gold); font-size: 1.1rem; letter-spacing: 1px; }
-.big-choice {
-  display: flex; align-items: center; gap: 12px; width: 100%; text-align: left; margin-bottom: 10px;
-  padding: 14px; border-radius: 16px; border: 3px solid var(--ink); box-shadow: 0 5px 0 var(--ink);
-  background: linear-gradient(180deg, var(--panel2), var(--panel));
-}
-.big-choice b { display: block; font-size: 1.1rem; }
-.big-choice small { display: block; color: var(--muted); font-size: 0.8rem; }
-.big-choice.d0 { background: linear-gradient(180deg, #5fd47e, #2a9a4b); }
-.big-choice.d1 { background: linear-gradient(180deg, #ffb84a, #d97a1a); }
-.big-choice.d2 { background: linear-gradient(180deg, #ff6a7a, #b02a44); }
-.big-choice.d0 small, .big-choice.d1 small, .big-choice.d2 small { color: #fff; opacity: 0.9; }
-.big-choice.cmd.sel { outline: 4px solid var(--cc); box-shadow: 0 5px 0 var(--ink), 0 0 20px var(--cc); }
-.cmd-ico { font-size: 2.2rem; width: 56px; height: 56px; display: grid; place-items: center; border-radius: 50%; background: var(--cc); border: 3px solid var(--ink); flex-shrink: 0; }
 .howto p { background: rgba(0,0,0,0.22); border-radius: 14px; padding: 10px 12px; margin: 0 0 8px; font-weight: 700; line-height: 1.4; }
 
 /* cartas */
@@ -151,9 +113,6 @@ button { font: inherit; color: inherit; cursor: pointer; touch-action: pan-x pan
 @keyframes popIn { from { transform: scale(0.7); opacity: 0; } }
 .modal-card h2 { margin: 4px 0; font-size: 1.8rem; text-shadow: 0 3px 0 var(--ink); }
 .modal-card p { margin: 6px 0; font-weight: 700; }
-.mc-img { width: 150px; height: 150px; }
-.mc-title { color: var(--muted); }
-.mc-stats { color: var(--gold); }
 .swap-row { display: flex; justify-content: center; gap: 6px; margin: 6px 0 10px; }
 .swap-row button { background: rgba(0,0,0,0.3); border: 2px solid var(--ink); border-radius: 12px; padding: 2px; }
 .swap-row img { width: 54px; height: 54px; display: block; }
@@ -210,7 +169,6 @@ button { font: inherit; color: inherit; cursor: pointer; touch-action: pan-x pan
 .unit-info small { display: block; font-size: 0.72rem; color: var(--muted); }
 .unit-info .hint { color: var(--gold); }
 .b-bottom { padding: 6px 10px max(8px, env(safe-area-inset-bottom)); background: linear-gradient(0deg, #16215a, #1d2c78); border-top: 3px solid var(--ink); display: flex; flex-direction: column; gap: 6px; }
-.b-status { display: flex; align-items: center; justify-content: space-between; }
 .lives small { display: block; font-size: 0.62rem; color: var(--muted); }
 .lives span { font-size: 0.95rem; letter-spacing: 1px; }
 .mana { display: flex; align-items: center; gap: 4px; background: rgba(0,0,0,0.35); border: 2px solid var(--ink); border-radius: 999px; padding: 2px 14px 2px 8px; }
@@ -250,10 +208,10 @@ button { font: inherit; color: inherit; cursor: pointer; touch-action: pan-x pan
    brillante, marco dorado grueso y reflejo superior.
    ========================================================= */
 :root { --gold-frame: #f5c400; --gold-dark: #4a3200; }
-.btn, .summon-btn, .mode-btn, .big-choice, .tile-btn, .back, .b-btn, .stage, .dcard {
+.btn, .summon-btn, .back, .b-btn, .stage, .dcard {
   position: relative; overflow: hidden;
 }
-.btn::after, .summon-btn::after, .mode-btn::after, .big-choice::after, .tile-btn::after, .b-btn::after, .stage::after {
+.btn::after, .summon-btn::after, .b-btn::after, .stage::after {
   content: ''; position: absolute; left: 6%; right: 6%; top: 5%; height: 38%;
   border-radius: 999px 999px 40% 40%;
   background: linear-gradient(180deg, rgba(255,255,255,0.55), rgba(255,255,255,0.05));
@@ -269,11 +227,7 @@ button { font: inherit; color: inherit; cursor: pointer; touch-action: pan-x pan
 .summon-btn:active, .btn-green:active { transform: translateY(4px); box-shadow: 0 0 0 3px var(--gold-dark), 0 3px 0 var(--gold-dark), inset 0 -6px 0 rgba(20,80,0,0.35); }
 .btn-red { border: 4px solid var(--gold-frame); box-shadow: 0 0 0 3px var(--gold-dark), 0 7px 0 var(--gold-dark); }
 .btn-ghost { border: 4px solid #8fa0d8; box-shadow: 0 0 0 3px var(--ink), 0 6px 0 var(--ink); }
-.mode-btn, .big-choice { border: 4px solid var(--gold-frame); box-shadow: 0 0 0 3px var(--gold-dark), 0 7px 0 var(--gold-dark), inset 0 -6px 0 rgba(0,0,0,0.18); }
-.mode-btn:active { box-shadow: 0 0 0 3px var(--gold-dark), 0 3px 0 var(--gold-dark); }
-.m-campaign { background: linear-gradient(180deg, #c4f74a 0%, #86dc22 48%, #4caa12 100%); }
-.m-campaign b, .m-campaign small { text-shadow: 0 2px 0 #1e5a00; }
-.tile-btn, .stage, .back, .b-btn { border-color: #e0b400; box-shadow: 0 0 0 2px var(--gold-dark), 0 5px 0 var(--gold-dark); }
+.stage, .back, .b-btn { border-color: #e0b400; box-shadow: 0 0 0 2px var(--gold-dark), 0 5px 0 var(--gold-dark); }
 .b-btn.quit { border-color: var(--gold-frame); }
 .dcard { border-color: var(--gold-frame); box-shadow: 0 0 0 2px var(--gold-dark), 0 4px 0 var(--gold-dark); }
 .dcard img { width: 50px; height: 50px; }
@@ -285,14 +239,6 @@ button { font: inherit; color: inherit; cursor: pointer; touch-action: pan-x pan
 .pill { border-color: rgba(245,196,0,0.6); }
 
 /* botón grande de jugar con la imagen del diseño */
-.play-hero {
-  display: block; width: min(190px, 52%); margin: 0 auto 16px; padding: 0; border: none; background: none;
-  filter: drop-shadow(0 8px 0 rgba(20,20,60,0.45));
-  animation: playPulse 1.6s ease-in-out infinite;
-}
-.play-hero img { width: 100%; display: block; }
-.play-hero span { position: absolute; left: 0; right: 0; bottom: -2px; text-align: center; font-family: 'Lilita One'; font-size: 0.95rem; color: #fff; text-shadow: 0 2px 0 var(--ink); }
-.play-hero:active { transform: translateY(4px) scale(0.98); }
 @keyframes playPulse { 50% { transform: scale(1.04); } }
 
 /* =========================================================
@@ -334,15 +280,9 @@ body {
   .logo h1 img { width: min(210px, 56%); }
   .deck-preview { margin: 2px 0 8px; }
   .deck-preview img { width: 52px; height: 52px; }
-  .play-hero { width: min(150px, 42%); margin-bottom: 10px; }
-  .mode-list { gap: 8px; }
-  .mode-btn { padding: 10px 14px; }
-  .home-grid { margin-top: 10px; }
 }
 @media (max-height: 760px) {
   .logo p { display: none; }
-  .play-hero { width: min(120px, 34%); }
-  .mode-btn b { font-size: 1.15rem; }
 }
 
 /* =========================================================
@@ -423,8 +363,6 @@ body {
 .deck-slots .ucard small { color: #fff; }
 
 /* retratos de los comandantes (assets/commanders) */
-.cmd-ico { background: none; border: none; width: 64px; height: 64px; }
-.cmd-ico img { width: 100%; height: 100%; filter: drop-shadow(0 3px 0 rgba(0,0,0,0.35)); }
 .cmd-btn span { overflow: hidden; filter: none; background: #16215a; }
 .cmd-btn span img { position: absolute; inset: -6%; width: 112%; height: 112%; }
 /* la parte aún sin cargar se ve oscura y se va destapando como un reloj */
@@ -1053,7 +991,6 @@ button.ucard.locked { cursor: pointer; }
 }
 
 /* botón de jugar */
-.play-hero { width: min(200px, 54%); filter: drop-shadow(0 6px 0 rgba(20,20,60,0.45)); }
 
 /* huecos de cofre con su marco de madera y piedra */
 .slot {
@@ -1069,23 +1006,6 @@ button.ucard.locked { cursor: pointer; }
 @keyframes slotGlow { 50% { filter: drop-shadow(0 4px 0 rgba(10,12,40,0.4)) drop-shadow(0 0 10px rgba(255,209,102,0.95)); } }
 
 /* modos: banner de madera con el icono en el aro de la izquierda */
-.mode-btn {
-  position: relative; aspect-ratio: 1004 / 245; padding: 0 8% 0 21%; gap: 6px; border: 0; border-radius: 0; box-shadow: none;
-  color: #fff; filter: drop-shadow(0 5px 0 rgba(10,12,40,0.45));
-}
-.mode-btn::after { display: none; }
-.mode-btn:active { box-shadow: none; transform: translateY(3px); }
-.mode-btn.m-campaign { background: url(assets/ui/banner-campana.webp) center / 100% 100% no-repeat; }
-.mode-btn.m-duel { background: url(assets/ui/banner-duelo.webp) center / 100% 100% no-repeat; }
-.mode-btn.m-coop { background: url(assets/ui/banner-coop.webp) center / 100% 100% no-repeat; }
-.mode-btn .mode-ico {
-  position: absolute; left: 12.25%; top: 50%; transform: translate(-50%, -50%);
-  width: 10.2%; aspect-ratio: 1; display: grid; place-items: center; font-size: clamp(1.2rem, 6.5vw, 1.8rem);
-}
-.mode-btn > span:nth-child(2) { min-width: 0; }
-.mode-btn b, .m-campaign b { font-size: clamp(1.1rem, 5.6vw, 1.4rem); color: #fff; text-shadow: 0 2px 0 #5a3414, 0 0 3px #5a3414, 0 0 1px #5a3414; }
-.mode-btn small, .m-campaign small { color: #5a3414; font-weight: 800; opacity: 1; text-shadow: none; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.mode-go { color: #8a5a2c; opacity: 1; }
 
 /* barra de pestañas sobre el marco azul y oro (con la joroba en el centro) */
 .navbar {
@@ -1099,7 +1019,7 @@ button.ucard.locked { cursor: pointer; }
    para que los textos parezcan parte de las ilustraciones.
    (el contorno va por detrás del relleno, así que se ve la mitad del grosor) */
 :root { --edge: #2b1606; }
-.logo p, .res-bar .pill b, .mode-btn b, .mode-btn small, .slot b, .slot small, .slot.empty span, .navbar span, .play-hero span {
+.logo p, .res-bar .pill b, .slot b, .slot small, .slot.empty span, .navbar span {
   font-family: 'Lilita One', 'Nunito', sans-serif; font-weight: 400; letter-spacing: 0.03em;
   color: #fff; -webkit-text-stroke: 6px var(--edge); paint-order: stroke fill;
   text-shadow: 0 3px 0 var(--edge), 0 5px 6px rgba(0,0,0,0.45);
@@ -1108,8 +1028,6 @@ button.ucard.locked { cursor: pointer; }
 .res-bar .pill { color: #fff; font-size: 0.9rem; }
 .res-bar .pill.gold b { color: #ffe58a; }
 .res-bar .pill b { -webkit-text-stroke-width: 5px; }
-.mode-btn b, .m-campaign b { -webkit-text-stroke-width: 7px; text-shadow: 0 3px 0 var(--edge), 0 5px 6px rgba(0,0,0,0.45); }
-.mode-btn small, .m-campaign small { color: #fff1b8; -webkit-text-stroke-width: 4.5px; text-shadow: 0 2px 0 var(--edge); }
 .slot b { -webkit-text-stroke-width: 5px; }
 .slot.unlocking b { color: #c8ecff; }
 .slot-go { color: #ffe58a; -webkit-text-stroke-width: 6px !important; }
@@ -1122,15 +1040,6 @@ button.ucard.locked { cursor: pointer; }
 .logo h1 { margin: 0; line-height: 0; }
 .logo h1 img { width: min(260px, 68%); height: auto; filter: drop-shadow(0 6px 0 rgba(10,12,40,0.4)); animation: bob 3s ease-in-out infinite; }
 .logo p { margin-top: 2px; }
-.deck-sign {
-  display: grid; place-items: center; width: min(72%, 270px); aspect-ratio: 900 / 214; margin: 0 auto -4px;
-  background: url(assets/ui/letrero.webp) center / 100% 100% no-repeat;
-  filter: drop-shadow(0 4px 0 rgba(10,12,40,0.4));
-}
-.deck-sign span {
-  padding-bottom: 2%; font-family: 'Lilita One', 'Nunito', sans-serif; font-size: clamp(1.1rem, 5.4vw, 1.4rem); letter-spacing: 0.03em; color: #fff;
-  -webkit-text-stroke: 7px var(--edge); paint-order: stroke fill; text-shadow: 0 3px 0 var(--edge), 0 5px 6px rgba(0,0,0,0.45);
-}
 @media (max-height: 760px) { .logo h1 img { width: min(170px, 46%); } }
 
 /* =========================================================
@@ -1146,8 +1055,6 @@ x-ico {
 .back-bar .pill x-ico { width: 1.45em; height: 1.45em; margin: -0.3em 0.08em -0.3em -0.3em; vertical-align: -0.42em; }
 .navbar i x-ico { width: 1.45em; height: 1.45em; margin: 0; vertical-align: 0; }
 .navbar b x-ico { width: 1.4em; height: 1.4em; }
-.tile-btn x-ico { width: 1.4em; height: 1.4em; margin: 0; }
-.mode-btn .mode-ico x-ico { width: 118%; height: 118%; margin: 0; filter: drop-shadow(0 2px 0 rgba(0,0,0,0.35)); }
 .res-emoji x-ico { width: 1.5em; height: 1.5em; }
 .code-ico x-ico, .chest-ico x-ico { width: 1.4em; height: 1.4em; }
 .ulock x-ico { width: 1.15em; height: 1.15em; margin: 0; vertical-align: -0.2em; }
@@ -1229,7 +1136,7 @@ x-ico.off { filter: grayscale(1) brightness(0.45); opacity: 0.75; }
 .side-btn.glow img { animation: sideGlow 1.2s ease-in-out infinite; }
 @keyframes sideGlow { 50% { transform: scale(1.1) rotate(-4deg); filter: drop-shadow(0 3px 0 rgba(10,12,40,0.5)) drop-shadow(0 0 8px rgba(255,209,102,0.95)); } }
 .side-btn:active { transform: translateY(3px); }
-.side-btn span, .play-side span, .play-camp, .cmd-banner b, .cmd-banner small, .cb-slot {
+.side-btn span, .cmd-banner b, .cmd-banner small, .cb-slot {
   font-family: 'Lilita One', 'Nunito', sans-serif; font-weight: 400; letter-spacing: 0.03em; white-space: nowrap;
   color: #fff; -webkit-text-stroke: 4.5px var(--edge); paint-order: stroke fill; text-shadow: 0 2px 0 var(--edge);
 }
@@ -1258,19 +1165,6 @@ x-ico.off { filter: grayscale(1) brightness(0.45); opacity: 0.75; }
 .deck-panel .deck-preview:active { transform: translateY(2px); }
 
 /* tres botones de jugar */
-.play-row { display: grid; grid-template-columns: 1fr 1.55fr 1fr; align-items: center; gap: 6px; width: min(100%, 400px); margin: 8px auto 4px; }
-.play-side { display: flex; flex-direction: column; align-items: center; padding: 0; border: 0; background: none; box-shadow: none; }
-.play-side::after { display: none; }
-.play-side img { width: 100%; max-width: 104px; height: auto; filter: drop-shadow(0 5px 0 rgba(10,12,40,0.45)); }
-.play-side span { margin-top: 2px; font-size: 0.85rem; color: #fff1b8; }
-.play-side:active { transform: translateY(3px) scale(0.97); }
-.play-mid { display: flex; flex-direction: column; align-items: center; min-width: 0; }
-.play-row .play-hero { width: 100%; max-width: 190px; margin: 0; }
-.play-camp { margin-top: 2px; padding: 0; border: 0; background: none; box-shadow: none; font-size: 1.05rem; -webkit-text-stroke-width: 6px; text-shadow: 0 3px 0 var(--edge); }
-.play-camp::after { display: none; }
-.play-camp small { font-size: 0.8rem; color: #fff1b8; -webkit-text-stroke-width: 4px; }
-.play-camp x-ico { width: 1em; height: 1em; vertical-align: -0.12em; }
-.play-camp:active { transform: translateY(2px); }
 @media (max-height: 760px) {
   .home-top { margin-bottom: 2px; }
   .home-top .logo h1 img { width: min(140px, 100%); }
@@ -1279,7 +1173,6 @@ x-ico.off { filter: grayscale(1) brightness(0.45); opacity: 0.75; }
   .side-col { gap: 2px; }
   .slots { width: 76%; margin: 0 auto 4px; gap: 6px; }
   .deck-panel { width: min(100%, 300px); margin-top: 14px; }
-  .play-row { width: min(100%, 330px); margin-top: 4px; }
 }
 
 /* opciones: sonido y restablecer juego */
@@ -1342,29 +1235,12 @@ x-ico.off { filter: grayscale(1) brightness(0.45); opacity: 0.75; }
    Pulido visual (docs/informe-ui-ux.md)
    ========================================================= */
 /* tres acabados de texto: grande, etiqueta y número */
-.t-hero, .t-label, .t-num {
-  font-family: 'Lilita One', 'Nunito', sans-serif; font-weight: 400; color: #fff;
-  paint-order: stroke fill;
-}
-.t-hero { letter-spacing: 0.02em; -webkit-text-stroke: 7px var(--edge); text-shadow: 0 4px 0 var(--edge), 0 6px 8px rgba(0,0,0,0.35); }
-.t-label, .t-num { -webkit-text-stroke: 5px var(--edge); text-shadow: 0 2px 0 var(--edge); }
-.t-num { font-variant-numeric: tabular-nums; }
 
 /* botón de jugar: late con «scale» (así el «transform» de :active sigue
    hundiéndolo) y un brillo lo cruza cada pocos segundos, recortado a la
    forma del dibujo */
 @keyframes playPulse { 0%, 100% { scale: 1; } 50% { scale: 1.04; } }
-.play-hero { position: relative; }
-.play-hero::after {
-  content: ''; position: absolute; inset: 0; pointer-events: none;
-  background: linear-gradient(105deg, transparent 40%, rgba(255,255,255,0.6) 50%, transparent 60%) no-repeat;
-  background-size: 250% 100%; background-position: 150% 0;
-  -webkit-mask: url(assets/ui/boton-jugar.webp) center / 100% 100% no-repeat;
-  mask: url(assets/ui/boton-jugar.webp) center / 100% 100% no-repeat;
-  animation: playShine 3.5s ease-in-out infinite;
-}
-@keyframes playShine { 0%, 65% { background-position: 150% 0; } 100% { background-position: -50% 0; } }
-@media (prefers-reduced-motion: reduce) { .play-hero, .play-hero::after { animation: none; } }
+
 
 /* hueco de cofre vacío: silueta apagada de un cofre en la piedra */
 .slot.empty::before {
@@ -1377,7 +1253,6 @@ x-ico.off { filter: grayscale(1) brightness(0.45); opacity: 0.75; }
 /* hueco para la figura de la comandante, que asoma por encima del banner */
 .deck-panel { margin-top: 30px; }
 /* huecos de cofre abajo del todo, debajo de los botones de jugar */
-.play-row + .slots { width: min(100%, 400px); margin: 14px auto; }
 /* texto de ayuda legible sobre el azul */
 .lead { color: rgba(255,255,255,0.85); }
 
@@ -1401,25 +1276,6 @@ x-ico.off { filter: grayscale(1) brightness(0.45); opacity: 0.75; }
 
 /* botón 2.5D: contorno, canto, cara en degradado y brillo de caramelo.
    Al pulsar baja lo mismo que mide el canto. */
-.btn3d {
-  --c1: #8df07a; --c2: #2fae3a; --c-edge: #1d6b23;
-  position: relative; border: 3px solid var(--ink); border-radius: 16px;
-  background: linear-gradient(180deg, var(--c1) 0%, var(--c2) 100%);
-  box-shadow: 0 6px 0 var(--c-edge), 0 9px 10px rgba(0,0,0,0.35), inset 0 -6px 0 rgba(0,0,0,0.18), inset 0 2px 0 rgba(255,255,255,0.55);
-  transition: transform 0.06s, box-shadow 0.06s;
-}
-.btn3d::before {
-  content: ''; position: absolute; left: 8%; right: 8%; top: 6%; height: 42%; pointer-events: none;
-  border-radius: 12px 12px 40% 40% / 12px 12px 18px 18px;
-  background: linear-gradient(180deg, rgba(255,255,255,0.55), rgba(255,255,255,0.08));
-}
-.btn3d:active {
-  transform: translateY(5px);
-  box-shadow: 0 1px 0 var(--c-edge), 0 2px 3px rgba(0,0,0,0.3), inset 0 -3px 0 rgba(0,0,0,0.18), inset 0 2px 0 rgba(255,255,255,0.4);
-}
-.btn3d.orange { --c1: #ffc65a; --c2: #f08a12; --c-edge: #a2520a; }
-.btn3d.blue { --c1: #6fc3ff; --c2: #1f74e0; --c-edge: #154a91; }
-.btn3d.gray { --c1: #b8bfd0; --c2: #7a8399; --c-edge: #4b5263; }
 /* los precios de la tienda, con el mismo volumen */
 .sh-price { position: relative; box-shadow: 0 4px 0 #1d6b23, inset 0 -4px 0 rgba(0,0,0,0.18), inset 0 2px 0 rgba(255,255,255,0.55); }
 .sh-price.poor { box-shadow: 0 4px 0 #4b5263, inset 0 -4px 0 rgba(0,0,0,0.18), inset 0 2px 0 rgba(255,255,255,0.35); }
@@ -1513,9 +1369,6 @@ x-ico.off { filter: grayscale(1) brightness(0.45); opacity: 0.75; }
 .stage:not(.locked):active { transform: translateY(3px); filter: drop-shadow(0 1px 0 rgba(10,12,40,0.45)); }
 
 /* 1. Inicio: el botón de campaña manda (más ancho que duelo y cooperativo) */
-.play-row { grid-template-columns: 1fr 1.9fr 1fr; }
-.play-row .play-hero { max-width: 220px; }
-.play-side img { max-width: 92px; }
 
 /* 1. Botón secundario con la misma receta 2.5D: cara en degradado, filo de luz, canto y hundido igual al canto */
 .btn-ghost { background: linear-gradient(180deg, #4a63c8, #263a8f); box-shadow: 0 0 0 3px var(--ink), 0 6px 0 var(--ink), inset 0 2px 0 rgba(255,255,255,0.35), inset 0 -5px 0 rgba(0,0,0,0.25); }
@@ -1614,8 +1467,6 @@ x-ico.off { filter: grayscale(1) brightness(0.45); opacity: 0.75; }
 /* =========================================================
    Torneo, niveles de comandante y cofre de comandante
    ========================================================= */
-.big-choice.d3 { background: linear-gradient(180deg, #a77bff, #5a2fb8); }
-.big-choice.d3 small { color: #fff; opacity: 0.9; }
 .sh-chests { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .sh-chests .sh-chest-pic { width: 62%; }
 .cmd-card .cmd-lv {
@@ -2082,7 +1933,6 @@ x-ico.off { filter: grayscale(1) brightness(0.45); opacity: 0.75; }
 .tn-decks { margin: 0 0 8px; font-size: 0.78rem; color: var(--muted); text-align: center; }
 
 /* ---------- comandantes nuevos (sin ilustración) y héroes ---------- */
-.cmd-hero { position: absolute; top: 14%; left: 15%; z-index: 1; padding: 1px 6px; border-radius: 8px; font-size: 0.62rem; font-weight: 800; background: var(--cc); color: #1a1430; border: 2px solid var(--ink); }
 .cmd-btn.aiming { animation: cmdAim 0.6s ease-in-out infinite; }
 @keyframes cmdAim { 50% { transform: scale(1.12); } }
 .hero-hint { position: absolute; left: 50%; top: 38%; transform: translateX(-50%); z-index: 6; pointer-events: none; text-align: center; padding: 6px 12px; border-radius: 12px; background: rgba(10,12,40,0.88); border: 2px solid var(--gold); font-size: 0.9rem; white-space: nowrap; }
@@ -2113,19 +1963,6 @@ x-ico.off { filter: grayscale(1) brightness(0.45); opacity: 0.75; }
 .uc-tabs { grid-template-columns: none; grid-auto-flow: column; grid-auto-columns: 1fr; }
 .uc-tabs button { position: relative; }
 .tab-dot { position: absolute; top: -4px; right: -4px; width: 12px; height: 12px; border-radius: 50%; background: var(--red); border: 2px solid var(--ink); }
-.tal-tree { display: flex; flex-direction: column; align-items: stretch; margin-top: 8px; }
-.tal-tier { display: flex; flex-direction: column; gap: 4px; }
-.tal-lv { align-self: center; padding: 1px 10px; border-radius: 8px; font-size: 0.72rem; font-weight: 800; background: var(--gold); color: #3a1d00; border: 2px solid var(--ink); }
-.tal-tier.locked .tal-lv { background: var(--panel2); color: var(--muted); }
-.tal-pair { display: grid; grid-template-columns: 1fr auto 1fr; gap: 4px; align-items: stretch; }
-.tal-or { align-self: center; font-style: normal; font-size: 0.75rem; color: var(--muted); }
-.tal-node { font: inherit; color: #fff; text-align: center; cursor: pointer; padding: 6px; border-radius: 12px; border: 3px solid var(--ink); background: var(--panel2); box-shadow: 0 3px 0 var(--ink); }
-.tal-node b { display: block; font-size: 0.85rem; }
-.tal-node small { display: block; font-size: 0.68rem; color: var(--muted); line-height: 1.2; }
-.tal-node.on { background: linear-gradient(180deg, #5fcf5a, #23853a); box-shadow: 0 0 0 2px var(--gold), 0 3px 0 var(--ink); }
-.tal-node.on small { color: #e6ffe0; }
-.tal-node:disabled { opacity: 0.45; cursor: default; }
-.tal-link { display: block; width: 4px; height: 12px; margin: 2px auto; background: var(--gold); border-radius: 2px; }
 .tal-note { font-size: 0.72rem; color: var(--muted); text-align: center; margin: 8px 0 0; }
 
 /* cofre legendario de la tienda: ocupa la fila entera y brilla */
@@ -2154,7 +1991,6 @@ x-ico.off { filter: grayscale(1) brightness(0.45); opacity: 0.75; }
 /* árbol de habilidades del comandante (pestaña Comandante) */
 .ct-tree { margin: 10px 0; padding: 10px; border-radius: 16px; background: var(--ui-panel-bg); border: 3px solid var(--cc); }
 .ct-tree h3 { margin: 0 0 6px; font-size: 1.05rem; }
-.ct-row { display: grid; grid-template-columns: repeat(var(--n), minmax(0, 1fr)); gap: 6px; margin-top: 4px; }
 .cmd-card.locked .cmd-body { filter: grayscale(1) brightness(0.45); }
 .cmd-card.locked b { opacity: 0.7; }
 .cmd-lock { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); width: 34%; aspect-ratio: 1; display: grid; place-items: center; }
@@ -2185,7 +2021,6 @@ x-ico.off { filter: grayscale(1) brightness(0.45); opacity: 0.75; }
 .tree-list p.locked { color: var(--muted); }
 .tree-list span { display: block; margin-top: 2px; color: #fff; }
 .tree-list em { font-style: normal; color: var(--gold); }
-.tree-list .tree-none { color: var(--muted); }
 
 /* ---------- repaso visual ---------- */
 /* títulos largos de las pantallas: en dos líneas y algo más pequeños en vez de cortarse */
@@ -2208,7 +2043,6 @@ x-ico.off { filter: grayscale(1) brightness(0.45); opacity: 0.75; }
 /* elección de ventajas y habilidades: tarjeta opaca (no se transparenta el cartel de detrás) */
 .sp-card { background: linear-gradient(180deg, #232c6e, #161c4c); }
 /* ficha de cofre: retrato de cada legendaria */
-.ci-row .ci-face { width: 34px; height: 34px; border-radius: 50%; border: 2px solid var(--rc); flex: none; object-fit: cover; }
 /* ficha de tropa: aire entre las pestañas y su contenido */
 .uc-pane { margin-top: 8px; }
 /* oleada en la barra de arriba: sin la palabra «Oleada» cuando no cabe */
@@ -2225,3 +2059,111 @@ x-ico.off { filter: grayscale(1) brightness(0.45); opacity: 0.75; }
 
 /* avisos largos (talentos, modificadores): en varias líneas dentro de la pantalla */
 .toast { white-space: normal; width: max-content; max-width: calc(100vw - 32px); text-align: center; line-height: 1.3; border-radius: 18px; }
+
+/* =========================================================
+   Lavado de cara: piezas comunes sin párrafos sueltos
+   - botón «?» de la barra y su ficha (INFO en ui.js)
+   - fichas de datos, premios por tramos y portada de modo
+   - Cómo jugar en fichas, interruptor de sonido y chapas
+   Todas con la misma placa: fondo tinta, borde dorado suave.
+   ========================================================= */
+:root { --plate-bg: var(--ui-panel-bg); --plate-edge: rgba(255,198,90,0.45); --plate-shadow: 0 3px 0 var(--ink); }
+.plate, .stat-tiles > span, .help-card, .info-row, .mode-hero, .time-chip, .ver-chip, .opt-row {
+  background: var(--plate-bg); border: 2px solid var(--plate-edge); box-shadow: var(--plate-shadow);
+}
+
+/* botón «?» junto al título de cada pantalla */
+.info-btn {
+  flex: none; width: 30px; height: 30px; display: grid; place-items: center; padding: 0;
+  border-radius: 50%; border: 2px solid var(--gold-frame); background: radial-gradient(circle at 35% 30%, #4a68d8, #1d2c78);
+  box-shadow: 0 3px 0 var(--gold-dark); color: #fff; font: 400 1.05rem 'Lilita One', sans-serif; line-height: 1;
+  -webkit-text-stroke: 3px var(--ink); paint-order: stroke fill;
+}
+.info-btn:active { transform: translateY(2px); box-shadow: 0 1px 0 var(--gold-dark); }
+.back-bar h2 { flex: 0 1 auto; }
+.back-bar .info-btn + .pill { margin-left: auto; }
+.back-bar h2:not(:has(+ .info-btn)) { flex: 1; }
+
+/* ficha de explicación */
+.info-list { display: flex; flex-direction: column; gap: 8px; margin: 10px 0 14px; }
+.info-row { display: flex; align-items: center; gap: 12px; padding: 9px 12px; border-radius: 14px; text-align: left; }
+.info-row p { margin: 0; font-size: 0.86rem; line-height: 1.3; color: #fff; }
+.info-ico { flex: none; width: 34px; height: 34px; display: grid; place-items: center; }
+.info-ico x-ico { width: 100%; height: 100%; margin: 0; vertical-align: 0; }
+
+/* fichas de datos (tres en fila) */
+.stat-tiles { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin: 0 0 12px; }
+.stat-tiles > span { display: flex; flex-direction: column; align-items: center; gap: 1px; padding: 8px 4px 7px; border-radius: 14px; }
+.stat-tiles x-ico { width: 30px; height: 30px; margin: 0 0 2px; vertical-align: 0; }
+.stat-tiles b { font: 400 1.3rem 'Lilita One', sans-serif; line-height: 1.05; color: #fff; -webkit-text-stroke: 4px var(--ink); paint-order: stroke fill; }
+.stat-tiles small { font-size: 0.66rem; font-weight: 800; color: var(--muted); }
+
+/* portada de un modo: su carta y el titular */
+.mode-hero { display: flex; align-items: center; gap: 14px; margin: 0 0 12px; padding: 10px 14px; border-radius: 18px; text-align: left; }
+.mode-hero img { width: 74px; flex: none; filter: drop-shadow(0 4px 0 rgba(10,12,40,0.5)); }
+.mode-hero b { display: block; font: 400 1.5rem 'Titan One', 'Lilita One', sans-serif; color: #ffe58a; -webkit-text-stroke: 5px var(--ink); paint-order: stroke fill; }
+.mode-hero small { display: block; margin-top: 2px; font-size: 0.82rem; font-weight: 800; color: var(--muted); }
+
+/* premios por tramos (cofre y cuándo) */
+.prize-steps { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+.prize-steps span { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.prize-steps img { width: 64px; height: 64px; object-fit: contain; filter: drop-shadow(0 3px 0 rgba(10,12,40,0.5)); }
+.prize-steps small { font-size: 0.72rem; font-weight: 900; color: #fff; -webkit-text-stroke: 3px var(--ink); paint-order: stroke fill; }
+
+/* Cómo jugar */
+.help-grid { display: grid; grid-template-columns: 1fr; gap: 8px; }
+.help-card { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 16px; text-align: left; }
+.help-card b { display: block; font: 400 1.05rem 'Lilita One', sans-serif; color: #ffe58a; -webkit-text-stroke: 3px var(--ink); paint-order: stroke fill; }
+.help-card small { display: block; margin-top: 1px; font-size: 0.8rem; line-height: 1.3; font-weight: 700; color: #e6ebff; }
+.help-ico { flex: none; width: 42px; height: 42px; display: grid; place-items: center; }
+.help-ico x-ico { width: 100%; height: 100%; margin: 0; vertical-align: 0; }
+
+/* chapas: tiempo que queda, versión y récord */
+.time-chip, .ver-chip {
+  display: inline-flex; align-items: center; gap: 5px; margin: 0 auto 10px; padding: 3px 12px 3px 6px; border-radius: 999px;
+  font-size: 0.78rem; font-weight: 900; color: #fff;
+}
+.time-chip x-ico { width: 1.3em; height: 1.3em; margin: 0; vertical-align: 0; }
+.ver-chip { margin: 12px auto 0; padding: 3px 12px; color: var(--muted); font-size: 0.7rem; }
+.rec-chip { align-items: center; }
+.rec-chip x-ico { width: 1.2em; height: 1.2em; margin: 0; vertical-align: 0; }
+
+/* opciones: fila con interruptor */
+.opt-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin: 8px 0 12px; padding: 8px 12px; border-radius: 14px; cursor: pointer; }
+.opt-row span { display: flex; align-items: center; gap: 8px; font: 400 1.1rem 'Lilita One', sans-serif; color: #fff; -webkit-text-stroke: 3px var(--ink); paint-order: stroke fill; }
+.opt-row span x-ico { width: 1.5em; height: 1.5em; margin: 0; vertical-align: 0; }
+.switch {
+  -webkit-appearance: none; appearance: none; position: relative; flex: none; width: 54px; height: 30px; margin: 0;
+  border-radius: 999px; border: 2px solid var(--ink); background: #2b3466; box-shadow: inset 0 2px 4px rgba(0,0,0,0.45); cursor: pointer;
+  transition: background 0.15s;
+}
+.switch::after {
+  content: ''; position: absolute; top: 2px; left: 2px; width: 22px; height: 22px; border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #fff3b0, #f5c400 60%, #c98a00); box-shadow: 0 2px 0 rgba(0,0,0,0.35);
+  transition: transform 0.15s;
+}
+.switch:checked { background: linear-gradient(180deg, #86dc22, #4caa12); }
+.switch:checked::after { transform: translateX(24px); }
+
+/* nombre escrito sobre la carta de modo, igual que el que trae la ilustración */
+.mode-name {
+  top: 69%; font-family: 'Titan One', 'Lilita One', sans-serif; font-size: 10.5cqw; letter-spacing: 0.02em; text-transform: uppercase;
+  color: #fbf1d8; -webkit-text-stroke: 0; text-shadow: 0 0.7cqw 0 rgba(20,10,30,0.55);
+}
+.mode-name.long { font-size: 8.6cqw; }
+
+/* títulos de la barra en una línea; la chapa de tiempo, centrada */
+.back-bar h2, .back-bar h2.long { white-space: nowrap; overflow-wrap: normal; overflow: visible; }
+.back-bar h2.long { font-size: clamp(0.95rem, 4.6vw, 1.3rem); }
+.time-chip { display: flex; width: fit-content; }
+
+/* final de partida: logros, premio y datos */
+.res-lines { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; margin: 4px 0 8px; }
+.res-lines span {
+  padding: 3px 12px; border-radius: 999px; background: linear-gradient(180deg, #ffe58a, #f5b400); border: 2px solid var(--gold-dark);
+  font: 400 0.92rem 'Lilita One', sans-serif; color: #4a2600;
+}
+.res-prize { display: flex; justify-content: center; flex-wrap: wrap; gap: 6px; margin: 2px 0 10px; }
+.res-prize .pz-chip { font-size: 1rem; }
+.pz-chip.neg b { color: #ffb3bc; }
+.res-stats { margin: 4px 0 10px; }
