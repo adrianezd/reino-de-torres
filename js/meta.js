@@ -40,7 +40,13 @@ function defaultMeta() {
     seen: {},             // bestiario: monstruo o jefe ('B' + clave) -> veces derrotado (0: solo visto)
     achieved: [],         // logros cobrados
     pity: 0,              // cofres de oro seguidos sin mítica ni legendaria (PITY_GOLD)
-    retos: []             // retos de amigos recibidos: { code, from, wave, best, won }
+    retos: [],            // retos de amigos recibidos: { code, from, wave, best, won }
+    login: { last: '', streak: 0 },          // racha de días seguidos (LOGIN_REWARDS)
+    season: { id: '', xp: 0, got: [] },      // temporada del mes: puntos y niveles cobrados
+    week: { id: '', wins: 0, got: false },   // evento de la semana: victorias y premio
+    rogueAsc: 0, rogueAscSel: 0,             // Ascensión del Roguelike: la más alta abierta y la elegida
+    frames: ['basico'], titles: ['novato'], frame: 'basico', title: 'novato',   // cosméticos
+    modesSeen: null       // modos ya abiertos (para celebrar los nuevos)
   };
 }
 function defaultCmdCards() {
@@ -59,7 +65,13 @@ function fixMeta(saved) {
   var m = Object.assign(defaultMeta(), saved);
   m.settings = Object.assign(defaultMeta().settings, saved.settings || {});
   ['stats', 'seen'].forEach(function (k) { if (!m[k] || typeof m[k] !== 'object') m[k] = {}; });
-  ['achieved', 'retos'].forEach(function (k) { if (!Array.isArray(m[k])) m[k] = []; });
+  ['achieved', 'retos', 'frames', 'titles'].forEach(function (k) { if (!Array.isArray(m[k])) m[k] = []; });
+  if (m.frames.indexOf('basico') === -1) m.frames.unshift('basico');
+  if (m.titles.indexOf('novato') === -1) m.titles.unshift('novato');
+  if (!FRAMES[m.frame] || m.frames.indexOf(m.frame) === -1) m.frame = 'basico';
+  if (!TITLES[m.title] || m.titles.indexOf(m.title) === -1) m.title = 'novato';
+  ['login', 'season', 'week'].forEach(function (k) { if (!m[k] || typeof m[k] !== 'object') m[k] = defaultMeta()[k]; });
+  if (!Array.isArray(m.season.got)) m.season.got = [];
   // saneado básico
   m.deck = (m.deck || []).filter(function (id) { return UNITS[id] && m.cards[id]; });
   STARTER_UNITS.forEach(function (id) { if (!m.cards[id]) m.cards[id] = { lv: 1, n: 0 }; });
@@ -144,7 +156,7 @@ function retoKey(o) { return o.seed + '|' + o.deck.join(',') + '|' + o.cmd; }
 function retoRecord(o) {
   var k = retoKey(o), r = meta.retos.filter(function (x) { return x.key === k; })[0];
   if (!r) {
-    r = { key: k, seed: o.seed, deck: o.deck.slice(), cmd: o.cmd, from: o.from || null, target: o.target || 0, best: 0, won: false, at: Date.now() };
+    r = { key: k, seed: o.seed, deck: o.deck.slice(), cmd: o.cmd, from: o.from || null, target: o.target || 0, best: 0, won: false, at: Date.now(), weekly: o.weekly || null };
     meta.retos.unshift(r);
     if (meta.retos.length > 20) meta.retos.length = 20;
   }
@@ -175,6 +187,125 @@ function receiveReto(o) {
   meta.retos.splice(meta.retos.indexOf(r), 1); meta.retos.unshift(r);
   saveMeta();
   return r;
+}
+
+/* ---------- cartas sobrantes ----------
+   Con la tropa (o el comandante) al máximo, las cartas de más pasan a oro.
+   Devuelve el oro ganado. */
+function takeSurplus() {
+  var gold = 0;
+  Object.keys(meta.cards).forEach(function (id) {
+    var c = meta.cards[id];
+    if (c.lv >= CARD_MAX && c.n > 0 && UNITS[id]) { gold += c.n * SURPLUS_GOLD[UNITS[id].rarity]; c.n = 0; }
+  });
+  Object.keys(meta.cmdCards).forEach(function (k) {
+    var c = meta.cmdCards[k];
+    if (c.lv >= CMD_MAX && c.n > 0) { gold += c.n * SURPLUS_CMD_GOLD; c.n = 0; }
+  });
+  meta.gold += gold;
+  return gold;
+}
+
+/* ---------- premios sueltos (racha y temporada) ---------- */
+function giveReward(rw) {
+  var out = { gold: rw.gold || 0, gems: rw.gems || 0 };
+  meta.gold += out.gold; meta.gems += out.gems;
+  if (rw.frame) { if (meta.frames.indexOf(rw.frame) === -1) { meta.frames.push(rw.frame); out.frame = rw.frame; } else { meta.gems += 30; out.gems += 30; } }
+  if (rw.title) { if (meta.titles.indexOf(rw.title) === -1) { meta.titles.push(rw.title); out.title = rw.title; } else if (!rw.frame) { meta.gems += 30; out.gems += 30; } }
+  saveMeta();
+  if (rw.chest) out.chest = openChest(rw.chest);
+  return out;
+}
+
+/* ---------- racha de días seguidos ---------- */
+function dayKey(offset) { var d = new Date(); d.setDate(d.getDate() + (offset || 0)); return d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate(); }
+function loginReady() { return meta.login.last !== dayKey(0); }
+// día de la racha que toca hoy (1 a 7)
+function loginDay() {
+  var l = meta.login, streak = l.last === dayKey(-1) || l.last === dayKey(0) ? l.streak : 0;
+  return loginReady() ? streak % 7 + 1 : ((streak - 1) % 7) + 1;
+}
+function claimLogin() {
+  if (!loginReady()) return null;
+  var l = meta.login;
+  l.streak = l.last === dayKey(-1) ? l.streak + 1 : 1;
+  l.last = dayKey(0);
+  var day = (l.streak - 1) % 7, r = giveReward(LOGIN_REWARDS[day]);
+  r.day = day + 1;
+  addSeasonXp(20);
+  if (l.streak >= 30 && meta.titles.indexOf('racha') === -1) { meta.titles.push('racha'); r.title = 'racha'; }
+  saveMeta();
+  return r;
+}
+
+/* ---------- temporada del mes ---------- */
+function seasonId() { var d = new Date(); return d.getFullYear() + '-' + (d.getMonth() + 1); }
+function seasonTheme() { var d = new Date(); return SEASON_THEMES[(d.getFullYear() * 12 + d.getMonth()) % SEASON_THEMES.length]; }
+function seasonDaysLeft() { var d = new Date(), end = new Date(d.getFullYear(), d.getMonth() + 1, 1); return Math.max(1, Math.ceil((end - d) / 864e5)); }
+// la temporada se reinicia al cambiar de mes
+function season() {
+  if (meta.season.id !== seasonId()) meta.season = { id: seasonId(), xp: 0, got: [] };
+  return meta.season;
+}
+function seasonLevel() { return Math.min(SEASON_LEVELS, Math.floor(season().xp / SEASON_XP)); }
+function addSeasonXp(n) { if (n > 0) season().xp += Math.round(n); }
+function seasonReady(lv) { return lv <= seasonLevel() && season().got.indexOf(lv) === -1; }
+function seasonPending() { var n = 0; for (var lv = 1; lv <= seasonLevel(); lv++) if (seasonReady(lv)) n++; return n; }
+function claimSeason(lv) {
+  if (!seasonReady(lv)) return null;
+  season().got.push(lv);
+  return giveReward(seasonReward(lv, seasonTheme()));
+}
+
+/* ---------- evento de la semana ---------- */
+// lunes de esta semana: su clave y su número (para rotar los eventos)
+function weekInfo() {
+  var d = new Date(), mon = new Date(d.getFullYear(), d.getMonth(), d.getDate() - (d.getDay() + 6) % 7);
+  var n = Math.round((mon - new Date(2026, 0, 5)) / (7 * 864e5));
+  return { id: mon.getFullYear() + '-' + (mon.getMonth() + 1) + '-' + mon.getDate(), n: n, end: new Date(mon.getFullYear(), mon.getMonth(), mon.getDate() + 7) };
+}
+function weekEvent() { var w = weekInfo(); return WEEK_EVENTS[((w.n % WEEK_EVENTS.length) + WEEK_EVENTS.length) % WEEK_EVENTS.length]; }
+function weekState() {
+  var w = weekInfo();
+  if (meta.week.id !== w.id) meta.week = { id: w.id, wins: 0, got: false };
+  return meta.week;
+}
+function weekReady() { var s = weekState(); return !s.got && s.wins >= WEEK_GOAL; }
+function claimWeek() {
+  if (!weekReady()) return null;
+  meta.week.got = true;
+  addSeasonXp(60);
+  saveMeta();
+  return openChest('oro');
+}
+function isWeekend() { var g = new Date().getDay(); return g === 0 || g === 6; }
+// reto de la semana: la misma semilla, mazo y comandante para todo el mundo
+function weeklyRetoOpts() {
+  var w = weekInfo(), seed = 0;
+  for (var i = 0; i < w.id.length; i++) seed = (seed * 31 + w.id.charCodeAt(i)) >>> 0;
+  var k = ((w.n % TOURNEY_DECKS.length) + TOURNEY_DECKS.length) % TOURNEY_DECKS.length;
+  return { seed: (seed * 2654435761) >>> 0, deck: TOURNEY_DECKS[k].deck.slice(), cmd: COMMANDER_ORDER[((w.n % 7) + 7) % 7], weekly: w.id };
+}
+
+/* ---------- modos que se abren con la campaña ---------- */
+function stagesWon() { return Object.keys(meta.campaign).filter(function (k) { return meta.campaign[k] > 0; }).length; }
+function modeUnlocked(k) {
+  var need = MODE_UNLOCK[k];
+  if (!need || stagesWon() >= need) return true;
+  // si ya lo habías jugado antes, sigue abierto
+  if (k === 'duelPick') return (meta.duelWins || 0) + (meta.duelLosses || 0) > 0 || (meta.trophies || 0) > 0;
+  if (k === 'coop') return (meta.coopBest || 0) > 0;
+  if (k === 'tourney') return (meta.tourneyWins || 0) + (meta.tourneyLosses || 0) > 0;
+  if (k === 'rogue') return (meta.rogueBest || 0) > 0;
+  return false;
+}
+// modos recién abiertos que aún no se han celebrado
+function newModes() {
+  var open = Object.keys(MODE_UNLOCK).filter(modeUnlocked);
+  if (!Array.isArray(meta.modesSeen)) { meta.modesSeen = open; saveMeta(); return []; }
+  var fresh = open.filter(function (k) { return meta.modesSeen.indexOf(k) === -1; });
+  if (fresh.length) { meta.modesSeen = meta.modesSeen.concat(fresh); saveMeta(); }
+  return fresh;
 }
 
 /* ---------- mazos guardados ---------- */
@@ -222,6 +353,7 @@ function claimAch(id) {
   var a = ACHIEVEMENTS.filter(function (x) { return x.id === id; })[0];
   if (!a || !achReady(a)) return null;
   meta.achieved.push(a.id);
+  if (a.title && meta.titles.indexOf(a.title) === -1) meta.titles.push(a.title);
   meta.gold += a.gold || 0;
   meta.gems += a.gems || 0;
   saveMeta();
@@ -293,8 +425,9 @@ function openChest(type) {
     meta.gold += gold;
     meta.gems += gems;
     missionAdd('chest', 1);
+    var cs = takeSurplus();
     saveMeta();
-    return { type: type, gold: gold, gems: gems, cards: {}, cmdCards: got, fresh: [], cmdFresh: cmdFresh };
+    return { type: type, gold: gold, gems: gems, cards: {}, cmdCards: got, fresh: [], cmdFresh: cmdFresh, surplus: cs };
   }
   for (var i = 0; i < (ch.legendOnly ? 0 : ch.cards); i++) {
     var roll = Math.random() - (ch.myth || 0), pool;
@@ -336,8 +469,9 @@ function openChest(type) {
     meta.cards[id] = { lv: 1, n: got[id] - 1 };
     fresh.push(id);
   });
+  var surplus = takeSurplus();
   saveMeta();
-  return { type: type, gold: gold, gems: gems, cards: got, cmdCards: cmdGot, fresh: fresh, cmdFresh: cmdNew, pity: pity };
+  return { type: type, gold: gold, gems: gems, cards: got, cmdCards: cmdGot, fresh: fresh, cmdFresh: cmdNew, pity: pity, surplus: surplus };
 }
 
 /* ---------- huecos de cofre ----------
@@ -413,7 +547,7 @@ function makeShopOffers(key) {
   var seed = 0;
   for (var i = 0; i < key.length; i++) seed = (seed * 31 + key.charCodeAt(i)) % 233280;
   var rnd = function () { seed = (seed * 9301 + 49297) % 233280; return seed / 233280; };
-  var pool = UNIT_ORDER.filter(function (id) { return meta.cards[id] || (UNITS[id].rarity !== 'legendaria' && UNITS[id].rarity !== 'mitica'); });
+  var pool = UNIT_ORDER.filter(function (id) { return meta.cards[id] ? meta.cards[id].lv < CARD_MAX : UNITS[id].rarity !== 'legendaria' && UNITS[id].rarity !== 'mitica'; });
   var of = function (r) { return pool.filter(function (id) { return UNITS[id].rarity === r; }); };
   var pickFrom = function (list, taken) {
     var free = list.filter(function (id) { return taken.indexOf(id) === -1; });
@@ -447,6 +581,7 @@ function buyOffer(i) {
   var fresh = !meta.cards[o.id];
   if (fresh) meta.cards[o.id] = { lv: 1, n: o.n - 1 };
   else meta.cards[o.id].n += o.n;
+  takeSurplus();
   saveMeta();
   return fresh ? 'new' : 'ok';
 }
@@ -465,18 +600,29 @@ function buyGold(i) {
 }
 
 /* ---------- códigos ---------- */
+// huella SHA-256 en hexadecimal (los códigos de CODES van así)
+function sha256Hex(s) {
+  if (!window.crypto || !crypto.subtle || !window.TextEncoder) return Promise.reject(new Error('sin cifrado'));
+  return crypto.subtle.digest('SHA-256', new TextEncoder().encode(s)).then(function (buf) {
+    return Array.from(new Uint8Array(buf)).map(function (b) { return ('0' + b.toString(16)).slice(-2); }).join('');
+  });
+}
+// devuelve una promesa con { gold, gems, chest } o { error }
 function redeemCode(raw) {
   var code = String(raw || '').toUpperCase().replace(/[^A-Z0-9Ñ]/g, '');
-  var c = CODES[code];
-  if (!code) return { error: 'Escribe un código' };
-  if (!c) return { error: 'Ese código no existe' };
-  if (meta.codes.indexOf(code) !== -1) return { error: 'Ya canjeaste ese código' };
-  meta.codes.push(code);
-  meta.gold += c.gold || 0;
-  meta.gems += c.gems || 0;
-  var chest = c.chest ? openChest(c.chest) : null;
-  saveMeta();
-  return { code: code, gold: c.gold || 0, gems: c.gems || 0, chest: chest };
+  if (!code) return Promise.resolve({ error: 'Escribe un código' });
+  return sha256Hex(code).then(function (h) {
+    var c = CODES[h];
+    if (!c) return { error: 'Ese código no existe' };
+    // antes se guardaba el código tal cual; ahora, su huella
+    if (meta.codes.indexOf(h) !== -1 || meta.codes.indexOf(code) !== -1) return { error: 'Ya canjeaste ese código' };
+    meta.codes.push(h);
+    meta.gold += c.gold || 0;
+    meta.gems += c.gems || 0;
+    var chest = c.chest ? openChest(c.chest) : null;
+    saveMeta();
+    return { code: code, gold: c.gold || 0, gems: c.gems || 0, chest: chest };
+  }, function () { return { error: 'Aquí no se pueden canjear códigos' }; });
 }
 
 /* ---------- trofeos: arenas y camino de trofeos ---------- */
@@ -514,6 +660,7 @@ function claimRoad(i) {
     if (meta.cards[id]) meta.cards[id].n += s.cards.n;
     else meta.cards[id] = { lv: 1, n: s.cards.n - 1 };
   }
+  out.surplus = takeSurplus();
   saveMeta();
   if (s.chest) out.chest = openChest(s.chest);
   return out;
@@ -553,6 +700,7 @@ function claimMission(i) {
   m.got = true;
   meta.gold += m.gold;
   meta.gems += m.gems;
+  addSeasonXp(25);
   saveMeta();
   return m;
 }
@@ -560,6 +708,7 @@ function dailyBonusReady() { var d = dailyMissions(); return !d.bonus && d.list.
 function claimDailyBonus() {
   if (!dailyBonusReady()) return null;
   meta.daily.bonus = true;
+  addSeasonXp(40);
   saveMeta();
   return openChest(DAILY_BONUS);
 }

@@ -57,7 +57,9 @@ function startBattle(mode, opts) {
   var lv = tourney || reto ? tourneyLevels() : cardLevels();
   var myCmd = reto ? opts.cmd : meta.commander;
   var myCmdLv = tourney || reto ? TOURNEY_CMD_LV : cmdLevel(meta.commander);
-  var lives = mode === 'campaign' || mode === 'rogue' ? { v: 5, max: 5 } : reto ? { v: RETO_LIVES, max: RETO_LIVES } : mode === 'duel' ? { v: 3, max: 3 } : { v: 6, max: 6 };
+  // Ascensión del Roguelike elegida (como mucho la más alta abierta)
+  var asc = mode === 'rogue' ? Math.max(0, Math.min(meta.rogueAsc || 0, meta.rogueAscSel || 0)) : 0;
+  var lives = mode === 'campaign' ? { v: 5, max: 5 } : mode === 'rogue' ? { v: rogueAscLives(asc), max: rogueAscLives(asc) } : reto ? { v: RETO_LIVES, max: RETO_LIVES } : mode === 'duel' ? { v: 3, max: 3 } : { v: 6, max: 6 };
   // torneo con mazo prestado o con cartas al azar: el mazo de los dos cambia
   var tmode = tourney ? opts.tmode || 'clasico' : null, aiPreset = null, lent = null;
   if (tmode === 'prestado') {
@@ -95,8 +97,10 @@ function startBattle(mode, opts) {
     player.tiles = {};
     ['altar', 'fuente', 'atalaya'].forEach(function (t, k) { player.tiles[spots[k]] = t; });
   }
+  // evento de la semana: más daño a un elemento (no en los retos, que se juegan igual para todos)
+  if (!reto) { var wev = weekEvent(); player.elemBonus[wev.el] = (player.elemBonus[wev.el] || 0) + WEEK_BONUS; }
   battle = {
-    rng: rng,
+    rng: rng, asc: asc,
     mode: mode, stage: stage, opts: opts, tmode: tmode, lent: lent,
     boards: [player], player: player, other: null,
     wave: 0, maxWaves: stage ? stage.waves : mode === 'rogue' ? ROGUE_WAVES : Infinity,
@@ -292,6 +296,7 @@ function hpScale() {
   if ((b.mode === 'duel' || b.mode === 'reto') && w > 12) s *= Math.pow(1.22, w - 12);
   // roguelike: a partir de la 15 aprieta más, que las ventajas se acumulan
   if (b.mode === 'rogue' && w > 15) s *= Math.pow(ROGUE_LATE, w - 15);
+  if (b.mode === 'rogue' && b.asc) s *= rogueAscHp(b.asc);
   if (b.event && b.event.id === 'horda') s *= 0.7;
   // cooperativo: a cada monstruo le disparan los dos tableros a la vez
   if (b.mode === 'coop') s *= COOP_HP;
@@ -505,6 +510,8 @@ function endBattle(won, draw) {
     res.gems = Math.floor(b.wave / 5) + (won ? 5 : 0);
     res.chest = won ? 'oro' : b.wave >= 20 ? 'plata' : b.wave >= 10 ? 'madera' : null;
     if (b.wave > (meta.rogueBest || 0)) { meta.rogueBest = b.wave; res.lines.push('¡Nuevo récord!'); }
+    if (b.asc) { res.gold = Math.round(res.gold * (1 + 0.1 * b.asc)); res.lines.push('Ascensión ' + b.asc + '.'); }
+    if (won && b.asc >= (meta.rogueAsc || 0) && (meta.rogueAsc || 0) < ROGUE_ASC_MAX) { meta.rogueAsc = b.asc + 1; meta.rogueAscSel = meta.rogueAsc; res.lines.push('¡Ascensión ' + meta.rogueAsc + ' abierta!'); }
     res.lines.push(won ? '¡Has vencido a ' + BOSSES[b.boss].name + ' en la oleada final!' : 'Caíste en la oleada ' + b.wave + ' de ' + b.maxWaves + '.');
     res.lines.push((b.player.skills.length + b.player.rogueMods.length) + ' ventajas reunidas.');
   } else {
@@ -518,6 +525,15 @@ function endBattle(won, draw) {
   }
   // ganar cualquier batalla siempre da algo de oro y gemas, aunque sea poco
   if (res.won) { res.gold = Math.max(res.gold, 30); res.gems = Math.max(res.gems, 1); }
+  // fin de semana: oro doble
+  if (isWeekend() && res.gold > 0) { res.gold *= 2; res.weekend = true; }
+  // evento de la semana: cuenta las victorias
+  if (res.won && !b.tutorial) weekState().wins++;
+  // puntos de temporada
+  var lv0 = seasonLevel();
+  res.xp = seasonXp(b, res);
+  addSeasonXp(res.xp);
+  if (seasonLevel() > lv0) res.seasonUp = seasonLevel();
   // misiones diarias
   var p = b.player;
   missionAdd('summon', p.summons); missionAdd('merge', p.merges); missionAdd('kills', p.kills);
@@ -537,9 +553,33 @@ function endBattle(won, draw) {
   res.dmgBy = Object.keys(b.player.dmgBy).map(function (k) { return { id: k, v: b.player.dmgBy[k] }; })
     .filter(function (d) { return d.v >= 1; }).sort(function (p, q) { return q.v - p.v; });
   res.commander = b.player.commander;
+  res.near = nearMisses(b, res);
   b.result = res;
   sfx(res.won ? 'win' : res.draw ? 'wave' : 'lose');
   setTimeout(function () { showResult(res); }, 900);
+}
+
+// puntos de temporada de una partida: por jugar, por la oleada y por ganar
+function seasonXp(b, res) {
+  var xp = 10 + Math.min(50, b.wave * 2) + (res.won ? 15 : 0);
+  if (b.mode === 'campaign' && res.won) xp += res.stars * 5;
+  return xp;
+}
+/* Lo que se quedó cerca: se enseña en el resultado para que apetezca otra. */
+function nearMisses(b, res) {
+  var out = [];
+  if (b.mode === 'campaign' && res.won && res.stars < 3) { var miss = 5 - b.player.lives.v; out.push((miss === 1 ? 'Te faltó 1 vida' : 'Te faltaron ' + miss + ' vidas') + ' para las 3 estrellas'); }
+  if (b.mode === 'duel' && !b.opts.tourney) {
+    var ai = arenaIndex(), nx = ARENAS[ai + 1];
+    if (nx && nx.at - meta.trophies <= 120) out.push('A ' + (nx.at - meta.trophies) + ' trofeos de ' + nx.name);
+  }
+  var ms = dailyMissions().list.filter(function (m) { return !m.got && m.prog < m.goal && m.prog / m.goal >= 0.6; })[0];
+  if (ms) out.push('Misión: ' + missionText(ms.k, ms.goal) + ' · ' + ms.prog + '/' + ms.goal);
+  var ach = ACHIEVEMENTS.filter(function (a) { return !achClaimed(a) && a.get() < a.goal && a.get() / a.goal >= 0.8; })[0];
+  if (ach) out.push('Logro: ' + ach.name + ' · ' + fmtNum(ach.get()) + '/' + fmtNum(ach.goal));
+  var ws = weekState();
+  if (!ws.got && ws.wins < WEEK_GOAL && ws.wins >= WEEK_GOAL - 2) out.push(weekEvent().name + ': ' + ws.wins + '/' + WEEK_GOAL + ' victorias');
+  return out.slice(0, 3);
 }
 
 /* ---------- disposición ---------- */

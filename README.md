@@ -85,6 +85,10 @@ La ficha de cada tropa tiene dos pestañas: Vídeo (una mini partida con la trop
 
 **💾 Copia de seguridad** en Opciones: toda la partida en un código `RT1:` (`exportSave` / `importSave`) para copiar, descargar o cargar en otro móvil. Al entrar se pide al navegador que no borre la partida (`askPersist`) y en Opciones hay botón para instalar el juego.
 
+**📅 Volver cada día:** racha de días seguidos (`LOGIN_REWARDS`, `claimLogin`; el séptimo, cofre de oro; si fallas un día, vuelve al primero), **temporada** del mes con pase gratis de 30 niveles (`SEASON_THEMES`, `seasonReward`, puntos en `seasonXp`, misiones y racha; marcos y títulos del mes en los niveles 10, 20 y 30), **evento de la semana** (`WEEK_EVENTS`: +25 % de daño a un elemento y cofre de oro por ganar `WEEK_GOAL` partidas), oro doble los fines de semana y **reto de la semana** (`weeklyRetoOpts`). En el inicio, una tira con la temporada y lo siguiente que tienes a mano (`nextGoal`); en el resultado, lo que se quedó cerca (`nearMisses`). Con el juego instalado, el icono enseña lo que hay por cobrar (`updateBadge`).
+
+**🔓 Modos que se abren** con la campaña (`MODE_UNLOCK`): 1 contra 1 en la fase 3, Co-op en la 5, Torneo en la 8 y Roguelike en la 10 (si ya los jugabas, siguen abiertos). **Ascensión** del Roguelike al superar las 30 oleadas (`ROGUE_ASC_MAX`). Las cartas de una tropa al máximo pasan a oro (`takeSurplus`). **Marcos y títulos** (`FRAMES`, `TITLES`) se eligen en el perfil. Los códigos de `CODES` van como huella SHA-256.
+
 **⚙️ Opciones:** sonido, música, vibración, números en partida (vida de los monstruos y críticos) y ahorro de batería (unos 30 fotogramas por segundo, menos trocitos, sin grabar la repetición, sin decorado animado y menos resolución).
 
 **♻️ Restablecer juego:** en Opciones (atajo del inicio); tras confirmarlo, borra todo el progreso (solo conserva los ajustes y el nombre sonido).

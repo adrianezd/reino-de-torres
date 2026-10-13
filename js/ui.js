@@ -169,7 +169,7 @@ function renderMenu(name, arg) {
       '<div class="side-col">' + side('freeChest', 'chests/madera', freeChestLabel(), free ? 'glow' : '') + side('missions', 'ui/misiones', 'Misiones', msN ? 'glow' : '', msN) + side('profile', 'icons/corona', 'Perfil', acN ? 'glow' : '', acN) + '</div>' +
       '<div class="logo"><h1><img src="assets/ui/titulo.webp" alt="Reino de Torres"></h1></div>' +
       '<div class="side-col">' + side('road', 'icons/trofeo', 'Trofeos', rdN ? 'glow' : '', rdN) + side('howto', 'icons/pergamino', 'Ayuda') + side('options', 'icons/engranaje', 'Opciones') + '</div>' +
-      '</div>' +
+      '</div>' + seasonStrip() +
       // mazo: banner del comandante (figura a la izquierda, nombre en el hueco)
       // y debajo las cinco tropas, cada retrato en un aro del banner
       '<div class="deck-panel">' +
@@ -181,12 +181,12 @@ function renderMenu(name, arg) {
       // la máquina y torneo. La de campaña lleva sus estrellas en una chapa.
       '<div class="mode-row">' +
       '<button class="mode-card" data-go="campaign" aria-label="Campaña"><img src="assets/ui/modo-campana.webp" alt=""><span class="mode-chip">' + ico('icons/estrella') + totalStars() + '/' + CAMPAIGN.length * 3 + '</span></button>' +
-      '<button class="mode-card" data-go="duelPick" aria-label="1 contra 1"><img src="assets/ui/modo-duelo.webp" alt=""></button>' +
+      '<button class="mode-card' + modeLock('duelPick') + '" data-go="duelPick" aria-label="1 contra 1"><img src="assets/ui/modo-duelo.webp" alt="">' + modeLockChip('duelPick') + '</button>' +
       // Co-op y Roguelike: ilustración sin el nombre (assets/ui/modo-coop-limpio y
       // modo-roguelike, la de 1 contra 1 en rojo) y el nombre escrito encima
-      '<button class="mode-card" data-go="coop" aria-label="Co-op"><img src="assets/ui/modo-coop-limpio.webp" alt=""><span class="mode-name">Co-op</span></button>' +
-      '<button class="mode-card" data-go="tourney" aria-label="Torneo"><img src="assets/ui/modo-torneo.webp" alt=""></button>' +
-      '<button class="mode-card" data-go="rogue" aria-label="Roguelike"><img src="assets/ui/modo-roguelike.webp" alt=""><span class="mode-name long">Roguelike</span>' + (meta.rogueBest ? '<span class="mode-chip">' + meta.rogueBest + '/' + ROGUE_WAVES + '</span>' : '') + '</button>' +
+      '<button class="mode-card' + modeLock('coop') + '" data-go="coop" aria-label="Co-op"><img src="assets/ui/modo-coop-limpio.webp" alt=""><span class="mode-name">Co-op</span>' + modeLockChip('coop') + '</button>' +
+      '<button class="mode-card' + modeLock('tourney') + '" data-go="tourney" aria-label="Torneo"><img src="assets/ui/modo-torneo.webp" alt="">' + modeLockChip('tourney') + '</button>' +
+      '<button class="mode-card' + modeLock('rogue') + '" data-go="rogue" aria-label="Roguelike"><img src="assets/ui/modo-roguelike.webp" alt=""><span class="mode-name long">Roguelike</span>' + (meta.rogueBest ? '<span class="mode-chip">' + meta.rogueBest + '/' + ROGUE_WAVES + (meta.rogueAsc ? ' · A' + meta.rogueAsc : '') + '</span>' : '') + modeLockChip('rogue') + '</button>' +
       '</div>' +
       // huecos de cofre abajo del todo, debajo de los botones de jugar
       '<div class="slots" id="chestSlots">' + slotsInner() + '</div>';
@@ -222,6 +222,9 @@ function renderMenu(name, arg) {
       [['madera', 'Oleada 10'], ['plata', 'Oleada 20'], ['oro', 'Jefe final']].map(function (p) {
         return '<span><img src="' + chestPic(p[0]) + '" alt=""><small>' + p[1] + '</small></span>';
       }).join('') + '</div></div>' +
+      (meta.rogueAsc ? '<div class="tn-panel"><h3>Ascensión</h3><div class="asc-row">' + Array.from({ length: meta.rogueAsc + 1 }, function (_, a) {
+        return '<button class="asc' + (a === Math.min(meta.rogueAscSel || 0, meta.rogueAsc) ? ' on' : '') + '" data-asc="' + a + '">' + a + '</button>';
+      }).join('') + '</div><small class="asc-note">' + ascNote(Math.min(meta.rogueAscSel || 0, meta.rogueAsc)) + '</small></div>' : '') +
       '<button class="btn btn-green tn-go" data-rogue="1">Jugar</button>' +
       '<div class="rec-row"><span class="rec-chip">' + ico('icons/trofeo') + '<b>' + (meta.rogueBest || 0) + '</b>récord</span></div>';
   } else if (name === 'road') {
@@ -251,6 +254,8 @@ function renderMenu(name, arg) {
     html = backBar('Tienda', true, 'tienda') + shopHtml();
   } else if (name === 'profile') {
     html = backBar('Perfil', false, 'perfil') + profTabs() + (profTab === 'logros' ? achievementsHtml() : profTab === 'bestiario' ? bestiaryHtml() : profileHtml());
+  } else if (name === 'season') {
+    html = backBar('Temporada', false, 'temporada') + seasonHtml();
   } else if (name === 'friends') {
     html = backBar('Retos', true, 'retos') + friendsHtml();
   } else if (name === 'howto') {
@@ -262,10 +267,12 @@ function renderMenu(name, arg) {
   m.scrollTop = keepScroll;
   bindMenu();
   // camino de trofeos: a la vista lo que toca (por cobrar o la siguiente parada)
-  if (name === 'road') {
+  if (name === 'road' || name === 'season') {
     var at = m.querySelector('.rd-stop.ready') || m.querySelector('.rd-stop.lock');
     if (at) at.scrollIntoView({ block: 'center' });
   }
+  // modos recién abiertos con la campaña: se celebran al volver al inicio
+  if (name === 'home' && $('overlay').hidden) { var nm = newModes(); if (nm.length) showNewMode(nm[0]); }
 }
 /* Cómo jugar: icono, título y una frase por ficha. */
 var HELP = [
@@ -283,6 +290,106 @@ var HELP = [
   ['icons/gema', 'Gemas', 'Salen en cofres, estrellas nuevas, duelos y Co-op. Se gastan en la tienda.'],
   ['icons/diana', 'Retos', 'Juega un reto y manda el enlace: tus amigos se enfrentan a los mismos monstruos.']
 ];
+/* ---------- modos que se abren con la campaña ---------- */
+function modeLock(k) { return modeUnlocked(k) ? '' : ' mode-locked'; }
+function modeLockChip(k) { return modeUnlocked(k) ? '' : '<span class="mode-lock">' + ico('icons/candado') + 'Fase ' + MODE_UNLOCK[k] + '</span>'; }
+var MODE_PICS = { duelPick: 'modo-duelo', coop: 'modo-coop-limpio', tourney: 'modo-torneo', rogue: 'modo-roguelike' };
+function showNewMode(k) {
+  sfx('win'); buzz([20, 40, 20]);
+  openOverlay('<div class="modal-card new-mode"><img class="nm-pic" src="assets/ui/' + MODE_PICS[k] + '.webp" alt=""><h2>¡Nuevo modo!</h2><p class="gold-big">' + MODE_NAMES[k] + '</p>' +
+    '<button class="btn btn-green" id="nmGo">Jugar</button><button class="btn btn-ghost" id="nmX">Luego</button></div>');
+  $('nmGo').onclick = function () { closeOverlay(); showScreen(k); };
+  $('nmX').onclick = function () { closeOverlay(); renderMenu('home'); };
+}
+
+/* ---------- temporada, meta siguiente y evento de la semana ---------- */
+// lo próximo que tienes a mano: un modo por abrir, una mejora, la fase siguiente o la arena siguiente
+function nextGoal() {
+  var won = stagesWon();
+  var lockd = Object.keys(MODE_UNLOCK).filter(function (k) { return !modeUnlocked(k); }).sort(function (a, b) { return MODE_UNLOCK[a] - MODE_UNLOCK[b]; })[0];
+  if (lockd && MODE_UNLOCK[lockd] - won <= 2) return 'Gana la fase ' + MODE_UNLOCK[lockd] + ' para abrir ' + MODE_NAMES[lockd];
+  var up = meta.deck.filter(canUpgradeCard)[0];
+  if (up) return '¡Ya puedes mejorar a ' + UNITS[up].name + '!';
+  var near = meta.deck.map(function (id) { var c = meta.cards[id]; return { id: id, left: c.lv < CARD_MAX ? cardsNeeded(c.lv) - c.n : 99 }; })
+    .filter(function (o) { return o.left > 0 && o.left <= 3; }).sort(function (a, b) { return a.left - b.left; })[0];
+  if (near) return (near.left === 1 ? 'Te falta 1 carta' : 'Te faltan ' + near.left + ' cartas') + ' para subir a ' + UNITS[near.id].name;
+  var nx = CAMPAIGN.filter(function (st) { return stageUnlocked(st.id) && !meta.campaign[st.id]; })[0];
+  if (nx) return 'Fase ' + nx.id + ': ' + nx.name;
+  var ar = ARENAS[arenaIndex() + 1];
+  if (ar) return 'A ' + (ar.at - meta.trophies) + ' trofeos de ' + ar.name;
+  return 'Sube tus tropas al nivel ' + CARD_MAX;
+}
+function seasonStrip() {
+  var th = seasonTheme(), lv = seasonLevel(), xp = season().xp, pend = seasonPending(), max = lv >= SEASON_LEVELS;
+  var ws = weekState(), ev = weekEvent(), wr = weekReady();
+  return '<button class="season-strip" data-go="season" style="--sc:' + th.color + '">' +
+    '<span class="ss-lv"><small>Nivel</small><b>' + lv + '</b></span>' +
+    '<span class="ss-body"><b>' + esc(th.name) + '</b>' +
+    '<span class="ubar' + (pend ? ' ok' : '') + '"><span style="width:' + (max ? 100 : xp % SEASON_XP) + '%"></span><em>' + (max ? 'Completa' : xp % SEASON_XP + '/' + SEASON_XP) + '</em></span>' +
+    '<small class="ss-next">' + esc(nextGoal()) + '</small></span>' + (pend ? '<i class="side-dot">' + pend + '</i>' : '') + '</button>' +
+    '<div class="ev-row"><button class="ev-chip' + (wr ? ' ready' : '') + '" id="weekChip">' + ELEMENTS[ev.el].icon + ' ' + esc(ev.name) + ' · ' + (ws.got ? '✔' : wr ? 'Cobrar' : Math.min(ws.wins, WEEK_GOAL) + '/' + WEEK_GOAL) + '</button>' +
+    (isWeekend() ? '<span class="ev-chip gold">🪙 Oro doble</span>' : '') + '</div>';
+}
+// cómo se ve un premio de temporada o de la racha
+function rewardLook(rw) {
+  if (rw.frame) return { html: '<span class="frame fr-' + rw.frame + '"><img src="' + COMMANDERS[meta.commander].pic + '" alt=""></span>', title: 'Marco ' + FRAMES[rw.frame].name + (rw.title ? ' y título' : ''), sub: rw.title ? TITLES[rw.title] : 'Para tu retrato' };
+  if (rw.title) return { pic: 'assets/icons/pergamino.webp', title: 'Título', sub: TITLES[rw.title] };
+  if (rw.chest) return { pic: chestPic(rw.chest), title: CHESTS[rw.chest].name };
+  if (rw.gems) return { pic: 'assets/icons/gema.webp', title: '+' + rw.gems + ' gemas' };
+  return { pic: 'assets/chests/oro-' + (rw.gold >= 600 ? 'saco' : 'monedas') + '.webp', title: '+' + rw.gold + ' de oro' };
+}
+function seasonHtml() {
+  var th = seasonTheme(), lv = seasonLevel(), xp = season().xp, d = seasonDaysLeft();
+  var rows = [];
+  for (var l = 1; l <= SEASON_LEVELS; l++) {
+    var rw = seasonReward(l, th), look = rewardLook(rw), got = season().got.indexOf(l) !== -1, ready = seasonReady(l);
+    rows.push('<div class="rd-stop ' + (got ? 'got' : ready ? 'ready' : 'lock') + (rw.frame || rw.title ? ' arena' : '') + (lv >= l ? ' reach' : '') + '">' +
+      '<span class="rd-at"><small>Nv</small><b>' + l + '</b></span>' +
+      '<div class="rd-card"><span class="rd-pic">' + (look.html || '<img src="' + look.pic + '" alt="">') + '</span>' +
+      '<span class="rd-txt"><b>' + esc(look.title) + '</b>' + (look.sub ? '<small>' + esc(look.sub) + '</small>' : '') + '</span>' +
+      (got ? '<i class="rd-ok">✔</i>' : ready ? '<button class="btn btn-green rd-claim" data-season="' + l + '">Cobrar</button>' : '<i class="rd-lock">🔒</i>') + '</div></div>');
+  }
+  return '<div class="rd-head season-head" style="--sc:' + th.color + '"><span class="ss-lv big"><small>Nivel</small><b>' + lv + '</b></span><span><small>' + (d === 1 ? 'Acaba hoy' : 'Quedan ' + d + ' días') + '</small><b>' + esc(th.name) + '</b>' +
+    '<span class="ubar"><span style="width:' + (lv >= SEASON_LEVELS ? 100 : xp % SEASON_XP) + '%"></span><em>' + (lv >= SEASON_LEVELS ? 'Completa' : xp % SEASON_XP + '/' + SEASON_XP + ' puntos') + '</em></span></span></div>' +
+    '<div class="road">' + rows.join('') + '</div>';
+}
+function claimSeasonStop(l) {
+  var r = claimSeason(l);
+  if (!r) return;
+  buzz(30);
+  var extra = [r.gold ? '+' + r.gold + ' 🪙' : '', r.gems ? '+' + r.gems + ' 💎' : '', r.frame ? '¡Marco ' + FRAMES[r.frame].name + '!' : '', r.title ? '¡Título nuevo: ' + TITLES[r.title] + '!' : ''].filter(Boolean).join(' · ');
+  if (r.chest) { showChest(r.chest); if (extra) toast(extra); return; }
+  sfx('chest'); toast(extra || '¡Cobrado!');
+  renderMenu('season');
+}
+// racha de días seguidos: siete casillas y el premio de hoy
+function showLogin(after) {
+  var day = loginDay(), cells = LOGIN_REWARDS.map(function (rw, i) {
+    var look = rewardLook(rw), st = i + 1 < day ? ' got' : i + 1 === day ? ' today' : '';
+    return '<span class="lg-day' + st + (i === 6 ? ' big' : '') + '"><small>Día ' + (i + 1) + '</small><img src="' + look.pic + '" alt=""><b>' + esc(rw.gold ? rw.gold : rw.gems ? rw.gems : CHESTS[rw.chest].name.replace('Cofre de ', '')) + '</b></span>';
+  }).join('');
+  openOverlay('<div class="modal-card login"><h2>Racha de días</h2><span class="time-chip">' + ico('icons/reloj') + 'Entra cada día: el séptimo, cofre de oro</span>' +
+    '<div class="lg-grid">' + cells + '</div><button class="btn btn-green" id="lgOk">Cobrar día ' + day + '</button></div>');
+  $('lgOk').onclick = function () {
+    var r = claimLogin();
+    closeOverlay();
+    if (!r) { if (after) after(); return; }
+    var extra = [r.gold ? '+' + r.gold + ' 🪙' : '', r.gems ? '+' + r.gems + ' 💎' : '', r.title ? '¡Título nuevo: ' + TITLES[r.title] + '!' : ''].filter(Boolean).join(' · ');
+    if (r.chest) { showChest(r.chest); if (extra) toast(extra); }
+    else { sfx('chest'); buzz(25); toast('Día ' + r.day + ': ' + extra); renderMenu(currentScreen); if (after) after(); }
+  };
+}
+function ascNote(a) { return a ? 'Monstruos +' + Math.round((rogueAscHp(a) - 1) * 100) + '% de vida · ' + rogueAscLives(a) + ' vidas · +' + a * 10 + '% de oro' : 'Normal'; }
+// número en el icono de la app instalada: cosas por cobrar
+var _badge = -1;
+function updateBadge() {
+  if (!navigator.setAppBadge) return;
+  var n = meta.slots.filter(function (s) { return slotState(s) === 'ready'; }).length + (freeChestReady() ? 1 : 0) + dailyPending() + (loginReady() ? 1 : 0) + seasonPending() + (weekReady() ? 1 : 0);
+  if (n === _badge) return;
+  _badge = n;
+  try { (n ? navigator.setAppBadge(n) : navigator.clearAppBadge()).catch(function () {}); } catch (e) {}
+}
+
 /* ---------- mazos guardados ---------- */
 function deckSlots() {
   return '<div class="sub-tabs three deck-slots">' + meta.decks.map(function (d, i) {
@@ -312,8 +419,14 @@ function profileHtml() {
       return '<div class="rd-row"><img src="' + unitIcon(id, 0, 64) + '" alt=""><span class="rd-bar"><i style="width:' + Math.max(4, obj[id] / max * 100) + '%"></i><b>' + esc(UNITS[id].name) + '</b><em>' + fmt(obj[id]) + '</em></span></div>';
     }).join('') + '</div>';
   };
-  return '<div class="tn-panel prof-head"><img src="' + c.pic + '" alt="" style="--cc:' + c.color + '">' +
-    '<label class="prof-name"><small>Tu nombre</small><input id="profName" type="text" maxlength="16" autocomplete="off" spellcheck="false" placeholder="Sin nombre" value="' + esc(meta.name || '') + '"></label></div>' +
+  return '<div class="tn-panel prof-head"><span class="frame big fr-' + meta.frame + '"><img src="' + c.pic + '" alt=""></span>' +
+    '<label class="prof-name"><small>Tu nombre</small><input id="profName" type="text" maxlength="16" autocomplete="off" spellcheck="false" placeholder="Sin nombre" value="' + esc(meta.name || '') + '"><em class="prof-title">' + esc(TITLES[meta.title]) + '</em></label></div>' +
+    '<div class="tn-panel"><h3>Marco</h3><div class="fr-grid">' + Object.keys(FRAMES).map(function (k) {
+      var own = meta.frames.indexOf(k) !== -1;
+      return '<button class="fr-pick' + (k === meta.frame ? ' on' : '') + (own ? '' : ' locked') + '" data-frame="' + k + '"><span class="frame fr-' + k + '"><img src="' + c.pic + '" alt=""></span><small>' + esc(FRAMES[k].name) + '</small></button>';
+    }).join('') + '</div><h3 class="t2">Título</h3><div class="ti-row">' + Object.keys(TITLES).filter(function (k) { return meta.titles.indexOf(k) !== -1; }).map(function (k) {
+      return '<button class="ti-pick' + (k === meta.title ? ' on' : '') + '" data-title="' + k + '">' + esc(TITLES[k]) + '</button>';
+    }).join('') + '</div><small class="asc-note">Marcos y títulos salen en la temporada, en los logros y en la racha.</small></div>' +
     '<div class="stat-tiles">' + tile('icons/espadas', s.games || 0, 'partidas') + tile('icons/corona', s.wins || 0, 'victorias') + tile('icons/reloj', fmtPlay(s.time || 0), 'jugando') +
     tile('icons/calavera', fmtNum(s.kills || 0), 'bajas') + tile('icons/explosion', s.bossKills || 0, 'jefes') + tile('icons/chispas', fmtNum(s.merges || 0), 'fusiones') +
     tile('icons/rayo', '×' + (s.bestCombo || 0), 'mejor combo') + tile('icons/grafico', s.maxRank || 1, 'rango máximo') + tile('icons/dado', fmtNum(s.summons || 0), 'invocaciones') + '</div>' +
@@ -364,8 +477,7 @@ function bestiaryHtml() {
 }
 
 /* ---------- retos con amigos ---------- */
-function friendsHtml() {
-  var list = meta.retos.map(function (r, i) {
+function retoRowHtml(r, i) {
     var c = COMMANDERS[r.cmd];
     var state = r.from ? (r.won ? '<span class="rt-chip ok">✔ Superado</span>' : '<span class="rt-chip">Supera la oleada ' + r.target + '</span>') : '<span class="rt-chip mine">Tu reto</span>';
     return '<div class="reto-row' + (r.won ? ' won' : '') + '"><div class="rt-top"><img class="rt-cmd" src="' + c.pic + '" alt="" style="--cc:' + c.color + '">' +
@@ -373,8 +485,18 @@ function friendsHtml() {
       '<span class="rt-best"><small>Tu mejor</small><b>' + (r.best || '—') + '</b></span></div>' +
       '<div class="rt-deck">' + r.deck.map(function (id) { return '<img src="' + unitIcon(id, 0, 48) + '" alt="' + esc(UNITS[id].name) + '">'; }).join('') + '</div>' +
       '<div class="rt-btns"><button class="btn btn-green" data-retoplay="' + i + '">Jugar</button><button class="btn btn-ghost" data-retoshare="' + i + '"' + (r.best ? '' : ' disabled') + '>Retar</button></div></div>';
-  }).join('');
+}
+function friendsHtml() {
+  var list;
+  var wk = weeklyRetoOpts(), wr = meta.retos.filter(function (r) { return r.key === retoKey(wk); })[0], wc = COMMANDERS[wk.cmd];
+  var weekly = '<div class="reto-row weekly"><div class="rt-top"><img class="rt-cmd" src="' + wc.pic + '" alt="" style="--cc:' + wc.color + '">' +
+    '<span class="rt-txt"><b>Reto de la semana</b><span class="rt-chip">El mismo para todo el mundo</span></span>' +
+    '<span class="rt-best"><small>Tu mejor</small><b>' + (wr && wr.best ? wr.best : '—') + '</b></span></div>' +
+    '<div class="rt-deck">' + wk.deck.map(function (id) { return '<img src="' + unitIcon(id, 0, 48) + '" alt="' + esc(UNITS[id].name) + '">'; }).join('') + '</div>' +
+    '<div class="rt-btns"><button class="btn btn-green" data-weekly="1">Jugar</button><button class="btn btn-ghost" data-weeklyshare="1"' + (wr && wr.best ? '' : ' disabled') + '>Retar</button></div></div>';
+  list = meta.retos.map(function (r, i) { return r.weekly ? '' : retoRowHtml(r, i); }).join('');
   return '<div class="mode-hero reto-hero"><img src="assets/ui/modo-duelo.webp" alt=""><span><b>Reta a tus amigos</b><small>Los mismos monstruos para todos. Gana quien llegue más lejos.</small></span></div>' +
+    weekly +
     '<button class="btn btn-green tn-go" data-newreto="1">Nuevo reto</button>' +
     (list ? '<h3 class="bst-t">Tus retos</h3>' + list : '<div class="coll-empty">' + ico('icons/diana') + '</div>');
 }
@@ -672,6 +794,11 @@ var INFO = {
   tienda: { title: 'Tienda', rows: [
     ['icons/reloj', 'Las ofertas de cartas cambian cada día.'],
     ['icons/gema', 'Ganas gemas en los cofres, con estrellas nuevas de campaña, en los duelos y en Co-op.']] },
+  temporada: { title: 'Temporada', rows: [
+    ['icons/estrella', 'Cada mes hay una temporada nueva con 30 niveles de premios.'],
+    ['icons/espadas', 'Ganas puntos al jugar cualquier modo, al cobrar misiones, con la racha y con el evento de la semana.'],
+    ['icons/corona', 'En los niveles 10, 20 y 30 hay marcos y títulos que solo salen ese mes.'],
+    ['icons/reloj', 'Al acabar el mes se reinicia: cobra antes lo que tengas.']] },
   perfil: { title: 'Perfil', rows: [
     ['icons/grafico', 'Tus cifras de todas las partidas y tus récords en cada modo.'],
     ['icons/corona', 'Los logros se cobran una vez y dan oro o gemas.'],
@@ -762,6 +889,7 @@ function bindMenu() {
     b.onclick = function () {
       sfx('tap');
       var g = b.dataset.go;
+      if (MODE_UNLOCK[g] && !modeUnlocked(g)) { sfx('no'); toast('Gana la fase ' + MODE_UNLOCK[g] + ' de la campaña para abrir ' + MODE_NAMES[g]); return; }
       if (g === 'coop') { startBattle('coop'); return; }
       if (g === 'codes') { showCodes(); return; }
       if (g === 'missions') { showMissions(); return; }
@@ -816,6 +944,26 @@ function bindMenu() {
       renderMenu('commanders');
     };
   });
+  m.querySelectorAll('[data-season]').forEach(function (b) { b.onclick = function () { claimSeasonStop(+b.dataset.season); }; });
+  m.querySelectorAll('[data-asc]').forEach(function (b) { b.onclick = function () { meta.rogueAscSel = +b.dataset.asc; saveMeta(); sfx('tap'); renderMenu('rogue'); }; });
+  m.querySelectorAll('[data-frame]').forEach(function (b) {
+    b.onclick = function () {
+      var k = b.dataset.frame;
+      if (meta.frames.indexOf(k) === -1) { sfx('no'); toast('Marco ' + FRAMES[k].name + ': sale en la temporada'); return; }
+      meta.frame = k; saveMeta(); sfx('tap'); renderMenu('profile');
+    };
+  });
+  m.querySelectorAll('[data-title]').forEach(function (b) { b.onclick = function () { meta.title = b.dataset.title; saveMeta(); sfx('tap'); renderMenu('profile'); }; });
+  m.querySelectorAll('[data-weekly]').forEach(function (b) { b.onclick = function () { startBattle('reto', weeklyRetoOpts()); }; });
+  m.querySelectorAll('[data-weeklyshare]').forEach(function (b) {
+    b.onclick = function () { var o = weeklyRetoOpts(), r = retoRecord(o); if (r.best) { sfx('tap'); shareReto(o, r.best); } };
+  });
+  var wc = $('weekChip');
+  if (wc) wc.onclick = function () {
+    if (weekReady()) { var r = claimWeek(); if (r) showChest(r); return; }
+    sfx('tap');
+    toast(weekEvent().name + ': tus tropas de ' + ELEMENTS[weekEvent().el].name.toLowerCase() + ' hacen un 25% más de daño. Gana ' + WEEK_GOAL + ' partidas esta semana para un cofre de oro.');
+  };
   m.querySelectorAll('[data-dslot]').forEach(function (b) { b.onclick = function () { switchDeck(+b.dataset.dslot); sfx('merge'); renderMenu('collection'); }; });
   m.querySelectorAll('[data-ptab]').forEach(function (b) { b.onclick = function () { profTab = b.dataset.ptab; sfx('tap'); renderMenu('profile'); }; });
   m.querySelectorAll('[data-ach]').forEach(function (b) {
@@ -1280,8 +1428,10 @@ function showCodes() {
     '<button class="btn btn-green" id="codeOk">Canjear</button><button class="btn btn-ghost" id="codeX">Cerrar</button></div>');
   var inp = $('codeIn');
   setTimeout(function () { try { inp.focus(); } catch (e) {} }, 50);
-  function go() {
-    var r = redeemCode(inp.value), err = $('codeErr');
+  function go() { redeemCode(inp.value).then(done); }
+  function done(r) {
+    var err = $('codeErr');
+    if (!err) return;
     if (r.error) { sfx('no'); buzz(20); err.textContent = r.error; err.hidden = false; return; }
     var extra = [r.gold ? '+' + r.gold + ' 🪙' : '', r.gems ? '+' + r.gems + ' 💎' : ''].filter(Boolean).join(' · ');
     if (r.chest) { showChest(r.chest); if (extra) toast('Además: ' + extra); return; }
@@ -1426,6 +1576,7 @@ setInterval(function () {
   }
   var left = $('ciLeft');
   if (left) { var s = meta.slots[+left.dataset.slot]; if (s) left.textContent = fmtDur(slotLeft(s)); }
+  updateBadge();
 }, 1000);
 
 // lo que sale del cofre, en orden: el oro, las cartas de comandante y luego
@@ -1604,7 +1755,7 @@ function chestResult(r) {
     if (it.cmd) return '<div class="chest-card" style="--rc:' + COMMANDERS[it.cmd].color + '"><img src="' + COMMANDERS[it.cmd].pic + '" alt=""><b>×' + it.n + '</b><small>' + esc(COMMANDERS[it.cmd].name) + '</small></div>';
     return '<div class="chest-card' + (it.fresh ? ' fresh' : '') + '" style="--rc:' + RARITY[UNITS[it.id].rarity].color + '"><img src="' + unitIcon(it.id, 0, 96) + '" alt=""><b>×' + it.n + '</b><small>' + esc(UNITS[it.id].name) + '</small></div>';
   }).join('');
-  openOverlay('<div class="modal-card chest-modal"><div class="chest-pic"><div class="chest-pic-glow"><img class="chest-pic-rays" src="assets/chests/destello.webp" alt=""><img class="chest-pic-portal" src="assets/chests/portal-' + r.type + '.webp" alt=""></div><img class="chest-pic-img" src="' + chestPic(r.type, true) + '" alt=""></div><h2>' + ch.name + '</h2>' + (r.gold || r.gems ? '<p class="gold-big">+' + r.gold + ' 🪙' + (r.gems ? ' · +' + r.gems + ' 💎' : '') + '</p>' : '') + (r.pity ? '<div class="res-unlock secret"><b>¡Garantía: mítica segura!</b></div>' : '') + chestNewHtml(r) + '<div class="chest-cards">' + cards + '</div><button class="btn chest-ok" id="chestOk">¡Genial!</button></div>');
+  openOverlay('<div class="modal-card chest-modal"><div class="chest-pic"><div class="chest-pic-glow"><img class="chest-pic-rays" src="assets/chests/destello.webp" alt=""><img class="chest-pic-portal" src="assets/chests/portal-' + r.type + '.webp" alt=""></div><img class="chest-pic-img" src="' + chestPic(r.type, true) + '" alt=""></div><h2>' + ch.name + '</h2>' + (r.gold || r.gems ? '<p class="gold-big">+' + r.gold + ' 🪙' + (r.gems ? ' · +' + r.gems + ' 💎' : '') + '</p>' : '') + (r.pity ? '<div class="res-unlock secret"><b>¡Garantía: mítica segura!</b></div>' : '') + (r.surplus ? '<p class="surplus">+' + r.surplus + ' 🪙 por cartas sobrantes</p>' : '') + chestNewHtml(r) + '<div class="chest-cards">' + cards + '</div><button class="btn chest-ok" id="chestOk">¡Genial!</button></div>');
   $('chestOk').onclick = function () { closeOverlay(); renderMenu(currentScreen === 'battle' ? 'home' : currentScreen); };
 }
 
@@ -1997,7 +2148,10 @@ function showResult(res) {
   var unlock = res.unlocked ? '<div class="res-unlock"><img src="' + unitIcon(res.unlocked, 0, 96) + '" alt=""><b>¡Nueva tropa: ' + esc(UNITS[res.unlocked].name) + '!</b></div>' : '';
   openOverlay('<div class="modal-card result ' + (res.won ? 'win' : 'lose') + '"><div class="res-emoji">' + (res.won ? '🏆' : res.draw ? '🤝' : ico('icons/derrota')) + '</div><h2>' + title + '</h2>' + stars +
     (res.lines.length ? '<div class="res-lines">' + res.lines.map(function (l) { return '<span>' + esc(l) + '</span>'; }).join('') + '</div>' : '') +
-    '<div class="res-prize">' + prizeChips(res.trophies || 0, res.gold, res.gems) + '</div>' + chest + unlock +
+    '<div class="res-prize">' + prizeChips(res.trophies || 0, res.gold, res.gems) + (res.xp ? '<span class="pz-chip xp">' + ico('icons/estrella') + '<b>+' + res.xp + '</b></span>' : '') + '</div>' +
+    (res.weekend ? '<p class="res-tag">Fin de semana: oro doble</p>' : '') +
+    (res.seasonUp ? '<p class="res-tag up">¡Nivel ' + res.seasonUp + ' de la temporada!</p>' : '') +
+    (res.near && res.near.length ? '<div class="res-near">' + res.near.map(function (l) { return '<span>' + esc(l) + '</span>'; }).join('') + '</div>' : '') + chest + unlock +
     '<div class="stat-tiles res-stats"><span>' + ico('icons/ola') + '<b>' + (battle ? battle.wave : 0) + '</b><small>oleada</small></span>' +
     '<span>' + ico('icons/calavera') + '<b>' + fmtNum(res.kills || 0) + '</b><small>bajas</small></span>' +
     '<span>' + ico('icons/espadas') + '<b>' + fmtNum(res.damage || 0) + '</b><small>daño</small></span></div>' + dmgSummary(res) +
@@ -2218,8 +2372,9 @@ function initGame() {
     if (ro) { showRetoInvite(receiveReto(ro)); return requestAnimationFrame(loop); }
     toast('Ese enlace de reto no vale');
   }
-  // versión nueva desde la última visita: enseña las novedades
-  if (meta.lastSeenVersion !== APP_VERSION) showPatchNotes();
+  // racha del día y, después, las novedades de una versión nueva
+  var news = function () { if (meta.lastSeenVersion !== APP_VERSION) showPatchNotes(); };
+  if (loginReady()) showLogin(news); else news();
   requestAnimationFrame(loop);
 }
 document.addEventListener('DOMContentLoaded', initGame);

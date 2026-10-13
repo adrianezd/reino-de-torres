@@ -320,18 +320,20 @@ var SHOP_GOLD = [
   { gold: 3000, gems: 180 }
 ];
 
-/* Códigos de regalo: se canjean una vez cada uno (en mayúsculas, sin espacios).
+/* Códigos de regalo: se canjean una vez cada uno. Se guardan como huella
+   SHA-256 del código en mayúsculas y sin espacios (así no se leen en el
+   código del juego). Para añadir uno: la huella del texto y su premio.
    gold / gems: cantidad · chest: tipo de cofre que se abre al canjearlo. */
 var CODES = {
-  BIENVENIDA:    { gold: 500, gems: 50 },
-  REINODETORRES: { chest: 'oro' },
-  GEMAS:         { gems: 30 },
-  GEMAS100:      { gems: 100 },
-  GEMAS15000:    { gems: 15000 },
-  DIAMANTES:     { gems: 250 },
-  TESOROREAL:    { gems: 500 },
-  MITICO:        { gems: 150 },
-  FUSION:        { gold: 400 }
+  '0a53889993db4a2a580275582d42ce3294e95b605e42af39d2ec2c78d88abac9': { gold: 500, gems: 50 },
+  '941681e1010f15496320554974d321f276759bb95545d33accede6a0b0def20a': { chest: 'oro' },
+  '2e58ab21fd2998963cb4668692dadbd7a657013552b31674da6be370919d3d78': { gems: 30 },
+  '10dc77720c8fef1d706ddd79cfc6d6515990c58d338a2881dcdd8b0ff931cb4d': { gems: 100 },
+  'e739bbf58ca177dc7e362fee47a12accc554bea13347fdb0b271429111fddc97': { gems: 15000 },
+  '8c4557908504f60bf10af97ea6d82eced9de6ea638a2c86abc43b713adef1a20': { gems: 250 },
+  '0c7141e6a68286482ff42b50a2b5e371bf44534c2b05971b91e7e3d9e53e5027': { gems: 500 },
+  'e675b0857b3a616cfaea9d3617a21ecaf1a7b3c5b67bb637797f4b3afe1577ee': { gems: 150 },
+  'd814714034eb9e32a223ac0000ffcfffed2fb7d85e0b2a623bb0218c59e33d41': { gold: 400 }
 };
 
 /* Arenas del 1 contra 1: se llega con los trofeos que tienes (at). Cada una
@@ -703,6 +705,91 @@ var DECK_SLOTS = 3;
 var RETO_MODS = ['mana2', 'rebajas', 'veteranos', 'carga', 'gigantes', 'enjambre', 'estampida', 'fusion', 'casillas', 'fijo', 'jefes', 'caos', 'lazos'];
 var RETO_LIVES = 5;
 
+/* Racha de días seguidos: un premio por día; el séptimo, cofre de oro.
+   Si un día no entras, vuelve al primero. */
+var LOGIN_REWARDS = [{ gold: 100 }, { gems: 10 }, { chest: 'madera' }, { gold: 300 }, { gems: 20 }, { chest: 'plata' }, { chest: 'oro' }];
+
+/* Modos que se abren con la campaña (fase ganada). Si ya los habías jugado,
+   siguen abiertos. */
+var MODE_UNLOCK = { duelPick: 3, coop: 5, tourney: 8, rogue: 10 };
+var MODE_NAMES = { duelPick: '1 contra 1', coop: 'Co-op', tourney: 'Torneo', rogue: 'Roguelike' };
+
+/* Cartas sobrantes: con la tropa al nivel máximo, cada carta de más se
+   cambia por oro (y las de comandante, a nivel 25). */
+var SURPLUS_GOLD = { comun: 20, rara: 50, epica: 150, mitica: 400, legendaria: 1000 };
+var SURPLUS_CMD_GOLD = 150;
+
+/* Ascensión del Roguelike: al superar las 30 oleadas se abre la siguiente.
+   Cada nivel, monstruos más duros y algo más de premio; cada tres, una vida menos. */
+var ROGUE_ASC_MAX = 10;
+function rogueAscHp(a) { return 1 + 0.15 * a; }
+function rogueAscLives(a) { return 5 - Math.floor(a / 3); }
+
+/* Cosméticos: marcos del retrato y títulos del perfil. Salen en la
+   temporada y en algunos logros; se eligen en el perfil. */
+var FRAMES = {
+  basico:   { name: 'Madera' },
+  oro:      { name: 'Oro' },
+  hielo:    { name: 'Escarcha' },
+  fuego:    { name: 'Brasas' },
+  natura:   { name: 'Enredadera' },
+  arcano:   { name: 'Arcano' },
+  sombra:   { name: 'Sombra' },
+  real:     { name: 'Real' },
+  arcoiris: { name: 'Prisma' },
+  eclipse:  { name: 'Eclipse' }
+};
+var TITLES = {
+  novato:   'Recluta del reino',
+  valle:    'Guardia del valle',
+  fusion:   'Maestría en fusión',
+  dragon:   'Azote de dragones',
+  escarcha: 'Corazón de escarcha',
+  fuego:    'Llama eterna',
+  arcano:   'Saber arcano',
+  hierro:   'Voluntad de hierro',
+  bosque:   'Espíritu del bosque',
+  leyenda:  'Leyenda del reino',
+  eclipse:  'Del eclipse',
+  racha:    'Constancia de acero'
+};
+
+/* Temporada: un pase gratis que cambia cada mes. Los puntos salen de jugar
+   (ver seasonXp en js/battle.js), de las misiones y de la racha. 30 niveles
+   de SEASON_XP puntos; en los niveles 10, 20 y 30, un cosmético del mes. */
+var SEASON_LEVELS = 30, SEASON_XP = 100;
+var SEASON_THEMES = [
+  { name: 'Temporada de la Escarcha', color: '#7fd6ff', frames: ['hielo', 'real', 'arcoiris'], title: 'escarcha' },
+  { name: 'Temporada del Dragón',     color: '#ff6a2a', frames: ['fuego', 'oro', 'eclipse'],   title: 'dragon' },
+  { name: 'Temporada del Bosque',     color: '#3fbf6a', frames: ['natura', 'oro', 'arcoiris'], title: 'bosque' },
+  { name: 'Temporada Arcana',         color: '#8c6bff', frames: ['arcano', 'sombra', 'eclipse'], title: 'arcano' },
+  { name: 'Temporada de Hierro',      color: '#f2b632', frames: ['oro', 'real', 'arcoiris'],   title: 'hierro' },
+  { name: 'Temporada de las Llamas',  color: '#ff5a2c', frames: ['fuego', 'sombra', 'eclipse'], title: 'fuego' }
+];
+// premio de cada nivel de la temporada del tema th
+function seasonReward(lv, th) {
+  if (lv === 10) return { frame: th.frames[0] };
+  if (lv === 20) return { frame: th.frames[1] };
+  if (lv === 30) return { frame: th.frames[2], title: th.title };
+  if (lv === 15) return { title: th.title };
+  if (lv % 5 === 0) return { chest: lv >= 25 ? 'oro' : 'plata' };
+  if (lv % 3 === 0) return { gems: 10 + lv };
+  if (lv % 7 === 0) return { chest: 'comandante' };
+  return { gold: 100 + lv * 20 };
+}
+
+/* Evento de la semana: cambia cada lunes. Un elemento con más daño en todos
+   los modos y una meta: ganar WEEK_GOAL partidas da un cofre de oro.
+   Los sábados y domingos, el oro de las partidas vale el doble. */
+var WEEK_EVENTS = [
+  { el: 'fuego',      name: 'Semana del Fuego' },
+  { el: 'hielo',      name: 'Semana del Hielo' },
+  { el: 'naturaleza', name: 'Semana del Bosque' },
+  { el: 'arcano',     name: 'Semana Arcana' },
+  { el: 'metal',      name: 'Semana del Metal' }
+];
+var WEEK_BONUS = 0.25, WEEK_GOAL = 5;
+
 /* Logros: se cobran una vez. get: valor actual (con meta) · goal: meta ·
    text: {n} es la meta · gold / gems: premio. */
 function statOf(k) { return (meta.stats && meta.stats[k]) || 0; }
@@ -714,11 +801,11 @@ var ACHIEVEMENTS = [
   { id: 'jefes1',   name: 'Matajefes',          text: 'Derrota a {n} jefes',                      goal: 10,    icon: 'icons/corona',   gold: 300, get: function () { return statOf('bossKills'); } },
   { id: 'jefes2',   name: 'Leyenda del reino',  text: 'Derrota a {n} jefes',                      goal: 100,   icon: 'icons/corona',   gems: 50,  get: function () { return statOf('bossKills'); } },
   { id: 'fus1',     name: 'Primeras fusiones',  text: 'Fusiona tropas {n} veces',                 goal: 100,   icon: 'icons/chispas',  gold: 200, get: function () { return statOf('merges'); } },
-  { id: 'fus2',     name: 'Maestría en fusión', text: 'Fusiona tropas {n} veces',                 goal: 1000,  icon: 'icons/chispas',  gems: 40,  get: function () { return statOf('merges'); } },
+  { id: 'fus2',     name: 'Maestría en fusión', text: 'Fusiona tropas {n} veces',                 goal: 1000,  icon: 'icons/chispas',  gems: 40,  title: 'fusion',  get: function () { return statOf('merges'); } },
   { id: 'combo',    name: 'Racha imparable',    text: 'Haz un combo de {n} fusiones',             goal: 5,     icon: 'icons/rayo',     gems: 15,  get: function () { return statOf('bestCombo'); } },
   { id: 'rango',    name: 'La cumbre',          text: 'Sube una tropa a rango {n}',               goal: 7,     icon: 'icons/grafico',  gems: 25,  get: function () { return statOf('maxRank'); } },
-  { id: 'estr1',    name: 'Defensa del valle',  text: 'Consigue {n} estrellas en la campaña',     goal: 30,    icon: 'icons/estrella', gold: 400, get: function () { return totalStars(); } },
-  { id: 'estr2',    name: 'Gloria del reino',   text: 'Consigue {n} estrellas en la campaña',     goal: 120,   icon: 'icons/estrella', gems: 100, get: function () { return totalStars(); } },
+  { id: 'estr1',    name: 'Defensa del valle',  text: 'Consigue {n} estrellas en la campaña',     goal: 30,    icon: 'icons/estrella', gold: 400, title: 'valle', get: function () { return totalStars(); } },
+  { id: 'estr2',    name: 'Gloria del reino',   text: 'Consigue {n} estrellas en la campaña',     goal: 120,   icon: 'icons/estrella', gems: 100, title: 'leyenda', get: function () { return totalStars(); } },
   { id: 'duel1',    name: 'Duelista',           text: 'Gana {n} duelos 1 contra 1',               goal: 10,    icon: 'icons/espadas',  gold: 400, get: function () { return meta.duelWins || 0; } },
   { id: 'duel2',    name: 'Reinado en la arena', text: 'Gana {n} duelos 1 contra 1',              goal: 50,    icon: 'icons/espadas',  gems: 60,  get: function () { return meta.duelWins || 0; } },
   { id: 'lava',     name: 'Río de Lava',        text: 'Llega a {n} trofeos',                      goal: 1800,  icon: 'icons/trofeo',   gems: 50,  get: function () { return meta.trophyBest || 0; } },

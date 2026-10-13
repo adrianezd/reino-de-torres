@@ -2267,3 +2267,81 @@ x-ico.off { filter: grayscale(1) brightness(0.45); opacity: 0.75; }
 .rl-style { margin: -4px 12px 8px; font-size: 0.78rem; text-align: center; color: var(--gold); text-shadow: 0 2px 0 var(--ink); }
 .emote-btn x-ico { width: 26px; height: 26px; margin: 0; vertical-align: middle; }
 .opt-btns .btn:last-child:nth-child(odd) { grid-column: 1 / -1; }
+
+/* ---------- 1.21: temporada, racha, evento, modos que se abren y cosméticos ---------- */
+.season-strip { position: relative; display: flex; align-items: center; gap: 10px; width: 100%; margin: 0 0 6px; padding: 8px 12px; border-radius: 18px; text-align: left;
+  background: linear-gradient(90deg, color-mix(in srgb, var(--sc) 35%, #1a1430), rgba(26,20,48,0.9)); border: 3px solid var(--ink); box-shadow: 0 4px 0 var(--ink), inset 0 0 0 2px color-mix(in srgb, var(--sc) 60%, transparent); }
+.ss-lv { display: flex; flex-direction: column; align-items: center; justify-content: center; width: 50px; height: 50px; flex: none; border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, color-mix(in srgb, var(--sc) 70%, #fff), var(--sc) 60%, color-mix(in srgb, var(--sc) 50%, #000)); border: 3px solid var(--ink); box-shadow: 0 3px 0 var(--ink); }
+.ss-lv small { font-size: 0.55rem; line-height: 1; color: #fff; text-shadow: 0 1px 0 var(--ink); }
+.ss-lv b { font: 400 1.35rem 'Lilita One', sans-serif; line-height: 1; color: #fff; -webkit-text-stroke: 4px var(--ink); paint-order: stroke fill; }
+.ss-lv.big { width: 64px; height: 64px; }
+.ss-lv.big b { font-size: 1.7rem; }
+.ss-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.ss-body > b { font: 400 1rem 'Lilita One', sans-serif; color: #fff; -webkit-text-stroke: 3px var(--ink); paint-order: stroke fill; }
+.ss-body .ubar { display: block; width: 100%; margin: 0; }
+.ss-next { font-size: 0.72rem; color: #ffe58a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.season-strip .side-dot { position: absolute; top: -6px; right: -4px; }
+.ev-row { display: flex; gap: 6px; justify-content: center; flex-wrap: wrap; margin: 0 0 8px; }
+.ev-chip { display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 999px; font-size: 0.75rem; color: #fff; background: rgba(10,12,40,0.7); border: 2px solid rgba(255,198,90,0.5); }
+.ev-chip x-ico { width: 1.3em; height: 1.3em; margin: 0; }
+.ev-chip.ready { border-color: #8fe08a; box-shadow: 0 0 10px rgba(143,224,138,0.7); animation: glow 1.2s ease-in-out infinite; }
+.ev-chip.gold { color: #ffe58a; }
+.season-head { --sc: var(--gold); }
+.season-head .ubar { display: block; margin-top: 4px; }
+.rd-at small { display: block; font-size: 0.55rem; line-height: 1; }
+.mode-card { position: relative; }
+.mode-card.mode-locked img { filter: grayscale(1) brightness(0.55); }
+.mode-lock { position: absolute; left: 50%; bottom: 8%; transform: translateX(-50%); display: inline-flex; align-items: center; gap: 2px; padding: 2px 7px; border-radius: 999px; white-space: nowrap;
+  font-size: 0.68rem; color: #fff; background: rgba(10,12,40,0.85); border: 2px solid var(--gold); }
+.mode-lock x-ico { width: 1.2em; height: 1.2em; margin: 0; }
+.new-mode .nm-pic { width: 120px; display: block; margin: 0 auto 6px; animation: popIn 0.4s cubic-bezier(0.3, 1.6, 0.5, 1); filter: drop-shadow(0 0 16px rgba(255,209,102,0.8)); }
+.lg-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; margin: 10px 0 4px; }
+.lg-day { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 6px 2px; border-radius: 12px; background: rgba(10,12,40,0.55); border: 2px solid rgba(255,255,255,0.12); }
+.lg-day small { font-size: 0.62rem; color: var(--muted); }
+.lg-day img { width: 34px; height: 34px; object-fit: contain; }
+.lg-day b { font-size: 0.7rem; }
+.lg-day.got { opacity: 0.45; }
+.lg-day.today { border-color: var(--gold); box-shadow: 0 0 12px rgba(255,209,102,0.8); animation: glow 1.2s ease-in-out infinite; }
+.lg-day.big { grid-column: span 2; background: linear-gradient(180deg, rgba(255,209,102,0.25), rgba(10,12,40,0.6)); }
+.lg-day.big img { width: 46px; height: 46px; }
+/* marcos del retrato */
+.frame { --fr: #8a5a2b; display: inline-grid; place-items: center; padding: 4px; border-radius: 50%; background: var(--fr); box-shadow: 0 3px 0 var(--ink), 0 0 0 2px var(--ink); flex: none; }
+.frame img { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; background: #16215a; display: block; }
+.frame.big img { width: 62px; height: 62px; }
+.fr-basico { --fr: linear-gradient(135deg, #c48a4a, #6b4220); }
+.fr-oro { --fr: linear-gradient(135deg, #fff1a8, #f5c400 45%, #a2520a); box-shadow: 0 3px 0 var(--ink), 0 0 0 2px var(--ink), 0 0 12px rgba(255,209,102,0.7); }
+.fr-hielo { --fr: linear-gradient(135deg, #ffffff, #7fd6ff 50%, #2b6fa8); box-shadow: 0 3px 0 var(--ink), 0 0 0 2px var(--ink), 0 0 12px rgba(127,214,255,0.8); }
+.fr-fuego { --fr: linear-gradient(135deg, #ffe066, #ff5a2c 50%, #8a1a0a); box-shadow: 0 3px 0 var(--ink), 0 0 0 2px var(--ink), 0 0 12px rgba(255,90,44,0.8); }
+.fr-natura { --fr: linear-gradient(135deg, #d4ff7a, #3fbf6a 50%, #1f5c2e); }
+.fr-arcano { --fr: linear-gradient(135deg, #e6c8ff, #8c6bff 50%, #3a1f8a); box-shadow: 0 3px 0 var(--ink), 0 0 0 2px var(--ink), 0 0 12px rgba(140,107,255,0.8); }
+.fr-sombra { --fr: linear-gradient(135deg, #5b3a9e, #14101f 60%); box-shadow: 0 3px 0 var(--ink), 0 0 0 2px #ff4f7b, 0 0 14px rgba(255,79,123,0.6); }
+.fr-real { --fr: conic-gradient(#ffd166, #ff4f7b, #ffd166, #8c6bff, #ffd166); box-shadow: 0 3px 0 var(--ink), 0 0 0 2px var(--ink), 0 0 14px rgba(255,209,102,0.8); }
+.fr-arcoiris { --fr: conic-gradient(#ff5a6a, #ffd166, #4fd36a, #58c9ff, #8c6bff, #ff5a6a); animation: frSpin 4s linear infinite; }
+.fr-eclipse { --fr: radial-gradient(circle, #14101f 55%, #c04bff 70%, #ffd166 80%, #14101f 92%); box-shadow: 0 3px 0 var(--ink), 0 0 0 2px var(--ink), 0 0 18px rgba(192,75,255,0.9); }
+@keyframes frSpin { to { filter: hue-rotate(360deg); } }
+.fr-grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; }
+.fr-pick { display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 6px 2px; border-radius: 12px; border: 2px solid transparent; background: rgba(10,12,40,0.45); }
+.fr-pick small { font-size: 0.6rem; color: var(--muted); }
+.fr-pick .frame img { width: 30px; height: 30px; }
+.fr-pick.on { border-color: var(--gold); }
+.fr-pick.locked { opacity: 0.4; filter: grayscale(0.7); }
+.t2 { margin-top: 12px !important; }
+.ti-row { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; }
+.ti-pick { padding: 4px 10px; border-radius: 999px; font-size: 0.78rem; color: #fff; background: rgba(10,12,40,0.6); border: 2px solid rgba(255,198,90,0.4); }
+.ti-pick.on { border-color: var(--gold); background: rgba(255,198,90,0.25); }
+.prof-title { font-style: normal; font-size: 0.8rem; color: var(--gold); }
+.asc-row { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; }
+.asc { width: 36px; height: 36px; border-radius: 10px; font: 400 1.05rem 'Lilita One', sans-serif; color: #fff; background: rgba(10,12,40,0.6); border: 2px solid rgba(255,90,106,0.5); }
+.asc.on { background: linear-gradient(180deg, #ff7a8a, #c22a44); border-color: var(--gold); }
+.asc-note { display: block; margin-top: 8px; text-align: center; font-size: 0.72rem; color: var(--muted); }
+.res-near { display: flex; flex-direction: column; gap: 4px; margin: 6px 0 2px; }
+.res-near span { padding: 4px 10px; border-radius: 10px; font-size: 0.78rem; color: #ffe58a; background: rgba(10,12,40,0.5); border: 1px dashed rgba(255,209,102,0.6); }
+.res-tag { margin: 4px 0; font-size: 0.8rem; color: #ffe58a; }
+.res-tag.up { font: 400 1rem 'Lilita One', sans-serif; color: #8dff7a; -webkit-text-stroke: 3px var(--ink); paint-order: stroke fill; }
+.pz-chip.xp b { color: #ffe58a; }
+.surplus { margin: 2px 0 6px; font-size: 0.85rem; color: #ffe58a; }
+.reto-row.weekly { border-color: var(--gold); background: linear-gradient(180deg, rgba(255,198,90,0.18), var(--ui-panel-bg)); }
+.season-head > span:last-child { flex: 1; }
+.season-head .ubar em { display: block; font-size: 0.72rem; color: #fff; }
+.ss-lv.big small { display: block; color: #fff; font-size: 0.6rem; }

@@ -7,8 +7,24 @@
    La ventana sale sola al entrar con una versión nueva (meta.lastSeenVersion)
    y también desde Opciones.
    ========================================================= */
-var APP_VERSION = '1.20.0';
+var APP_VERSION = '1.21.0';
 var APP_PATCH_NOTES = [
+  {
+    version: '1.21.0',
+    summary: 'Temporada, racha de días y evento de la semana',
+    items: [
+      'Temporada del mes: 30 niveles de premios que subes jugando cualquier modo, con marcos y títulos que solo salen ese mes. Está arriba en el inicio.',
+      'Racha de días: entra cada día para cobrar su premio; el séptimo, cofre de oro.',
+      'Evento de la semana: un elemento pega un 25% más en todos los modos y, si ganas 5 partidas, cofre de oro. Los fines de semana, oro doble.',
+      'Reto de la semana en la pestaña Retos: el mismo para todo el mundo, para comparar con tus amigos.',
+      'Marcos y títulos para tu perfil.',
+      'En el inicio verás siempre lo siguiente que tienes a mano, y al terminar una partida, lo que se te quedó cerca.',
+      'Los modos se abren con la campaña: 1 contra 1 en la fase 3, Co-op en la 5, Torneo en la 8 y Roguelike en la 10. Si ya los jugabas, siguen abiertos.',
+      'Ascensión en el Roguelike: al superar las 30 oleadas se abre un nivel más difícil, hasta 10.',
+      'Las cartas de una tropa al nivel máximo se cambian por oro.',
+      'Con el juego instalado, el icono enseña cuántas cosas tienes por cobrar.'
+    ]
+  },
   {
     version: '1.20.0',
     summary: 'Retos con amigos, perfil, logros, zona 4 y música',
