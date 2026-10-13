@@ -7,8 +7,16 @@
    La ventana sale sola al entrar con una versión nueva (meta.lastSeenVersion)
    y también desde Opciones.
    ========================================================= */
-var APP_VERSION = '1.17.2';
+var APP_VERSION = '1.17.3';
 var APP_PATCH_NOTES = [
+  {
+    version: '1.17.3',
+    summary: 'Casillas especiales encajadas en su loseta',
+    items: [
+      'El altar, la fuente y la atalaya se ven justo encima de su loseta: el borde de color la rodea entera y el emblema va en el centro.',
+      'En el tablero de roca, los carteles de entrada y salida ya no tapan las casillas.'
+    ]
+  },
   {
     version: '1.17.2',
     summary: 'Losetas iguales en todo el tablero',

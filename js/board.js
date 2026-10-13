@@ -56,7 +56,7 @@ var FIELDS = {
   hielo: { image: 'boards/hielo', iw: 1024, ih: 572, cx: 195, cy: 62, cw: 635, ch: 470, portal: true, over: true, frame: [107, 20, 917, 552],
     gx0: 318, gy0: 170, gx1: 706, gy1: 402,
     way: [[322, 505], [300, 445], [255, 385], [245, 300], [250, 215], [290, 150], [380, 118], [640, 118], [730, 150], [772, 215], [778, 300], [770, 385], [725, 445], [700, 505]] },
-  roca: { image: 'boards/roca', iw: 1024, ih: 572, cx: 188, cy: 70, cw: 650, ch: 420, portal: true, over: true, frame: [168, 29, 852, 534],
+  roca: { image: 'boards/roca', iw: 1024, ih: 572, cx: 188, cy: 70, cw: 650, ch: 420, portal: true, over: true, signOff: 1.7, frame: [168, 29, 852, 534],
     gx0: 312, gy0: 173, gx1: 712, gy1: 403,
     way: [[395, 452], [300, 440], [250, 390], [238, 290], [255, 185], [320, 130], [420, 113], [605, 113], [705, 130], [770, 185], [788, 290], [775, 390], [725, 440], [628, 452]] },
   veneno: { image: 'boards/veneno', iw: 1024, ih: 572, cx: 262, cy: 105, cw: 502, ch: 412, portal: true, over: true, frame: [176, 58, 848, 518],

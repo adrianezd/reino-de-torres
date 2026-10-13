@@ -758,7 +758,7 @@ function drawBoard(b, L, now, isMain) {
       var tt = b.tiles[ti];
       // las 15 losas siempre; la casilla especial, como emblema encima
       drawStoneTile(b, ti, b.cc(ti), G);
-      if (tt) drawTileFloor(tt, b.cc(ti), G, ti, now);
+      if (tt) drawTileFloor(tt, b.cc(ti), G, ti, now, b);
     }
     drawPathSigns(G);
   } else {
@@ -781,7 +781,7 @@ function drawBoard(b, L, now, isMain) {
     rrect(ctx, c.x - 0.47, c.y - 0.47, 0.94, 0.94, 0.14);
     ctx.fillStyle = (i + Math.floor(i / COLS)) % 2 ? bio.grass : bio.grass2; ctx.fill();
     drawStoneTile(b, i, c, b.geo);
-    if (b.tiles[i]) drawTileFloor(b.tiles[i], c, b.geo, i, now);
+    if (b.tiles[i]) drawTileFloor(b.tiles[i], c, b.geo, i, now, b);
   }
   // franja inferior bajo el tablero
   ctx.fillStyle = shade(bio.frame, -10);
@@ -1110,9 +1110,21 @@ function drawGate(x, y) {
 /* Casilla especial (altar, fuente, atalaya) sobre su losa de piedra: la
    losa no cambia; encima van un borde que late del color de la casilla y
    su ilustración en pequeño, como emblema. */
-function drawTileFloor(type, cc, G, i, now) {
+function drawTileFloor(type, cc, G, i, now, b) {
   var pic = art('tiles/' + type), t = TILES[type];
   var s = Math.min(G.cw, G.ch), pulse = Math.sin(now / 500 + i);
+  var fr = b && floorRect(b, i, cc, G);
+  if (fr) {
+    // con loseta: el borde abraza la loseta entera y el emblema va en su cara de arriba
+    rrect(ctx, fr.x + 0.02, fr.y + 0.02, fr.w - 0.04, fr.h - 0.04, 0.1);
+    ctx.strokeStyle = alpha(t.color, 0.75 + pulse * 0.2); ctx.lineWidth = 0.05; ctx.stroke();
+    var fx = fr.x + fr.w / 2, fy = fr.y + fr.h * 0.44;
+    if (!pic) { ctx.fillStyle = alpha(t.color, 0.18 + pulse * 0.06); ctx.fill(); return; }
+    glow(ctx, fx, fy, s * 0.42, t.color, 0.35 + pulse * 0.12);
+    var ew = fr.w * 0.5, eh = ew * pic.naturalHeight / pic.naturalWidth;
+    ctx.drawImage(pic, fx - ew / 2, fy - eh / 2, ew, eh);
+    return;
+  }
   rrect(ctx, cc.x - s * 0.45, cc.y - s * 0.45, s * 0.9, s * 0.9, 0.1);
   ctx.strokeStyle = alpha(t.color, 0.75 + pulse * 0.2); ctx.lineWidth = 0.05; ctx.stroke();
   if (!pic) {
@@ -1142,14 +1154,18 @@ function drawPathSigns(G) {
 }
 /* Losa de cada casilla: la del juego de su tablero (b.floor, al azar en
    cada partida); se ve de frente, con su canto abajo. Sin ella, la lisa. */
+// dónde se pinta la loseta de una casilla (null si es la lisa o no ha cargado)
+function floorRect(b, i, cc, G) {
+  var pic = b.floor && b.floor[i] !== STONE_TILE && art('tiles/' + b.floor[i]);
+  if (!pic) return null;
+  var w = G.cw * 1.02, h = Math.min(w * pic.naturalHeight / pic.naturalWidth, G.ch * 1.16);
+  return { pic: pic, x: cc.x - w / 2, y: cc.y - G.ch / 2 - 0.02, w: w, h: h };
+}
 function drawStoneTile(b, i, cc, G) {
-  var pic = (b.floor && art('tiles/' + b.floor[i])) || art('tiles/' + STONE_TILE);
+  var fr = floorRect(b, i, cc, G);
+  if (fr) { ctx.drawImage(fr.pic, fr.x, fr.y, fr.w, fr.h); return true; }
+  var pic = art('tiles/' + STONE_TILE);
   if (!pic) return false;
-  if (b.floor && pic === art('tiles/' + b.floor[i])) {
-    var w = G.cw * 1.02, h = Math.min(w * pic.naturalHeight / pic.naturalWidth, G.ch * 1.16);
-    ctx.drawImage(pic, cc.x - w / 2, cc.y - G.ch / 2 - 0.02, w, h);
-    return true;
-  }
   var s = Math.min(G.cw, G.ch) * 0.97;
   ctx.fillStyle = 'rgba(10,12,30,0.3)';
   rrect(ctx, cc.x - s / 2 + 0.02, cc.y - s / 2 + 0.05, s, s, 0.08); ctx.fill();
