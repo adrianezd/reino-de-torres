@@ -863,7 +863,7 @@ function startCardDemo(cv, id) {
   var ch = (F.gy1 - F.gy0) / ROWS / cell, y0 = (F.gy0 - D.y) / cell, col0 = (F.gx0 - D.x) / cell;
   // la tropa en la casilla del centro de la fila (y su pareja, en la de al lado)
   var geo = makeGeo({ W: W, H: H, x0: col0 + 2, y0: y0, cw: 1, ch: ch, way: [{ x: -0.6, y: PY }, { x: W + 0.6, y: PY }] });
-  var floor = [3, 7, 1, 10, 5].map(function (n) { return 'bosque-' + n; });
+  var floor = [0, 1, 2, 3, 4].map(function () { return 'bosque-3'; });
   var pair = UNITS[id].buff || UNITS[id].wild;
   var deck = pair ? [id, 'lyra'] : [id];
   var lv = {}; deck.forEach(function (k) { lv[k] = meta.cards[k] ? meta.cards[k].lv : 1; });

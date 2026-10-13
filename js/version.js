@@ -7,8 +7,16 @@
    La ventana sale sola al entrar con una versión nueva (meta.lastSeenVersion)
    y también desde Opciones.
    ========================================================= */
-var APP_VERSION = '1.17.1';
+var APP_VERSION = '1.17.2';
 var APP_PATCH_NOTES = [
+  {
+    version: '1.17.2',
+    summary: 'Losetas iguales en todo el tablero',
+    items: [
+      'Las 15 casillas del tablero llevan la misma loseta, que cambia de una partida a otra.',
+      'En Co-op te puede tocar cualquiera de los cinco tableros, aunque aún no hayas llegado a su arena.'
+    ]
+  },
   {
     version: '1.17.1',
     summary: 'Garra con aro verde',

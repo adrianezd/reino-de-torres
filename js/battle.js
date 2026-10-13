@@ -36,7 +36,8 @@ function startBattle(mode, opts) {
     lent = two[0]; deck = two[0].deck.slice(); aiPreset = two[1].deck.slice();
   } else if (tmode === 'azar') { deck = randomDeck(); aiPreset = randomDeck(); }
   // tablero ilustrado (al azar entre los que ya han cargado): la campaña usa
-  // uno de su bioma; el duelo y el cooperativo, cualquiera, con un bioma
+  // uno de su bioma; el cooperativo, cualquiera de los cinco (no hace falta
+  // tener su arena), y el duelo, el de tu arena; con un bioma
   // que le pegue para el decorado de alrededor
   var loaded = function (k) { return art(FIELD_GEOS[k].image); };
   // el 1 contra 1 (no el torneo) se juega en el tablero de tu arena
@@ -48,7 +49,8 @@ function startBattle(mode, opts) {
     if (fits.length) biome = pick(fits);
   }
   var geo = fid ? FIELD_GEOS[fid] : VECTOR_GEO;
-  var player = new Board({ name: 'Tú', deck: deck, cardLv: lv, commander: meta.commander, cmdLv: myCmdLv, lives: lives, biome: biome, geo: geo, mana: stage ? stage.mana : 100, talents: myTalents(lv), cmdNodes: cmdTreeActive(meta.commander, myCmdLv, (meta.cmdTree || {})[meta.commander]) });
+  var floorTile = floorTileFor(geo.field);
+  var player = new Board({ name: 'Tú', deck: deck, cardLv: lv, commander: meta.commander, cmdLv: myCmdLv, lives: lives, biome: biome, geo: geo, floorTile: floorTile, mana: stage ? stage.mana : 100, talents: myTalents(lv), cmdNodes: cmdTreeActive(meta.commander, myCmdLv, (meta.cmdTree || {})[meta.commander]) });
   battle = {
     mode: mode, stage: stage, opts: opts, tmode: tmode, lent: lent,
     boards: [player], player: player, other: null,
@@ -70,12 +72,12 @@ function startBattle(mode, opts) {
     if (tourney) aiCard = tourneyLevels();
     var aiCmdLv = tourney ? TOURNEY_CMD_LV : Math.max(1, Math.min(CMD_MAX, myCmdLv + DUEL_CARD_OFFSET[aiLv]));
     var aiCmd = pick(COMMANDER_ORDER);
-    battle.other = new Board({ name: pick(RIVAL_NAMES), ai: true, aiLevel: aiLv, deck: aiDeck, cardLv: aiCard, commander: aiCmd, cmdLv: aiCmdLv, lives: { v: 3, max: 3 }, biome: biome, geo: geo, talents: aiTalents(aiCard), cmdNodes: cmdTreeActive(aiCmd, aiCmdLv, aiCmdTree(aiCmd)) });
+    battle.other = new Board({ name: pick(RIVAL_NAMES), ai: true, aiLevel: aiLv, deck: aiDeck, cardLv: aiCard, commander: aiCmd, cmdLv: aiCmdLv, lives: { v: 3, max: 3 }, biome: biome, geo: geo, floorTile: floorTile, talents: aiTalents(aiCard), cmdNodes: cmdTreeActive(aiCmd, aiCmdLv, aiCmdTree(aiCmd)) });
   } else if (mode === 'coop') {
     var allyDeck = shuffleArr(AI_UNITS.slice()).slice(0, 5);
     var allyCard = {};
     UNIT_ORDER.forEach(function (id) { allyCard[id] = Math.max(1, (lv[id] || 1)); });
-    battle.other = new Board({ name: pick(ALLY_NAMES), ai: true, aiLevel: 2, deck: allyDeck, cardLv: allyCard, commander: pick(COMMANDER_ORDER), cmdLv: myCmdLv, lives: lives, biome: biome, geo: geo });
+    battle.other = new Board({ name: pick(ALLY_NAMES), ai: true, aiLevel: 2, deck: allyDeck, cardLv: allyCard, commander: pick(COMMANDER_ORDER), cmdLv: myCmdLv, lives: lives, biome: biome, geo: geo, floorTile: floorTile });
   }
   if (battle.other) { battle.boards.push(battle.other); battle.other.battle = battle; }
   if (mode === 'coop') { battle.other.passTo = player; battle.other.shareWith = player; player.shareWith = battle.other; }

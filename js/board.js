@@ -99,6 +99,8 @@ function neighbors(i) {
   if (r < ROWS - 1) out.push(i + COLS);
   return out;
 }
+// una losa al azar del juego del tablero (o la lisa si no tiene)
+function floorTileFor(field) { var ft = FIELD_TILES[field]; return ft ? ft.set + '-' + (1 + Math.floor(Math.random() * ft.n)) : STONE_TILE; }
 function rnd(a, b) { return a + Math.random() * (b - a); }
 function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
 
@@ -121,9 +123,10 @@ function Board(opts) {
   this.deck.forEach(function (id) { this.power[id] = 1; }, this);
   this.cells = new Array(COLS * ROWS).fill(null);
   this.tiles = {};
-  // losa de cada casilla: una de las del juego de su tablero, al azar (FIELD_TILES)
-  var ft = FIELD_TILES[this.geo.field];
-  this.floor = this.cells.map(function () { return ft ? ft.set + '-' + (1 + Math.floor(Math.random() * ft.n)) : STONE_TILE; });
+  // losa de las casillas: la misma en las 15, una del juego de su tablero
+  // (FIELD_TILES); la partida la elige una vez para los dos tableros
+  var ft = opts.floorTile || floorTileFor(this.geo.field);
+  this.floor = this.cells.map(function () { return ft; });
   var spots = shuffleArr(Array.from({ length: COLS * ROWS }, function (_, i) { return i; }));
   ['altar', 'fuente', 'atalaya'].forEach(function (t, k) { this.tiles[spots[k]] = t; }, this);
   this.enemies = [];
