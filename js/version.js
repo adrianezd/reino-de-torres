@@ -7,8 +7,15 @@
    La ventana sale sola al entrar con una versión nueva (meta.lastSeenVersion)
    y también desde Opciones.
    ========================================================= */
-var APP_VERSION = '1.17.3';
+var APP_VERSION = '1.17.4';
 var APP_PATCH_NOTES = [
+  {
+    version: '1.17.4',
+    summary: 'Casillas especiales bien encajadas también en lava',
+    items: [
+      'En los tableros con losetas altas, como el de lava, el borde del altar, la fuente y la atalaya ya no se mete en la fila de abajo.'
+    ]
+  },
   {
     version: '1.17.3',
     summary: 'Casillas especiales encajadas en su loseta',

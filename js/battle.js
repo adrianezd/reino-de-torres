@@ -754,12 +754,10 @@ function drawBoard(b, L, now, isMain) {
         ctx.fillStyle = g4; ctx.fillRect(G.W - fside, -0.02, fside + 0.02, G.H + 0.04);
       }
     }
-    for (var ti = 0; ti < COLS * ROWS; ti++) {
-      var tt = b.tiles[ti];
-      // las 15 losas siempre; la casilla especial, como emblema encima
-      drawStoneTile(b, ti, b.cc(ti), G);
-      if (tt) drawTileFloor(tt, b.cc(ti), G, ti, now, b);
-    }
+    // las 15 losas siempre; después, las casillas especiales como emblema
+    // encima (así la fila de abajo no les tapa el borde)
+    for (var ti = 0; ti < COLS * ROWS; ti++) drawStoneTile(b, ti, b.cc(ti), G);
+    for (ti = 0; ti < COLS * ROWS; ti++) if (b.tiles[ti]) drawTileFloor(b.tiles[ti], b.cc(ti), G, ti, now, b);
     drawPathSigns(G);
   } else {
   // marco
@@ -1115,10 +1113,12 @@ function drawTileFloor(type, cc, G, i, now, b) {
   var s = Math.min(G.cw, G.ch), pulse = Math.sin(now / 500 + i);
   var fr = b && floorRect(b, i, cc, G);
   if (fr) {
-    // con loseta: el borde abraza la loseta entera y el emblema va en su cara de arriba
-    rrect(ctx, fr.x + 0.02, fr.y + 0.02, fr.w - 0.04, fr.h - 0.04, 0.1);
+    // con loseta: el borde abraza lo que se ve de ella (la fila de abajo
+    // tapa su canto, salvo en la última) y el emblema va en su centro
+    var vh = Math.min(fr.h, G.ch + 0.02);
+    rrect(ctx, fr.x + 0.03, fr.y + 0.03, fr.w - 0.06, vh - 0.06, 0.1);
     ctx.strokeStyle = alpha(t.color, 0.75 + pulse * 0.2); ctx.lineWidth = 0.05; ctx.stroke();
-    var fx = fr.x + fr.w / 2, fy = fr.y + fr.h * 0.44;
+    var fx = fr.x + fr.w / 2, fy = fr.y + vh * 0.5;
     if (!pic) { ctx.fillStyle = alpha(t.color, 0.18 + pulse * 0.06); ctx.fill(); return; }
     glow(ctx, fx, fy, s * 0.42, t.color, 0.35 + pulse * 0.12);
     var ew = fr.w * 0.5, eh = ew * pic.naturalHeight / pic.naturalWidth;
