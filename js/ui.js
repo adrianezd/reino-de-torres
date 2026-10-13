@@ -135,7 +135,8 @@ function bindSwipe() {
   m.addEventListener('touchcancel', end);
 }
 // centro de cada aro del banner del mazo (assets/ui/banner-mazo.webp), en % del ancho
-var DECK_RINGS = [13.66, 31.83, 49.95, 68.06, 86.24];
+// centro de cada aro de la placa del mazo (assets/ui/panel-mazo), en % de la fila de aros
+var DECK_RINGS = [10.79, 30.4, 49.95, 69.48, 89.1];
 function topBar() {
   return '<div class="res-bar"><span class="pill gold">🪙 <b>' + meta.gold + '</b></span><span class="pill gem">💎 <b>' + meta.gems + '</b></span><span class="pill trophy">🏆 <b>' + meta.trophies + '</b></span><span class="pill star">⭐ <b>' + totalStars() + '</b></span></div>';
 }
@@ -234,28 +235,7 @@ function renderMenu(name, arg) {
       '<div class="coll-head"><h3>Colección</h3>' + sortSwitch() + '</div>' +
       (collSort === 'tipo' ? elementFilters() : rarityFilters()) + collectionGrid();
   } else if (name === 'commanders') {
-    // tarjetas con el comandante de cuerpo entero; en los medallones de abajo
-    // se enciende el suyo. Debajo, la habilidad del elegido con su efecto.
-    var cs = COMMANDERS[meta.commander], cc = meta.cmdCards[meta.commander];
-    var cNeed = cmdCardsNeeded(cc.lv), cGold = cmdUpgradeGold(cc.lv), cMax = cc.lv >= CMD_MAX;
-    var cWhy = cMax ? '' : cc.n < cNeed ? (cNeed - cc.n === 1 ? 'Falta 1 carta' : 'Faltan ' + (cNeed - cc.n) + ' cartas') : meta.gold < cGold ? 'Te faltan ' + (cGold - meta.gold) + ' 🪙' : '';
-    html = backBar('Mazo', true, 'comandante') + deckTabs('commanders') +
-      '<div class="cmd-cards">' + COMMANDER_ORDER.map(function (k, i) {
-        var c = COMMANDERS[k];
-        var own = cmdOwned(k);
-        return '<button class="cmd-card' + (meta.commander === k ? ' sel' : '') + (own ? '' : ' locked') + '" data-cmd="' + k + '" style="--cc:' + c.color + '" aria-label="' + esc(c.name) + '">' +
-          '<img class="cmd-body" src="' + c.body + '" alt=""><span class="cmd-frame"></span><b>' + esc(c.name) + '</b>' +
-          (own ? '<span class="cmd-lv' + (canUpgradeCmd(k) ? ' ready' : '') + '">Nv ' + cmdLevel(k) + '</span>' : '<span class="cmd-lock">' + ico('icons/candado') + '</span>') +
-          '</button>';
-      }).join('') + '</div>' +
-      '<div class="cmd-detail" style="--cc:' + cs.color + '"><img src="' + cmdFxPic(meta.commander) + '" alt=""><div><b>' + esc(cs.name) + ' · ' + esc(cs.title) + '</b>' +
-      '<small><em>' + esc(cs.ability) + ':</em> ' + esc(cmdDesc(meta.commander, cc.lv)) + '</small><small>' + ico('icons/reloj') + ' Se carga en ' + cmdCd(meta.commander, cc.lv) + ' s' + (cs.hero ? ' · con cada nivel, antes' : '') + '</small></div></div>' +
-      cmdTreeHtml(meta.commander, cc.lv) +
-      // nivel del comandante: sus cartas salen en el cofre de comandante
-      '<div class="uc-level cmd-level"><span class="uc-lvmedal">' + cc.lv + '</span><div class="uc-lvbody"><div class="uc-lvtop"><b>' + (cMax ? 'Nivel máximo' : 'Nivel ' + cc.lv) + '</b>' +
-      (cMax ? '' : '<span class="uc-gain">💪 ' + Math.round(cmdGrow(meta.commander, cc.lv) * 100) + '% → <b>' + Math.round(cmdGrow(meta.commander, cc.lv + 1) * 100) + '%</b></span>') + '</div>' +
-      '<div class="ubar' + (canUpgradeCmd(meta.commander) ? ' ok' : '') + '"><span style="width:' + (cMax ? 100 : Math.min(100, cc.n / cNeed * 100)) + '%"></span><em>' + (cMax ? 'MÁX' : cc.n + '/' + cNeed) + '</em></div></div></div>' +
-      (cMax ? '' : '<button class="btn btn-up cmd-upbtn" id="cmdUp" ' + (canUpgradeCmd(meta.commander) ? '' : 'disabled') + '>⬆ Mejorar ' + cGold + ' 🪙</button>' + (cWhy ? '<p class="cmd-why">' + cWhy + '</p>' : ''));
+    html = backBar('Mazo', true, 'comandante') + deckTabs('commanders') + commandersHtml();
   } else if (name === 'shop') {
     html = backBar('Tienda', true, 'tienda') + shopHtml();
   } else if (name === 'howto') {
@@ -464,6 +444,39 @@ function cmdTreeHtml(k, lv) {
     }), 'Puedes cambiarlas cuando quieras.') + '</div>';
 }
 
+/* Pestaña Comandante: fila de retratos para elegir y, debajo, la ficha del
+   que estás viendo (figura, habilidad, nivel y mejora) con su árbol a la
+   vista. Tocar uno tuyo lo pone en el mazo; uno bloqueado solo se mira. */
+var cmdView = null;
+function commandersHtml() {
+  if (!cmdView || !COMMANDERS[cmdView]) cmdView = meta.commander;
+  var k = cmdView, c = COMMANDERS[k], own = cmdOwned(k), cc = meta.cmdCards[k] || { lv: 1, n: 0 }, lv = own ? cc.lv : 1;
+  var pick = '<div class="cmd-pick">' + COMMANDER_ORDER.map(function (q) {
+    var o = COMMANDERS[q], mine = cmdOwned(q);
+    return '<button class="cp-btn' + (q === k ? ' view' : '') + (q === meta.commander ? ' eq' : '') + (mine ? '' : ' locked') + '" data-cmd="' + q + '" style="--cc:' + o.color + '" aria-label="' + esc(o.name) + '">' +
+      '<span class="cp-face"><img src="' + o.pic + '" alt=""></span>' +
+      (mine ? '<span class="cp-lv' + (canUpgradeCmd(q) ? ' ready' : '') + '">' + cmdLevel(q) + '</span>' : '<span class="cp-lock">' + ico('icons/candado') + '</span>') + '</button>';
+  }).join('') + '</div>';
+  var level = '';
+  if (own) {
+    var need = cmdCardsNeeded(cc.lv), gold = cmdUpgradeGold(cc.lv), max = cc.lv >= CMD_MAX;
+    var why = max ? '' : cc.n < need ? (need - cc.n === 1 ? 'Falta 1 carta' : 'Faltan ' + (need - cc.n) + ' cartas') : meta.gold < gold ? 'Te faltan ' + (gold - meta.gold) + ' 🪙' : '';
+    level = '<div class="ch-level"><span class="uc-lvmedal">' + cc.lv + '</span><div class="uc-lvbody"><div class="uc-lvtop"><b>' + (max ? 'Nivel máximo' : 'Nivel ' + cc.lv) + '</b>' +
+      (max ? '' : '<span class="uc-gain">💪 ' + Math.round(cmdGrow(k, cc.lv) * 100) + '% → <b>' + Math.round(cmdGrow(k, cc.lv + 1) * 100) + '%</b></span>') + '</div>' +
+      '<div class="ubar' + (canUpgradeCmd(k) ? ' ok' : '') + '"><span style="width:' + (max ? 100 : Math.min(100, cc.n / need * 100)) + '%"></span><em>' + (max ? 'MÁX' : cc.n + '/' + need) + '</em></div></div></div>' +
+      (max ? '' : '<button class="btn btn-up cmd-upbtn" id="cmdUp" ' + (canUpgradeCmd(k) ? '' : 'disabled') + '>⬆ Mejorar ' + gold + ' 🪙</button>' + (why ? '<p class="cmd-why">' + why + '</p>' : ''));
+  }
+  var state = !own ? '<span class="ch-state locked">' + ico('icons/candado') + 'Cofre de comandante</span>'
+    : k === meta.commander ? '<span class="ch-state on">✔ En tu mazo</span>' : '';
+  return pick +
+    '<div class="cmd-hero' + (own ? '' : ' locked') + '" style="--cc:' + c.color + '">' +
+    '<div class="ch-top"><div class="ch-stage"><img class="ch-body" src="' + c.body + '" alt=""></div>' +
+    '<div class="ch-info"><small class="ch-title">' + esc(c.title) + '</small><b class="ch-name">' + esc(c.name) + '</b>' + state +
+    '<div class="ch-ab"><img src="' + cmdFxPic(k) + '" alt=""><span><em>' + esc(c.ability) + '</em><small>' + esc(cmdDesc(k, lv)) + '</small></span></div>' +
+    '<span class="ch-cd">' + ico('icons/reloj') + 'Se carga en ' + cmdCd(k, lv) + ' s</span></div></div>' +
+    level + '</div>' +
+    cmdTreeHtml(k, own ? lv : 0);
+}
 function cmdFxPic(k) { return CMD_FX[k] ? 'assets/fx/' + CMD_FX[k] + '.webp' : COMMANDERS[k].pic; }
 // Pestañas dentro de Mazo: tropas y comandante.
 function deckTabs(on) {
@@ -623,13 +636,14 @@ function bindMenu() {
   m.querySelectorAll('[data-rogue]').forEach(function (b) { b.onclick = function () { startBattle('rogue'); }; });
   var cu = $('cmdUp');
   if (cu) cu.onclick = function () {
-    var k = meta.commander;
+    var k = cmdView || meta.commander;
     if (upgradeCmd(k)) { sfx('power'); buzz(20); toast(COMMANDERS[k].name + ' sube a nivel ' + cmdLevel(k)); renderMenu('commanders'); }
   };
   m.querySelectorAll('[data-ctree]').forEach(function (b) {
     b.onclick = function () {
-      var t = +b.dataset.ctree.split(':')[0], id = b.dataset.ctree.split(':')[1], k = meta.commander;
+      var t = +b.dataset.ctree.split(':')[0], id = b.dataset.ctree.split(':')[1], k = cmdView || meta.commander;
       var cn = CMD_TREE[k][t].filter(function (o) { return o.id === id; })[0];
+      if (!cmdOwned(k)) { sfx('tap'); toast(cn.name + ': ' + cn.desc); return; }
       if (cmdLevel(k) < CMD_TREE_LV[t]) { sfx('tap'); toast(cn.name + ': ' + cn.desc + ' Se abre en el nivel ' + CMD_TREE_LV[t] + '.'); return; }
       if (!meta.cmdTree) meta.cmdTree = {};
       var picks = (meta.cmdTree[k] || []).map(function (x) { return (x || []).slice(); });
@@ -644,8 +658,9 @@ function bindMenu() {
   m.querySelectorAll('[data-cmd]').forEach(function (b) {
     b.onclick = function () {
       var k = b.dataset.cmd;
-      if (!cmdOwned(k)) { sfx('no'); toast(COMMANDERS[k].name + ' sale en el cofre de comandante y en el de oro'); return; }
-      meta.commander = k; saveMeta(); sfx('tap'); renderMenu('commanders');
+      cmdView = k; sfx('tap');
+      if (cmdOwned(k)) { meta.commander = k; saveMeta(); }
+      renderMenu('commanders');
     };
   });
   m.querySelectorAll('[data-rf]').forEach(function (b) { b.onclick = function () { collFilter = b.dataset.rf; sfx('tap'); renderMenu('collection'); }; });

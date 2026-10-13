@@ -7,8 +7,17 @@
    La ventana sale sola al entrar con una versión nueva (meta.lastSeenVersion)
    y también desde Opciones.
    ========================================================= */
-var APP_VERSION = '1.19.0';
+var APP_VERSION = '1.19.1';
 var APP_PATCH_NOTES = [
+  {
+    version: '1.19.1',
+    summary: 'Comandante y mazo en una placa, y ficha de comandante nueva',
+    items: [
+      'En el inicio, tu comandante y tus cinco tropas comparten la misma placa de madera.',
+      'En la pestaña Comandante eliges en una fila de retratos y ves al momento su ficha: figura, habilidad, nivel, mejora y su árbol justo debajo.',
+      'También puedes ver la ficha y el árbol de los comandantes que aún no tienes.'
+    ]
+  },
   {
     version: '1.19.0',
     summary: 'Interfaz más limpia',
