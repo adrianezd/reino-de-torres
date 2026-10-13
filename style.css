@@ -85,18 +85,6 @@ button { font: inherit; color: inherit; cursor: pointer; touch-action: pan-x pan
 .howto p { background: rgba(0,0,0,0.22); border-radius: 14px; padding: 10px 12px; margin: 0 0 8px; font-weight: 700; line-height: 1.4; }
 
 /* cartas */
-.deck-slots { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; padding: 10px 8px; background: rgba(0,0,0,0.25); border-radius: 18px; margin-bottom: 14px; }
-.card-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
-.ucard {
-  position: relative; display: flex; flex-direction: column; align-items: center; padding: 6px 4px 6px;
-  background: linear-gradient(180deg, #2b3c8f, #1a2563); border: 3px solid var(--rc); border-radius: 14px;
-  box-shadow: 0 4px 0 var(--ink); min-width: 0;
-}
-.ucard img { width: 100%; max-width: 76px; aspect-ratio: 1; }
-.ucard small { font-size: 0.68rem; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
-.ucard.locked { filter: grayscale(1) brightness(0.6); }
-.ucard.ready { animation: glow 1.2s ease-in-out infinite; }
-.uel { position: absolute; top: 3px; right: 4px; font-size: 0.8rem; }
 .ulv { margin-top: -6px; background: linear-gradient(180deg, #ffb84a, #e07b1a); color: #fff; border: 2px solid var(--ink); border-radius: 8px; padding: 0 8px; font-family: 'Lilita One'; font-size: 0.8rem; text-shadow: 0 1px 0 rgba(0,0,0,0.5); }
 .ubar { position: relative; width: 92%; height: 14px; margin-top: 4px; background: #0e1430; border: 2px solid var(--ink); border-radius: 7px; overflow: hidden; }
 .ubar span { position: absolute; left: 0; top: 0; bottom: 0; background: linear-gradient(90deg, #3aa0ff, #6fd2ff); }
@@ -231,8 +219,6 @@ button { font: inherit; color: inherit; cursor: pointer; touch-action: pan-x pan
 .b-btn.quit { border-color: var(--gold-frame); }
 .dcard { border-color: var(--gold-frame); box-shadow: 0 0 0 2px var(--gold-dark), 0 4px 0 var(--gold-dark); }
 .dcard img { width: 50px; height: 50px; }
-.ucard { box-shadow: 0 0 0 2px var(--gold-dark), 0 5px 0 var(--gold-dark); }
-.ucard img { max-width: 84px; }
 .deck-preview img { width: 62px; height: 62px; }
 .cmd-btn { box-shadow: 0 0 0 3px var(--gold-dark); border-color: var(--gold-frame); }
 .mana { border-color: var(--gold-frame); box-shadow: 0 0 0 2px var(--gold-dark); }
@@ -263,13 +249,6 @@ body {
   background: url('assets/ui/marco-carta.webp') center / 100% 100% no-repeat, radial-gradient(circle at 50% 40%, color-mix(in srgb, var(--rc) 55%, #1d2c78), #16215a 75%) center / 86% 86% no-repeat;
 }
 .dcard img { width: 46px; height: 46px; }
-.ucard {
-  border: none; box-shadow: none; color: #3a2410;
-  background: url('assets/ui/carta.webp') center / 100% 100% no-repeat;
-  padding: 8px 6px 12px;
-}
-.ucard small { color: #3a2410; }
-.ucard .ubar em { color: #fff; }
 
 /* sin barra de desplazamiento visible en los menús (se sigue pudiendo
    desplazar) y menú más compacto en pantallas bajas */
@@ -356,11 +335,6 @@ body {
 .btn-green:disabled { filter: grayscale(0.8) brightness(0.8); }
 
 /* cartas del mazo en el menú de tropas con el marco de partida */
-.deck-slots .ucard {
-  color: #fff; padding: 8px 6px 10px;
-  background: url('assets/ui/marco-carta.webp') center / 100% 100% no-repeat, linear-gradient(180deg, #2b3c8f, #1a2563) center / 84% 84% no-repeat;
-}
-.deck-slots .ucard small { color: #fff; }
 
 /* retratos de los comandantes (assets/commanders) */
 .cmd-btn span { overflow: hidden; filter: none; background: #16215a; }
@@ -478,26 +452,14 @@ body {
    dentro del marco (sin pisar la madera de abajo) y nombre,
    nivel y contador llevan contorno oscuro y sombra.
    ========================================================= */
-.ucard, .deck-slots .ucard { padding-bottom: 16%; }
-.ucard small, .deck-slots .ucard small {
-  position: relative; z-index: 1; margin-top: 5px; padding: 1px 7px 2px; max-width: 100%;
-  font-family: 'Lilita One', 'Nunito', sans-serif; font-weight: 400; font-size: 0.78rem; line-height: 1.15; letter-spacing: 0.02em;
-  color: #fff; background: linear-gradient(180deg, rgba(20,24,60,0.85), rgba(10,12,34,0.9));
-  border: 2px solid rgba(245,196,0,0.75); border-radius: 8px;
-  -webkit-text-stroke: 3px var(--ink); paint-order: stroke fill;
-  text-shadow: 0 2px 0 var(--ink);
-}
 .ulv { -webkit-text-stroke: 3px var(--ink); paint-order: stroke fill; text-shadow: 0 2px 0 var(--ink); }
-.ucard .ubar em { font-family: 'Lilita One', sans-serif; font-weight: 400; font-size: 0.66rem; color: #fff; -webkit-text-stroke: 2.5px var(--ink); paint-order: stroke fill; }
-.ucard.locked small { filter: none; }
-.deck-slots .ucard small { padding: 1px 3px 2px; font-size: 0.72rem; letter-spacing: 0; -webkit-text-stroke-width: 2.5px; }
 
 /* =========================================================
    Cartas de tropa (barra de la partida y menú de tropas):
    marco dorado fino, fondo del color de su rareza (como las
    cartas del rival en la cabecera) y textos en placas limpias.
    ========================================================= */
-.dcard, .ucard, .deck-slots .ucard {
+.dcard {
   --gold-rim: linear-gradient(180deg, #fff1a8 0%, #f5c400 35%, #c98a00 70%, #8a5a00 100%);
   border: 3px solid transparent; border-image: none; border-radius: 14px; filter: none;
   box-shadow: 0 4px 0 #3a2600, 0 7px 12px rgba(0,0,0,0.35);
@@ -537,21 +499,6 @@ body {
 .dcard:active { transform: translateY(3px); box-shadow: 0 1px 0 #3a2600, 0 3px 6px rgba(0,0,0,0.35); }
 
 /* menú de tropas */
-.deck-slots { gap: 8px; padding: 12px 10px; background: rgba(6,10,36,0.35); border: 1px solid rgba(255,214,90,0.25); border-radius: 18px; }
-.card-grid { gap: 10px; }
-.ucard, .deck-slots .ucard {
-  padding: 0; color: #fff; gap: 0;
-  background:
-    linear-gradient(var(--rc), var(--rc)) top / 100% 4px no-repeat padding-box,
-    radial-gradient(circle at 50% 32%, color-mix(in srgb, var(--rc) 45%, #2b3c8f) 0%, #1a2766 58%, #111a4a 100%) padding-box,
-    var(--gold-rim) border-box;
-}
-.uport { position: relative; display: block; width: 84%; margin-top: 9px; }
-.ucard img, .deck-slots .ucard img { display: block; width: 100%; max-width: none; height: auto; aspect-ratio: 1; filter: drop-shadow(0 4px 3px rgba(0,0,0,0.45)); }
-.uel {
-  top: 6px; right: 5px; z-index: 1; width: 22px; height: 22px; display: grid; place-items: center; font-size: 0.75rem;
-  background: rgba(6,10,36,0.75); border: 1.5px solid rgba(255,214,90,0.7); border-radius: 50%;
-}
 .ulv {
   position: relative; z-index: 1; margin-top: -10px; padding: 1px 9px 2px; border-radius: 999px;
   background: linear-gradient(180deg, #ffd166, #f08a24); border: 2px solid var(--ink); box-shadow: 0 2px 0 rgba(0,0,0,0.35);
@@ -560,33 +507,8 @@ body {
 .ubar { width: 82%; height: 13px; margin-top: 5px; border-width: 2px; border-radius: 999px; background: #0b1238; }
 .ubar span { background: linear-gradient(180deg, #8fe3ff, #3aa0ff); border-radius: 999px; }
 .ubar em { line-height: 9px; font-size: 0.6rem; }
-.ucard.ready .ubar span { background: linear-gradient(180deg, #b6ff8a, #3fcf4a); }
-.ucard small, .deck-slots .ucard small {
-  display: block; width: 100%; max-width: 100%; margin-top: 7px; padding: 4px 4px 5px;
-  border: none; border-top: 1px solid rgba(255,214,90,0.45); border-radius: 0;
-  background: linear-gradient(180deg, rgba(6,10,36,0.5), rgba(6,10,36,0.88));
-  font-size: 0.76rem; letter-spacing: 0.01em; text-align: center; color: #fff;
-  -webkit-text-stroke: 2.5px var(--ink); text-shadow: none;
-}
-.deck-slots .ucard small { font-size: 0.7rem; padding: 3px 2px 4px; }
-.deck-slots .ulv { font-size: 0.7rem; padding: 0 7px 1px; }
-.deck-slots .uel { width: 18px; height: 18px; font-size: 0.62rem; top: 5px; right: 4px; }
-.ucard.ready { animation: cardGlow 1.2s ease-in-out infinite; }
 @keyframes cardGlow { 50% { box-shadow: 0 4px 0 #3a2600, 0 0 16px 4px rgba(255,209,102,0.85); } }
 /* bloqueadas: silueta oscura, candado y la fase que la desbloquea */
-.ucard.locked {
-  filter: none; box-shadow: 0 4px 0 #15182c, 0 7px 12px rgba(0,0,0,0.35);
-  background:
-    radial-gradient(circle at 50% 32%, #2a3360 0%, #161c3e 60%, #0e1230 100%) padding-box,
-    linear-gradient(180deg, #8e97b8, #4d5574 60%, #2c3150) border-box;
-}
-.ulock {
-  position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); width: 40%; aspect-ratio: 1;
-  display: grid; place-items: center; font-style: normal; font-size: 1.15rem; border-radius: 50%;
-  background: radial-gradient(circle at 35% 30%, #4a5280, #1c2248); border: 2px solid #8e97b8; box-shadow: 0 3px 0 rgba(0,0,0,0.45);
-}
-.ulv.ulv-lock { background: linear-gradient(180deg, #5b6386, #363d5e); color: #dfe5ff; font-size: 0.7rem; }
-.ucard.locked small { color: #b9c4f0; }
 
 /* «Seguir jugando» con el mismo botón naranja que «Invocar» */
 .btn.pause-resume {
@@ -598,18 +520,8 @@ body {
 }
 .btn.pause-resume::after { display: none; }
 .btn.pause-resume:active { transform: translateY(3px); filter: drop-shadow(0 1px 0 #8a4300); box-shadow: none; }
-.ucard small, .deck-slots .ucard small { margin-top: auto; }
-.ucard .ubar { margin-bottom: 7px; }
-.ucard.locked .ulv { margin-bottom: 7px; }
-.ucard.locked img { filter: grayscale(0.55) brightness(0.72) drop-shadow(0 4px 3px rgba(0,0,0,0.45)); }
 /* bloqueadas a la vista: retrato apagado y candado pequeño en la esquina */
-.ucard.locked .ulock { left: auto; top: auto; right: -4%; bottom: 2%; transform: none; width: 34%; font-size: 0.85rem; }
-.ucard.locked .uel { opacity: 0.75; }
 /* en la colección, las que ya están en el mazo */
-.udeck {
-  position: absolute; top: 6px; left: 5px; z-index: 1; padding: 1px 6px 2px; border-radius: 999px;
-  font: 400 0.62rem 'Lilita One', sans-serif; color: #10351a; background: linear-gradient(180deg, #b6ff8a, #3fcf4a); border: 1.5px solid var(--ink);
-}
 
 /* =========================================================
    Ficha de tropa: marco dorado, rayos del color de la rareza,
@@ -707,17 +619,6 @@ body {
 .unit-card.rar-mitica .uc-rays { opacity: 1; animation-duration: 6s; }
 
 /* filtros por rareza de la colección */
-.rar-filters { display: flex; gap: 6px; overflow-x: auto; margin: 0 -2px 10px; padding: 2px 2px 4px; scrollbar-width: none; }
-.rar-filters::-webkit-scrollbar { display: none; }
-.rar-f {
-  flex-shrink: 0; display: flex; flex-direction: column; align-items: center; padding: 5px 12px 4px; border-radius: 14px;
-  font: 400 0.9rem 'Lilita One', sans-serif; color: #fff; text-shadow: 0 2px 0 var(--ink);
-  background: rgba(6,10,36,0.45); border: 2px solid color-mix(in srgb, var(--rc) 55%, transparent);
-}
-.rar-f small { font-family: 'Fredoka', 'Nunito', sans-serif; font-weight: 700; font-size: 0.66rem; color: var(--muted); text-shadow: none; }
-.rar-f.on { color: var(--ink); text-shadow: none; background: linear-gradient(180deg, color-mix(in srgb, var(--rc) 45%, #fff), var(--rc)); border-color: var(--ink); box-shadow: 0 3px 0 var(--ink); }
-.rar-f.on small { color: color-mix(in srgb, var(--ink) 75%, transparent); }
-.rar-f:active { transform: translateY(2px); }
 .coll-empty { grid-column: 1 / -1; text-align: center; }
 
 /* ---------- tienda ---------- */
@@ -964,7 +865,6 @@ body {
 .uc-get { display: flex; flex-direction: column; gap: 3px; margin: 10px 0 6px; padding: 8px 10px; border-radius: 14px; background: rgba(6,10,36,0.45); border: 1px solid rgba(255,214,90,0.25); }
 .uc-get b { color: var(--gold); }
 .uc-get small { font-size: 0.8rem; color: #dfe6ff; }
-button.ucard.locked { cursor: pointer; }
 .sh-new { position: absolute; top: 14px; right: 10px; z-index: 1; background: #ff4f7b; color: #fff; font-size: 0.62rem; font-weight: 900; padding: 1px 6px; border-radius: 8px; border: 2px solid var(--ink); transform: rotate(8deg); }
 
 /* =========================================================
@@ -1057,7 +957,6 @@ x-ico {
 .navbar b x-ico { width: 1.4em; height: 1.4em; }
 .res-emoji x-ico { width: 1.5em; height: 1.5em; }
 .code-ico x-ico, .chest-ico x-ico { width: 1.4em; height: 1.4em; }
-.ulock x-ico { width: 1.15em; height: 1.15em; margin: 0; vertical-align: -0.2em; }
 .sh-price x-ico, .btn x-ico { width: 1.4em; height: 1.4em; vertical-align: -0.38em; }
 
 /* Tarjetas de la tienda (ofertas, cofres y oro) con el mismo marco de
@@ -1264,7 +1163,6 @@ x-ico.off { filter: grayscale(1) brightness(0.45); opacity: 0.75; }
 .sort-sw button { padding: 4px 10px; border: 0; border-radius: 9px; background: none; color: var(--muted); font: 400 0.85rem 'Lilita One', sans-serif; }
 .sort-sw button.on { background: linear-gradient(180deg, #ffd166, #f08a24); color: #3a1d00; box-shadow: 0 2px 0 var(--ink); }
 .sort-sw button:active { transform: translateY(2px); }
-.el-filters .rar-f { flex-direction: column; }
 .ef-ico x-ico { width: 1.25em; height: 1.25em; margin: 0 3px 0 0; vertical-align: -0.28em; }
 .el-head {
   display: flex; align-items: center; gap: 6px; margin: 14px 0 8px; padding: 6px 12px; border-radius: 12px;
@@ -1358,16 +1256,6 @@ x-ico.off { filter: grayscale(1) brightness(0.45); opacity: 0.75; }
 .pill b { -webkit-text-stroke: 4px var(--ink); paint-order: stroke fill; }
 
 /* 3. Cartas de la colección con el marco y el fondo de su rareza (los mismos que la tienda) */
-.ucard.r-comun { --rbg: url(assets/ui/tienda-comun.webp); }
-.ucard.r-rara { --rbg: url(assets/ui/tienda-rara.webp); }
-.ucard.r-epica { --rbg: url(assets/ui/tienda-epica.webp); }
-.ucard.r-mitica { --rbg: url(assets/ui/tienda-mitica.webp); }
-.ucard.r-legendaria { --rbg: url(assets/ui/tienda-legendaria.webp); }
-.ucard[class*="r-"]:not(.locked) {
-  border-color: transparent; box-shadow: 0 4px 0 rgba(10,12,40,0.5);
-  background: var(--rbg) center / 100% 100% no-repeat border-box;
-}
-.ucard[class*="r-"]:not(.locked) small { background: linear-gradient(180deg, rgba(6,10,36,0.35), rgba(6,10,36,0.8)); border-top-color: transparent; }
 
 /* 7. Estandarte del comandante teñido con su color */
 .cmd-banner::before {
@@ -1456,24 +1344,6 @@ x-ico.off { filter: grayscale(1) brightness(0.45); opacity: 0.75; }
    en dos filas de tres. Nombre del color de su rareza con trazo de
    tinta y la cuenta en una chapa abajo. Las de elemento siguen igual.
    ========================================================= */
-.rar-tabs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px 8px; overflow: visible; margin: 2px 0 14px; padding: 4px 0 6px; }
-.rar-tabs .rar-f {
-  position: relative; min-width: 0; aspect-ratio: 270 / 140; padding: 0; border: 0; border-radius: 0;
-  background: url(assets/ui/filtro-rareza-h.webp?v=2) center / 100% 100% no-repeat; box-shadow: none;
-  filter: brightness(0.88) saturate(0.85) drop-shadow(0 3px 0 rgba(10,8,30,0.45)); transition: transform 0.15s cubic-bezier(0.3, 1.6, 0.5, 1), filter 0.15s;
-}
-.rar-tabs .rar-f.on { background: url(assets/ui/filtro-rareza-h.webp?v=2) center / 100% 100% no-repeat; box-shadow: none; transform: translateY(-3px); filter: drop-shadow(0 3px 0 rgba(10,8,30,0.45)) drop-shadow(0 0 7px var(--rc)); z-index: 1; }
-.rar-tabs .rf-n {
-  position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); white-space: nowrap;
-  font: 400 clamp(0.8rem, 3.6vw, 1.05rem) 'Lilita One', sans-serif; color: color-mix(in srgb, var(--rc) 60%, #fff); letter-spacing: 0.02em;
-  -webkit-text-stroke: 3px var(--ink); paint-order: stroke fill; text-shadow: 0 2px 0 var(--ink);
-}
-.rar-tabs .rar-f.on .rf-n { color: #fff; }
-.rar-tabs .rar-f small, .rar-tabs .rar-f.on small {
-  position: absolute; left: 50%; bottom: -7px; transform: translateX(-50%); padding: 0 6px; border-radius: 7px; white-space: nowrap;
-  background: var(--ui-panel-bg); border: 2px solid var(--rc); color: #fff; font-size: 0.6rem; line-height: 1.25;
-}
-.rar-tabs .rar-f:active { transform: translateY(1px); }
 
 /* =========================================================
    Cartas de modo de la pantalla principal (assets/ui/modo-*):
@@ -2176,8 +2046,6 @@ x-ico.off { filter: grayscale(1) brightness(0.45); opacity: 0.75; }
   background: linear-gradient(180deg, #ffb84a, #e07b1a); border: 2px solid var(--ink); color: #fff;
   font: 400 0.72rem 'Lilita One', sans-serif; -webkit-text-stroke: 2.5px var(--ink); paint-order: stroke fill;
 }
-.cp-lv.ready { background: linear-gradient(180deg, #b6ff8a, #3fcf4a); animation: cmdLvPulse2 1.2s ease-in-out infinite; }
-@keyframes cmdLvPulse2 { 50% { transform: scale(1.15); } }
 .cp-lock { width: 22px; padding: 0; background: rgba(8,12,40,0.85); border: 2px solid rgba(255,198,90,0.6); }
 .cp-lock x-ico { width: 14px; height: 14px; margin: 0; vertical-align: 0; }
 
@@ -2247,3 +2115,93 @@ x-ico.off { filter: grayscale(1) brightness(0.45); opacity: 0.75; }
 .cp-lock x-ico { width: 13px; height: 13px; }
 .cp-btn.view .cp-lv::before { background: linear-gradient(180deg, #ffffff 0%, #ffe066 40%, #f5a300 100%); }
 .cp-btn.eq::after { bottom: -7px; width: 40%; height: 3px; }
+
+/* =========================================================
+   Menú de tropas: bandeja del mazo, chapas de filtro y cartas
+   con el fondo ilustrado de su rareza
+   ========================================================= */
+.deck-tray {
+  margin: 4px 0 16px; padding: 10px 8px 12px; border-radius: 20px;
+  background: linear-gradient(180deg, rgba(255,198,90,0.16), rgba(26,20,48,0.85) 40%), var(--ui-panel-bg);
+  border: 2px solid rgba(255,198,90,0.6); box-shadow: 0 4px 0 var(--ink), inset 0 1px 0 rgba(255,255,255,0.12);
+}
+.tc-row { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; }
+.tc-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin-bottom: 14px; }
+.coll-head h3 small { font: 800 0.8rem 'Nunito', sans-serif; color: var(--muted); -webkit-text-stroke: 0; text-shadow: none; }
+
+/* chapas de filtro en una fila */
+.chip-filters { display: flex; gap: 5px; margin: 0 0 12px; overflow-x: auto; scrollbar-width: none; padding: 2px 1px 5px; }
+.chip-filters::-webkit-scrollbar { display: none; }
+.cf {
+  flex: 1 0 auto; padding: 5px 10px 6px; border-radius: 999px; border: 2px solid color-mix(in srgb, var(--rc) 55%, var(--ink));
+  background: rgba(8,12,40,0.6); color: color-mix(in srgb, var(--rc) 55%, #fff); box-shadow: 0 3px 0 var(--ink);
+  font: 400 0.82rem 'Lilita One', sans-serif; white-space: nowrap;
+}
+.cf x-ico { width: 1.35em; height: 1.35em; margin: 0; vertical-align: -0.3em; }
+.cf.on {
+  background: linear-gradient(180deg, color-mix(in srgb, var(--rc) 85%, #fff), color-mix(in srgb, var(--rc) 75%, #000));
+  border-color: #fff3c0; color: #fff; -webkit-text-stroke: 3px var(--ink); paint-order: stroke fill;
+}
+.cf:active { transform: translateY(2px); box-shadow: 0 1px 0 var(--ink); }
+.coll-empty { display: grid; place-items: center; padding: 30px 0; opacity: 0.4; }
+.coll-empty x-ico { width: 48px; height: 48px; }
+
+/* carta */
+.tc {
+  position: relative; display: flex; flex-direction: column; align-items: center; padding: 0; overflow: hidden;
+  aspect-ratio: 3 / 4.15; border-radius: 12px; border: 2.5px solid transparent;
+  background:
+    url(assets/ui/fondo-carta-comun.webp) center 30% / cover no-repeat padding-box,
+    linear-gradient(180deg, #fff1a8 0%, #f5c400 35%, #c98a00 70%, #8a5a00 100%) border-box;
+  box-shadow: 0 4px 0 #3a2600, 0 6px 10px rgba(0,0,0,0.3);
+  transition: transform 0.1s;
+}
+.tc.r-rara { background-image: url(assets/ui/fondo-carta-rara.webp), linear-gradient(180deg, #fff1a8 0%, #f5c400 35%, #c98a00 70%, #8a5a00 100%); }
+.tc.r-epica { background-image: url(assets/ui/fondo-carta-epica.webp), linear-gradient(180deg, #fff1a8 0%, #f5c400 35%, #c98a00 70%, #8a5a00 100%); }
+.tc.r-mitica { background-image: url(assets/ui/fondo-carta-mitica.webp), linear-gradient(180deg, #fff1a8 0%, #f5c400 35%, #c98a00 70%, #8a5a00 100%); }
+.tc.r-legendaria { background-image: url(assets/ui/fondo-carta-legendaria.webp), linear-gradient(180deg, #fff1a8 0%, #f5c400 35%, #c98a00 70%, #8a5a00 100%); }
+.tc:active { transform: translateY(3px) scale(0.97); box-shadow: 0 1px 0 #3a2600; }
+.tc-art { display: block; width: 84%; margin-top: 9%; aspect-ratio: 1; }
+.tc-art img { display: block; width: 100%; height: 100%; filter: drop-shadow(0 3px 3px rgba(0,0,0,0.5)); }
+.tc-el {
+  position: absolute; top: 3px; right: 3px; width: 20px; height: 20px; display: grid; place-items: center; border-radius: 50%;
+  background: rgba(8,12,40,0.8); border: 1.5px solid rgba(255,214,90,0.8);
+}
+.tc-el x-ico { width: 14px; height: 14px; margin: 0; vertical-align: 0; }
+/* nivel: escudo dorado, como los de los comandantes */
+.tc-lv {
+  position: absolute; top: 2px; left: 3px; width: 20px; height: 23px; display: grid; place-items: center; padding-bottom: 3px; isolation: isolate;
+  clip-path: polygon(50% 100%, 0 72%, 0 0, 100% 0, 100% 72%); background: linear-gradient(180deg, #5a3a08, #2a1800);
+  font: 400 0.78rem 'Lilita One', sans-serif; line-height: 1; color: #3a1d00;
+}
+.tc-lv::before {
+  content: ''; position: absolute; inset: 2px 2px 3px; z-index: -1;
+  clip-path: polygon(50% 100%, 0 72%, 0 0, 100% 0, 100% 72%); background: linear-gradient(180deg, #fff1a8 0%, #f5c400 45%, #c98a00 100%);
+}
+.tc-lv.lock::before { background: linear-gradient(180deg, #4a4f6a, #22263c); }
+.tc-lv x-ico { width: 11px; height: 11px; margin: 0; vertical-align: 0; }
+.tc.ready .tc-lv::before { background: linear-gradient(180deg, #d8ff9a 0%, #6fd83a 50%, #2f9a1a 100%); }
+.tc.ready .tc-lv { color: #123800; }
+.tc.ready { box-shadow: 0 4px 0 #3a2600, 0 0 12px 2px rgba(111,216,58,0.75); }
+/* barra de cartas */
+.tc-bar { position: relative; width: 84%; height: 12px; margin-top: 3px; border-radius: 999px; background: #0b1238; border: 1.5px solid var(--ink); overflow: hidden; }
+.tc-bar i { position: absolute; inset: 0 auto 0 0; background: linear-gradient(180deg, #8fe3ff, #3aa0ff); border-radius: 999px; }
+.tc-bar.full i { background: linear-gradient(180deg, #b6ff8a, #3fcf4a); }
+.tc-bar em { position: relative; display: block; text-align: center; font: 400 0.6rem/10px 'Lilita One', sans-serif; font-style: normal; color: #fff; -webkit-text-stroke: 2px var(--ink); paint-order: stroke fill; }
+/* placa del nombre */
+.tc-name {
+  display: block; width: 100%; margin-top: auto; padding: 3px 2px 4px; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  background: linear-gradient(180deg, rgba(6,10,36,0.55), rgba(6,10,36,0.9)); border-top: 1px solid rgba(255,214,90,0.45);
+  font: 400 0.74rem 'Lilita One', sans-serif; color: #fff; -webkit-text-stroke: 2.5px var(--ink); paint-order: stroke fill;
+}
+.tc-row .tc-name { font-size: 0.68rem; }
+/* aún no la tienes */
+.tc.locked { filter: saturate(0.25) brightness(0.75); }
+.tc.locked .tc-art img { filter: brightness(0.15) drop-shadow(0 0 1px rgba(255,255,255,0.6)); }
+.tc.locked .tc-name { color: #b9c4f0; }
+.cf { flex: 1 1 auto; padding: 5px 6px 6px; font-size: 0.74rem; }
+.chip-filters { gap: 4px; }
+.tc.locked { filter: saturate(0.35) brightness(0.85); }
+.tc.locked .tc-art img { filter: grayscale(1) brightness(0.42) contrast(1.1); }
+.tc.locked .tc-lv::before { background: linear-gradient(180deg, #8a90b0, #4a4f6a); }
+.tc.locked .tc-lv x-ico { width: 12px; height: 12px; }

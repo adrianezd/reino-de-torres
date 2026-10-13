@@ -7,8 +7,18 @@
    La ventana sale sola al entrar con una versión nueva (meta.lastSeenVersion)
    y también desde Opciones.
    ========================================================= */
-var APP_VERSION = '1.19.2';
+var APP_VERSION = '1.19.3';
 var APP_PATCH_NOTES = [
+  {
+    version: '1.19.3',
+    summary: 'Menú de tropas renovado',
+    items: [
+      'Las cartas de tropa llevan el fondo ilustrado de su rareza, el nivel en un escudo dorado y el nombre en una placa.',
+      'Tu mazo va en su bandeja arriba y ya no se repite en la colección.',
+      'Filtros en una sola fila de chapas, y las tropas que aún no tienes se ven en sombra, sin texto.',
+      'Los niveles de los comandantes ya no parpadean y el menú no se repinta al cargar las imágenes.'
+    ]
+  },
   {
     version: '1.19.2',
     summary: 'Comandantes bien encajados en su ficha',

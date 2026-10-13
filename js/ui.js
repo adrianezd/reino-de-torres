@@ -231,8 +231,8 @@ function renderMenu(name, arg) {
       recordChips(meta.tourneyWins || 0, meta.tourneyLosses || 0);
   } else if (name === 'collection') {
     html = backBar('Mazo', true, 'mazo') + deckTabs('collection') +
-      '<div class="deck-slots">' + meta.deck.map(function (id) { return cardHtml(id, true); }).join('') + '</div>' +
-      '<div class="coll-head"><h3>Colección</h3>' + sortSwitch() + '</div>' +
+      '<div class="deck-tray"><div class="tc-row">' + meta.deck.map(function (id) { return cardHtml(id); }).join('') + '</div></div>' +
+      '<div class="coll-head"><h3>Colección <small>' + UNIT_ORDER.filter(isUnlocked).length + '/' + UNIT_ORDER.length + '</small></h3>' + sortSwitch() + '</div>' +
       (collSort === 'tipo' ? elementFilters() : rarityFilters()) + collectionGrid();
   } else if (name === 'commanders') {
     html = backBar('Mazo', true, 'comandante') + deckTabs('commanders') + commandersHtml();
@@ -537,12 +537,9 @@ function showInfo(k) {
 var collFilter = 'all';
 function rarityFilters() {
   var keys = ['all'].concat(Object.keys(RARITY));
-  // pestañas de madera unidas por cuerdas (assets/ui/filtro-rareza, de assets/filtros-tabs.jpg)
-  return '<div class="rar-filters rar-tabs">' + keys.map(function (k) {
-    var ids = UNIT_ORDER.filter(function (id) { return k === 'all' || UNITS[id].rarity === k; });
-    var own = ids.filter(isUnlocked).length;
-    return '<button class="rar-f' + (collFilter === k ? ' on' : '') + '" data-rf="' + k + '" style="--rc:' + (k === 'all' ? 'var(--ui-gold)' : RARITY[k].color) + '">' +
-      '<span class="rf-n">' + (k === 'all' ? 'Todas' : RARITY[k].name) + '</span><small>' + own + '/' + ids.length + '</small></button>';
+  return '<div class="chip-filters">' + keys.map(function (k) {
+    return '<button class="cf' + (collFilter === k ? ' on' : '') + '" data-rf="' + k + '" style="--rc:' + (k === 'all' ? 'var(--ui-gold)' : RARITY[k].color) + '">' +
+      (k === 'all' ? 'Todas' : RARITY[k].name) + '</button>';
   }).join('') + '</div>';
 }
 // color de cada zona de la campaña (franja de su placa)
@@ -558,50 +555,42 @@ function sortSwitch() {
 }
 function elementFilters() {
   var keys = ['all'].concat(Object.keys(ELEMENTS));
-  return '<div class="rar-filters el-filters">' + keys.map(function (k) {
-    var ids = UNIT_ORDER.filter(function (id) { return k === 'all' || UNITS[id].element === k; });
-    return '<button class="rar-f' + (collEl === k ? ' on' : '') + '" data-ef="' + k + '" style="--rc:' + (k === 'all' ? '#ffd166' : ELEMENTS[k].color) + '">' +
-      (k === 'all' ? 'Todos' : '<span class="ef-ico">' + ELEMENTS[k].icon + '</span>' + ELEMENTS[k].name) +
-      '<small>' + ids.filter(isUnlocked).length + '/' + ids.length + '</small></button>';
+  return '<div class="chip-filters">' + keys.map(function (k) {
+    return '<button class="cf' + (collEl === k ? ' on' : '') + '" data-ef="' + k + '" style="--rc:' + (k === 'all' ? 'var(--ui-gold)' : ELEMENTS[k].color) + '"' + (k === 'all' ? '' : ' aria-label="' + ELEMENTS[k].name + '"') + '>' +
+      (k === 'all' ? 'Todos' : ELEMENTS[k].icon) + '</button>';
   }).join('') + '</div>';
 }
 function collectionGrid() {
-  var card = function (id) { return cardHtml(id, meta.deck.indexOf(id) !== -1, true); };
+  var rest = function (ids) { return ids.filter(function (id) { return meta.deck.indexOf(id) === -1; }); };
   // las que tienes primero; las no encontradas, debajo (sin cambiar el orden dentro de cada grupo)
-  var ownedFirst = function (ids) { return ids.filter(isUnlocked).concat(ids.filter(function (id) { return !isUnlocked(id); })); };
+  var ownedFirst = function (ids) { ids = rest(ids); return ids.filter(isUnlocked).concat(ids.filter(function (id) { return !isUnlocked(id); })); };
   // de común a legendaria, con la mítica antes que la legendaria (orden de RARITY)
   var byRar = function (a, b) { return RARITY_ORDER.indexOf(UNITS[a].rarity) - RARITY_ORDER.indexOf(UNITS[b].rarity) || UNIT_ORDER.indexOf(a) - UNIT_ORDER.indexOf(b); };
+  var grid = function (ids) { return '<div class="tc-grid">' + ids.map(function (id) { return cardHtml(id); }).join('') + '</div>'; };
   if (collSort !== 'tipo') {
     var ids = ownedFirst(UNIT_ORDER.filter(function (id) { return collFilter === 'all' || UNITS[id].rarity === collFilter; }).sort(byRar));
-    return '<div class="card-grid">' + (ids.map(card).join('') || '<p class="muted coll-empty">No hay tropas de esta rareza</p>') + '</div>';
+    return ids.length ? grid(ids) : '<div class="coll-empty">' + ico('icons/estrella') + '</div>';
   }
   // por tipo: dentro de cada elemento, por rareza
   return Object.keys(ELEMENTS).filter(function (k) { return collEl === 'all' || collEl === k; }).map(function (k) {
     var ids = ownedFirst(UNIT_ORDER.filter(function (id) { return UNITS[id].element === k; }).sort(byRar));
-    return '<h4 class="el-head" style="--ec:' + ELEMENTS[k].color + '"><span class="ef-ico">' + ELEMENTS[k].icon + '</span>' + ELEMENTS[k].name + '<small>' + ids.filter(isUnlocked).length + '/' + ids.length + '</small></h4>' +
-      '<div class="card-grid">' + ids.map(card).join('') + '</div>';
+    if (!ids.length) return '';
+    return '<h4 class="el-head" style="--ec:' + ELEMENTS[k].color + '"><span class="ef-ico">' + ELEMENTS[k].icon + '</span>' + ELEMENTS[k].name + '</h4>' + grid(ids);
   }).join('');
 }
-// inColl: carta de la colección, que marca las que ya están en el mazo
-function cardHtml(id, inDeck, inColl) {
+/* Carta de tropa: el fondo ilustrado de su rareza (assets/ui/fondo-carta-*),
+   su retrato, el nivel en un escudo, el elemento, la barra de cartas y el
+   nombre en su placa. Las que aún no tienes, en sombra y con candado. */
+function cardHtml(id) {
   var u = UNITS[id], c = meta.cards[id];
-  if (!c) {
-    // aún no la tienes: solo sale en cofres (y en la tienda)
-    return '<button class="ucard locked" data-card="' + id + '" style="--rc:' + RARITY[u.rarity].color + '">' +
-      '<span class="uel">' + ELEMENTS[u.element].icon + '</span>' +
-      '<span class="uport"><img src="' + unitIcon(id, 0, 128) + '" alt=""><i class="ulock">🔒</i></span>' +
-      '<div class="ulv ulv-lock">No encontrado</div>' +
-      '<small>' + esc(u.name) + '</small></button>';
-  }
-  var need = cardsNeeded(c.lv), pct = c.lv >= CARD_MAX ? 100 : Math.min(100, c.n / need * 100);
-  var ready = canUpgradeCard(id);
-  return '<button class="ucard r-' + u.rarity + (ready ? ' ready' : '') + '" data-card="' + id + '" style="--rc:' + RARITY[u.rarity].color + '">' +
-    '<span class="uel">' + ELEMENTS[u.element].icon + '</span>' +
-    (inColl && inDeck ? '<span class="udeck">Mazo</span>' : '') +
-    '<span class="uport"><img src="' + unitIcon(id, 0, 128) + '" alt=""></span>' +
-    '<div class="ulv">Nv ' + c.lv + '</div>' +
-    '<div class="ubar"><span style="width:' + pct + '%"></span><em>' + (c.lv >= CARD_MAX ? 'MÁX' : c.n + '/' + need) + '</em></div>' +
-    '<small>' + esc(u.name) + '</small></button>';
+  var head = '<button class="tc r-' + u.rarity + (c ? '' : ' locked') + (c && canUpgradeCard(id) ? ' ready' : '') + '" data-card="' + id + '" style="--rc:' + RARITY[u.rarity].color + '">' +
+    '<span class="tc-art"><img src="' + unitIcon(id, 0, 128) + '" alt=""></span>' +
+    '<span class="tc-el">' + ELEMENTS[u.element].icon + '</span>';
+  if (!c) return head + '<span class="tc-lv lock">' + ico('icons/candado') + '</span><b class="tc-name">' + esc(u.name) + '</b></button>';
+  var need = cardsNeeded(c.lv), max = c.lv >= CARD_MAX, pct = max ? 100 : Math.min(100, c.n / need * 100);
+  return head + '<span class="tc-lv">' + c.lv + '</span>' +
+    '<span class="tc-bar' + (pct >= 100 ? ' full' : '') + '"><i style="width:' + pct + '%"></i><em>' + (max ? 'MÁX' : c.n + '/' + need) + '</em></span>' +
+    '<b class="tc-name">' + esc(u.name) + '</b></button>';
 }
 function bindMenu() {
   var m = $('menu');
@@ -1890,8 +1879,12 @@ function loop(t) {
   requestAnimationFrame(loop);
 }
 
+// al cargar las ilustraciones se repinta el menú una sola vez, cuando
+// dejan de llegar (antes se repintaba con cada imagen y parpadeaba)
+var artTimer = null;
 window.onArtReady = function () {
-  if (imgReadyCount >= 14 && currentScreen !== 'battle') renderMenu(currentScreen);
+  clearTimeout(artTimer);
+  artTimer = setTimeout(function () { if (imgReadyCount >= 14 && currentScreen !== 'battle') renderMenu(currentScreen); }, 400);
 };
 function initGame() {
   canvas = $('cv');
