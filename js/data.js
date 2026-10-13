@@ -401,8 +401,9 @@ var ELEMENTS = {
 Object.keys(ELEMENTS).forEach(function (k) { ELEMENTS[k].color = GAME_PALETTE.elements[k]; });
 var AFFINITY_BONUS = 0.12;
 
-// losetas de cada tablero (assets/tiles/<juego>-<n>, de assets/losetas-nuevas.jpg)
-var FIELD_TILES = { prado: { set: 'bosque', n: 12 }, lava2: { set: 'lava', n: 12 }, hielo: { set: 'hielo', n: 4 }, veneno: { set: 'veneno', n: 12 }, roca: { set: 'roca', n: 12 } };
+// losetas de cada tablero (assets/tiles/<juego>-<n>, de assets/losetas-nuevas.jpg:
+// de las enmarcadas, solo las enteras, con sus dos postes)
+var FIELD_TILES = { prado: { set: 'bosque', n: 6 }, lava2: { set: 'lava', n: 6 }, hielo: { set: 'hielo', n: 2 }, veneno: { set: 'veneno', n: 6 }, roca: { set: 'roca', n: 12 } };
 var STONE_TILE = 'piedra-1';
 
 /* Casillas especiales del tablero: cambian en cada partida. */

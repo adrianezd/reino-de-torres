@@ -911,7 +911,7 @@ function startCardDemo(cv, id) {
     for (var i = 0; i < 2; i++) {
       if (!b.cells[i]) continue;
       var c = b.cc(i), u = b.cells[i];
-      drawUnit(dc, u.id, c.x, c.y - 0.02, 0.42 * ch * (1 + u.anim * 0.25), u.rank, t, { board: true, atk: u.atk, aim: u.aim, recoil: u.recoil || 0 });
+      drawUnit(dc, u.id, c.x, c.y - 0.02 - ch * FLOOR_LIFT, 0.42 * ch * (1 + u.anim * 0.25), u.rank, t, { board: true, atk: u.atk, aim: u.aim, recoil: u.recoil || 0 });
     }
     b.enemies.slice().sort(function (p, q) { return p.y - q.y; }).forEach(function (e) {
       drawEnemy(dc, e, ENEMIES[e.kind].size * 0.82, t);

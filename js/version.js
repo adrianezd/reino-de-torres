@@ -7,8 +7,16 @@
    La ventana sale sola al entrar con una versión nueva (meta.lastSeenVersion)
    y también desde Opciones.
    ========================================================= */
-var APP_VERSION = '1.17.4';
+var APP_VERSION = '1.17.5';
 var APP_PATCH_NOTES = [
+  {
+    version: '1.17.5',
+    summary: 'Losetas enteras y tropas encima de ellas',
+    items: [
+      'La última loseta de cada fila ya no sale cortada en el prado, la lava, el veneno y el hielo.',
+      'Las tropas pisan la loseta en vez de quedarse en su borde de abajo, también en el vídeo de cada tropa.'
+    ]
+  },
   {
     version: '1.17.4',
     summary: 'Casillas especiales bien encajadas también en lava',

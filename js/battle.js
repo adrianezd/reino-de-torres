@@ -818,16 +818,16 @@ function drawBoard(b, L, now, isMain) {
       ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 0.07;
       rrect(ctx, cc2.x - G.cw * 0.47, cc2.y - G.ch * 0.47, G.cw * 0.94, G.ch * 0.94, 0.14); ctx.stroke();
     }
-    var r = 0.42 * Math.min(G.cw, G.ch) * (1 + u.anim * 0.25);
+    var r = 0.42 * Math.min(G.cw, G.ch) * (1 + u.anim * 0.25), uy = cc2.y - 0.02 - unitLift(b, i, G);
     // al invocar cae y rebota; al fusionar se estira (desde los pies)
     var pose = summonPose(u.drop) || mergePose(u.pop);
     if (pose) {
-      var footY = cc2.y - 0.02 + r * 0.9;
+      var footY = uy + r * 0.9;
       ctx.save();
       ctx.globalAlpha *= pose.a;
       ctx.translate(cc2.x, footY + pose.dy); ctx.scale(pose.sx, pose.sy); ctx.translate(-cc2.x, -footY);
     }
-    drawUnit(ctx, u.id, cc2.x, cc2.y - 0.02, r, u.rank, now, { frozen: u.frozen > 0, board: true, atk: u.atk, aim: u.aim, recoil: u.recoil || 0, flash: pose ? pose.flash : 0 });
+    drawUnit(ctx, u.id, cc2.x, uy, r, u.rank, now, { frozen: u.frozen > 0, board: true, atk: u.atk, aim: u.aim, recoil: u.recoil || 0, flash: pose ? pose.flash : 0 });
     if (pose) ctx.restore();
     if (b.tiles[i]) drawTileIcon(b.tiles[i], cc2.x + G.cw * 0.33, cc2.y - G.ch * 0.33, 0.13);
     ctx.globalAlpha = 1;
@@ -1019,6 +1019,7 @@ function drawCellAuras(b, G, now) {
     var pic = art('cells/' + u.id), d = UNITS[u.id];
     if (!pic) continue;
     var c = b.cc(i), pulse = 0.5 + 0.5 * Math.sin(now / 420 + i), a, k = 1;
+    c = { x: c.x, y: c.y - unitLift(b, i, G) };
     if (d.twin) {
       // aura doble entre cada pareja de Nívea (una vez por pareja)
       neighbors(i).forEach(function (j) {
@@ -1154,6 +1155,10 @@ function drawPathSigns(G) {
 }
 /* Losa de cada casilla: la del juego de su tablero (b.floor, al azar en
    cada partida); se ve de frente, con su canto abajo. Sin ella, la lisa. */
+// con loseta de canto, la tropa sube un poco para pisar su cara de arriba
+// (si no, los pies le quedan en el borde de abajo)
+var FLOOR_LIFT = 0.16;
+function unitLift(b, i, G) { return b.floor && b.floor[i] !== STONE_TILE && art('tiles/' + b.floor[i]) ? G.ch * FLOOR_LIFT : 0; }
 // dónde se pinta la loseta de una casilla (null si es la lisa o no ha cargado)
 function floorRect(b, i, cc, G) {
   var pic = b.floor && b.floor[i] !== STONE_TILE && art('tiles/' + b.floor[i]);
