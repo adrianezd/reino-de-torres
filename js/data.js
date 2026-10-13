@@ -401,6 +401,10 @@ var ELEMENTS = {
 Object.keys(ELEMENTS).forEach(function (k) { ELEMENTS[k].color = GAME_PALETTE.elements[k]; });
 var AFFINITY_BONUS = 0.12;
 
+// losetas de cada tablero (assets/tiles/<juego>-<n>, de assets/losetas-nuevas.jpg)
+var FIELD_TILES = { prado: { set: 'bosque', n: 12 }, lava2: { set: 'lava', n: 12 }, hielo: { set: 'hielo', n: 4 }, veneno: { set: 'veneno', n: 12 }, roca: { set: 'roca', n: 12 } };
+var STONE_TILE = 'piedra-1';
+
 /* Casillas especiales del tablero: cambian en cada partida. */
 var TILES = {
   altar:   { name: 'Altar',   icon: '⚔️', color: '#ff5a6a', desc: '+35% de daño a la tropa que esté encima.', dmg: 0.35 },
@@ -411,17 +415,17 @@ var TILES = {
 /* Comandantes: habilidad que se carga con el tiempo. power: fuerza a nivel 1
    (aria: segundos de congelación · merlo: maná · brann: daño del meteoro). */
 var COMMANDERS = {
-  aria:  { name: 'Aria',  title: 'Capitana de Escarcha', color: '#7fd6ff', icon: '🌨️', pic: 'assets/commanders/aria.webp?v=2', ability: 'Ventisca',  desc: 'Congela a todos los enemigos 3 segundos.', power: 3, cd: 30 },
-  merlo: { name: 'Merlo', title: 'Archimago',            color: '#b26bff', icon: '✨', pic: 'assets/commanders/merlo.webp?v=2', ability: 'Marea de maná', desc: 'Te da 120 de maná al instante.', power: 120, cd: 35 },
-  brann: { name: 'Brann', title: 'General Enano',        color: '#ff8f3c', icon: '☄️', pic: 'assets/commanders/brann.webp?v=2', ability: 'Meteoro',   desc: 'Un meteorito golpea a los enemigos más adelantados.', power: 520, cd: 28 },
+  aria:  { name: 'Aria',  title: 'Capitana de Escarcha', color: '#7fd6ff', icon: '🌨️', pic: 'assets/commanders/aria.webp?v=2', ability: 'Ventisca',  desc: 'Congela a todos los enemigos 3 segundos.', power: 3, cd: 30, grow: 0.75 },
+  merlo: { name: 'Merlo', title: 'Archimago',            color: '#b26bff', icon: '✨', pic: 'assets/commanders/merlo.webp?v=2', ability: 'Marea de maná', desc: 'Te da 150 de maná al instante, y más en las oleadas avanzadas.', power: 150, cd: 28 },
+  brann: { name: 'Brann', title: 'General Enano',        color: '#ff8f3c', icon: '☄️', pic: 'assets/commanders/brann.webp?v=2', ability: 'Meteoro',   desc: 'Caen 6 meteoritos sobre los monstruos más adelantados.', power: 6, cd: 28 },
   // los cuatro nuevos (de assets/pack-nyx-sol-morgana-tormal.jpg) empiezan
   // bloqueados (locked) y se consiguen en los cofres
-  nyx:   { name: 'Nyx',   title: 'Hechicera del Eclipse', color: '#c04bff', icon: '🌑', locked: true, pic: 'assets/commanders/nyx.webp', ability: 'Maldición', desc: 'Los monstruos reciben un 60% más de daño durante 6 segundos.', power: 6, cd: 32 },
-  sol:   { name: 'Sol',   title: 'Paladín del Alba',      color: '#ffc83a', icon: '☀️', locked: true, pic: 'assets/commanders/sol.webp', ability: 'Escudo divino', desc: 'Durante 5 segundos no pierdes vidas.', power: 5, cd: 40 },
+  nyx:   { name: 'Nyx',   title: 'Hechicera del Eclipse', color: '#c04bff', icon: '🌑', locked: true, pic: 'assets/commanders/nyx.webp', ability: 'Maldición', desc: 'Los monstruos reciben un 60% más de daño durante 8 segundos.', power: 8, cd: 28 },
+  sol:   { name: 'Sol',   title: 'Paladín del Alba',      color: '#ffc83a', icon: '☀️', locked: true, pic: 'assets/commanders/sol.webp', ability: 'Escudo divino', desc: 'Durante 6 segundos no pierdes vidas y los monstruos van un 35% más lentos.', power: 6, cd: 30, grow: 0.5 },
   // héroes: su habilidad se usa sobre el tablero eligiendo tropas (hero: cuántas);
   // con nivel se cargan antes en vez de tener más fuerza
   morgana: { name: 'Morgana', title: 'Inventora', color: '#2fd6a0', icon: '⚙️', locked: true, pic: 'assets/commanders/morgana.webp', hero: 2, ability: 'Ensamblaje', desc: 'Eliges dos tropas del mismo rango, aunque sean distintas, y se fusionan.', power: 1, cd: 30 },
-  torvald: { name: 'Torvald', title: 'Viejo Maestro', color: '#ff7a3c', icon: '🧮', locked: true, pic: 'assets/commanders/torvald.webp', hero: 1, ability: 'Forja', desc: 'Eliges una tropa y sube un rango, hasta el 5.', power: 1, cd: 110 }
+  torvald: { name: 'Torvald', title: 'Viejo Maestro', color: '#ff7a3c', icon: '🧮', locked: true, pic: 'assets/commanders/torvald.webp', hero: 1, ability: 'Forja', desc: 'Eliges una tropa y sube un rango, hasta el 5.', power: 1, cd: 90, grow: 0.6 }
 };
 var COMMANDER_ORDER = ['aria', 'merlo', 'brann', 'nyx', 'sol', 'morgana', 'torvald'];
 COMMANDER_ORDER.forEach(function (k) { var c = COMMANDERS[k]; c.body = c.gen ? '' : 'assets/commanders/' + k + '-cuerpo.webp'; });
@@ -433,18 +437,22 @@ var CMD_BONUS = 0.08, CMD_BONUS_HIGH = 0.03;
 function cmdMult(lv) { lv = lv || 1; return 1 + CMD_BONUS * (Math.min(lv, 10) - 1) + CMD_BONUS_HIGH * Math.max(0, lv - 10); }
 function cmdCardsNeeded(lv) { return [0, 1, 2, 3, 4, 5, 7, 9, 12, 15, 18, 21, 24, 27, 30, 34, 38, 42, 46, 50, 55, 60, 65, 70, 80][lv] || 999; }
 function cmdUpgradeGold(lv) { return [0, 100, 250, 500, 900, 1400, 2100, 3000, 4200, 6000, 7000, 8000, 9000, 10000, 11500, 13000, 14500, 16000, 18000, 20000, 22500, 25000, 28000, 32000, 36000][lv] || 99999; }
+// lo que gana cada comandante con su nivel: grow < 1 lo frena (Aria, Torvald)
+function cmdGrow(k, lv) { return 1 + (cmdMult(lv) - 1) * (COMMANDERS[k].grow || 1); }
 // fuerza de la habilidad a un nivel, y su texto
-function cmdPower(k, lv) { return COMMANDERS[k].power * cmdMult(lv); }
+function cmdPower(k, lv) { return COMMANDERS[k].power * cmdGrow(k, lv); }
 // segundos de carga: los héroes se cargan antes con cada nivel
-function cmdCd(k, lv) { var c = COMMANDERS[k]; return c.hero ? Math.round(c.cd / cmdMult(lv)) : c.cd; }
+function cmdCd(k, lv) { var c = COMMANDERS[k]; return c.hero ? Math.round(c.cd / cmdGrow(k, lv)) : c.cd; }
+// meteoritos de Brann: 6, y con nivel caen más (9 al 10, 11 al 25)
+function brannMeteors(lv) { return 6 + Math.floor((cmdMult(lv) - 1) * 5); }
 function cmdDesc(k, lv) {
   var p = cmdPower(k, lv), sec = String(Math.round(p * 10) / 10).replace('.', ',');
   if (COMMANDERS[k].hero) return COMMANDERS[k].desc;
   if (k === 'nyx') return 'Los monstruos reciben un 60% más de daño durante ' + sec + ' segundos.';
-  if (k === 'sol') return 'Durante ' + sec + ' segundos no pierdes vidas.';
+  if (k === 'sol') return 'Durante ' + sec + ' segundos no pierdes vidas y los monstruos van un 35% más lentos.';
   if (k === 'aria') return 'Congela a todos los enemigos ' + String(Math.round(p * 10) / 10).replace('.', ',') + ' segundos.';
-  if (k === 'merlo') return 'Te da ' + Math.round(p) + ' de maná al instante.';
-  return 'Un meteorito golpea a los enemigos más adelantados con un ' + Math.round(cmdMult(lv) * 100) + '% de fuerza.';
+  if (k === 'merlo') return 'Te da ' + Math.round(p) + ' de maná al instante, y más en las oleadas avanzadas.';
+  return 'Caen ' + brannMeteors(lv) + ' meteoritos sobre los monstruos más adelantados.';
 }
 
 /* Árbol de habilidades de cada comandante: con el nivel CMD_TREE_LV[piso]
@@ -455,7 +463,7 @@ var CMD_TREE_LV = [5, 25];
 var CMD_TREE_PICK = [1, 2];
 var CMD_TREE = {
   aria: [
-    [{ id: 'cortante', name: 'Escarcha cortante', desc: 'La Ventisca también hace daño a todos los monstruos.', add: { cmdDmg: 150 } },
+    [{ id: 'cortante', name: 'Escarcha cortante', desc: 'La Ventisca también hace daño a todos los monstruos.', add: { cmdDmg: 1.2 } },
      { id: 'largo', name: 'Invierno largo', desc: 'La Ventisca congela un 50% más de tiempo.', mul: { cmdPowerMult: 1.5 } }],
     [{ id: 'recarga', name: 'Recarga', desc: 'Se carga un 30% más rápido.', mul: { chargeMult: 1.3 } },
      { id: 'eterno', name: 'Hielo eterno', desc: 'Tras la Ventisca, los monstruos van un 30% más lentos 4 segundos.', set: { cmdSlow: 0.3 } },

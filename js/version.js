@@ -7,8 +7,27 @@
    La ventana sale sola al entrar con una versión nueva (meta.lastSeenVersion)
    y también desde Opciones.
    ========================================================= */
-var APP_VERSION = '1.16.3';
+var APP_VERSION = '1.17.0';
 var APP_PATCH_NOTES = [
+  {
+    version: '1.17.0',
+    summary: 'Losetas nuevas, carteles en el camino y comandantes equilibrados',
+    items: [
+      'Cada tablero tiene sus propias losetas: musgo en el prado, lava, hielo, veneno y roca, distintas en cada casilla.',
+      'Carteles de Entrada y Salida de monstruos junto al camino de cada tablero.',
+      'Las cartas de la partida enseñan su elemento arriba a la derecha.',
+      'Oria, Garra y Eco estrenan dibujos, y el lobo de Garra también.',
+      'Todas las épicas llevan el mismo marco morado con rombos.',
+      'El vídeo de cada tropa se ve en un trozo del tablero de verdad, con la tropa en su loseta.',
+      'Las fichas del cofre de comandante y del legendario ya no dicen quién puede tocar.',
+      'Merlo da 150 de maná, se carga en 28 s y da más en las oleadas avanzadas.',
+      'Brann tira más meteoros al subir de nivel: 9 al nivel 10 y 11 al 25.',
+      'Nyx: la Maldición dura 8 s y se carga en 28 s.',
+      'Sol: el Escudo dura 6 s, se carga en 30 s y además frena a los monstruos un 35%.',
+      'Torvald se carga en 90 s en vez de 110.',
+      'Aria: la Ventisca crece menos con el nivel y Escarcha cortante ya no barre a todos de un golpe.'
+    ]
+  },
   {
     version: '1.16.3',
     summary: 'Misiones con Reclamar y fichas de cofre más limpias',

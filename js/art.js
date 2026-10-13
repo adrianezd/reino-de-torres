@@ -52,9 +52,9 @@ var NO_ATTACK_POSE = { eco: true, oria: true, garra: true };
 var IMG_LIST = {
   units: UNIT_ORDER.filter(function (id) { return !UNITS[id].noArt; }),
   enemies: ['blob', 'ghost', 'brute', 'orco', 'rocoso', 'escarcha', 'gelido', 'coloso', 'coloso2', 'nigro', 'dragon'],
-  tiles: ['altar', 'fuente', 'atalaya', 'piedra-1'],
+  tiles: ['altar', 'fuente', 'atalaya', 'piedra-1'].concat(Object.keys(FIELD_TILES).reduce(function (a, k) { var t = FIELD_TILES[k]; for (var n = 1; n <= t.n; n++) a.push(t.set + '-' + n); return a; }, [])),
   boards: ['lava2', 'hielo', 'roca', 'veneno'],
-  ui: ['boton', 'fondo', 'vida'],
+  ui: ['boton', 'fondo', 'vida', 'cartel-entrada', 'cartel-salida'],
   commanders: COMMANDER_ORDER,
   icons: ['estrella', 'gota', 'espadas', 'escudo'],
   chests: ['moneda'], // proyectil de Midas
@@ -175,7 +175,7 @@ Object.keys(POSES).forEach(function (id) {
   (NO_ATTACK_POSE[id] ? ['idle'] : ['idle', 'attack']).forEach(function (pose) {
     var im = new Image();
     im.onload = function () { im.ready = true; };
-    im.src = 'assets/units/board/' + id + '-' + pose + '.webp' + (pose === 'idle' ? '?v=2' : '');
+    im.src = 'assets/units/board/' + id + '-' + pose + '.webp' + (pose === 'idle' ? '?v=3' : '');
     IMG['pose/' + id + '-' + pose] = im;
   });
 });

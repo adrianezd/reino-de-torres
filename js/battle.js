@@ -758,6 +758,7 @@ function drawBoard(b, L, now, isMain) {
       drawStoneTile(b, ti, b.cc(ti), G);
       if (tt) drawTileFloor(tt, b.cc(ti), G, ti, now);
     }
+    drawPathSigns(G);
   } else {
   // marco
   rrect(ctx, -0.12, -0.12, BOARD_W + 0.24, BOARD_H + 0.24, 0.35);
@@ -1120,11 +1121,33 @@ function drawTileFloor(type, cc, G, i, now) {
   var w = s * 0.58, h = w * pic.naturalHeight / pic.naturalWidth;
   ctx.drawImage(pic, cc.x - w / 2, cc.y - h / 2, w, h);
 }
-/* Losa de piedra de cada casilla: las 15 iguales, la lisa, en todos los mapas. */
-var STONE_TILE = 'piedra-1';
+/* Carteles de entrada y salida de los monstruos (assets/ui/cartel-*,
+   de assets/set-salida-entrada-monstruos.jpg), plantados junto a la boca
+   del camino: la entrada a su izquierda y la salida a su derecha, a F.signOff
+   de la boca; F.signs (píxeles de la ilustración, pie de cada cartel) los
+   coloca a mano. */
+var SIGN_W = 1.15;
+function drawPathSigns(G) {
+  var w = G.way, F = G.px, upx = F.cw / G.W;
+  var at = F.signs ? F.signs.map(function (q) { return { x: (q[0] - F.cx) / upx, y: (q[1] - F.cy) / upx }; })
+    : [{ x: w[0].x - (F.signOff || 0.7), y: Math.min(w[0].y, G.H - 0.05) }, { x: w[w.length - 1].x + (F.signOff || 0.7), y: Math.min(w[w.length - 1].y, G.H - 0.05) }];
+  ['entrada', 'salida'].forEach(function (k, i) {
+    var pic = art('ui/cartel-' + k);
+    if (!pic) return;
+    var h = SIGN_W * pic.naturalHeight / pic.naturalWidth;
+    ctx.drawImage(pic, at[i].x - SIGN_W / 2, at[i].y - h, SIGN_W, h);
+  });
+}
+/* Losa de cada casilla: la del juego de su tablero (b.floor, al azar en
+   cada partida); se ve de frente, con su canto abajo. Sin ella, la lisa. */
 function drawStoneTile(b, i, cc, G) {
-  var pic = art('tiles/' + STONE_TILE);
+  var pic = (b.floor && art('tiles/' + b.floor[i])) || art('tiles/' + STONE_TILE);
   if (!pic) return false;
+  if (b.floor && pic === art('tiles/' + b.floor[i])) {
+    var w = G.cw * 1.02, h = Math.min(w * pic.naturalHeight / pic.naturalWidth, G.ch * 1.16);
+    ctx.drawImage(pic, cc.x - w / 2, cc.y - G.ch / 2 - 0.02, w, h);
+    return true;
+  }
   var s = Math.min(G.cw, G.ch) * 0.97;
   ctx.fillStyle = 'rgba(10,12,30,0.3)';
   rrect(ctx, cc.x - s / 2 + 0.02, cc.y - s / 2 + 0.05, s, s, 0.08); ctx.fill();

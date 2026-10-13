@@ -253,7 +253,7 @@ function renderMenu(name, arg) {
       cmdTreeHtml(meta.commander, cc.lv) +
       // nivel del comandante: sus cartas salen en el cofre de comandante
       '<div class="uc-level cmd-level"><span class="uc-lvmedal">' + cc.lv + '</span><div class="uc-lvbody"><div class="uc-lvtop"><b>' + (cMax ? 'Nivel máximo' : 'Nivel ' + cc.lv) + '</b>' +
-      (cMax ? '' : '<span class="uc-gain">💪 ' + Math.round(cmdMult(cc.lv) * 100) + '% → <b>' + Math.round(cmdMult(cc.lv + 1) * 100) + '%</b></span>') + '</div>' +
+      (cMax ? '' : '<span class="uc-gain">💪 ' + Math.round(cmdGrow(meta.commander, cc.lv) * 100) + '% → <b>' + Math.round(cmdGrow(meta.commander, cc.lv + 1) * 100) + '%</b></span>') + '</div>' +
       '<div class="ubar' + (canUpgradeCmd(meta.commander) ? ' ok' : '') + '"><span style="width:' + (cMax ? 100 : Math.min(100, cc.n / cNeed * 100)) + '%"></span><em>' + (cMax ? 'MÁX' : cc.n + '/' + cNeed) + '</em></div></div></div>' +
       (cMax ? '' : '<button class="btn btn-up cmd-upbtn" id="cmdUp" ' + (canUpgradeCmd(meta.commander) ? '' : 'disabled') + '>⬆ Mejorar ' + cGold + ' 🪙</button>' + (cWhy ? '<p class="cmd-why">' + cWhy + '</p>' : '')) +
       '<p class="muted">🎁 Las cartas de comandante salen en el cofre de comandante: lo ganas en el Torneo y está en la tienda.</p>';
@@ -851,12 +851,19 @@ function showLockedCard(id) {
   $('mcX').onclick = closeOverlay;
 }
 
-/* Mini partida en la ficha de una tropa: la tropa en su casilla disparando
-   a los monstruos que pasan por el camino (Melodía, con Lyra al lado). */
+/* Mini partida en la ficha de una tropa: un trozo del tablero del prado
+   (el camino de arriba y la primera fila de losetas) con la tropa en su
+   loseta disparando a los monstruos que pasan (Melodía, con Lyra al lado).
+   DEMO_CROP: el recorte de la ilustración, en sus píxeles. */
+var DEMO_CROP = { x: 420, y: 112, w: 880, h: 335 };
 function startCardDemo(cv, id) {
   if (!cv) return;
-  var W = 6, H = 2.5, PY = 1.9;
-  var geo = makeGeo({ W: W, H: H, x0: 2.5, y0: 0.4, cw: 1, ch: 1, way: [{ x: -0.6, y: PY }, { x: W + 0.6, y: PY }] });
+  var F = FIELDS.prado, cell = (F.gx1 - F.gx0) / COLS, D = DEMO_CROP;
+  var W = D.w / cell, H = D.h / cell, PY = (F.way[3][1] - D.y) / cell;
+  var ch = (F.gy1 - F.gy0) / ROWS / cell, y0 = (F.gy0 - D.y) / cell, col0 = (F.gx0 - D.x) / cell;
+  // la tropa en la casilla del centro de la fila (y su pareja, en la de al lado)
+  var geo = makeGeo({ W: W, H: H, x0: col0 + 2, y0: y0, cw: 1, ch: ch, way: [{ x: -0.6, y: PY }, { x: W + 0.6, y: PY }] });
+  var floor = [3, 7, 1, 10, 5].map(function (n) { return 'bosque-' + n; });
   var pair = UNITS[id].buff || UNITS[id].wild;
   var deck = pair ? [id, 'lyra'] : [id];
   var lv = {}; deck.forEach(function (k) { lv[k] = meta.cards[k] ? meta.cards[k].lv : 1; });
@@ -886,13 +893,25 @@ function startCardDemo(cv, id) {
     var g = dc.createLinearGradient(0, 0, 0, chh); g.addColorStop(0, '#6fc322'); g.addColorStop(1, '#4f9a1c');
     dc.fillStyle = g; dc.fillRect(0, 0, cw, chh);
     dc.save(); dc.translate(ox, oy); dc.scale(sc, sc);
-    dc.fillStyle = '#c9a66b'; dc.fillRect(-1, PY - 0.42, W + 2, 0.84);
-    dc.fillStyle = '#e6c78c'; dc.fillRect(-1, PY - 0.36, W + 2, 0.72);
+    var pic = art(F.image);
+    if (pic) {
+      var kx = pic.naturalWidth / F.iw, ky = pic.naturalHeight / F.ih;
+      dc.drawImage(pic, D.x * kx, D.y * ky, D.w * kx, D.h * ky, 0, 0, W, H);
+    } else {
+      dc.fillStyle = '#c9a66b'; dc.fillRect(-1, PY - 0.42, W + 2, 0.84);
+      dc.fillStyle = '#e6c78c'; dc.fillRect(-1, PY - 0.36, W + 2, 0.72);
+    }
+    // la fila de losetas, como en la partida
+    floor.forEach(function (k, ci) {
+      var tp = art('tiles/' + k);
+      if (!tp) return;
+      var tw = 1.02, th = Math.min(tw * tp.naturalHeight / tp.naturalWidth, ch * 1.16);
+      dc.drawImage(tp, col0 + ci + 0.5 - tw / 2, y0 - 0.02, tw, th);
+    });
     for (var i = 0; i < 2; i++) {
       if (!b.cells[i]) continue;
       var c = b.cc(i), u = b.cells[i];
-      dc.fillStyle = 'rgba(0,0,0,0.18)'; rrect(dc, c.x - 0.46, c.y - 0.46, 0.92, 0.92, 0.14); dc.fill();
-      drawUnit(dc, u.id, c.x, c.y - 0.02, 0.42 * (1 + u.anim * 0.25), u.rank, t, { board: true, atk: u.atk, aim: u.aim, recoil: u.recoil || 0 });
+      drawUnit(dc, u.id, c.x, c.y - 0.02, 0.42 * ch * (1 + u.anim * 0.25), u.rank, t, { board: true, atk: u.atk, aim: u.aim, recoil: u.recoil || 0 });
     }
     b.enemies.slice().sort(function (p, q) { return p.y - q.y; }).forEach(function (e) {
       drawEnemy(dc, e, ENEMIES[e.kind].size * 0.82, t);
@@ -1027,17 +1046,13 @@ function showChestInfo(k, slot) {
     '<div class="chest-pic closed"><div class="chest-pic-glow"><img class="chest-pic-rays" src="assets/chests/destello.webp" alt=""></div><img class="chest-pic-img" id="ciPic" src="' + chestPic(k) + '" alt=""></div>' +
     '<h2>' + ch.name + '</h2>' +
     (ch.legendOnly ? '' : '<div class="ci-loot"><span><b>' + ch.cards + '</b>cartas</span><span><b>' + ch.gold[0] + ' a ' + ch.gold[1] + '</b>🪙 oro</span><span><b>' + ch.gems[0] + ' a ' + ch.gems[1] + '</b>💎 gemas</span></div>') +
+    // legendario y de comandante: qué trae, sin decir qué tropa o comandante toca
     (ch.legendOnly
-      ? (function (ls) {
-        return ls.map(function (id) {
-          return row(RARITY.legendaria.color, UNITS[id].name, meta.cards[id] ? 'Nivel ' + meta.cards[id].lv : 'Aún no la tienes', '').replace('<i></i>', '<img class="ci-face" src="' + unitIcon(id, 0, 64) + '" alt="">');
-        }).join('') + '<p class="ci-note">Solo trae una carta, siempre legendaria y al azar.</p>';
-      })(UNIT_ORDER.filter(function (id) { return UNITS[id].rarity === 'legendaria'; }))
+      ? row(RARITY.legendaria.color, 'Legendaria', 'Una tropa legendaria al azar', '1 carta') +
+        '<p class="ci-note">Solo trae una carta, siempre legendaria. Puede ser una que aún no tienes.</p>'
       : ch.cmd
-      // el de comandante: qué comandantes pueden tocar, con su nivel
-      ? COMMANDER_ORDER.map(function (c) {
-        return row(COMMANDERS[c].color, COMMANDERS[c].name, cmdOwned(c) ? 'Nivel ' + cmdLevel(c) : 'Aún no lo tienes', '').replace('<i></i>', '<img class="ci-face" src="' + COMMANDERS[c].pic + '" alt="">');
-      }).join('') + '<p class="ci-note">Trae ' + CHESTS.comandante.cards + ' cartas, todas de un mismo comandante al azar. Con ellas subes su nivel.</p>'
+      ? row(ch.color, 'Comandante', 'Uno al azar, aunque aún no lo tengas', ch.cards + ' cartas') +
+        '<p class="ci-note">Todas las cartas son de un mismo comandante. Con ellas subes su nivel.</p>'
       : '<h3 class="ci-t">Probabilidad por cofre</h3>' +
       row(RARITY.rara.color, 'Rara', '', chestOdds(ch.rare, ch.cards)) +
       row(RARITY.epica.color, 'Épica', '', chestOdds(ch.epic, ch.cards)) +
@@ -1314,7 +1329,7 @@ function buildBattleHud() {
   var b = battle;
   var deck = $('deckBar');
   deck.innerHTML = b.player.deck.map(function (id) {
-    return '<button class="dcard" data-power="' + id + '" style="--rc:' + RARITY[UNITS[id].rarity].color + '"><img src="' + unitIcon(id, 0, 96) + '" alt=""><span class="dlv" id="dlv_' + id + '">1</span><span class="dcost" id="dcost_' + id + '">100</span></button>';
+    return '<button class="dcard" data-power="' + id + '" style="--rc:' + RARITY[UNITS[id].rarity].color + '"><img src="' + unitIcon(id, 0, 96) + '" alt=""><span class="dlv" id="dlv_' + id + '">1</span><span class="del" title="' + ELEMENTS[UNITS[id].element].name + '">' + icons(ELEMENTS[UNITS[id].element].icon) + '</span><span class="dcost" id="dcost_' + id + '">100</span></button>';
   }).join('');
   deck.querySelectorAll('[data-power]').forEach(function (btn) {
     // invocación dirigida: mantener pulsada la carta invoca esa tropa (el doble de maná)

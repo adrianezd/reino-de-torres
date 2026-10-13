@@ -38,7 +38,7 @@ var VECTOR_GEO = makeGeo({ W: BOARD_W, H: BOARD_H, x0: PATH_W, y0: PATH_W, cw: 1
    recorrido de los monstruos (way). 1 unidad = ancho de una casilla. */
 var FIELDS = {
   // prado (assets/tablero.*): entran por el camino de abajo y salen por el mismo
-  prado: { image: 'board/tablero', iw: 1672, ih: 941, cx: 250, cy: 110, cw: 1180, ch: 831, fade: true,
+  prado: { image: 'board/tablero', iw: 1672, ih: 941, cx: 250, cy: 110, cw: 1180, ch: 831, fade: true, signOff: 1.45,
     gx0: 477, gy0: 315, gx1: 1196, gy1: 690,
     way: [[805, 990], [805, 767], [322, 767], [322, 185], [1352, 185], [1352, 767], [866, 767], [866, 990]] },
   // lava, el único de volcán y cripta: anillo (volteado de assets/tablero-lava-invertido.jpg): salen por
@@ -69,7 +69,7 @@ function fieldGeo(id) {
   var f = FIELDS[id], cell = (f.gx1 - f.gx0) / COLS;
   var P = function (q) { return { x: (q[0] - f.cx) / cell, y: (q[1] - f.cy) / cell }; };
   return makeGeo({
-    image: f.image, px: f,
+    image: f.image, px: f, field: id,
     W: f.cw / cell, H: f.ch / cell,
     x0: (f.gx0 - f.cx) / cell, y0: (f.gy0 - f.cy) / cell, cw: 1, ch: (f.gy1 - f.gy0) / ROWS / cell,
     way: f.way.map(P)
@@ -121,6 +121,9 @@ function Board(opts) {
   this.deck.forEach(function (id) { this.power[id] = 1; }, this);
   this.cells = new Array(COLS * ROWS).fill(null);
   this.tiles = {};
+  // losa de cada casilla: una de las del juego de su tablero, al azar (FIELD_TILES)
+  var ft = FIELD_TILES[this.geo.field];
+  this.floor = this.cells.map(function () { return ft ? ft.set + '-' + (1 + Math.floor(Math.random() * ft.n)) : STONE_TILE; });
   var spots = shuffleArr(Array.from({ length: COLS * ROWS }, function (_, i) { return i; }));
   ['altar', 'fuente', 'atalaya'].forEach(function (t, k) { this.tiles[spots[k]] = t; }, this);
   this.enemies = [];
@@ -185,6 +188,8 @@ Board.prototype.unitPower = function (id) {
   return (1 + POWER_BONUS * ((this.power[id] || 1) - 1)) * this.cardMult(id) * this.dmgMult * (1 + (this.elemBonus[UNITS[id].element] || 0));
 };
 // todo el maná que se gana pasa por aquí (con «Doble de maná» vale el doble); devuelve lo ganado
+// Escudo divino de Sol: además de guardar las vidas, frena a los monstruos
+var SOL_SLOW = 0.65;
 Board.prototype.addMana = function (n) {
   n *= this.manaMult;
   this.mana += n;
@@ -442,13 +447,14 @@ Board.prototype.useCommander = function (picks) {
     this.addFx('flash', { x: this.geo.W / 2, y: this.geo.H / 2 }, '#bfefff');
     this.addSweep('fx/ventisca');
   } else if (cmd === 'merlo') {
-    var gain = this.addMana(Math.round(pw));
+    // la marea crece con la partida: +6% por oleada
+    var gain = this.addMana(Math.round(pw * (1 + 0.06 * Math.max(0, (this.battle ? this.battle.wave : 1) - 1))));
     this.addText(this.geo.W / 2, this.geo.H / 2, '+' + gain + ' 💧', GAME_PALETTE.manaBlue, true);
     this.addFx('flash', { x: this.geo.W / 2, y: this.geo.H / 2 }, '#b26bff');
     this.addSweep('fx/marea');
   } else if (cmd === 'brann') {
     // caen uno tras otro sobre los más adelantados; el daño llega al tocar suelo
-    var targets = this.enemies.slice().sort(function (a, b) { return b.d - a.d; }).slice(0, 6 + this.extraMeteors);
+    var targets = this.enemies.slice().sort(function (a, b) { return b.d - a.d; }).slice(0, brannMeteors(this.cmdLv) + this.extraMeteors);
     var dmg = pw * hpScale();
     targets.forEach(function (e, k) {
       var t = METEOR_FALL + k * 0.09;
@@ -796,7 +802,7 @@ Board.prototype.update = function (dt) {
     if (e.critT > 0) e.critT -= dt;
     if (e.breakT > 0) e.breakT -= dt;
     if (e.stun > 0) { e.stun -= dt; }
-    else e.d += e.speed * evSpeed * (1 - e.slowPct) * dt;
+    else e.d += e.speed * evSpeed * (1 - e.slowPct) * (this.guardT > 0 ? SOL_SLOW : 1) * dt;
     var p2 = this.pos(e.d); e.x = p2.x; e.y = p2.y;
     if (e.boss) this.bossAbility(e, dt);
     if (e.d >= this.geo.len) {
