@@ -56,10 +56,26 @@ var FIELDS = {
     way: [[395, 452], [300, 440], [250, 390], [238, 290], [255, 185], [320, 130], [420, 113], [605, 113], [705, 130], [770, 185], [788, 290], [775, 390], [725, 440], [628, 452]] },
   veneno: { image: 'boards/veneno', iw: 1024, ih: 572, cx: 262, cy: 105, cw: 502, ch: 412, portal: true, over: true, frame: [176, 58, 848, 518],
     gx0: 352, gy0: 188, gx1: 670, gy1: 376,
-    way: [[400, 500], [400, 440], [320, 390], [305, 300], [320, 190], [380, 148], [640, 148], [700, 190], [718, 300], [705, 390], [625, 440], [625, 500]] }
+    way: [[400, 500], [400, 440], [320, 390], [305, 300], [320, 190], [380, 148], [640, 148], [700, 190], [718, 300], [705, 390], [625, 440], [625, 500]] },
+  // tableros nuevos (assets/tablero-*-nuevo.jpg): anillo de tierra alrededor
+  // de la cuadrícula, entrada abajo a la izquierda y salida abajo a la derecha.
+  // prado3 viene sin fondo: alrededor, la textura de caminos (ground); en sus
+  // dos puertas de la valla, los portales (gates) y el camino sigue hacia
+  // abajo por fuera del dibujo (road: x de cada puerta y dónde acaba la valla)
+  prado3: { image: 'boards/prado3', iw: 1248, ih: 832, cx: 60, cy: 40, cw: 1130, ch: 760, portal: true, over: true, frame: [40, 20, 1210, 812],
+    ground: 'boards/suelo-prado', gates: true, road: { xs: [315, 875], y: 790, w: 108 },
+    gx0: 280, gy0: 208, gx1: 970, gy1: 548,
+    way: [[315, 745], [315, 655], [230, 655], [192, 615], [192, 200], [230, 162], [1020, 162], [1058, 200], [1058, 615], [1020, 655], [875, 655], [875, 745]] },
+  // hielo2 y lava3 traen sus propios arcos y portales (ownGates: sin carteles)
+  hielo2: { image: 'boards/hielo2', iw: 1248, ih: 832, cx: 120, cy: 90, cw: 1010, ch: 700, portal: true, over: true, ownGates: true, frame: [0, 0, 1248, 832],
+    gx0: 310, gy0: 258, gx1: 940, gy1: 588,
+    way: [[262, 712], [230, 650], [200, 560], [198, 300], [225, 200], [300, 170], [950, 170], [1030, 200], [1048, 300], [1046, 560], [1015, 650], [985, 712]] },
+  lava3: { image: 'boards/lava3', iw: 1248, ih: 832, cx: 90, cy: 60, cw: 1070, ch: 700, portal: true, over: true, ownGates: true, frame: [0, 0, 1248, 832],
+    gx0: 340, gy0: 218, gx1: 908, gy1: 515,
+    way: [[175, 668], [195, 600], [205, 300], [235, 170], [320, 140], [930, 140], [1020, 170], [1045, 260], [1050, 560], [1052, 668]] }
 };
 // con varios tableros para un bioma se elige uno al azar en cada partida
-var BIOME_FIELD = { prado: 'prado', bosque: 'prado', pantano: ['prado', 'veneno'], hielo: 'hielo', ruinas: 'roca', desierto: 'roca', volcan: 'lava2', cripta: 'lava2' };
+var BIOME_FIELD = { prado: ['prado', 'prado3'], bosque: ['prado', 'prado3'], pantano: ['prado', 'veneno'], hielo: ['hielo', 'hielo2'], ruinas: 'roca', desierto: 'roca', volcan: ['lava2', 'lava3'], cripta: ['lava2', 'lava3'] };
 function fieldGeo(id) {
   var f = FIELDS[id], cell = (f.gx1 - f.gx0) / COLS;
   var P = function (q) { return { x: (q[0] - f.cx) / cell, y: (q[1] - f.cy) / cell }; };
@@ -259,9 +275,12 @@ Board.prototype.placeScore = function (i) {
   if (UNITS[u.id].buff) return neighbors(i).filter(function (j) { var v = this.cells[j]; return v && UNITS[v.id].dmg; }, this).length;
   return this.posBonus(i);
 };
+// tropas en el tablero sin contar la de la casilla i (Legión de Valka)
+Board.prototype.allies = function (i) { var n = 0; for (var k = 0; k < this.cells.length; k++) if (k !== i && this.cells[k]) n++; return n; };
 Board.prototype.unitDamage = function (i) {
   var u = this.cells[i], d = this.def(u.id);
   var m = RANK_MULT[u.rank] * this.unitPower(u.id) * (1 + AFFINITY_BONUS * this.affMult * this.affinity(i)) * (1 + this.posBonus(i));
+  if (d.legion) m *= 1 + d.legion.per * this.allies(i);
   if (this.tiles[i] === 'altar') m *= 1 + TILES.altar.dmg;
   return (d.dmg || 0) * m;
 };
@@ -352,6 +371,7 @@ Board.prototype.merge = function (from, to, start) {
 Board.prototype.landFx = function (i, u) {
   var p = this.cc(i);
   // círculo mágico con humo y destello (assets/fx/invocar)
+  if (art('fx/invocar-aro')) this.fx.push({ type: 'pic', key: 'fx/invocar-aro', x: p.x, y: p.y + 0.12, size: 0.95, rot: 0, grow: 0.4, life: 0.45, max: 0.45 });
   if (art('fx/invocar')) this.fx.push({ type: 'pic', key: 'fx/invocar', x: p.x, y: p.y - 0.06, size: 1.05, rot: 0, grow: 0.5, life: 0.5, max: 0.5 });
   else this.addFx('ring', p, UNITS[u.id].color);
   for (var n = 0; n < 6; n++) {
@@ -493,7 +513,8 @@ Board.prototype.spawn = function (kind, hp, opt) {
     speed: (this.geo.len / BASE_CROSS_TIME) * d.speed * (opt.speedMult || 1),
     slowPct: 0, slowT: 0, poison: 0, poisonT: 0, stun: 0, shield: 0, abilityT: 3, dead: false, critT: 0, breakT: 0,
     hitT: 0, kbx: 0, kby: 0,
-    armor: d.armor || 0, dodge: d.dodge || 0
+    armor: d.armor || 0, dodge: d.dodge || 0,
+    barrier: d.barrier ? hp * d.barrier : 0
   };
   var p = this.pos(e.d); e.x = p.x; e.y = p.y;
   this.enemies.push(e);
@@ -505,7 +526,7 @@ Board.prototype.hit = function (e, dmg, unitDef, kind) {
   if (e.dead) return;
   if (e.shield > 0) { this.addText(e.x, e.y - 0.4, 'Bloqueo', '#c9d4e6'); return; }
   var dodge = e.dodge * (this.event === 'niebla' ? 2 : 1);
-  if (dodge && kind !== 'meteor' && Math.random() < dodge) { this.addText(e.x, e.y - 0.4, 'Fallo', '#b6a6ff'); return; }
+  if (dodge && kind !== 'meteor' && kind !== 'ember' && Math.random() < dodge) { this.addText(e.x, e.y - 0.4, 'Fallo', '#b6a6ff'); return; }
   var crit = false;
   if (unitDef && unitDef.crit && Math.random() < unitDef.crit.chance) { dmg *= unitDef.crit.mult; crit = true; }
   else if (unitDef && this.luck && Math.random() < this.luck) { dmg *= 2; crit = true; }
@@ -514,7 +535,24 @@ Board.prototype.hit = function (e, dmg, unitDef, kind) {
   if (cb) dmg *= cb.curseMult;
   if (unitDef && unitDef.bossMult && e.boss) dmg *= unitDef.bossMult;
   if (unitDef && e.boss) dmg *= this.bossDmgMult;
+  if (e.tangleT > 0) dmg *= 1 + e.tanglePct;
   if (!(unitDef && unitDef.pierce)) dmg *= 1 - e.armor;
+  else if (e.armor > 0) {
+    // las que perforan (Titán, Midas) le rompen la armadura para siempre
+    e.armor = 0; e.breakT = 0.55;
+    this.addText(e.x, e.y - 0.55, '¡Armadura rota!', '#c9d4e6');
+  }
+  if (e.barrier > 0) {
+    // escudo de vida: se gasta antes que la vida; al romperse, estalla en luz
+    var soak = Math.min(e.barrier, dmg);
+    e.barrier -= soak; dmg -= soak;
+    if (e.barrier <= 0) {
+      e.barrier = 0;
+      this.fx.push({ type: 'pic', key: 'fx/luz-impacto', x: e.x, y: e.y - 0.15, size: 0.95, rot: 0, grow: 0.4, life: 0.45, max: 0.45 });
+      this.addText(e.x, e.y - 0.6, '¡Escudo roto!', '#ffe08a', true);
+    }
+    if (dmg <= 0) { e.hitT = HIT_TIME; return; }
+  }
   var src = unitDef ? unitDef.id : 'cmd';
   this.dmgBy[src] = (this.dmgBy[src] || 0) + Math.min(dmg, Math.max(0, e.hp));
   e.hp -= dmg;
@@ -525,7 +563,6 @@ Board.prototype.hit = function (e, dmg, unitDef, kind) {
   e.kbx = (e.x - hcx) / hd * 0.05; e.kby = (e.y - hcy) / hd * 0.05;
   if (crit) this.addText(e.x, e.y - 0.5, '¡' + fmtNum(dmg) + '!', GAME_PALETTE.damageRed, true, true);
   if (crit && !(unitDef && unitDef.critPic)) e.critT = 0.55;
-  if (unitDef && unitDef.pierce && e.armor > 0) e.breakT = 0.55;
   if (crit && unitDef && unitDef.critPic) this.fx.push({ type: 'pic', key: unitDef.critPic, x: e.x, y: e.y - 0.3, size: 0.75, rot: 0, grow: 0.4, life: 0.55, max: 0.55 });
   // remate (Seren): un monstruo que no sea jefe y quede por debajo del umbral cae al instante
   if (unitDef && unitDef.execute && !e.boss && e.hp > 0 && e.hp <= e.maxHp * unitDef.execute) {
@@ -600,6 +637,18 @@ Board.prototype.fire = function (i, u) {
     return true;
   }
   this.shots.push({ x: from.x, y: from.y, sx: from.x, sy: from.y, target: target, t: 0, dur: d.proj === 'bullet' ? 0.12 : 0.32, kind: d.proj, color: d.color, color2: d.color2, dmg: this.unitDamage(i), def: d, unit: u });
+  if (d.legion) {
+    // Legión: con muchas tropas en el campo, lanzas también a otros enemigos
+    var nAl = this.allies(i) + 1, taken = {};
+    taken[target.id] = true;
+    d.legion.extra.forEach(function (need) {
+      if (nAl < need) return;
+      var t2 = this.findTarget(d.target, taken);
+      if (!t2) return;
+      taken[t2.id] = true;
+      this.shots.push({ x: from.x, y: from.y, sx: from.x, sy: from.y, target: t2, t: 0, dur: 0.32, kind: d.proj, color: d.color, color2: d.color2, dmg: this.unitDamage(i), def: d, unit: u });
+    }, this);
+  }
   // destello ilustrado en la boca del arma
   if (FX_OF[d.proj]) {
     var mk = 'fx/' + FX_OF[d.proj] + '-destello';
@@ -649,6 +698,33 @@ Board.prototype.applyHit = function (e, dmg, d, u) {
     e.stun = Math.max(e.stun, d.stun.dur);
     e.stunIce = d.element === 'hielo'; // congelado (cubo de hielo) o aturdido (remolino)
     if (d.stunPic) this.fx.push({ type: 'pic', key: d.stunPic, x: e.x, y: e.y, size: 0.8, rot: 0, grow: 0.4, life: 0.6, max: 0.6 });
+  }
+  if (d.tangle) {
+    // Frida: zarzas; el monstruo recibe más daño de todos mientras dure
+    var tp = d.tangle.pct + d.tangle.perRank * (u.rank - 1);
+    e.tanglePct = e.tangleT > 0 ? Math.max(e.tanglePct, tp) : tp;
+    e.tangleT = d.tangle.dur;
+  }
+  if (d.knock && !e.boss && !(e.knockCd > 0)) {
+    // Marea: la ola lo devuelve hacia atrás por el camino
+    e.d = Math.max(0, e.d - (d.knock.dist + d.knock.perRank * (u.rank - 1)));
+    e.knockCd = d.knock.cd;
+    var kp = this.pos(e.d); e.x = kp.x; e.y = kp.y;
+    if (art('fx/marea-tiro')) this.fx.push({ type: 'pic', key: 'fx/marea-tiro', x: e.x, y: e.y, size: 0.7, rot: 0, grow: 0.4, life: 0.4, max: 0.4 });
+  }
+  if (d.embers) {
+    // Pyra: con max ascuas, estalla por un trozo de su vida máxima
+    e.embers = (e.embers || 0) + 1;
+    if (e.embers >= d.embers.max) {
+      e.embers = 0;
+      var burst = e.maxHp * (e.boss ? d.embers.boss : d.embers.pct) * (1 + 0.1 * (u.rank - 1));
+      this.fx.push({ type: 'pic', key: 'fx/pyra-estallido', x: e.x, y: e.y - 0.1, size: 1.0, rot: 0, grow: 0.4, life: 0.5, max: 0.5 });
+      this.addText(e.x, e.y - 0.7, '¡Estallido!', '#ffb347', true);
+      this.enemies.forEach(function (o) {
+        if (o !== e && !o.dead && Math.hypot(o.x - e.x, o.y - e.y) <= 0.9) this.hit(o, burst * d.embers.splash, d, 'ember');
+      }, this);
+      this.hit(e, burst, d, 'ember');
+    }
   }
   if (d.splash) {
     var r = d.splash + 0.06 * u.rank;
@@ -736,6 +812,7 @@ Board.prototype.update = function (dt) {
         var amt = this.addMana(this.manaAmount(u));
         u.atk = 0.5; u.recoil = 1; // pose de ataque y rebote al repartir el maná
         var p = this.cc(i);
+        if (art('fx/ganancia-mana')) this.fx.push({ type: 'pic', key: 'fx/ganancia-mana', x: p.x, y: p.y - 0.2, size: 0.8, rot: 0, grow: 0.45, life: 0.6, max: 0.6 });
         this.addText(p.x, p.y - 0.5, '+' + amt + ' 💧', GAME_PALETTE.manaBlue);
       }
       continue;
@@ -812,6 +889,8 @@ Board.prototype.update = function (dt) {
     if (e.shield > 0) e.shield -= dt;
     if (e.critT > 0) e.critT -= dt;
     if (e.breakT > 0) e.breakT -= dt;
+    if (e.tangleT > 0) e.tangleT -= dt;
+    if (e.knockCd > 0) e.knockCd -= dt;
     if (e.stun > 0) { e.stun -= dt; }
     else e.d += e.speed * evSpeed * (1 - e.slowPct) * (this.guarded() ? SOL_SLOW : 1) * dt;
     var p2 = this.pos(e.d); e.x = p2.x; e.y = p2.y;

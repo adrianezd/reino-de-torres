@@ -316,7 +316,8 @@ function planWave(w) {
   var mix = ['blob', 'blob', 'blob'];
   if (w >= 2) mix.push('imp');
   if (w >= 3) mix.push('brute');
-  if (w >= 4) mix.push('ghost', 'imp');
+  if (w >= 4) mix.push('ghost', 'imp', 'escudado');
+  if (w >= 7) mix.push('escudado');
   if (w >= 3) mix.push('orco');
   if (w >= 5) mix.push('escarcha', 'orco');
   if (w >= 6) mix.push('rocoso');
@@ -868,6 +869,16 @@ function drawAmbient(now) {
    que cualquier forma de pantalla quede rellena con sus colores. */
 var _backdrop = {};
 function drawBackdrop(pic, F) {
+  // tablero sin fondo propio: alrededor, su suelo (F.ground) repetido
+  var gp = F.ground && art(F.ground);
+  if (gp) {
+    var gk = 'ground:' + F.ground, pat = _backdrop[gk];
+    if (!pat) pat = _backdrop[gk] = ctx.createPattern(gp, 'repeat');
+    var gs = Math.max(0.6, layout.w / 700);
+    ctx.save(); ctx.scale(gs, gs); ctx.fillStyle = pat; ctx.fillRect(0, 0, layout.w / gs, layout.h / gs); ctx.restore();
+    ctx.fillStyle = 'rgba(20,40,10,0.18)'; ctx.fillRect(0, 0, layout.w, layout.h);
+    return;
+  }
   var cv = _backdrop[F.image];
   if (!cv) {
     var kx = pic.naturalWidth / F.iw, ky = pic.naturalHeight / F.ih;
@@ -937,6 +948,7 @@ function drawBoard(b, L, now, isMain) {
       // ilustración entera con la zona de juego en su sitio: el marco asoma
       // por arriba, abajo y los lados hasta donde llegue la pantalla
       var upx = F.cw / G.W; // píxeles de la imagen por unidad
+      if (F.road) drawRoad(F, upx);
       ctx.drawImage(pic, -F.cx / upx, -F.cy / upx, F.iw / upx, F.ih / upx);
     } else ctx.drawImage(pic, F.cx * kx, F.cy * ky, F.cw * kx, F.ch * ky, 0, 0, G.W, G.H);
     if (F.fade) {
@@ -1023,6 +1035,14 @@ function drawBoard(b, L, now, isMain) {
     var r = 0.42 * Math.min(G.cw, G.ch) * (1 + u.anim * 0.25), uy = cc2.y - 0.02 - unitLift(b, i, G);
     // al invocar cae y rebota; al fusionar se estira (desde los pies)
     var pose = summonPose(u.drop) || mergePose(u.pop);
+    // aro de notas bajo las tropas que acelera Melodía (assets/fx/acelerar)
+    var acel = art('fx/acelerar');
+    if (acel && UNITS[u.id].dmg && neighbors(i).some(function (j) { var v = b.cells[j]; return v && UNITS[v.id].buff && !(v.frozen > 0); })) {
+      var aw = G.cw * 0.95, ah = aw * acel.naturalHeight / acel.naturalWidth;
+      ctx.save(); ctx.globalAlpha *= 0.5 + 0.15 * Math.sin(now / 260 + i);
+      ctx.drawImage(acel, cc2.x - aw / 2, uy + r * 0.9 - ah * 0.6, aw, ah);
+      ctx.restore();
+    }
     if (pose) {
       var footY = uy + r * 0.9;
       ctx.save();
@@ -1076,10 +1096,10 @@ function drawBoard(b, L, now, isMain) {
     if (f.type === 'bolt') {
       // rayo ilustrado estirado entre los dos puntos (se voltea al azar para
       // que chisporrotee) y un trazo quebrado encima
-      var bim = art('fx/rayo-bola');
+      var cad = art('fx/rayo-cadena'), bim = cad || art('fx/rayo-bola');
       ctx.globalAlpha = f.life / f.max;
       if (bim) {
-        var bl = Math.hypot(f.x2 - f.x1, f.y2 - f.y1), bh = 0.42;
+        var bl = Math.hypot(f.x2 - f.x1, f.y2 - f.y1), bh = cad ? Math.min(0.55, bl * bim.naturalHeight / bim.naturalWidth * 1.4) : 0.42;
         ctx.save(); ctx.translate((f.x1 + f.x2) / 2, (f.y1 + f.y2) / 2); ctx.rotate(Math.atan2(f.y2 - f.y1, f.x2 - f.x1));
         if (Math.random() < 0.5) ctx.scale(1, -1);
         ctx.drawImage(bim, -bl / 2, -bh / 2, bl, bh);
@@ -1135,13 +1155,22 @@ function drawBoard(b, L, now, isMain) {
   // textos en coordenadas de pantalla (nítidos)
   var toS = function (x, y) { return { x: L.ox + x * sc, y: L.oy + y * sc }; };
   ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-  (ally || !meta.settings.dmgNums ? [] : b.enemies).forEach(function (e) {
+  (ally ? [] : b.enemies).forEach(function (e) {
     if (dual && pic && e.y > G.H + 0.1) return; // aún fuera del mapa
     var p = toS(e.x, e.y - (e.boss ? 0.92 : ENEMIES[e.kind].size + 0.16));
     // el número da un saltito al recibir un golpe
     var fs = Math.max(9, sc * (e.boss ? 0.3 : 0.22)) * (1 + 0.3 * (e.hitT > 0 ? e.hitT / HIT_TIME : 0));
+    var txt = fmtNum(e.hp > 0 ? Math.max(1, Math.ceil(e.hp)) : 0), tw = 0;
     // mientras le quede vida nunca pone 0: como mínimo 1 hasta que muere
-    drawOutlinedText(ctx, fmtNum(e.hp > 0 ? Math.max(1, Math.ceil(e.hp)) : 0), p.x, p.y, fs, e.boss ? '#ffd166' : '#ffffff');
+    if (meta.settings.dmgNums) { drawOutlinedText(ctx, txt, p.x, p.y, fs, e.boss ? '#ffd166' : '#ffffff'); tw = ctx.measureText(txt).width; }
+    // a la izquierda del número: placa de armadura y escudo de vida
+    var ix = p.x - tw / 2 - fs * 0.15, is = Math.max(10, fs * 1.05);
+    [[e.armor > 0, 'fx/icono-armadura'], [e.barrier > 0, 'fx/icono-barrera']].forEach(function (q) {
+      var im = q[0] && art(q[1]);
+      if (!im) return;
+      var iw = is * im.naturalWidth / im.naturalHeight;
+      ctx.drawImage(im, ix - iw, p.y - is / 2, iw, is); ix -= iw + 1;
+    });
   });
   if (isMain || sc > 30) {
     b.texts.forEach(function (t) {
@@ -1358,8 +1387,32 @@ function drawAllyPanel(b, G, now) {
    de la boca; F.signs (píxeles de la ilustración, pie de cada cartel) los
    coloca a mano. */
 var SIGN_W = 1.15;
+/* Camino que sigue por fuera del tablero bajo cada puerta (F.road), con la
+   tira de tierra y césped de assets/boards/camino repetida hacia abajo. */
+function drawRoad(F, upx) {
+  var pic = art('boards/camino');
+  if (!pic) return;
+  var r = F.road, w = r.w / upx * pic.naturalWidth / (pic.naturalWidth * 0.4), h = w * pic.naturalHeight / pic.naturalWidth;
+  r.xs.forEach(function (px) {
+    var x = (px - F.cx) / upx - w / 2;
+    for (var y = (r.y - F.cy) / upx; y < (r.y - F.cy) / upx + 12; y += h * 0.98) ctx.drawImage(pic, x, y, w, h);
+  });
+}
+/* Portales de entrada y salida (assets/ui/portal-*) en las dos puertas de los
+   tableros con gates; los que traen los suyos (ownGates) no llevan nada. */
+var PORTAL_W = 1.5;
 function drawPathSigns(G) {
   var w = G.way, F = G.px, upx = F.cw / G.W;
+  if (F.ownGates) return;
+  if (F.gates) {
+    [['entrada', w[0]], ['salida', w[w.length - 1]]].forEach(function (p) {
+      var pic = art('ui/portal-' + p[0]);
+      if (!pic) return;
+      var h = PORTAL_W * pic.naturalHeight / pic.naturalWidth;
+      ctx.drawImage(pic, p[1].x - PORTAL_W / 2, p[1].y + 0.45 - h, PORTAL_W, h);
+    });
+    return;
+  }
   var at = F.signs ? F.signs.map(function (q) { return { x: (q[0] - F.cx) / upx, y: (q[1] - F.cy) / upx }; })
     : [{ x: w[0].x - (F.signOff || 0.7), y: Math.min(w[0].y, G.H - 0.05) }, { x: w[w.length - 1].x + (F.signOff || 0.7), y: Math.min(w[w.length - 1].y, G.H - 0.05) }];
   ['entrada', 'salida'].forEach(function (k, i) {

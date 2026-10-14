@@ -1097,6 +1097,10 @@ function unitTraits(u) {
   if (u.interest) t.push(['💧', 'Intereses', Math.round(u.interest.pct * 100) + '% del maná cada ' + u.interest.every + ' s']);
   if (u.wolves) t.push(['🐺', 'Manada', u.wolves.bites + ' mordiscos por lobo, más con rango']);
   if (u.execute) t.push(['💀', 'Remate', 'Bajo el ' + Math.round(u.execute * 100) + '% cae al instante']);
+  if (u.knock) t.push(['🌊', 'Retroceso', 'Empuja ' + String(u.knock.dist).replace('.', ',') + ' casillas atrás, más con rango']);
+  if (u.tangle) t.push(['🌿', 'Enredo', '+' + Math.round(u.tangle.pct * 100) + '% de daño recibido · ' + u.tangle.dur + ' s']);
+  if (u.embers) t.push(['🔥', 'Ascuas', 'Con ' + u.embers.max + ' estalla: ' + Math.round(u.embers.pct * 100) + '% de su vida']);
+  if (u.legion) t.push(['⚔️', 'Legión', '+' + Math.round(u.legion.per * 100) + '% por cada tropa en el campo']);
   if (u.dmg && !u.wolves) t.push(['🎯', 'Objetivo', u.target === 'strong' ? 'El más fuerte' : 'El primero']);
   return t;
 }

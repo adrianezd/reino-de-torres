@@ -175,9 +175,40 @@ var UNITS = {
     color: '#8a6a4a', color2: '#e8d9b0', skin: '#f0c9a0',
     dmg: 80, rate: 0.28, wolves: { bites: 3, speed: 2.2 }, target: 'first',
     desc: 'No dispara: suelta lobos que recorren el camino al revés y muerden a los monstruos que se cruzan. Con más rango, más mordiscos.'
+  },
+  // knock: la ola empuja hacia atrás por el camino dist casillas (+perRank por
+  // rango); a cada monstruo, como mucho una vez cada cd segundos; a los jefes no
+  marea: {
+    element: 'hielo', name: 'Marea', title: 'Sacerdotisa del Oleaje', role: 'Retroceso', rarity: 'comun',
+    color: '#2f8fe0', color2: '#bfe9ff', skin: '#f3d2b4',
+    dmg: 18, rate: 0.7, proj: 'ice', knock: { dist: 0.5, perRank: 0.15, cd: 3 }, target: 'first',
+    desc: 'Su ola empuja a los monstruos hacia atrás por el camino. A cada uno, como mucho una vez cada 3 segundos; a los jefes no los mueve.'
+  },
+  // tangle: el monstruo enredado recibe pct más daño de todos (+perRank por rango) durante dur segundos
+  frida: {
+    element: 'naturaleza', name: 'Frida', title: 'Druida de Espinas', role: 'Enredo', rarity: 'rara',
+    color: '#5aa83a', color2: '#d4ff7a', skin: '#f0c9a0',
+    dmg: 20, rate: 1.1, proj: 'poison', tangle: { pct: 0.2, perRank: 0.05, dur: 3 }, target: 'first',
+    desc: 'Sus semillas enredan en zarzas al monstruo: durante 3 segundos recibe un 20% más de daño de todas tus tropas, y más con rango.'
+  },
+  // embers: cada golpe deja una ascua; con max, estalla y quita pct de su vida
+  // máxima (boss a los jefes) y splash de ese daño a los de alrededor
+  pyra: {
+    element: 'fuego', name: 'Pyra', title: 'Reina de Ceniza', role: 'Ascuas', rarity: 'mitica', chestOnly: true,
+    color: '#e0541c', color2: '#ffb347', skin: '#f2c49c',
+    dmg: 30, rate: 1.1, proj: 'fire', embers: { max: 5, pct: 0.12, boss: 0.04, splash: 0.5 }, target: 'first',
+    desc: 'Cada golpe deja una ascua. Con 5 ascuas el monstruo estalla y pierde un 12% de su vida máxima (un 4% los jefes), y salpica a los de al lado.'
+  },
+  // legion: +per de daño por cada otra tropa en tu tablero; con extra[0] tropas
+  // o más, cada disparo alcanza a un segundo enemigo, y con extra[1], a un tercero
+  valka: {
+    element: 'metal', name: 'Valka', title: 'General de Acero', role: 'Legión', rarity: 'legendaria', chestOnly: true,
+    color: '#8a9bb5', color2: '#ffd34d', skin: '#f3cfae',
+    dmg: 52, rate: 0.75, proj: 'arrow', legion: { per: 0.07, extra: [6, 10] }, target: 'first',
+    desc: 'Cuantas más tropas tengas en el campo, más fuerte: +7% de daño por cada una, y con 6 o más sus lanzas alcanzan a dos enemigos (con 10, a tres).'
   }
 };
-var UNIT_ORDER = ['lyra', 'brasa', 'nivea', 'doblon', 'rocco', 'volta', 'mirra', 'melodia', 'kaia', 'sombra', 'cronos', 'halcon', 'eco', 'oria', 'ulric', 'fenix', 'aurora', 'titan', 'boreas', 'midas', 'seren', 'garra'];
+var UNIT_ORDER = ['lyra', 'brasa', 'nivea', 'doblon', 'rocco', 'volta', 'mirra', 'melodia', 'kaia', 'sombra', 'cronos', 'halcon', 'eco', 'oria', 'ulric', 'fenix', 'aurora', 'titan', 'boreas', 'midas', 'seren', 'garra', 'marea', 'frida', 'pyra', 'valka'];
 UNIT_ORDER.forEach(function (id) { UNITS[id].id = id; });
 // tropas que pueden usar los rivales y aliados de la máquina
 var AI_UNITS = UNIT_ORDER.filter(function (id) { return !UNITS[id].chestOnly; });
@@ -213,7 +244,9 @@ var ENEMIES = {
   ghost: { name: 'Espectro', color: '#b6a6ff', hp: 0.9, speed: 1.2,  size: 0.3,  reward: 9, dodge: 0.2 },
   orco:  { name: 'Orco',     color: '#7fae3a', hp: 2,   speed: 0.95, size: 0.38, reward: 12 },
   rocoso:   { name: 'Rocoso',            color: '#6b6670', hp: 4.6, speed: 0.48, size: 0.42, reward: 22, armor: 0.4 },
-  escarcha: { name: 'Gólem de escarcha', color: '#7fd6ff', hp: 2.6, speed: 0.8,  size: 0.4,  reward: 16, slowRes: 0.6 }
+  escarcha: { name: 'Gólem de escarcha', color: '#7fd6ff', hp: 2.6, speed: 0.8,  size: 0.4,  reward: 16, slowRes: 0.6 },
+  // barrier: escudo de vida extra (fracción de su vida) que se gasta antes que la vida
+  escudado: { name: 'Ogro escudado',     color: '#9aa4b8', hp: 2.2, speed: 0.8,  size: 0.4,  reward: 16, armor: 0.1, barrier: 0.6 }
 };
 var BOSSES = {
   rey:      { name: 'Rey Gelatina',     color: '#3ea6ff', hp: 26, speed: 0.55, ability: 'split',  desc: 'Al morir se divide en gelatinas.' },
@@ -439,7 +472,8 @@ var AFFINITY_BONUS = 0.12;
 
 // losetas de cada tablero (assets/tiles/<juego>-<n>, de assets/losetas-nuevas.jpg:
 // de las enmarcadas, solo las enteras, con sus dos postes)
-var FIELD_TILES = { prado: { set: 'bosque', n: 6 }, lava2: { set: 'lava', n: 6 }, hielo: { set: 'hielo', n: 2 }, veneno: { set: 'veneno', n: 6 }, roca: { set: 'roca', n: 12 } };
+var FIELD_TILES = { prado: { set: 'bosque', n: 6 }, lava2: { set: 'lava', n: 6 }, hielo: { set: 'hielo', n: 2 }, veneno: { set: 'veneno', n: 6 }, roca: { set: 'roca', n: 12 },
+  prado3: { set: 'blanca', n: 3 }, hielo2: { set: 'escarcha', n: 2 }, lava3: { set: 'magma', n: 2 } };
 var STONE_TILE = 'piedra-1';
 
 /* Casillas especiales del tablero: cambian en cada partida. */

@@ -7,8 +7,23 @@
    La ventana sale sola al entrar con una versión nueva (meta.lastSeenVersion)
    y también desde Opciones.
    ========================================================= */
-var APP_VERSION = '1.22.0';
+var APP_VERSION = '1.23.0';
 var APP_PATCH_NOTES = [
+  {
+    version: '1.23.0',
+    summary: 'Cuatro tropas nuevas, tableros nuevos y monstruos con escudo',
+    items: [
+      'Marea (común, hielo): su ola empuja a los monstruos hacia atrás por el camino.',
+      'Frida (rara, naturaleza): sus zarzas hacen que el monstruo reciba más daño de todas tus tropas durante 3 segundos.',
+      'Pyra (mítica, fuego, solo en cofre): cada golpe deja una ascua y con 5 el monstruo estalla y pierde parte de su vida máxima.',
+      'Valka (legendaria, metal, solo en cofre): cuantas más tropas tengas en el campo, más pega, y con muchas sus lanzas alcanzan a varios enemigos.',
+      'Ígnea estrena dibujo.',
+      'Tres tableros nuevos de prado, hielo y lava, con sus losetas, y portales de entrada y salida en el prado.',
+      'Nuevo Ogro escudado: lleva un escudo de vida dorado que hay que romper antes de hacerle daño.',
+      'Los monstruos con armadura llevan su escudo junto a la vida, y Titán y Midas se la rompen para siempre.',
+      'Efectos nuevos al invocar, al fusionar, en los rayos, el veneno, el fuego, el hielo, el aturdido, el crítico, el maná de Doblón y las tropas que acelera Melodía.'
+    ]
+  },
   {
     version: '1.22.0',
     summary: 'Once tropas redibujadas e interfaz nueva',

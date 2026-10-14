@@ -47,17 +47,18 @@ function star(c, x, y, r, pts) {
 /* ---------- imágenes de los diseños (assets/) ---------- */
 var IMG = {};
 // imágenes redibujadas: llevan ?v= para que no salga la vieja de la caché
-var ASSET_VER = { 'ui/vida': 2, 'icons/gota': 2, 'chests/madera': 2, 'chests/plata': 2, 'chests/oro': 2, 'chests/comandante': 2, 'chests/legendario': 2 };
-['cronos', 'eco', 'garra', 'halcon', 'kaia', 'lyra', 'oria', 'rocco', 'seren', 'sombra', 'titan'].forEach(function (id) { ASSET_VER['units/' + id] = 3; });
+var ASSET_VER = { 'fx/fusion': 2, 'fx/fusion-eco': 2, 'fx/invocar': 2, 'fx/estado-aturdido': 2, 'fx/estado-veneno': 2, 'fx/estado-critico': 2,
+  'fx/veneno-impacto': 2, 'fx/fuego-impacto': 2, 'enemies/coloso2': 2, 'fx/eco-resuena': 2, 'fx/oria-interes': 2, 'ui/vida': 2, 'icons/gota': 2, 'chests/madera': 2, 'chests/plata': 2, 'chests/oro': 2, 'chests/comandante': 2, 'chests/legendario': 2 };
+['cronos', 'eco', 'garra', 'halcon', 'kaia', 'lyra', 'oria', 'rocco', 'seren', 'sombra', 'titan', 'fenix'].forEach(function (id) { ASSET_VER['units/' + id] = 3; });
 function assetV(key) { return ASSET_VER[key] ? '?v=' + ASSET_VER[key] : ''; }
 // tropas sin aura en su casilla
-var NO_CELL_AURA = { eco: true };
+var NO_CELL_AURA = { eco: true, marea: true, frida: true, pyra: true, valka: true };
 var IMG_LIST = {
   units: UNIT_ORDER.filter(function (id) { return !UNITS[id].noArt; }),
-  enemies: ['blob', 'ghost', 'brute', 'orco', 'rocoso', 'escarcha', 'gelido', 'coloso', 'coloso2', 'nigro', 'dragon'],
+  enemies: ['blob', 'ghost', 'brute', 'orco', 'rocoso', 'escarcha', 'escudado', 'gelido', 'coloso', 'coloso2', 'nigro', 'dragon'],
   tiles: ['altar', 'fuente', 'atalaya', 'piedra-1'].concat(Object.keys(FIELD_TILES).reduce(function (a, k) { var t = FIELD_TILES[k]; for (var n = 1; n <= t.n; n++) a.push(t.set + '-' + n); return a; }, [])),
-  boards: ['lava2', 'hielo', 'roca', 'veneno'],
-  ui: ['boton', 'fondo', 'vida', 'cartel-entrada', 'cartel-salida'],
+  boards: ['lava2', 'hielo', 'roca', 'veneno', 'prado3', 'hielo2', 'lava3', 'suelo-prado', 'camino'],
+  ui: ['boton', 'fondo', 'vida', 'cartel-entrada', 'cartel-salida', 'portal-entrada', 'portal-salida'],
   commanders: COMMANDER_ORDER,
   icons: ['estrella', 'gota', 'espadas', 'escudo'],
   chests: ['moneda'], // proyectil de Midas
@@ -171,10 +172,11 @@ var POSES = {
   nivea: { face: -1 }, doblon: { face: 1 }, volta: { face: -1 }, mirra: { face: -1 },
   melodia: { face: 1 }, cronos: { face: 1 }, halcon: { face: 1 }, ulric: { face: 1 },
   fenix: { face: -1 }, aurora: { face: 1 }, titan: { face: -1 }, boreas: { face: 1 }, midas: { face: 1 },
-  kaia: { face: 1 }, seren: { face: 1 }, eco: { face: -1 }, oria: { face: 1 }, garra: { face: 1 }
+  kaia: { face: 1 }, seren: { face: 1 }, eco: { face: -1 }, oria: { face: 1 }, garra: { face: 1 },
+  marea: { face: 1 }, frida: { face: 1 }, pyra: { face: 1 }, valka: { face: 1 }
 };
 // tropas con el arte nuevo (assets/personajes): sus poses llevan otra versión
-var NEW_POSE = { cronos: 1, eco: 1, garra: 1, halcon: 1, kaia: 1, lyra: 1, oria: 1, rocco: 1, seren: 1, sombra: 1, titan: 1 };
+var NEW_POSE = { cronos: 1, eco: 1, garra: 1, halcon: 1, kaia: 1, lyra: 1, oria: 1, rocco: 1, seren: 1, sombra: 1, titan: 1, fenix: 1 };
 var ATK_POSE_TIME = 0.15;
 Object.keys(POSES).forEach(function (id) {
   ['idle', 'attack'].forEach(function (pose) {
@@ -193,21 +195,22 @@ var FX_OF = { fire: 'fuego', ice: 'hielo', poison: 'veneno', bomb: 'canon', arro
   ['destello', 'bola', 'impacto'].forEach(function (part) {
     var im = new Image();
     im.onload = function () { im.ready = true; };
-    im.src = 'assets/fx/' + el + '-' + part + '.webp';
+    im.src = 'assets/fx/' + el + '-' + part + '.webp' + assetV('fx/' + el + '-' + part);
     IMG['fx/' + el + '-' + part] = im;
   });
 });
-['ventisca', 'marea', 'meteoro', 'crater', 'nyx-maldicion', 'nyx-chispas', 'sol-escudo', 'morgana-ensamblaje', 'torvald-forja', 'torvald-carga', 'boreas-ventisca', 'midas-critico', 'eco-resuena', 'fusion-eco', 'oria-interes', 'muerte-puf', 'invocar', 'fusion', 'fusion-doblon', 'mover', 'ralentizado-1', 'ralentizado-2', 'ralentizado-3', 'ralentizado-4', 'ralentizado-5'].concat(Object.keys(ELEMENTS).map(function (el) { return 'conector-' + el; })).forEach(function (k) {
+['ventisca', 'marea', 'meteoro', 'crater', 'nyx-maldicion', 'nyx-chispas', 'sol-escudo', 'morgana-ensamblaje', 'torvald-forja', 'torvald-carga', 'boreas-ventisca', 'midas-critico', 'eco-resuena', 'fusion-eco', 'oria-interes', 'muerte-puf', 'invocar', 'invocar-aro', 'acelerar', 'rayo-cadena', 'congelado-1', 'congelado-2', 'ganancia-mana', 'pyra-estallido', 'icono-armadura', 'icono-barrera', 'fusion', 'fusion-doblon', 'mover', 'ralentizado-1', 'ralentizado-2', 'ralentizado-3', 'ralentizado-4', 'ralentizado-5'].concat(Object.keys(ELEMENTS).map(function (el) { return 'conector-' + el; })).forEach(function (k) {
   var im = new Image();
   im.onload = function () { im.ready = true; };
-  im.src = 'assets/fx/' + k + '.webp' + (k === 'eco-resuena' || k === 'oria-interes' ? '?v=2' : '');
+  im.src = 'assets/fx/' + k + '.webp' + assetV('fx/' + k);
   IMG['fx/' + k] = im;
 });
 /* Proyectil propio de algunas tropas (assets/fx/<tropa>-tiro.webp), por
    encima del de su elemento. Todos miran a la derecha; el engranaje y la
    bomba dan vueltas. */
-var UNIT_SHOT = { lyra: 0.5, kaia: 0.56, halcon: 0.6, seren: 0.46, sombra: 0.52, titan: 0.46, cronos: 0.32, rocco: 0.36 };
-var UNIT_SHOT_SPIN = { cronos: true, rocco: true };
+var UNIT_SHOT = { lyra: 0.5, kaia: 0.56, halcon: 0.6, seren: 0.46, sombra: 0.52, titan: 0.46, cronos: 0.32, rocco: 0.36,
+  marea: 0.42, frida: 0.5, pyra: 0.3, valka: 0.62, fenix: 0.5 };
+var UNIT_SHOT_SPIN = { cronos: true, rocco: true, marea: true, pyra: true };
 Object.keys(UNIT_SHOT).forEach(function (id) {
   var im = new Image();
   im.onload = function () { im.ready = true; };
@@ -221,10 +224,10 @@ var FX_STILL = { 'fx/luz-bola': true };
 /* Estados sobre la cabeza del monstruo (assets/fx/estado-*.webp): congelado
    o aturdido, quemado o envenenado, y un momento el crítico y la armadura
    rota. Si son varios, van en fila. */
-['helado', 'armadura', 'quemado', 'veneno', 'critico', 'aturdido'].forEach(function (k) {
+['helado', 'armadura', 'quemado', 'veneno', 'critico', 'aturdido', 'enredado', 'ascuas'].forEach(function (k) {
   var im = new Image();
   im.onload = function () { im.ready = true; };
-  im.src = 'assets/fx/estado-' + k + '.webp';
+  im.src = 'assets/fx/estado-' + k + '.webp' + assetV('fx/estado-' + k);
   IMG['fx/estado-' + k] = im;
 });
 function drawStatus(c, e, r, now) {
@@ -233,6 +236,8 @@ function drawStatus(c, e, r, now) {
   if (e.poison > 0) list.push(e.poisonBy && UNITS[e.poisonBy] && UNITS[e.poisonBy].element === 'fuego' ? 'quemado' : 'veneno');
   if (e.breakT > 0) list.push('armadura');
   if (e.critT > 0) list.push('critico');
+  if (e.tangleT > 0) list.push('enredado');
+  if (e.embers > 0) list.push('ascuas');
   if (!list.length) return;
   // encima del número de vida (ver drawBoard en battle.js), en unidades del tablero
   var s = e.boss ? 0.52 : 0.42, gap = s * 0.85, x0 = e.x - (list.length - 1) * gap / 2;
@@ -240,7 +245,7 @@ function drawStatus(c, e, r, now) {
   list.forEach(function (k, i) {
     var x = x0 + i * gap, bob = Math.sin(now / 220 + i) * r * 0.05;
     if (k === 'aturdido' && !art('fx/estado-aturdido')) { drawStun(c, x, y, r, now); return; }
-    var pop = k === 'critico' ? 1 + Math.max(0, e.critT - 0.35) * 2.5 : k === 'armadura' ? 1 + Math.max(0, e.breakT - 0.35) * 2.5 : 1;
+    var pop = k === 'critico' ? 1 + Math.max(0, e.critT - 0.35) * 2.5 : k === 'armadura' ? 1 + Math.max(0, e.breakT - 0.35) * 2.5 : k === 'ascuas' ? 0.55 + 0.12 * e.embers : 1;
     if (!drawFxPic(c, 'fx/estado-' + k, x, y + bob, s * pop, k === 'aturdido' ? Math.sin(now / 300) * 0.15 : 0) && k === 'veneno') {
       c.fillStyle = 'rgba(120,255,90,0.85)'; circle(c, x, y, r * 0.18); c.fill();
     }
@@ -354,6 +359,14 @@ function frostAlpha(e) { return 0.12 + 0.2 * Math.min(1, e.slowPct / 0.6); }
    ralentizado-1…5): aplastado para que quede en el suelo, gira despacio y
    se ve más cuanto más frenado va. footY: altura de los pies (ya trasladado). */
 function drawFrostSeal(c, e, r, now, footY) {
+  // congelado del todo: corona de cristales a los pies (assets/fx/congelado-*)
+  var ice = e.stun > 0 && e.stunIce && art(e.boss ? 'fx/congelado-2' : 'fx/congelado-1');
+  if (ice) {
+    var si = r * 2.7, hi = si * ice.naturalHeight / ice.naturalWidth;
+    c.save(); c.globalAlpha = Math.min(1, e.stun * 4);
+    c.drawImage(ice, -si / 2, footY - hi * 0.62, si, hi);
+    c.restore();
+  }
   if (!(e.slowPct > 0)) return;
   var im = art('fx/ralentizado-' + (1 + Math.floor(now / 110 + e.seed * 7) % 5));
   if (!im) return;
@@ -908,6 +921,14 @@ function drawEnemyPic(c, e, r, now, pic) {
   if (e.slowPct > 0) { c.globalAlpha = frostAlpha(e); c.drawImage(silhouette(pic, '#8fe3ff'), -W / 2, r * 0.95 - H - step + float, W, H); }
   if (hk) { c.globalAlpha = 0.85 * hk; c.drawImage(silhouette(pic, '#ffffff'), -W / 2, r * 0.95 - H - step + float, W, H); }
   c.globalAlpha = 1;
+  if (e.barrier > 0) {
+    // escudo de vida: burbuja dorada que late alrededor
+    var by = r * 0.95 - H / 2 - step + float, br = Math.max(W, H) * 0.62;
+    var bg = c.createRadialGradient(0, by, br * 0.55, 0, by, br);
+    bg.addColorStop(0, 'rgba(255,224,120,0)'); bg.addColorStop(0.8, 'rgba(255,214,90,' + (0.3 + 0.12 * Math.sin(now / 200 + e.seed)) + ')'); bg.addColorStop(1, 'rgba(255,240,180,0)');
+    c.fillStyle = bg; circle(c, 0, by, br); c.fill();
+    c.strokeStyle = 'rgba(255,230,140,0.75)'; c.lineWidth = r * 0.06; circle(c, 0, by, br * 0.86); c.stroke();
+  }
   c.restore();
   drawStatus(c, e, r, now);
   if (e.shield > 0) { c.strokeStyle = 'rgba(120,220,255,0.8)'; c.lineWidth = r * 0.12; circle(c, e.x, e.y, r * 1.35); c.stroke(); }
