@@ -248,6 +248,8 @@ var ENEMIES = {
   // barrier: escudo de vida extra (fracción de su vida) que se gasta antes que la vida
   escudado: { name: 'Ogro escudado',     color: '#9aa4b8', hp: 2.2, speed: 0.8,  size: 0.4,  reward: 16, armor: 0.1, barrier: 0.6 }
 };
+// maná de cada baja: el premio del monstruo por este multiplicador (en todos los modos)
+var KILL_MANA_MULT = 1.25;
 var BOSSES = {
   rey:      { name: 'Rey Gelatina',     color: '#3ea6ff', hp: 26, speed: 0.55, ability: 'split',  desc: 'Al morir se divide en gelatinas.' },
   gelido:   { name: 'Señor Gélido',     color: '#8fe3ff', hp: 24, speed: 0.6,  ability: 'freeze', desc: 'Congela tus tropas y llama a gólems de escarcha.' },
@@ -376,7 +378,8 @@ var SHOP_GOLD = [
 /* Códigos de regalo: se canjean una vez cada uno. Se guardan como huella
    SHA-256 del código en mayúsculas y sin espacios (así no se leen en el
    código del juego). Para añadir uno: la huella del texto y su premio.
-   gold / gems: cantidad · chest: tipo de cofre que se abre al canjearlo. */
+   gold / gems: cantidad · chest: tipo de cofre que se abre al canjearlo ·
+   trophies: te deja con al menos esos trofeos. */
 var CODES = {
   '0a53889993db4a2a580275582d42ce3294e95b605e42af39d2ec2c78d88abac9': { gold: 500, gems: 50 },
   '941681e1010f15496320554974d321f276759bb95545d33accede6a0b0def20a': { chest: 'oro' },
@@ -386,7 +389,8 @@ var CODES = {
   '8c4557908504f60bf10af97ea6d82eced9de6ea638a2c86abc43b713adef1a20': { gems: 250 },
   '0c7141e6a68286482ff42b50a2b5e371bf44534c2b05971b91e7e3d9e53e5027': { gems: 500 },
   'e675b0857b3a616cfaea9d3617a21ecaf1a7b3c5b67bb637797f4b3afe1577ee': { gems: 150 },
-  'd814714034eb9e32a223ac0000ffcfffed2fb7d85e0b2a623bb0218c59e33d41': { gold: 400 }
+  'd814714034eb9e32a223ac0000ffcfffed2fb7d85e0b2a623bb0218c59e33d41': { gold: 400 },
+  '30c03231011b471f86480c0e694edca51f52a24e4a4be75522f95d413c7b8120': { trophies: 6000 }
 };
 
 /* Arenas del 1 contra 1: se llega con los trofeos que tienes (at). Cada una
@@ -480,8 +484,19 @@ var STONE_TILE = 'piedra-1';
 var TILES = {
   altar:   { name: 'Altar',   icon: '⚔️', color: '#ff5a6a', desc: '+35% de daño a la tropa que esté encima.', dmg: 0.35 },
   fuente:  { name: 'Fuente',  icon: '💧', color: '#4ecdc4', desc: 'La tropa que esté encima genera 1 de maná por segundo.', mana: 1 },
-  atalaya: { name: 'Atalaya', icon: '🏹', color: '#ffd166', desc: '+30% de velocidad de ataque.', speed: 0.3 }
+  atalaya: { name: 'Atalaya', icon: '🏹', color: '#ffd166', desc: '+30% de velocidad de ataque.', speed: 0.3 },
+  // merge: rangos de más al fusionar encima · crit: probabilidad de golpe doble · splash: zona que se suma
+  vortice:  { name: 'Vórtice',  icon: '🌀', color: '#8a6bff', desc: 'Al fusionar dos tropas encima, la nueva sube un rango más.', merge: 1 },
+  diana:    { name: 'Diana',    icon: '🎯', color: '#ff3b5c', desc: 'La tropa que esté encima tiene un 20% de golpe crítico doble.', crit: 0.2 },
+  semillero: { name: 'Semillero', icon: '💥', color: '#5fdc4a', desc: 'La tropa que esté encima hace daño en zona, o más zona si ya lo hacía.', splash: 0.35 }
 };
+// cada tablero lleva TILE_COUNT casillas especiales distintas, al azar entre todas
+var TILE_COUNT = 3;
+function pickTileTypes(n, rnd, skip) {
+  var all = Object.keys(TILES).filter(function (k) { return !skip || skip.indexOf(k) === -1; });
+  for (var i = all.length - 1; i > 0; i--) { var j = Math.floor((rnd || Math.random)() * (i + 1)), t = all[i]; all[i] = all[j]; all[j] = t; }
+  return all.slice(0, n);
+}
 
 /* Comandantes: habilidad que se carga con el tiempo. power: fuerza a nivel 1
    (aria: segundos de congelación · merlo: maná · brann: daño del meteoro). */

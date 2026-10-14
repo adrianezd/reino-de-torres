@@ -283,7 +283,7 @@ var HELP = [
   ['icons/recolocar', 'Recoloca', 'Arrastra una tropa a otra casilla o sobre otra para intercambiarlas.'],
   ['icons/mejorar', 'Mejora', 'Toca una carta de abajo para mejorar todas las tropas de ese tipo.'],
   ['icons/vecinas', 'Afinidad', 'Cada vecina del mismo elemento da un 12% más de daño.'],
-  ['tiles/altar', 'Casillas especiales', 'Altar: más daño. Fuente: maná. Atalaya: más velocidad.'],
+  ['tiles/altar', 'Casillas especiales', 'Cada tablero trae tres al azar. Altar: más daño. Fuente: maná. Atalaya: más velocidad. Vórtice: la fusión encima sube un rango más. Diana: golpes críticos. Semillero: daño en zona.'],
   ['icons/corona', 'Comandante', 'Cuando su retrato brilla, tócalo para usar su habilidad.'],
   ['icons/rayo', 'Combos', 'Dos fusiones seguidas en menos de 2 segundos dan maná extra.'],
   ['icons/gota', 'Maná', 'Se gana derrotando monstruos, con Doblón, Oria y la Fuente.'],
@@ -463,7 +463,7 @@ function enemyTraits(d, boss) {
   if (d.armor) t.push('Armadura ' + Math.round(d.armor * 100) + '%');
   if (d.dodge) t.push('Esquiva ' + Math.round(d.dodge * 100) + '%');
   if (d.slowRes) t.push('Resiste el frío');
-  if (!boss) t.push('+' + d.reward + ' de maná');
+  if (!boss) t.push('+' + Math.round(d.reward * KILL_MANA_MULT) + ' de maná');
   return t.join(' · ');
 }
 function bestiaryHtml() {
@@ -1504,7 +1504,7 @@ function showCodes() {
     var err = $('codeErr');
     if (!err) return;
     if (r.error) { sfx('no'); buzz(20); err.textContent = r.error; err.hidden = false; return; }
-    var extra = [r.gold ? '+' + r.gold + ' 🪙' : '', r.gems ? '+' + r.gems + ' 💎' : ''].filter(Boolean).join(' · ');
+    var extra = [r.gold ? '+' + r.gold + ' 🪙' : '', r.gems ? '+' + r.gems + ' 💎' : '', r.trophies ? '+' + r.trophies + ' 🏆' : ''].filter(Boolean).join(' · ') || 'Ya tenías esos trofeos';
     if (r.chest) { showChest(r.chest); if (extra) toast('Además: ' + extra); return; }
     sfx('chest');
     openOverlay('<div class="modal-card chest-modal"><div class="chest-ico" style="--cc:#b48bff">🎟️</div><h2>¡Código canjeado!</h2><p class="gold-big">' + extra + '</p><button class="btn btn-green" id="chestOk">¡Genial!</button></div>');

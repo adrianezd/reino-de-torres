@@ -95,7 +95,7 @@ function startBattle(mode, opts) {
     var spots = Array.from({ length: COLS * ROWS }, function (_, i) { return i; });
     for (var si = spots.length - 1; si > 0; si--) { var sj = Math.floor(rng() * (si + 1)), sw = spots[si]; spots[si] = spots[sj]; spots[sj] = sw; }
     player.tiles = {};
-    ['altar', 'fuente', 'atalaya'].forEach(function (t, k) { player.tiles[spots[k]] = t; });
+    pickTileTypes(TILE_COUNT, rng).forEach(function (t, k) { player.tiles[spots[k]] = t; });
   }
   // evento de la semana: más daño a un elemento (no en los retos, que se juegan igual para todos)
   if (!reto) { var wev = weekEvent(); player.elemBonus[wev.el] = (player.elemBonus[wev.el] || 0) + WEEK_BONUS; }
@@ -203,7 +203,8 @@ function applyDuelMod(bd, id) {
   else if (id.indexOf('r_') === 0) { var el = id.slice(2); bd.elemBonus[el] = (bd.elemBonus[el] || 0) + 0.35; }
   else if (id === 'casillas') {
     var spots = shuffleArr(Array.from({ length: COLS * ROWS }, function (_, i) { return i; }).filter(function (i) { return !bd.tiles[i]; }));
-    ['altar', 'fuente', 'atalaya'].forEach(function (t, k) { bd.tiles[spots[k]] = t; });
+    var have = Object.keys(bd.tiles).map(function (k) { return bd.tiles[k]; });
+    pickTileTypes(TILE_COUNT, null, have).forEach(function (t, k) { bd.tiles[spots[k]] = t; });
   }
 }
 // vida de los monstruos según el modificador del duelo
@@ -1469,6 +1470,21 @@ function drawTileIcon(type, x, y, r) {
     ctx.fillRect(x - r * 0.4, y + r * 0.25, r * 0.8, r * 0.14);
   } else if (type === 'fuente') {
     ctx.beginPath(); ctx.moveTo(x, y - r * 0.6); ctx.quadraticCurveTo(x + r * 0.5, y, x, y + r * 0.5); ctx.quadraticCurveTo(x - r * 0.5, y, x, y - r * 0.6); ctx.fill();
+  } else if (type === 'vortice') {
+    // dos aros enlazados
+    ctx.strokeStyle = '#fff'; ctx.lineWidth = r * 0.13;
+    circle(ctx, x - r * 0.2, y, r * 0.32); ctx.stroke(); circle(ctx, x + r * 0.2, y, r * 0.32); ctx.stroke();
+  } else if (type === 'diana') {
+    // punto de mira
+    ctx.strokeStyle = '#fff'; ctx.lineWidth = r * 0.12;
+    circle(ctx, x, y, r * 0.42); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(x - r * 0.62, y); ctx.lineTo(x + r * 0.62, y); ctx.moveTo(x, y - r * 0.62); ctx.lineTo(x, y + r * 0.62); ctx.stroke();
+    circle(ctx, x, y, r * 0.12); ctx.fill();
+  } else if (type === 'semillero') {
+    // ondas que se expanden desde una semilla
+    ctx.strokeStyle = '#fff'; ctx.lineWidth = r * 0.1;
+    circle(ctx, x, y, r * 0.58); ctx.stroke(); circle(ctx, x, y, r * 0.36); ctx.stroke();
+    circle(ctx, x, y, r * 0.15); ctx.fill();
   } else {
     ctx.beginPath(); ctx.moveTo(x - r * 0.45, y + r * 0.45); ctx.lineTo(x + r * 0.35, y - r * 0.35); ctx.lineWidth = r * 0.18; ctx.strokeStyle = '#fff'; ctx.stroke();
     ctx.beginPath(); ctx.moveTo(x + r * 0.5, y - r * 0.5); ctx.lineTo(x + r * 0.05, y - r * 0.4); ctx.lineTo(x + r * 0.4, y - r * 0.05); ctx.closePath(); ctx.fill();

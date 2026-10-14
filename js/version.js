@@ -7,8 +7,19 @@
    La ventana sale sola al entrar con una versión nueva (meta.lastSeenVersion)
    y también desde Opciones.
    ========================================================= */
-var APP_VERSION = '1.23.0';
+var APP_VERSION = '1.24.0';
 var APP_PATCH_NOTES = [
+  {
+    version: '1.24.0',
+    summary: 'Tres casillas especiales nuevas y más maná por baja',
+    items: [
+      'Vórtice: si fusionas dos tropas encima, la nueva sube un rango más.',
+      'Diana: la tropa que esté encima tiene un 20% de golpe crítico doble.',
+      'Semillero: la tropa que esté encima hace daño en zona, o más zona si ya lo hacía.',
+      'Cada tablero trae tres casillas especiales al azar entre las seis.',
+      'Los monstruos dan un 25% más de maná al morir, en todos los modos.'
+    ]
+  },
   {
     version: '1.23.0',
     summary: 'Cuatro tropas nuevas, tableros nuevos y monstruos con escudo',

@@ -141,7 +141,7 @@ function Board(opts) {
   var ft = opts.floorTile || floorTileFor(this.geo.field);
   this.floor = this.cells.map(function () { return ft; });
   var spots = shuffleArr(Array.from({ length: COLS * ROWS }, function (_, i) { return i; }));
-  ['altar', 'fuente', 'atalaya'].forEach(function (t, k) { this.tiles[spots[k]] = t; }, this);
+  pickTileTypes(TILE_COUNT).forEach(function (t, k) { this.tiles[spots[k]] = t; }, this);
   this.enemies = [];
   this.shots = [];
   this.fx = [];
@@ -349,6 +349,8 @@ Board.prototype.merge = function (from, to, start) {
   if (UNITS[v.id].wild && !UNITS[src.id].wild) v.id = src.id;
   v.ecoFx = echo;
   v.rank++;
+  // Vórtice: la fusión encima sube un rango más
+  if (this.tiles[to] === 'vortice' && v.rank < MAX_RANK) { v.rank = Math.min(MAX_RANK, v.rank + TILES.vortice.merge); this.addText(p.x, p.y - 1.05, '¡Vórtice!', '#c9b8ff', true); }
   if (echo && v.rank < MAX_RANK && Math.random() < this.echoChance()) { v.rank++; v.echoed = true; }
   else if (v.rank < MAX_RANK && Math.random() < this.mergeBoost) { v.rank++; v.echoed = true; }
   this.merges++;
@@ -580,7 +582,7 @@ Board.prototype.kill = function (e) {
   e.dead = true;
   this.kills++;
   if (e.boss) this.bossKills++;
-  var raw = Math.round((e.boss ? 100 : ENEMIES[e.kind].reward) * (this.event === 'lluvia' ? 2 : 1) * this.rewardMult);
+  var raw = Math.round((e.boss ? 100 : ENEMIES[e.kind].reward) * KILL_MANA_MULT * (this.event === 'lluvia' ? 2 : 1) * this.rewardMult);
   var reward = this.addMana(raw + this.killBonus);
   // cooperativo: el maná de cada baja es para los dos
   if (this.shareWith) this.shareWith.addMana(raw);
@@ -726,8 +728,14 @@ Board.prototype.applyHit = function (e, dmg, d, u) {
       this.hit(e, burst, d, 'ember');
     }
   }
-  if (d.splash) {
-    var r = d.splash + 0.06 * u.rank;
+  if (at >= 0 && this.tiles[at] === 'diana' && Math.random() < TILES.diana.crit) {
+    // Diana: golpe crítico doble
+    dmg *= 2; e.critT = 0.55;
+    this.addText(e.x, e.y - 0.5, '¡' + fmtNum(dmg) + '!', GAME_PALETTE.damageRed, true, true);
+  }
+  var spl = (d.splash || 0) + (at >= 0 && this.tiles[at] === 'semillero' ? TILES.semillero.splash : 0);
+  if (spl > 0) {
+    var r = spl + 0.06 * u.rank;
     this.enemies.forEach(function (o) {
       if (o !== e && !o.dead && Math.hypot(o.x - e.x, o.y - e.y) <= r) this.hit(o, dmg * 0.6, d, d.proj);
     }, this);
@@ -1044,7 +1052,7 @@ Board.prototype.think = function (dt) {
 // táctica: lleva su mejor tropa de ataque al altar o la atalaya si están libres
 // o tienen una tropa peor encima (como tú, cambia una tropa de sitio)
 Board.prototype.aiReposition = function () {
-  var spots = Object.keys(this.tiles).filter(function (k) { return this.tiles[k] === 'altar' || this.tiles[k] === 'atalaya'; }, this).map(Number);
+  var spots = Object.keys(this.tiles).filter(function (k) { return ['altar', 'atalaya', 'diana', 'semillero'].indexOf(this.tiles[k]) !== -1; }, this).map(Number);
   var score = function (u) { return u && UNITS[u.id].dmg && !UNITS[u.id].wolves ? u.rank : 0; };
   for (var s = 0; s < spots.length; s++) {
     var to = spots[s], here = score(this.cells[to]), from = -1, bv = here;
