@@ -2361,3 +2361,5 @@ x-ico.off { filter: grayscale(1) brightness(0.45); opacity: 0.75; }
 .wh-cost x-ico { width: 1.3em; height: 1.3em; margin: 0 2px 0 0; vertical-align: -0.3em; }
 .wh-prize { display: block; width: 90px; height: 90px; object-fit: contain; margin: 0 auto 6px; animation: popIn 0.4s cubic-bezier(0.3, 1.6, 0.5, 1); }
 .navbar button.has-dot::after { content: ''; position: absolute; top: 6px; right: 22%; width: 12px; height: 12px; border-radius: 50%; background: var(--red); border: 2px solid var(--ink); }
+/* ---------- 1.21.2: cartas del mazo en la colección ---------- */
+.tc-mazo { position: absolute; left: 50%; top: 44%; transform: translateX(-50%); z-index: 2; padding: 1px 7px; border-radius: 999px; white-space: nowrap; font: 400 0.62rem 'Lilita One', sans-serif; color: #fff; background: rgba(47,174,58,0.92); border: 1.5px solid #fff1a8; box-shadow: 0 2px 0 rgba(0,0,0,0.4); }

@@ -911,12 +911,13 @@ function elementFilters() {
   }).join('') + '</div>';
 }
 function collectionGrid() {
-  var rest = function (ids) { return ids.filter(function (id) { return meta.deck.indexOf(id) === -1; }); };
+  // las del mazo también salen en la colección (con su marca de «En el mazo»)
+  var rest = function (ids) { return ids; };
   // las que tienes primero; las no encontradas, debajo (sin cambiar el orden dentro de cada grupo)
   var ownedFirst = function (ids) { ids = rest(ids); return ids.filter(isUnlocked).concat(ids.filter(function (id) { return !isUnlocked(id); })); };
   // de común a legendaria, con la mítica antes que la legendaria (orden de RARITY)
   var byRar = function (a, b) { return RARITY_ORDER.indexOf(UNITS[a].rarity) - RARITY_ORDER.indexOf(UNITS[b].rarity) || UNIT_ORDER.indexOf(a) - UNIT_ORDER.indexOf(b); };
-  var grid = function (ids) { return '<div class="tc-grid">' + ids.map(function (id) { return cardHtml(id); }).join('') + '</div>'; };
+  var grid = function (ids) { return '<div class="tc-grid">' + ids.map(function (id) { return cardHtml(id, true); }).join('') + '</div>'; };
   if (collSort !== 'tipo') {
     var ids = ownedFirst(UNIT_ORDER.filter(function (id) { return collFilter === 'all' || UNITS[id].rarity === collFilter; }).sort(byRar));
     return ids.length ? grid(ids) : '<div class="coll-empty">' + ico('icons/estrella') + '</div>';
@@ -931,13 +932,14 @@ function collectionGrid() {
 /* Carta de tropa: el fondo ilustrado de su rareza (assets/ui/fondo-carta-*),
    su retrato, el nivel en un escudo, el elemento, la barra de cartas y el
    nombre en su placa. Las que aún no tienes, en sombra y con candado. */
-function cardHtml(id) {
+function cardHtml(id, enRejilla) {
   var u = UNITS[id], c = meta.cards[id];
   var head = '<button class="tc r-' + u.rarity + (c ? '' : ' locked') + (c && canUpgradeCard(id) ? ' ready' : '') + '" data-card="' + id + '" style="--rc:' + RARITY[u.rarity].color + '">' +
     '<span class="tc-art"><img src="' + unitIcon(id, 0, 128) + '" alt=""></span>' +
     '<span class="tc-el">' + ELEMENTS[u.element].icon + '</span>';
   if (!c) return head + '<span class="tc-lv lock">' + ico('icons/candado') + '</span><b class="tc-name">' + esc(u.name) + '</b></button>';
   var need = cardsNeeded(c.lv), max = c.lv >= CARD_MAX, pct = max ? 100 : Math.min(100, c.n / need * 100);
+  if (enRejilla && meta.deck.indexOf(id) !== -1) head += '<span class="tc-mazo">En el mazo</span>';
   return head + '<span class="tc-lv">' + c.lv + '</span>' +
     '<span class="tc-bar' + (pct >= 100 ? ' full' : '') + '"><i style="width:' + pct + '%"></i><em>' + (max ? 'MÁX' : c.n + '/' + need) + '</em></span>' +
     '<b class="tc-name">' + esc(u.name) + '</b></button>';

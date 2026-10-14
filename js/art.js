@@ -65,7 +65,7 @@ Object.keys(IMG_LIST).forEach(function (dir) {
   IMG_LIST[dir].forEach(function (id) {
     var im = new Image();
     im.onload = function () { im.ready = true; imgReadyCount++; _unitIconCache = {}; _enemyIconCache = {}; _tintCache = {}; if (window.onArtReady) window.onArtReady(); };
-    im.src = 'assets/' + dir + '/' + id + '.webp' + (dir === 'boards' ? '?v=4' : dir === 'tiles' || dir === 'commanders' ? '?v=2' : '');
+    im.src = 'assets/' + dir + '/' + id + '.webp' + (dir === 'boards' ? '?v=4' : dir === 'tiles' || dir === 'commanders' || dir === 'units' ? '?v=2' : '');
     IMG[dir + '/' + id] = im;
   });
 });
@@ -1014,7 +1014,8 @@ var _unitIconCache = {};
 function unitIcon(id, rank, size) {
   size = size || 128;
   // sin rango: la ficha ilustrada; si la tropa aún no tiene, su retrato dibujado
-  if (!rank && !UNITS[id].noArt) return 'assets/units/' + id + '.webp';
+  // ?v=2: marcos iguales por rareza (raras como Rocco, míticas en rojo, legendarias como Ulric)
+  if (!rank && !UNITS[id].noArt) return 'assets/units/' + id + '.webp?v=2';
   if (!art('units/' + id) && !UNITS[id].noArt) { var tmp = drawIconCanvas(id, rank, size); return tmp; }
   var k = id + '_' + (rank || 0) + '_' + size;
   if (_unitIconCache[k]) return _unitIconCache[k];

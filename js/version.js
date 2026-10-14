@@ -7,8 +7,16 @@
    La ventana sale sola al entrar con una versión nueva (meta.lastSeenVersion)
    y también desde Opciones.
    ========================================================= */
-var APP_VERSION = '1.21.1';
+var APP_VERSION = '1.21.2';
 var APP_PATCH_NOTES = [
+  {
+    version: '1.21.2',
+    summary: 'Marcos por rareza y mazo visible en la colección',
+    items: [
+      'Todas las cartas de una rareza llevan el mismo marco: las raras como Rocco, las épicas como Sombra, las míticas en rojo y las legendarias como Ulric.',
+      'Las cartas de tu mazo también salen en la colección, con la marca En el mazo, ordenes como ordenes.'
+    ]
+  },
   {
     version: '1.21.1',
     summary: 'Ruleta con tirada gratis en la tienda',
