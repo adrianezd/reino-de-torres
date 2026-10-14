@@ -1460,18 +1460,20 @@ function drawShot(s, now) {
   var x = s.x, y = s.y;
   // proyectiles ilustrados: fuego y hielo miran hacia donde van, el frasco
   // gira y la bomba da vueltas despacio
-  var el = FX_OF[s.kind];
-  if (el) {
-    var key = 'fx/' + el + '-bola', rot;
-    if (FX_TURNS[key]) {
+  // si la tropa tiene proyectil propio (UNIT_SHOT), ese en vez del de su elemento
+  var el = FX_OF[s.kind], uid = s.def && s.def.id;
+  var own = uid && UNIT_SHOT[uid] && art('fx/' + uid + '-tiro') ? 'fx/' + uid + '-tiro' : null;
+  if (el || own) {
+    var key = own || 'fx/' + el + '-bola', rot;
+    if (own ? !UNIT_SHOT_SPIN[uid] : FX_TURNS[key]) {
       var px = s.px != null ? s.px : s.sx, py = s.py != null ? s.py : s.sy;
       rot = (Math.abs(x - px) + Math.abs(y - py) > 0.001) ? Math.atan2(y - py, x - px) : Math.atan2(s.target.y - s.sy, s.target.x - s.sx);
-    } else rot = FX_STILL[key] ? 0 : now / (s.kind === 'bomb' ? 260 : 120);
+    } else rot = !own && FX_STILL[key] ? 0 : now / (s.kind === 'bomb' ? 260 : 120);
     s.px = x; s.py = y;
-    var size = SHOT_SIZE[s.kind] || 0.32;
-    if (s.def && s.def.id === 'titan') size *= 1.3;
+    var size = own ? UNIT_SHOT[uid] : SHOT_SIZE[s.kind] || 0.32;
+    if (!own && uid === 'titan') size *= 1.3;
     if (s.kind === 'fire') glow(ctx, x, y, 0.26, '#ff7a1a', 0.45);
-    if (s.kind === 'holy') glow(ctx, x, y, 0.24, '#ffd34d', 0.5);
+    if (s.kind === 'holy') glow(ctx, x, y, 0.24, uid === 'seren' && own ? '#9fc8ff' : '#ffd34d', 0.5);
     if (s.kind === 'shadow') glow(ctx, x, y, 0.2, '#b026ff', 0.4);
     if (drawFxPic(ctx, key, x, y, size, rot)) return;
   }

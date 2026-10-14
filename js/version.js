@@ -7,8 +7,20 @@
    La ventana sale sola al entrar con una versión nueva (meta.lastSeenVersion)
    y también desde Opciones.
    ========================================================= */
-var APP_VERSION = '1.21.2';
+var APP_VERSION = '1.22.0';
 var APP_PATCH_NOTES = [
+  {
+    version: '1.22.0',
+    summary: 'Once tropas redibujadas e interfaz nueva',
+    items: [
+      'Lyra, Kaia, Rocco, Cronos, Halcón, Sombra, Eco, Oria, Seren, Titán y Garra estrenan dibujo: retrato, figura en el tablero y pose de ataque.',
+      'Cada una dispara su propio proyectil: flechas de Lyra y Kaia, bala de Halcón, estrella de Seren, tajo de Sombra, roca de Titán, engranaje de Cronos y bomba de Rocco.',
+      'Eco, Oria y Garra también tienen pose de ataque, Garra suelta lobos nuevos y Eco y Oria tienen efectos nuevos.',
+      'Cofres nuevos, y todos se ven abriéndose antes de dar el premio.',
+      'Fondos del castillo en cada pantalla, barra de recursos y barra de pestañas nuevas, avisos y consejos en pergamino y la cinta roja de la pausa.',
+      'Las cartas que aún no tienes salen en su carta morada y el botón Nuevo reto lleva su espada.'
+    ]
+  },
   {
     version: '1.21.2',
     summary: 'Marcos por rareza y mazo visible en la colección',

@@ -1119,7 +1119,7 @@ x-ico.off { filter: grayscale(1) brightness(0.45); opacity: 0.75; }
 /* hueco de cofre vacío: silueta apagada de un cofre en la piedra */
 .slot.empty::before {
   content: ''; position: absolute; left: 24%; right: 24%; top: 18%; bottom: 30%; pointer-events: none;
-  background: url(assets/chests/madera.webp) center / contain no-repeat;
+  background: url(assets/chests/madera.webp?v=2) center / contain no-repeat;
   filter: grayscale(1) brightness(0.35); opacity: 0.45;
 }
 .slot.empty span { position: relative; }
@@ -2363,3 +2363,113 @@ x-ico.off { filter: grayscale(1) brightness(0.45); opacity: 0.75; }
 .navbar button.has-dot::after { content: ''; position: absolute; top: 6px; right: 22%; width: 12px; height: 12px; border-radius: 50%; background: var(--red); border: 2px solid var(--ink); }
 /* ---------- 1.21.2: cartas del mazo en la colección ---------- */
 .tc-mazo { position: absolute; left: 50%; top: 44%; transform: translateX(-50%); z-index: 2; padding: 1px 7px; border-radius: 999px; white-space: nowrap; font: 400 0.62rem 'Lilita One', sans-serif; color: #fff; background: rgba(47,174,58,0.92); border: 1.5px solid #fff1a8; box-shadow: 0 2px 0 rgba(0,0,0,0.4); }
+
+/* =========================================================
+   Interfaz nueva (assets/new-ui): fondos por pantalla, barra de
+   recursos, barra de pestañas, cinta de título, botón azul, carta
+   por descubrir, cartel de la siguiente fase, paneles de pergamino,
+   separador de secciones, placa de vidas y botón de reto.
+   Las placas van en border-image cortadas en nueve (cifras en
+   píxeles de cada imagen) para que no se deformen al estirarse.
+   ========================================================= */
+body {
+  background:
+    linear-gradient(180deg, rgba(22,32,90,0.12) 0%, rgba(22,32,90,0.5) 34%, rgba(20,28,82,0.9) 62%, rgba(18,26,74,0.97) 100%),
+    url('assets/ui/fondo-2.webp') center top / cover no-repeat,
+    linear-gradient(180deg, var(--bg1), var(--bg2));
+}
+body[data-screen="shop"] { background-image: linear-gradient(180deg, rgba(22,32,90,0.12) 0%, rgba(22,32,90,0.5) 34%, rgba(20,28,82,0.9) 62%, rgba(18,26,74,0.97) 100%), url('assets/ui/fondo-1.webp'), linear-gradient(180deg, var(--bg1), var(--bg2)); }
+body[data-screen="collection"], body[data-screen="commanders"], body[data-screen="friends"] { background-image: linear-gradient(180deg, rgba(22,32,90,0.12) 0%, rgba(22,32,90,0.5) 34%, rgba(20,28,82,0.9) 62%, rgba(18,26,74,0.97) 100%), url('assets/ui/fondo-3.webp'), linear-gradient(180deg, var(--bg1), var(--bg2)); }
+
+/* barra de recursos: placa azul con gemas en los extremos */
+.res-bar {
+  background: none; border-style: solid; border-color: transparent; border-width: 12px 20px;
+  border-image: url(assets/ui/header.webp?v=2) 72 84 fill / 12px 20px stretch;
+  padding: 1px 0 3px;
+}
+
+/* barra de pestañas: tabla de madera con canto dorado */
+.navbar {
+  background: none; padding: 0 2px env(safe-area-inset-bottom);
+  border-style: solid; border-color: transparent; border-width: 16px 20px 10px;
+  border-image: url(assets/ui/navbar.webp?v=2) 80 100 70 fill / 16px 20px 10px stretch;
+}
+
+/* cinta roja de los títulos de pausa y resultados */
+.pause-ribbon::before, .pause-ribbon::after { display: none; }
+.pause-ribbon h2 {
+  padding: 8px 0 22px; border: 0; box-shadow: none;
+  background: url(assets/ui/cinta-titulo.webp) center / 100% 100% no-repeat;
+}
+
+/* botón secundario: placa azul con marco de oro */
+.btn-ghost, .btn-ghost:active {
+  background: none; box-shadow: none; padding: 3px 6px 5px;
+  border-style: solid; border-color: transparent; border-width: 12px 18px;
+  border-image: url(assets/ui/boton-azul.webp) 64 84 fill / 12px 18px stretch;
+  filter: drop-shadow(0 4px 0 rgba(10,12,40,0.5));
+}
+.btn-ghost:active { filter: drop-shadow(0 1px 0 rgba(10,12,40,0.5)); }
+
+/* botón de reto: tabla naranja con la espada a la izquierda */
+.btn-reto {
+  background: none; box-shadow: none; padding: 4px 6px 6px; color: #fff;
+  border-style: solid; border-color: transparent; border-width: 14px 16px 14px 50px;
+  border-image: url(assets/ui/boton-reto.webp) 64 66 64 168 fill / 14px 16px 14px 50px stretch;
+  filter: drop-shadow(0 4px 0 rgba(60,24,0,0.55));
+}
+.btn-reto:active { transform: translateY(3px); filter: drop-shadow(0 1px 0 rgba(60,24,0,0.55)); }
+
+/* carta por descubrir: marco morado con el hueco del retrato */
+.tc.locked {
+  filter: none; border-color: transparent; box-shadow: 0 4px 0 rgba(10,12,40,0.45);
+  background: url(assets/ui/carta-vacia.webp) center / 100% 100% no-repeat;
+}
+.tc.locked .tc-art img { filter: grayscale(1) brightness(0.32) contrast(1.1); opacity: 0.85; }
+
+/* la siguiente fase de la campaña, señalada con el cartel de la flecha */
+.stage.next::after {
+  display: block; content: ''; position: absolute; left: -10px; top: -20px; width: 58px; height: 33px; z-index: 2;
+  background: url(assets/ui/cartel-flecha.webp) center / contain no-repeat; border: 0; border-radius: 0; opacity: 1;
+  filter: drop-shadow(0 2px 0 rgba(0,0,0,0.4)); transform: rotate(-8deg); pointer-events: none;
+}
+
+/* separador dorado entre las secciones de la tienda */
+.sh-head:not(:first-child) { position: relative; margin-top: 34px; }
+.sh-head:not(:first-child)::before {
+  content: ''; position: absolute; left: 0; right: 0; top: -32px; height: 26px; pointer-events: none;
+  background: url(assets/ui/separador.webp) center / contain no-repeat;
+}
+
+/* paneles de pergamino (texto oscuro) */
+.coach {
+  background: none; box-shadow: none; border-radius: 0; padding: 0 6px; color: #3a2410;
+  border: 14px solid transparent; border-image: url(assets/ui/panel-1.webp) 44 fill / 14px stretch;
+  filter: drop-shadow(0 3px 0 rgba(10,12,40,0.45));
+}
+.toast {
+  background: none; border-radius: 0; padding: 2px 8px; color: #3a2410;
+  border: 12px solid transparent; border-image: url(assets/ui/panel-2.webp) 40 fill / 12px stretch;
+  filter: drop-shadow(0 3px 0 rgba(10,12,40,0.45));
+}
+.unit-info {
+  background: none; border-radius: 0; padding: 0 4px; color: #3a2410;
+  border: 14px solid transparent; border-image: url(assets/ui/panel-3.webp) 50 fill / 14px stretch;
+  filter: drop-shadow(0 3px 0 rgba(10,12,40,0.45));
+}
+.unit-info b { color: #3a2410; }
+.unit-info small { color: #6b4a2a; }
+.unit-info .hint { color: #b2470e; }
+.modal-card.patch-notes {
+  background: none; box-shadow: none; border-radius: 0; padding: 0 8px; color: #3a2410;
+  border: 30px solid transparent; border-width: 30px 22px 26px; border-image: url(assets/ui/panel-4.webp) 70 48 60 fill / 30px 22px 26px stretch;
+  filter: drop-shadow(0 6px 0 rgba(10,12,40,0.45));
+}
+.patch-notes .pn-ver { color: #9a4a00; }
+.patch-notes .pn-old { background: rgba(90,60,20,0.12); }
+
+/* placa azul y oro detrás de las vidas en partida */
+.b-top .lives {
+  border-style: solid; border-color: transparent; border-width: 5px 8px;
+  border-image: url(assets/ui/placa-vida.webp) 24 fill / 5px 8px stretch; padding: 1px 4px;
+}

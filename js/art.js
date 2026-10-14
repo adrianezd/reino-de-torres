@@ -46,9 +46,12 @@ function star(c, x, y, r, pts) {
 
 /* ---------- imágenes de los diseños (assets/) ---------- */
 var IMG = {};
-// tropas sin aura en su casilla ni pose de ataque (no disparan)
+// imágenes redibujadas: llevan ?v= para que no salga la vieja de la caché
+var ASSET_VER = { 'ui/vida': 2, 'icons/gota': 2, 'chests/madera': 2, 'chests/plata': 2, 'chests/oro': 2, 'chests/comandante': 2, 'chests/legendario': 2 };
+['cronos', 'eco', 'garra', 'halcon', 'kaia', 'lyra', 'oria', 'rocco', 'seren', 'sombra', 'titan'].forEach(function (id) { ASSET_VER['units/' + id] = 3; });
+function assetV(key) { return ASSET_VER[key] ? '?v=' + ASSET_VER[key] : ''; }
+// tropas sin aura en su casilla
 var NO_CELL_AURA = { eco: true };
-var NO_ATTACK_POSE = { eco: true, oria: true, garra: true };
 var IMG_LIST = {
   units: UNIT_ORDER.filter(function (id) { return !UNITS[id].noArt; }),
   enemies: ['blob', 'ghost', 'brute', 'orco', 'rocoso', 'escarcha', 'gelido', 'coloso', 'coloso2', 'nigro', 'dragon'],
@@ -65,7 +68,7 @@ Object.keys(IMG_LIST).forEach(function (dir) {
   IMG_LIST[dir].forEach(function (id) {
     var im = new Image();
     im.onload = function () { im.ready = true; imgReadyCount++; _unitIconCache = {}; _enemyIconCache = {}; _tintCache = {}; if (window.onArtReady) window.onArtReady(); };
-    im.src = 'assets/' + dir + '/' + id + '.webp' + (dir === 'boards' ? '?v=4' : dir === 'tiles' || dir === 'commanders' || dir === 'units' ? '?v=2' : '');
+    im.src = 'assets/' + dir + '/' + id + '.webp' + (assetV(dir + '/' + id) || (dir === 'boards' ? '?v=4' : dir === 'tiles' || dir === 'commanders' || dir === 'units' ? '?v=2' : ''));
     IMG[dir + '/' + id] = im;
   });
 });
@@ -115,7 +118,7 @@ function art(key) { var im = IMG[key]; return im && im.ready ? im : null; }
 ['garra-lobo', 'garra-lobo-2'].forEach(function (k) {
   var im = new Image();
   im.onload = function () { im.ready = true; };
-  im.src = 'assets/fx/' + k + '.webp';
+  im.src = 'assets/fx/' + k + '.webp?v=2';
   IMG['fx/' + k] = im;
 });
 /* Lobo de Garra corriendo por el camino: w.dir dice hacia dónde mira y
@@ -164,18 +167,20 @@ function drawWolf(c, w) {
    con el mismo encuadre (pies abajo en el centro) para que no salte.
    face: hacia dónde mira la pose de ataque (1 derecha, -1 izquierda). */
 var POSES = {
-  lyra: { face: 1 }, brasa: { face: -1 }, rocco: { face: -1 }, sombra: { face: -1 },
+  lyra: { face: 1 }, brasa: { face: -1 }, rocco: { face: 1 }, sombra: { face: -1 },
   nivea: { face: -1 }, doblon: { face: 1 }, volta: { face: -1 }, mirra: { face: -1 },
-  melodia: { face: 1 }, cronos: { face: -1 }, halcon: { face: 1 }, ulric: { face: 1 },
-  fenix: { face: -1 }, aurora: { face: 1 }, titan: { face: 1 }, boreas: { face: 1 }, midas: { face: 1 },
-  kaia: { face: 1 }, seren: { face: 1 }, eco: { face: 1 }, oria: { face: 1 }, garra: { face: 1 }
+  melodia: { face: 1 }, cronos: { face: 1 }, halcon: { face: 1 }, ulric: { face: 1 },
+  fenix: { face: -1 }, aurora: { face: 1 }, titan: { face: -1 }, boreas: { face: 1 }, midas: { face: 1 },
+  kaia: { face: 1 }, seren: { face: 1 }, eco: { face: -1 }, oria: { face: 1 }, garra: { face: 1 }
 };
+// tropas con el arte nuevo (assets/personajes): sus poses llevan otra versión
+var NEW_POSE = { cronos: 1, eco: 1, garra: 1, halcon: 1, kaia: 1, lyra: 1, oria: 1, rocco: 1, seren: 1, sombra: 1, titan: 1 };
 var ATK_POSE_TIME = 0.15;
 Object.keys(POSES).forEach(function (id) {
-  (NO_ATTACK_POSE[id] ? ['idle'] : ['idle', 'attack']).forEach(function (pose) {
+  ['idle', 'attack'].forEach(function (pose) {
     var im = new Image();
     im.onload = function () { im.ready = true; };
-    im.src = 'assets/units/board/' + id + '-' + pose + '.webp' + (pose === 'idle' ? '?v=3' : '');
+    im.src = 'assets/units/board/' + id + '-' + pose + '.webp' + (NEW_POSE[id] ? (pose === 'idle' ? '?v=4' : '?v=2') : pose === 'idle' ? '?v=3' : '');
     IMG['pose/' + id + '-' + pose] = im;
   });
 });
@@ -195,8 +200,19 @@ var FX_OF = { fire: 'fuego', ice: 'hielo', poison: 'veneno', bomb: 'canon', arro
 ['ventisca', 'marea', 'meteoro', 'crater', 'nyx-maldicion', 'nyx-chispas', 'sol-escudo', 'morgana-ensamblaje', 'torvald-forja', 'torvald-carga', 'boreas-ventisca', 'midas-critico', 'eco-resuena', 'fusion-eco', 'oria-interes', 'muerte-puf', 'invocar', 'fusion', 'fusion-doblon', 'mover', 'ralentizado-1', 'ralentizado-2', 'ralentizado-3', 'ralentizado-4', 'ralentizado-5'].concat(Object.keys(ELEMENTS).map(function (el) { return 'conector-' + el; })).forEach(function (k) {
   var im = new Image();
   im.onload = function () { im.ready = true; };
-  im.src = 'assets/fx/' + k + '.webp';
+  im.src = 'assets/fx/' + k + '.webp' + (k === 'eco-resuena' || k === 'oria-interes' ? '?v=2' : '');
   IMG['fx/' + k] = im;
+});
+/* Proyectil propio de algunas tropas (assets/fx/<tropa>-tiro.webp), por
+   encima del de su elemento. Todos miran a la derecha; el engranaje y la
+   bomba dan vueltas. */
+var UNIT_SHOT = { lyra: 0.5, kaia: 0.56, halcon: 0.6, seren: 0.46, sombra: 0.52, titan: 0.46, cronos: 0.32, rocco: 0.36 };
+var UNIT_SHOT_SPIN = { cronos: true, rocco: true };
+Object.keys(UNIT_SHOT).forEach(function (id) {
+  var im = new Image();
+  im.onload = function () { im.ready = true; };
+  im.src = 'assets/fx/' + id + '-tiro.webp';
+  IMG['fx/' + id + '-tiro'] = im;
 });
 var FX_TURNS = { 'fx/fuego-bola': true, 'fx/hielo-bola': true, 'fx/hielo-destello': true, 'fx/canon-destello': true,
   'fx/flecha-bola': true, 'fx/flecha-destello': true, 'fx/sombra-bola': true, 'fx/bala-bola': true, 'fx/bala-destello': true, 'fx/engranaje-destello': true };
@@ -1014,8 +1030,8 @@ var _unitIconCache = {};
 function unitIcon(id, rank, size) {
   size = size || 128;
   // sin rango: la ficha ilustrada; si la tropa aún no tiene, su retrato dibujado
-  // ?v=2: marcos iguales por rareza (raras como Rocco, míticas en rojo, legendarias como Ulric)
-  if (!rank && !UNITS[id].noArt) return 'assets/units/' + id + '.webp?v=2';
+  // ?v=2: marcos iguales por rareza; ?v=3 (ASSET_VER): retratos nuevos de assets/personajes
+  if (!rank && !UNITS[id].noArt) return 'assets/units/' + id + '.webp' + (assetV('units/' + id) || '?v=2');
   if (!art('units/' + id) && !UNITS[id].noArt) { var tmp = drawIconCanvas(id, rank, size); return tmp; }
   var k = id + '_' + (rank || 0) + '_' + size;
   if (_unitIconCache[k]) return _unitIconCache[k];

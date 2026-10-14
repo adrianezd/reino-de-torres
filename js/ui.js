@@ -23,7 +23,7 @@ var ICON_RE = new RegExp('(' + Object.keys(ICON_FILES).join('|') + ')️?', 'g')
 function starRow(n) { var s = ''; for (var i = 0; i < 3; i++) s += '<x-ico class="' + (i < n ? '' : 'off') + '" style="background-image:url(assets/icons/estrella.webp)"></x-ico>'; return s; }
 // etiqueta propia con la imagen de fondo: así no le afectan las reglas de
 // «img», «span» o «i» de los sitios donde cae (precios, huecos, cartas…)
-function ico(name) { return '<x-ico style="background-image:url(assets/' + name + '.webp)"></x-ico>'; }
+function ico(name) { return '<x-ico style="background-image:url(assets/' + name + '.webp' + assetV(name) + ')"></x-ico>'; }
 function icons(html) { return String(html).replace(ICON_RE, function (m, e) { return ico(ICON_FILES[e]); }); }
 
 /* ---------- sonido sintetizado ---------- */
@@ -73,6 +73,8 @@ function showScreen(name) {
   $('navbar').hidden = name === 'battle';
   if (name === 'battle') renderedScreen = '';
   currentScreen = name;
+  // fondo ilustrado de cada pantalla (ver body[data-screen] en style.css)
+  document.body.dataset.screen = name;
   // pestaña activa de la barra de abajo
   var tab = name === 'shop' ? 'shop' : name === 'collection' || name === 'commanders' ? 'collection' : name === 'friends' ? 'friends' : 'home';
   document.querySelectorAll('[data-tab]').forEach(function (b) { b.classList.toggle('on', b.dataset.tab === tab); });
@@ -497,7 +499,7 @@ function friendsHtml() {
   list = meta.retos.map(function (r, i) { return r.weekly ? '' : retoRowHtml(r, i); }).join('');
   return '<div class="mode-hero reto-hero"><img src="assets/ui/modo-duelo.webp" alt=""><span><b>Reta a tus amigos</b><small>Los mismos monstruos para todos. Gana quien llegue más lejos.</small></span></div>' +
     weekly +
-    '<button class="btn btn-green tn-go" data-newreto="1">Nuevo reto</button>' +
+    '<button class="btn btn-reto tn-go" data-newreto="1">Nuevo reto</button>' +
     (list ? '<h3 class="bst-t">Tus retos</h3>' + list : '<div class="coll-empty">' + ico('icons/diana') + '</div>');
 }
 // pide un nombre antes de compartir (sale en el enlace)
@@ -573,7 +575,7 @@ var wheelAngle = 0, wheelBusy = false;
 function wheelPrizeLook(p) {
   if (p.chest) return { pic: chestPic(p.chest), txt: p.chest.charAt(0).toUpperCase() + p.chest.slice(1) };
   if (p.cards) return { pic: 'assets/ui/fondo-carta-' + p.cards + '.webp', txt: '×' + p.n + ' ' + RARITY[p.cards].name.toLowerCase() };
-  if (p.cmd) return { pic: 'assets/chests/comandante.webp', txt: '×' + p.cmd + ' cmd' };
+  if (p.cmd) return { pic: chestPic('comandante'), txt: '×' + p.cmd + ' cmd' };
   if (p.gems) return { pic: 'assets/icons/gema.webp', txt: String(p.gems) };
   return { pic: 'assets/icons/moneda.webp', txt: String(p.gold) };
 }
@@ -1525,7 +1527,8 @@ function unitNewHtml(r) {
    destello girando detrás y sube al centro de arriba. Reparto: primero el oro
    y luego las cartas una a una (de común a legendaria), con las que quedan en
    el cofre. Al final, el resumen. */
-function chestPic(type, open) { return 'assets/chests/' + type + (open ? '-abierto' : '') + '.webp'; }
+// ?v=2: cofres nuevos de assets/new-ui
+function chestPic(type, open) { return 'assets/chests/' + type + (open ? '-abierto' : '') + '.webp?v=2'; }
 var chestFxOn = false;
 var RARITY_RANK = ['comun', 'rara', 'epica', 'mitica', 'legendaria'];
 
@@ -1880,10 +1883,10 @@ function buildBattleHud() {
 var _hud = {};
 function setTxt(id, v) { if (_hud[id] === v) return; _hud[id] = v; var e = $(id); if (e) e.textContent = v; }
 function setHtml(id, v) { if (_hud[id] === v) return; _hud[id] = v; var e = $(id); if (e) e.innerHTML = icons(v); }
-var MANA_ICO = '<img class="mi" src="assets/icons/gota.webp" alt="maná">';
+var MANA_ICO = '<img class="mi" src="assets/icons/gota.webp?v=2" alt="maná">';
 function heartsHtml(l) {
   var s = '';
-  for (var i = 0; i < l.max; i++) s += '<img class="heart' + (i < l.v ? '' : ' lost') + '" src="assets/ui/vida.webp" alt="">';
+  for (var i = 0; i < l.max; i++) s += '<img class="heart' + (i < l.v ? '' : ' lost') + '" src="assets/ui/vida.webp?v=2" alt="">';
   return s;
 }
 function updateHud(force) {

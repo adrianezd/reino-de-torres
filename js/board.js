@@ -761,6 +761,11 @@ Board.prototype.update = function (dt) {
       u.gen += dt;
       if (u.gen >= 2.4) { u.gen = 0; u.atk = 0.5; u.recoil = 1; }
     }
+    if (d.wild) {
+      // Eco ensaya su hechizo de cristales de vez en cuando
+      u.gen += dt;
+      if (u.gen >= 5) { u.gen = 0; u.atk = 0.6; u.recoil = 1; }
+    }
     if (!d.dmg) continue;
     u.cd -= dt * d.rate * this.unitSpeed(i) * (1 + 0.06 * (u.rank - 1));
     if (u.cd <= 0) {

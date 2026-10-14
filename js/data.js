@@ -293,11 +293,12 @@ var CHESTS = {
     types: { comun: 2, rara: 2, epica: 1, mitica: 1, legendaria: 1 }, cmdChance: 0.5, cmdCards: 4 },
   // de comandante: muchas cartas, todas de un mismo comandante al azar (cmd: true)
   // legendario: solo en la tienda; una carta legendaria al azar y nada más.
-  // mid: imagen del cofre abriéndose, entre el cerrado y el abierto
-  legendario: { name: 'Cofre legendario', gold: [0, 0], gems: [0, 0], cards: 1, legendOnly: true, mid: 'assets/chests/legendario-abriendo.webp', rare: 0, epic: 0, legend: 1, myth: 0, color: '#3fd0ff', price: 500, time: 10800 },
+  legendario: { name: 'Cofre legendario', gold: [0, 0], gems: [0, 0], cards: 1, legendOnly: true, rare: 0, epic: 0, legend: 1, myth: 0, color: '#3fd0ff', price: 500, time: 10800 },
   comandante: { name: 'Cofre de comandante', gold: [30, 60], gems: [0, 1], cards: 10, cmd: true, rare: 0, epic: 0, legend: 0, myth: 0, color: '#a35bff', price: 60, time: 7200 }
 };
 var CHEST_ORDER = ['madera', 'plata', 'oro', 'comandante', 'legendario'];
+// todos los cofres tienen su imagen abriéndose (assets/chests/<tipo>-abriendo)
+CHEST_ORDER.forEach(function (k) { CHESTS[k].mid = 'assets/chests/' + k + '-abriendo.webp?v=2'; });
 /* Garantía del cofre de oro: si llevas PITY_GOLD cofres de oro seguidos sin
    ninguna mítica ni legendaria, el siguiente trae una mítica segura
    (meta.pity cuenta los que van sin ninguna). */
@@ -584,7 +585,7 @@ var WAVE_EVENTS = [
    modificador para los dos (DUEL_MODS) y el jefe final de la partida, que sale
    en todas sus oleadas de jefe. El torneo no lleva ruleta. */
 var DUEL_MODS = [
-  { id: 'mana2',     name: 'Doble de maná',  pic: 'assets/icons/gota.webp',     desc: 'Empezáis con el doble y todo el maná que ganáis vale el doble.' },
+  { id: 'mana2',     name: 'Doble de maná',  pic: 'assets/icons/gota.webp?v=2',     desc: 'Empezáis con el doble y todo el maná que ganáis vale el doble.' },
   { id: 'rebajas',   name: 'Mejoras a mitad', pic: 'assets/icons/mejorar.webp', desc: 'Mejorar tropas en la partida cuesta la mitad.' },
   { id: 'veteranos', name: 'Veteranos',      pic: 'assets/icons/estrella.webp', desc: 'Cada tropa invocada tiene un 25% de salir con rango 2.' },
   { id: 'carga',     name: 'Carga rápida',   pic: 'assets/icons/rapido.webp',   desc: 'Los comandantes se cargan el doble de rápido.' },
@@ -607,7 +608,7 @@ var DUEL_MODS = [
   { id: 'r_arcano',     relic: 'arcano',     name: 'Orbe arcano',        pic: 'assets/icons/arcano.webp',    desc: 'Las tropas arcanas hacen un 35% más de daño.' },
   { id: 'r_metal',      relic: 'metal',      name: 'Engranaje dorado',   pic: 'assets/icons/engranaje.webp', desc: 'Las tropas de metal hacen un 35% más de daño.' },
   { id: 'r_suerte',     relic: true,         name: 'Trébol de la suerte', pic: 'assets/icons/critico.webp',  desc: 'Todas las tropas tienen un 10% de golpe crítico doble.' },
-  { id: 'r_caliz',      relic: true,         name: 'Cáliz de vida',      pic: 'assets/ui/vida.webp',         desc: 'Cada jefe derrotado devuelve una vida.' }
+  { id: 'r_caliz',      relic: true,         name: 'Cáliz de vida',      pic: 'assets/ui/vida.webp?v=2',         desc: 'Cada jefe derrotado devuelve una vida.' }
 ];
 /* Habilidades de comandante que se pueden elegir como ventaja en el roguelike. */
 var CMD_SKILLS = {
