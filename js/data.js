@@ -539,7 +539,7 @@ var COMMANDERS = {
   torvald: { name: 'Torvald', title: 'Viejo Maestro', color: '#ff7a3c', icon: '🧮', locked: true, pic: 'assets/commanders/torvald.webp?v=3', hero: 1, ability: 'Forja', desc: 'Eliges una tropa y sube un rango, hasta el 5.', power: 1, cd: 90, grow: 0.6 }
 };
 var COMMANDER_ORDER = ['aria', 'merlo', 'brann', 'nyx', 'sol', 'morgana', 'torvald'];
-COMMANDER_ORDER.forEach(function (k) { var c = COMMANDERS[k]; c.body = c.gen ? '' : 'assets/commanders/' + k + '-cuerpo.webp?v=' + (k === 'brann' || k === 'merlo' ? 5 : 4); });
+COMMANDER_ORDER.forEach(function (k) { var c = COMMANDERS[k]; c.body = c.gen ? '' : 'assets/commanders/' + k + '-cuerpo.webp?v=6'; });
 // niveles de comandante: cada nivel, +CMD_BONUS de fuerza en su habilidad.
 // Sus cartas salen solo en el cofre de comandante (pocas), por eso piden menos.
 // Del 11 al 25 cada nivel da menos (CMD_BONUS_HIGH) y pide bastante más.

@@ -74,7 +74,10 @@ var FIELDS = {
     gx0: 340, gy0: 218, gx1: 908, gy1: 515,
     way: [[175, 668], [195, 600], [205, 300], [235, 170], [320, 140], [930, 140], [1020, 170], [1045, 260], [1050, 560], [1052, 668]] },
   // tableros con sus casillas ya dibujadas (assets/tablero-estelar*, roca-2 y
-  // veneno-2): ownTiles, sin losetas encima; sin portales (taparían la fila de abajo)
+  // veneno-2): ownTiles, sin losetas encima; sin portales (taparían la fila de abajo).
+  // veneno2 sí los lleva, pequeños (portalW) en las esquinas de abajo del anillo;
+  // slabs: dónde está cada losa dibujada (x y y en px), para que la especial
+  // la tape justa; mobScale: monstruos algo más pequeños, que el camino es estrecho
   estelar: { image: 'boards/estelar', iw: 1024, ih: 559, cx: 35, cy: 52, cw: 940, ch: 450, portal: true, over: true, ownGates: true, ownTiles: true, frame: [0, 0, 1024, 559],
     gx0: 268, gy0: 165, gx1: 757, gy1: 380,
     way: [[105, 445], [195, 420], [195, 122], [850, 122], [850, 420], [905, 462]] },
@@ -84,9 +87,10 @@ var FIELDS = {
   roca2: { image: 'boards/roca2', iw: 1248, ih: 832, cx: 148, cy: 114, cw: 972, ch: 718, portal: true, over: true, ownGates: true, ownTiles: true, frame: [0, 0, 1248, 832],
     gx0: 315, gy0: 222, gx1: 935, gy1: 535,
     way: [[232, 830], [222, 650], [218, 184], [1045, 184], [1050, 650], [965, 830]] },
-  veneno2: { image: 'boards/veneno2', iw: 1248, ih: 832, cx: 128, cy: 105, cw: 1002, ch: 563, portal: true, over: true, ownGates: true, ownTiles: true, frame: [0, 0, 1248, 832],
+  veneno2: { image: 'boards/veneno2', iw: 1248, ih: 832, cx: 128, cy: 105, cw: 1002, ch: 563, portal: true, over: true, gates: true, portalW: 1.15, ownTiles: true, mobScale: 0.8, frame: [0, 0, 1248, 832],
     gx0: 245, gy0: 210, gx1: 1000, gy1: 578,
-    way: [[330, 628], [200, 615], [198, 175], [1058, 175], [1060, 615], [930, 628]] }
+    slabs: { xs: [[252, 393], [404, 543], [554, 691], [701, 842], [849, 993]], ys: [[213, 318], [328, 436], [447, 562]] },
+    way: [[192, 660], [200, 615], [198, 175], [1058, 175], [1060, 615], [1066, 660]] }
 };
 // con varios tableros para un bioma se elige uno al azar en cada partida
 var BIOME_FIELD = { prado: ['prado', 'prado3'], bosque: ['prado', 'prado3'], pantano: ['veneno', 'veneno2'], hielo: ['hielo', 'hielo2'], ruinas: ['roca', 'roca2'], desierto: ['roca', 'roca2'], volcan: ['lava2', 'lava3'], cripta: ['estelar', 'estelar2'] };

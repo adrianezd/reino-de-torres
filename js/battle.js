@@ -1083,7 +1083,7 @@ function drawBoard(b, L, now, isMain) {
     var grow = G.image && !G.px.portal ? 1 : Math.min(1, 0.25 + e.d / 0.5);
     if (G.image && G.px.portal) grow = Math.min(grow, 0.25 + (G.len - e.d) / 0.5);
     if (grow < 1) ctx.globalAlpha = grow;
-    drawEnemy(ctx, e, (e.boss ? 0.42 : d.size) * (G.image ? 0.82 : 1) * grow, now);
+    drawEnemy(ctx, e, (e.boss ? 0.42 : d.size) * (G.image ? 0.82 * (G.px.mobScale || 1) : 1) * grow, now);
     ctx.globalAlpha = 1;
   });
   // Escudo divino de Sol: esfera de luz tapando la salida mientras dure
@@ -1365,7 +1365,12 @@ function drawTileFloor(type, cc, G, i, now, b) {
     r = { x: fr.x + bx.x0 * fr.w, y: fr.y + bx.y0 * fr.h, w: (bx.x1 - bx.x0) * fr.w, h: (bx.y1 - bx.y0) * fr.h };
   } else if (b && b.floor && b.floor[i] === 'none') {
     // casilla ya dibujada en el tablero: la losa especial la cubre entera
-    r = { x: cc.x - G.cw * 0.46, y: cc.y - G.ch * 0.46, w: G.cw * 0.92, h: G.ch * 0.92 };
+    // (justo encima de la dibujada si el tablero dice dónde está cada una)
+    var sl = G.px && G.px.slabs;
+    if (sl) {
+      var F = G.px, cell = (F.gx1 - F.gx0) / COLS, sx = sl.xs[i % COLS], sy = sl.ys[Math.floor(i / COLS)];
+      r = { x: (sx[0] - F.cx) / cell, y: (sy[0] - F.cy) / cell, w: (sx[1] - sx[0]) / cell, h: (sy[1] - sy[0]) / cell };
+    } else r = { x: cc.x - G.cw * 0.46, y: cc.y - G.ch * 0.46, w: G.cw * 0.92, h: G.ch * 0.92 };
   } else r = { x: cc.x - s * 0.485, y: cc.y - s * 0.485, w: s * 0.97, h: s * 0.97 };
   if (pic) {
     glow(ctx, r.x + r.w / 2, r.y + r.h / 2, s * 0.55, t.color, 0.22 + pulse * 0.1);
@@ -1429,8 +1434,8 @@ function drawPathSigns(G) {
     [['entrada', w[0]], ['salida', w[w.length - 1]]].forEach(function (p) {
       var pic = art('ui/portal-' + p[0]);
       if (!pic) return;
-      var h = PORTAL_W * pic.naturalHeight / pic.naturalWidth;
-      ctx.drawImage(pic, p[1].x - PORTAL_W / 2, p[1].y + 0.45 - h, PORTAL_W, h);
+      var pw = F.portalW || PORTAL_W, h = pw * pic.naturalHeight / pic.naturalWidth;
+      ctx.drawImage(pic, p[1].x - pw / 2, p[1].y + 0.45 - h, pw, h);
     });
     return;
   }

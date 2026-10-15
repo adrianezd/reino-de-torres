@@ -7,8 +7,17 @@
    La ventana sale sola al entrar con una versión nueva (meta.lastSeenVersion)
    y también desde Opciones.
    ========================================================= */
-var APP_VERSION = '1.31.2';
+var APP_VERSION = '1.31.3';
 var APP_PATCH_NOTES = [
+  {
+    version: '1.31.3',
+    summary: 'Comandantes bien recortados y Pantano con portales',
+    items: [
+      'Los siete comandantes, recortados de nuevo: Aria ya sale entera, Merlo sin manchas blancas, Brann centrado y Sol y Torvald sin huecos.',
+      'En el Pantano Tóxico se ven el portal de entrada y el de salida, los monstruos son algo más pequeños y las casillas especiales encajan en su losa.',
+      'En el móvil, la barra de cartas de cada tropa ya no queda tapada por su nombre.'
+    ]
+  },
   {
     version: '1.31.2',
     summary: 'Brann y Merlo retocados',
