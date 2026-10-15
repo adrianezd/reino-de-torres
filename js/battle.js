@@ -1361,7 +1361,10 @@ function drawTileFloor(type, cc, G, i, now, b) {
   // transparentes, para no meterse en las de al lado); si no, donde va la de piedra
   var r;
   if (fr) {
-    var bx = opaqueBox(fr.pic);
+    // si el juego de losetas dice dónde está su cara de arriba (face), solo ahí,
+    // para que se siga viendo el canto de la loseta alrededor
+    var face = G.field && FIELD_TILES[G.field] && FIELD_TILES[G.field].face;
+    var bx = face ? { x0: face[0], y0: face[1], x1: face[2], y1: face[3] } : opaqueBox(fr.pic);
     r = { x: fr.x + bx.x0 * fr.w, y: fr.y + bx.y0 * fr.h, w: (bx.x1 - bx.x0) * fr.w, h: (bx.y1 - bx.y0) * fr.h };
   } else if (b && b.floor && b.floor[i] === 'none') {
     // casilla ya dibujada en el tablero: la losa especial la cubre entera

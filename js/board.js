@@ -90,6 +90,12 @@ var FIELDS = {
   estelar2: { image: 'boards/estelar2', iw: 1248, ih: 832, cx: 65, cy: 65, cw: 1115, ch: 675, portal: true, over: true, ownGates: true, ownTiles: true, frame: [0, 0, 1248, 832],
     gx0: 272, gy0: 188, gx1: 988, gy1: 582,
     way: [[135, 700], [175, 620], [175, 135], [1105, 135], [1105, 620], [1110, 700]] },
+  // magico (assets/tablero-magico-2.jpg): el estelar2 redibujado, con sus
+  // portales de estrella en las esquinas de abajo y el camino entre las dos líneas doradas
+  magico: { image: 'boards/magico', iw: 1248, ih: 832, cx: 120, cy: 100, cw: 1010, ch: 640, portal: true, over: true, ownGates: true, ownTiles: true, mobScale: 0.85, frame: [0, 0, 1248, 832],
+    gx0: 267, gy0: 215, gx1: 979, gy1: 590,
+    slabs: { xs: [[271, 406], [415, 549], [557, 689], [698, 831], [840, 974]], ys: [[217, 332], [338, 458], [463, 586]] },
+    way: [[190, 664], [184, 610], [184, 173], [1064, 173], [1064, 610], [1058, 660]] },
   roca2: { image: 'boards/roca2', iw: 1248, ih: 832, cx: 148, cy: 114, cw: 972, ch: 718, portal: true, over: true, ownGates: true, ownTiles: true, frame: [0, 0, 1248, 832],
     gx0: 315, gy0: 222, gx1: 935, gy1: 535,
     way: [[232, 830], [222, 650], [218, 184], [1045, 184], [1050, 650], [965, 830]] },
@@ -99,11 +105,11 @@ var FIELDS = {
     way: [[192, 660], [200, 615], [198, 175], [1058, 175], [1060, 615], [1066, 660]] }
 };
 // con varios tableros para un bioma se elige uno al azar en cada partida
-var BIOME_FIELD = { prado: ['prado', 'prado3'], bosque: ['prado', 'prado3'], pantano: ['veneno', 'veneno2'], hielo: ['hielo', 'hielo2'], ruinas: ['roca', 'roca2'], desierto: ['roca', 'roca2'], volcan: ['lava2', 'lava4'], cripta: ['estelar', 'estelar2'] };
+var BIOME_FIELD = { prado: ['prado', 'prado3'], bosque: ['prado', 'prado3'], pantano: ['veneno', 'veneno2'], hielo: ['hielo', 'hielo2'], ruinas: ['roca', 'roca2'], desierto: ['roca', 'roca2'], volcan: ['lava2', 'lava4'], cripta: ['estelar', 'magico'] };
 // de momento solo se juega en los tableros nuevos: cada uno viejo se cambia
 // por el nuevo que más se le parece
-var NEW_FIELDS = ['prado3', 'hielo2', 'lava4', 'roca2', 'veneno2', 'estelar', 'estelar2'];
-var NEW_FIELD_OF = { prado: 'prado3', veneno: 'veneno2', hielo: 'hielo2', roca: 'roca2', lava2: 'lava4', lava3: 'lava4' };
+var NEW_FIELDS = ['prado3', 'hielo2', 'lava4', 'roca2', 'veneno2', 'estelar', 'magico'];
+var NEW_FIELD_OF = { prado: 'prado3', veneno: 'veneno2', hielo: 'hielo2', roca: 'roca2', lava2: 'lava4', lava3: 'lava4', estelar2: 'magico' };
 function onlyNewFields(list) {
   var out = [];
   list.forEach(function (f) { f = NEW_FIELD_OF[f] || f; if (NEW_FIELDS.indexOf(f) !== -1 && out.indexOf(f) === -1) out.push(f); });

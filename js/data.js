@@ -501,7 +501,7 @@ var AFFINITY_BONUS = 0.12;
 // losetas de cada tablero (assets/tiles/<juego>-<n>, de assets/losetas-nuevas.jpg:
 // de las enmarcadas, solo las enteras, con sus dos postes)
 var FIELD_TILES = { prado: { set: 'bosque', n: 6 }, lava2: { set: 'lava', n: 6 }, hielo: { set: 'hielo', n: 2 }, veneno: { set: 'veneno', n: 6 }, roca: { set: 'roca', n: 12 },
-  prado3: { set: 'blanca', n: 3 }, hielo2: { set: 'escarcha', n: 2 }, lava3: { set: 'magma', n: 2 } };
+  prado3: { set: 'blanca', n: 3 }, hielo2: { set: 'escarcha', n: 2, face: [0.04, 0.04, 0.94, 0.83] }, lava3: { set: 'magma', n: 2 } };
 var STONE_TILE = 'piedra-1';
 
 /* Casillas especiales del tablero: cambian en cada partida. */

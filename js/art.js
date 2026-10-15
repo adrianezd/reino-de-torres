@@ -68,7 +68,7 @@ var IMG_LIST = {
   units: UNIT_ORDER.filter(function (id) { return !UNITS[id].noArt; }),
   enemies: ['blob', 'ghost', 'brute', 'orco', 'rocoso', 'escarcha', 'escudado', 'gelido', 'coloso', 'coloso2', 'nigro', 'dragon'],
   tiles: ['altar', 'fuente', 'atalaya', 'vortice', 'diana', 'piedra-1'].concat(Object.keys(FIELD_TILES).reduce(function (a, k) { var t = FIELD_TILES[k]; for (var n = 1; n <= t.n; n++) a.push(t.set + '-' + n); return a; }, [])),
-  boards: ['lava2', 'hielo', 'roca', 'veneno', 'prado3', 'hielo2', 'lava4', 'roca2', 'veneno2', 'estelar', 'estelar2', 'suelo-prado', 'camino'],
+  boards: ['lava2', 'hielo', 'roca', 'veneno', 'prado3', 'hielo2', 'lava4', 'roca2', 'veneno2', 'estelar', 'magico', 'suelo-prado', 'camino'],
   ui: ['boton', 'fondo', 'vida', 'cartel-entrada', 'cartel-salida', 'portal-entrada', 'portal-salida'],
   commanders: COMMANDER_ORDER,
   icons: ['estrella', 'gota', 'espadas', 'escudo'],

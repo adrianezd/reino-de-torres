@@ -7,8 +7,16 @@
    La ventana sale sola al entrar con una versión nueva (meta.lastSeenVersion)
    y también desde Opciones.
    ========================================================= */
-var APP_VERSION = '1.31.4';
+var APP_VERSION = '1.31.5';
 var APP_PATCH_NOTES = [
+  {
+    version: '1.31.5',
+    summary: 'Tablero mágico nuevo y hielo retocado',
+    items: [
+      'Las fases de cripta estrenan tablero mágico: losas de cielo estrellado, camino entre líneas doradas y portales de estrella.',
+      'En el tablero de hielo, las casillas especiales encajan dentro de su losa y se sigue viendo el hielo alrededor.'
+    ]
+  },
   {
     version: '1.31.4',
     summary: 'Tablero de lava nuevo',
