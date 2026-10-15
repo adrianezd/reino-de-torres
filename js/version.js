@@ -7,8 +7,15 @@
    La ventana sale sola al entrar con una versión nueva (meta.lastSeenVersion)
    y también desde Opciones.
    ========================================================= */
-var APP_VERSION = '1.31.3';
+var APP_VERSION = '1.31.4';
 var APP_PATCH_NOTES = [
+  {
+    version: '1.31.4',
+    summary: 'Tablero de lava nuevo',
+    items: [
+      'El Río de Lava y las fases de volcán estrenan tablero: losas con vetas de magma, camino de adoquines por fuera y dos arcos de runas como entrada y salida.'
+    ]
+  },
   {
     version: '1.31.3',
     summary: 'Comandantes bien recortados y Pantano con portales',

@@ -73,6 +73,12 @@ var FIELDS = {
   lava3: { image: 'boards/lava3', iw: 1248, ih: 832, cx: 90, cy: 60, cw: 1070, ch: 700, portal: true, over: true, ownGates: true, frame: [0, 0, 1248, 832],
     gx0: 340, gy0: 218, gx1: 908, gy1: 515,
     way: [[175, 668], [195, 600], [205, 300], [235, 170], [320, 140], [930, 140], [1020, 170], [1045, 260], [1050, 560], [1052, 668]] },
+  // lava4 (assets/tablero-lava-nuevo-2.jpg, sin el fondo azul): sus dos arcos
+  // abajo, sus casillas y el camino de adoquines que da la vuelta por fuera
+  lava4: { image: 'boards/lava4', iw: 1248, ih: 832, cx: 150, cy: 100, cw: 950, ch: 610, portal: true, over: true, ownGates: true, ownTiles: true, mobScale: 0.8, frame: [133, 40, 1113, 761],
+    gx0: 327, gy0: 244, gx1: 918, gy1: 502,
+    slabs: { xs: [[330, 440], [450, 558], [568, 676], [686, 795], [804, 915]], ys: [[247, 327], [335, 412], [420, 499]] },
+    way: [[362, 622], [362, 660], [208, 660], [208, 160], [1022, 160], [1022, 660], [878, 660], [878, 622]] },
   // tableros con sus casillas ya dibujadas (assets/tablero-estelar*, roca-2 y
   // veneno-2): ownTiles, sin losetas encima; sin portales (taparían la fila de abajo).
   // veneno2 sí los lleva, pequeños (portalW) en las esquinas de abajo del anillo;
@@ -93,11 +99,11 @@ var FIELDS = {
     way: [[192, 660], [200, 615], [198, 175], [1058, 175], [1060, 615], [1066, 660]] }
 };
 // con varios tableros para un bioma se elige uno al azar en cada partida
-var BIOME_FIELD = { prado: ['prado', 'prado3'], bosque: ['prado', 'prado3'], pantano: ['veneno', 'veneno2'], hielo: ['hielo', 'hielo2'], ruinas: ['roca', 'roca2'], desierto: ['roca', 'roca2'], volcan: ['lava2', 'lava3'], cripta: ['estelar', 'estelar2'] };
+var BIOME_FIELD = { prado: ['prado', 'prado3'], bosque: ['prado', 'prado3'], pantano: ['veneno', 'veneno2'], hielo: ['hielo', 'hielo2'], ruinas: ['roca', 'roca2'], desierto: ['roca', 'roca2'], volcan: ['lava2', 'lava4'], cripta: ['estelar', 'estelar2'] };
 // de momento solo se juega en los tableros nuevos: cada uno viejo se cambia
 // por el nuevo que más se le parece
-var NEW_FIELDS = ['prado3', 'hielo2', 'lava3', 'roca2', 'veneno2', 'estelar', 'estelar2'];
-var NEW_FIELD_OF = { prado: 'prado3', veneno: 'veneno2', hielo: 'hielo2', roca: 'roca2', lava2: 'lava3' };
+var NEW_FIELDS = ['prado3', 'hielo2', 'lava4', 'roca2', 'veneno2', 'estelar', 'estelar2'];
+var NEW_FIELD_OF = { prado: 'prado3', veneno: 'veneno2', hielo: 'hielo2', roca: 'roca2', lava2: 'lava4', lava3: 'lava4' };
 function onlyNewFields(list) {
   var out = [];
   list.forEach(function (f) { f = NEW_FIELD_OF[f] || f; if (NEW_FIELDS.indexOf(f) !== -1 && out.indexOf(f) === -1) out.push(f); });
