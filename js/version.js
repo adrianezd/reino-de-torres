@@ -7,8 +7,17 @@
    La ventana sale sola al entrar con una versión nueva (meta.lastSeenVersion)
    y también desde Opciones.
    ========================================================= */
-var APP_VERSION = '1.30.0';
+var APP_VERSION = '1.31.0';
 var APP_PATCH_NOTES = [
+  {
+    version: '1.31.0',
+    summary: 'Comandantes redibujados y ficha de tropa nueva',
+    items: [
+      'Los siete comandantes estrenan retrato, cuerpo y efectos: la ventisca de Aria, la marea de Merlo, los meteoros de Brann, la maldición de Nyx, el escudo de Sol, el ensamblaje de Morgana y la forja de Torvald.',
+      'Ficha de tropa nueva: cabecera con runas, cinta de piedra, pestañas de metal, panel de stats con sus iconos y panel de nivel con escudo.',
+      'Al deslizar de lado entre menús, la pantalla ya no sube ni baja.'
+    ]
+  },
   {
     version: '1.30.0',
     summary: 'Fichas de tropa renovadas y tableros más finos',

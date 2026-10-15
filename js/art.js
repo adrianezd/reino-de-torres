@@ -58,6 +58,8 @@ var ASSET_VER = { 'fx/fusion': 2, 'fx/fusion-eco': 2, 'fx/invocar': 2, 'fx/estad
 });
 ['cronos', 'eco', 'garra', 'halcon', 'kaia', 'lyra', 'oria', 'rocco', 'seren', 'sombra', 'titan', 'fenix'].forEach(function (id) { ASSET_VER['units/' + id] = 3; });
 ASSET_VER['units/garra'] = 4;
+// efectos de los comandantes redibujados (assets/comandantes/*-set.jpg)
+['ventisca', 'marea', 'meteoro', 'crater', 'nyx-maldicion', 'nyx-chispas', 'sol-escudo', 'morgana-ensamblaje', 'torvald-forja', 'torvald-carga'].forEach(function (k) { ASSET_VER['fx/' + k] = 3; });
 function assetV(key) { return ASSET_VER[key] ? '?v=' + ASSET_VER[key] : ''; }
 // tropas sin aura en su casilla
 var NO_CELL_AURA = { eco: true, marea: true, frida: true, pyra: true, valka: true, hilda: true, tilo: true, elian: true };

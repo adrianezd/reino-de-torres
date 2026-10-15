@@ -2523,3 +2523,47 @@ body[data-screen="collection"], body[data-screen="commanders"], body[data-screen
 .uc-trait { border-radius: 12px; padding: 6px 8px; align-items: flex-start; text-align: left; }
 .uc-trait > span { display: flex; flex-direction: column; min-width: 0; }
 .uc-trait small { line-height: 1.2; }
+
+/* =========================================================
+   Ficha de tropa con las piezas de assets/tarjeta-personajes.jpg
+   (assets/ui/ficha-*): cabecera de pergamino con runas, cinta de
+   piedra, píldoras y pestañas de metal, panel de stats y panel de nivel.
+   ========================================================= */
+.unit-card .uc-hero { height: 184px; margin: -6px -10px 0; background: url(assets/ui/ficha-cabecera.webp) center / 100% 100% no-repeat; }
+.unit-card .uc-rays { opacity: 0.45; }
+.unit-card .uc-ribbon { margin: -14px -22px 2px; padding: 0; height: 62px; display: grid; place-items: center; background: url(assets/ui/ficha-cinta.webp) center / 100% 100% no-repeat; }
+.unit-card .uc-ribbon::before, .unit-card .uc-ribbon::after { display: none; }
+.unit-card .uc-ribbon h2 { padding: 0; background: none; border: 0; box-shadow: none; font-size: 1.9rem; color: #fff; -webkit-text-stroke: 5px #1e2228; paint-order: stroke fill; text-shadow: 0 3px 0 #1e2228; }
+.unit-card .uc-chip { padding: 5px 14px 6px; border: 0; border-radius: 0; color: #1d2433; font-weight: 900; background: url(assets/ui/ficha-pildora.webp) center / 100% 100% no-repeat; }
+.unit-card .uc-chip.rar { color: #1d2433; }
+.unit-card .uc-chip.rar::before { content: ''; display: inline-block; width: 10px; height: 10px; margin-right: 5px; border-radius: 50%; vertical-align: -1px; background: var(--rc); border: 2px solid #1d2433; }
+.unit-card .uc-chip.el { color: #1d2433; }
+.modal-card.unit-card .uc-desc { background: #1b222b; border: 2px solid #3d444c; box-shadow: inset 0 2px 6px rgba(0,0,0,0.45); }
+.unit-card .uc-tabs { gap: 6px; }
+.unit-card .uc-tabs button {
+  display: flex; align-items: center; justify-content: center; gap: 5px; height: 42px; padding: 0 6px 2px; border: 0; border-radius: 0; box-shadow: none;
+  background: url(assets/ui/ficha-tab.webp) center / 100% 100% no-repeat; color: #2a3140; text-shadow: 0 1px 0 rgba(255,255,255,0.6);
+}
+.unit-card .uc-tabs button.on { background-image: url(assets/ui/ficha-tab-on.webp); color: #4a2e08; text-shadow: 0 1px 0 rgba(255,240,190,0.7); box-shadow: none; }
+.unit-card .uc-tabs button::before { content: ''; width: 20px; height: 20px; flex-shrink: 0; background: center / contain no-repeat; }
+.unit-card .uc-tabs button[data-uct="video"]::before { background-image: url(assets/ui/ficha-ico-video.webp); }
+.unit-card .uc-tabs button[data-uct="stats"]::before { background-image: url(assets/ui/ficha-ico-stats.webp); }
+.unit-card .uc-tabs button[data-uct="talents"]::before { background-image: url(assets/ui/ficha-ico-talentos.webp); }
+.unit-card .us-sheet { background: linear-gradient(180deg, #272e38, #1d232b); border: 3px solid #5b4434; border-radius: 18px; box-shadow: inset 0 0 0 1px #2c2219, inset 0 0 22px rgba(0,0,0,0.35), 0 3px 0 rgba(0,0,0,0.4); }
+.unit-card .us-row + .us-row { border-top: 2px solid #2d3542; }
+.unit-card .us-ico { background: radial-gradient(circle at 35% 30%, #8a6a52, #4a3426); border-color: #2c2219; }
+.unit-card .us-ico.pic { background: none; border: 0; box-shadow: none; width: 38px; height: 38px; }
+.unit-card .us-ico.pic img { width: 38px; height: 38px; object-fit: contain; filter: drop-shadow(0 2px 0 rgba(0,0,0,0.5)); }
+.unit-card .us-bar { height: 9px; background: #3a1a2c; box-shadow: inset 0 1px 3px rgba(0,0,0,0.7); }
+.unit-card .us-bar span { background: linear-gradient(180deg, #d9bda6, #a3826c 55%, #6e5444); }
+.unit-card .us-val { min-width: 52px; padding: 3px 9px; border-radius: 9px; background: #12161c; box-shadow: inset 0 1px 3px rgba(0,0,0,0.6); }
+.unit-card .uc-trait { background: #1b222b; border: 2px solid #3d444c; }
+.unit-card .uc-level { min-height: 70px; padding: 10px 14px 10px 10px; border: 0; border-radius: 0; background: url(assets/ui/ficha-nivel.webp) center / 100% 100% no-repeat; }
+.unit-card .uc-lvmedal {
+  width: 50px; height: 52px; border: 0; border-radius: 0; box-shadow: none; padding-bottom: 4px;
+  background: url(assets/ui/ficha-escudo.webp) center / 100% 100% no-repeat; color: #f1c24a; font-size: 1.5rem;
+  -webkit-text-stroke: 4px #2a1c0a; paint-order: stroke fill;
+}
+.unit-card .uc-level .ubar { height: 15px; background: #0e1f14; border: 2px solid #7a5a2a; }
+.unit-card .uc-level .ubar span, .unit-card .uc-level .ubar.ok span { background: url(assets/ui/ficha-barra.webp) left center / 100% 100% no-repeat; border-radius: 999px; }
+.unit-card .uc-level .ubar em { line-height: 11px; text-shadow: 0 1px 0 #000; }

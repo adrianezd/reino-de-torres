@@ -112,16 +112,22 @@ function bindSwipe() {
     var t = e.touches[0], dx = t.clientX - g.x, dy = t.clientY - g.y;
     if (!g.side) {
       if (Math.abs(dy) > 14 && Math.abs(dy) > Math.abs(dx)) { g = null; return; } // es desplazamiento vertical
-      if (Math.abs(dx) > 14) g.side = true;
+      if (Math.abs(dx) > 14) {
+        // gesto de lado: la pantalla deja de subir y bajar hasta soltar
+        g.side = true; g.top = m.scrollTop; m.style.overflowY = 'hidden';
+      }
     }
     if (g.side) {
+      if (e.cancelable) e.preventDefault();
+      if (m.scrollTop !== g.top) m.scrollTop = g.top;
       // sin pestaña a ese lado, se resiste más
       var to = swipeTab() - Math.sign(dx), k = to >= 0 && to < SWIPE_TABS.length ? 0.35 : 0.12;
       m.style.transform = 'translateX(' + dx * k + 'px)';
       g.dx = dx;
     }
-  }, { passive: true });
+  }, { passive: false });
   var end = function () {
+    m.style.overflowY = '';
     if (!g) return;
     var sideways = g.side, dx = g.dx || 0, fast = Date.now() - g.t < 700;
     g = null;
@@ -812,7 +818,7 @@ function commandersHtml() {
     level + '</div>' +
     cmdTreeHtml(k, own ? lv : 0);
 }
-function cmdFxPic(k) { return CMD_FX[k] ? 'assets/fx/' + CMD_FX[k] + '.webp' : COMMANDERS[k].pic; }
+function cmdFxPic(k) { return CMD_FX[k] ? 'assets/fx/' + CMD_FX[k] + '.webp' + assetV('fx/' + CMD_FX[k]) : COMMANDERS[k].pic; }
 // Pestañas dentro de Mazo: tropas y comandante.
 function deckTabs(on) {
   return '<div class="sub-tabs"><button data-go="collection" class="' + (on === 'collection' ? 'on' : '') + '">Tropas</button>' +
@@ -1394,6 +1400,8 @@ function showCardModal(id, tab) {
 /* Hoja de stats de una tropa: cada fila con su icono, una barra que la
    compara con la mejor de todas en eso y el valor a su nivel; si se puede
    mejorar, en verde lo que tendrá al subir (up: false para no enseñarlo). */
+// filas con su icono ilustrado de la plantilla de ficha (assets/ui/ficha-stat-*)
+var STAT_PIC = { '⚔️': 'espadas', '⏱️': 'engranaje', '📈': 'libro', '💥': 'zona' };
 var STAT_MAX = {};
 function statMax(key, f) {
   if (STAT_MAX[key] == null) STAT_MAX[key] = Math.max.apply(null, UNIT_ORDER.map(function (k) { return f(UNITS[k]) || 0; }));
@@ -1406,7 +1414,8 @@ function unitStatsHtml(u, lv, up) {
   var row = function (icon, label, val, unit, grow, max) {
     var num = typeof val === 'number', v = num ? val * (grow ? m(lv) : 1) : val, v2 = num && grow && next ? val * m(lv + 1) : null;
     var pct = num && max ? Math.max(6, Math.min(100, v / (max * (grow ? m(CARD_MAX) : 1)) * 100)) : 0;
-    rows.push('<div class="us-row"><i class="us-ico">' + icon + '</i><span class="us-name">' + label +
+    var pic = STAT_PIC[icon];
+    rows.push('<div class="us-row"><i class="us-ico' + (pic ? ' pic' : '') + '">' + (pic ? '<img src="assets/ui/ficha-stat-' + pic + '.webp" alt="">' : icon) + '</i><span class="us-name">' + label +
       (pct ? '<span class="us-bar"><span style="width:' + pct.toFixed(0) + '%"></span></span>' : '') + '</span>' +
       '<b class="us-val">' + (num ? fmtStat(v) : v) + (unit || '') +
       (v2 != null && fmtStat(v2) !== fmtStat(v) ? '<em>→ ' + fmtStat(v2) + (unit || '') + '</em>' : '') + '</b></div>');

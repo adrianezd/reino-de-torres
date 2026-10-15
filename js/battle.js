@@ -1126,7 +1126,8 @@ function drawBoard(b, L, now, isMain) {
       ctx.globalAlpha = 1;
     } else if (f.type === 'sweep') {
       // habilidad de Aria o Merlo: la ola cruza el tablero y se apaga al final
-      var sw = G.W * 0.8;
+      // como mucho 2,2 casillas de lado: los dibujos casi cuadrados (ventisca, marea) no tapan el tablero
+      var sw = Math.min(G.W * 0.8, 2.2);
       ctx.globalAlpha = t < 0.8 ? 1 : (1 - t) * 5;
       drawFxPic(ctx, f.key, -sw / 2 + (G.W + sw) * t, f.y, sw, 0);
       ctx.globalAlpha = 1;
