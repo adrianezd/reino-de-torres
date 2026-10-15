@@ -1444,15 +1444,17 @@ function drawPathSigns(G) {
 // con loseta de canto, la tropa sube un poco para pisar su cara de arriba
 // (si no, los pies le quedan en el borde de abajo)
 var FLOOR_LIFT = 0.16;
-function unitLift(b, i, G) { return b.floor && b.floor[i] !== STONE_TILE && art('tiles/' + b.floor[i]) ? G.ch * FLOOR_LIFT : 0; }
+function unitLift(b, i, G) { return b.floor && b.floor[i] !== STONE_TILE && b.floor[i] !== 'none' && art('tiles/' + b.floor[i]) ? G.ch * FLOOR_LIFT : 0; }
 // dónde se pinta la loseta de una casilla (null si es la lisa o no ha cargado)
 function floorRect(b, i, cc, G) {
-  var pic = b.floor && b.floor[i] !== STONE_TILE && art('tiles/' + b.floor[i]);
+  var pic = b.floor && b.floor[i] !== STONE_TILE && b.floor[i] !== 'none' && art('tiles/' + b.floor[i]);
   if (!pic) return null;
   var w = G.cw * 1.02, h = Math.min(w * pic.naturalHeight / pic.naturalWidth, G.ch * 1.16);
   return { pic: pic, x: cc.x - w / 2, y: cc.y - G.ch / 2 - 0.02, w: w, h: h };
 }
 function drawStoneTile(b, i, cc, G) {
+  // tableros con sus casillas ya dibujadas: nada encima
+  if (b.floor && b.floor[i] === 'none') return false;
   var fr = floorRect(b, i, cc, G);
   if (fr) { ctx.drawImage(fr.pic, fr.x, fr.y, fr.w, fr.h); return true; }
   var pic = art('tiles/' + STONE_TILE);

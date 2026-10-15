@@ -7,8 +7,17 @@
    La ventana sale sola al entrar con una versión nueva (meta.lastSeenVersion)
    y también desde Opciones.
    ========================================================= */
-var APP_VERSION = '1.28.0';
+var APP_VERSION = '1.29.0';
 var APP_PATCH_NOTES = [
+  {
+    version: '1.29.0',
+    summary: 'Cuatro tableros nuevos',
+    items: [
+      'Tableros nuevos: Estelar, Estelar II, Roca y Pantano, con sus casillas dibujadas.',
+      'El Pantano Tóxico y las Ruinas de Piedra del 1 contra 1 se juegan ya en sus tableros nuevos.',
+      'La cripta de la campaña usa los tableros estelares.'
+    ]
+  },
   {
     version: '1.28.0',
     summary: 'Muertes según el golpe y cartas nuevas equilibradas',

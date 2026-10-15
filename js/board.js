@@ -72,14 +72,28 @@ var FIELDS = {
     way: [[262, 712], [230, 650], [200, 560], [198, 300], [225, 200], [300, 170], [950, 170], [1030, 200], [1048, 300], [1046, 560], [1015, 650], [985, 712]] },
   lava3: { image: 'boards/lava3', iw: 1248, ih: 832, cx: 90, cy: 60, cw: 1070, ch: 700, portal: true, over: true, ownGates: true, frame: [0, 0, 1248, 832],
     gx0: 340, gy0: 218, gx1: 908, gy1: 515,
-    way: [[175, 668], [195, 600], [205, 300], [235, 170], [320, 140], [930, 140], [1020, 170], [1045, 260], [1050, 560], [1052, 668]] }
+    way: [[175, 668], [195, 600], [205, 300], [235, 170], [320, 140], [930, 140], [1020, 170], [1045, 260], [1050, 560], [1052, 668]] },
+  // tableros con sus casillas ya dibujadas (assets/tablero-estelar*, roca-2 y
+  // veneno-2): ownTiles, sin losetas encima; veneno2 lleva los portales del juego
+  estelar: { image: 'boards/estelar', iw: 1024, ih: 559, cx: 35, cy: 52, cw: 940, ch: 450, portal: true, over: true, ownGates: true, ownTiles: true, frame: [0, 0, 1024, 559],
+    gx0: 268, gy0: 165, gx1: 757, gy1: 380,
+    way: [[105, 445], [195, 420], [195, 122], [850, 122], [850, 420], [905, 462]] },
+  estelar2: { image: 'boards/estelar2', iw: 1248, ih: 832, cx: 65, cy: 65, cw: 1115, ch: 675, portal: true, over: true, ownGates: true, ownTiles: true, frame: [0, 0, 1248, 832],
+    gx0: 272, gy0: 188, gx1: 988, gy1: 582,
+    way: [[135, 700], [175, 620], [175, 135], [1105, 135], [1105, 620], [1110, 700]] },
+  roca2: { image: 'boards/roca2', iw: 1248, ih: 832, cx: 148, cy: 114, cw: 972, ch: 718, portal: true, over: true, ownGates: true, ownTiles: true, frame: [0, 0, 1248, 832],
+    gx0: 315, gy0: 222, gx1: 935, gy1: 535,
+    way: [[232, 830], [222, 650], [218, 184], [1045, 184], [1050, 650], [965, 830]] },
+  veneno2: { image: 'boards/veneno2', iw: 1248, ih: 832, cx: 128, cy: 105, cw: 1002, ch: 563, portal: true, over: true, gates: true, ownTiles: true, frame: [0, 0, 1248, 832],
+    gx0: 245, gy0: 210, gx1: 1000, gy1: 578,
+    way: [[330, 628], [200, 615], [198, 175], [1058, 175], [1060, 615], [930, 628]] }
 };
 // con varios tableros para un bioma se elige uno al azar en cada partida
-var BIOME_FIELD = { prado: ['prado', 'prado3'], bosque: ['prado', 'prado3'], pantano: ['prado', 'veneno'], hielo: ['hielo', 'hielo2'], ruinas: 'roca', desierto: 'roca', volcan: ['lava2', 'lava3'], cripta: ['lava2', 'lava3'] };
+var BIOME_FIELD = { prado: ['prado', 'prado3'], bosque: ['prado', 'prado3'], pantano: ['veneno', 'veneno2'], hielo: ['hielo', 'hielo2'], ruinas: ['roca', 'roca2'], desierto: ['roca', 'roca2'], volcan: ['lava2', 'lava3'], cripta: ['estelar', 'estelar2'] };
 // de momento solo se juega en los tableros nuevos: cada uno viejo se cambia
 // por el nuevo que más se le parece
-var NEW_FIELDS = ['prado3', 'hielo2', 'lava3'];
-var NEW_FIELD_OF = { prado: 'prado3', veneno: 'prado3', hielo: 'hielo2', roca: 'hielo2', lava2: 'lava3' };
+var NEW_FIELDS = ['prado3', 'hielo2', 'lava3', 'roca2', 'veneno2', 'estelar', 'estelar2'];
+var NEW_FIELD_OF = { prado: 'prado3', veneno: 'veneno2', hielo: 'hielo2', roca: 'roca2', lava2: 'lava3' };
 function onlyNewFields(list) {
   var out = [];
   list.forEach(function (f) { f = NEW_FIELD_OF[f] || f; if (NEW_FIELDS.indexOf(f) !== -1 && out.indexOf(f) === -1) out.push(f); });
@@ -120,7 +134,7 @@ function neighbors(i) {
   return out;
 }
 // una losa al azar del juego del tablero (o la lisa si no tiene)
-function floorTileFor(field) { var ft = FIELD_TILES[field]; return ft ? ft.set + '-' + (1 + Math.floor(Math.random() * ft.n)) : STONE_TILE; }
+function floorTileFor(field) { if (FIELDS[field] && FIELDS[field].ownTiles) return 'none'; var ft = FIELD_TILES[field]; return ft ? ft.set + '-' + (1 + Math.floor(Math.random() * ft.n)) : STONE_TILE; }
 function rnd(a, b) { return a + Math.random() * (b - a); }
 function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
 
