@@ -401,7 +401,8 @@ var SHOP_GOLD = [
    espacios (así no se leen en el código del juego). Para añadir uno: esa
    huella corta y su premio.
    gold / gems: cantidad · chest: tipo de cofre que se abre al canjearlo ·
-   trophies: te deja con al menos esos trofeos. */
+   trophies: te deja con al menos esos trofeos · campaign: todas las fases
+   de la campaña pasadas con tres estrellas. */
 var CODES = {
   '0a538899': { gold: 500, gems: 50 },
   '941681e1': { chest: 'oro' },
@@ -412,7 +413,8 @@ var CODES = {
   '0c7141e6': { gems: 500 },
   'e675b085': { gems: 150 },
   'd8147140': { gold: 400 },
-  '30c03231': { trophies: 6000 }
+  '30c03231': { trophies: 6000 },
+  '8c6e905b': { campaign: true }
 };
 
 /* Arenas del 1 contra 1: se llega con los trofeos que tienes (at). Cada una

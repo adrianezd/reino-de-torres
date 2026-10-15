@@ -687,6 +687,8 @@ Board.prototype.releaseWolf = function (i, u) {
   this.wolves.push({ d: start, x: at.x, y: at.y, dir: -1, t: 0, biteT: 0, bitten: {}, v: Math.random() < 0.5 ? '' : '-2',
     bites: d.wolves.bites + Math.floor((u.rank - 1) / 2), dmg: this.unitDamage(i), def: d, unit: u });
   this.fx.push({ type: 'pic', key: 'fx/muerte-puf', x: at.x, y: at.y - 0.05, size: 0.55, rot: 0, grow: 0.4, life: 0.4, max: 0.4 });
+  // el espíritu de lobo sale aullando de Garra
+  this.fx.push({ type: 'pic', key: 'fx/garra-espiritu', x: p.x + 0.15, y: p.y - 0.45, size: 0.8, rot: 0, grow: 0.4, life: 0.6, max: 0.6 });
   return true;
 };
 Board.prototype.nearestTo = function (p, exclude, maxD) {
@@ -779,11 +781,12 @@ var MAX_PARTS = 160;
 function maxParts() { return typeof meta !== 'undefined' && meta.settings.saver ? 40 : MAX_PARTS; }
 Board.prototype.deathFx = function (e) {
   var col = e.boss ? BOSSES[e.kind].color : ENEMIES[e.kind].color, big = e.boss ? 1.8 : 1;
-  if (!art('fx/muerte-puf')) this.addFx('pop', { x: e.x, y: e.y }, col);
-  else this.fx.push({ type: 'pic', key: 'fx/muerte-puf', x: e.x, y: e.y - 0.08, size: 0.85 * big, rot: 0, grow: 0.45, life: 0.5, max: 0.5 });
+  // destello de luz (assets/fx/luz-impacto) en vez de la nube de antes
+  if (!art('fx/luz-impacto')) this.addFx('pop', { x: e.x, y: e.y }, col);
+  else this.fx.push({ type: 'pic', key: 'fx/luz-impacto', x: e.x, y: e.y - 0.12, size: 0.75 * big, rot: 0, grow: 0.3, life: 0.4, max: 0.4 });
   var parts = 0;
   for (var k = 0; k < this.fx.length; k++) if (this.fx[k].type === 'part') parts++;
-  var many = maxParts() < MAX_PARTS ? 4 : 10;
+  var many = maxParts() < MAX_PARTS ? 2 : 5;
   for (var n = 0; n < many * big && parts < maxParts(); n++, parts++) {
     var a = Math.random() * Math.PI * 2, v = 1.2 + Math.random() * 1.8;
     this.fx.push({ type: 'part', x: e.x, y: e.y, vx: Math.cos(a) * v, vy: Math.sin(a) * v - 1.2, r: 0.035 + Math.random() * 0.04, color: col, life: 0.45, max: 0.45 });

@@ -668,9 +668,10 @@ function redeemCode(raw) {
     meta.gems += c.gems || 0;
     var tr = c.trophies ? Math.max(0, c.trophies - meta.trophies) : 0;
     if (tr) addTrophies(tr);
+    if (c.campaign) CAMPAIGN.forEach(function (st) { meta.campaign[st.id] = 3; });
     var chest = c.chest ? openChest(c.chest) : null;
     saveMeta();
-    return { code: code, gold: c.gold || 0, gems: c.gems || 0, trophies: tr, chest: chest };
+    return { code: code, gold: c.gold || 0, gems: c.gems || 0, trophies: tr, chest: chest, campaign: !!c.campaign };
   }, function () { return { error: 'Aquí no se pueden canjear códigos' }; });
 }
 

@@ -73,6 +73,8 @@ function startBattle(mode, opts) {
   var loaded = function (k) { return art(FIELD_GEOS[k].image); };
   // el 1 contra 1 (no el torneo) se juega en el tablero de tu arena
   var choices = onlyNewFields(stage ? [].concat(BIOME_FIELD[biome] || 'prado') : mode === 'duel' && !opts.tourney ? [ARENAS[arenaIndex()].field] : Object.keys(FIELD_GEOS));
+  // en el torneo se puede elegir la arena
+  if (tourney && opts.arena >= 0 && ARENAS[opts.arena]) choices = onlyNewFields([ARENAS[opts.arena].field]);
   var ready = choices.filter(loaded);
   var fid = ready.length ? pick(ready) : loaded('prado') ? 'prado' : null;
   if (reto) {
@@ -120,7 +122,7 @@ function startBattle(mode, opts) {
   }
   battle.next = planWave(1);
   if (mode === 'duel') {
-    var aiLv = tourney ? 1 : opts.level == null ? 1 : opts.level;
+    var aiLv = opts.level == null ? 1 : opts.level;
     // cada rival juega a su manera y lleva tropas de su elemento favorito
     var rv = pick(RIVALS);
     battle.rival = rv;
@@ -160,6 +162,11 @@ function startBattle(mode, opts) {
     battle.boards.forEach(function (bd) { applyDuelMod(bd, battle.mod.id); });
     battle.intro = true;
   }
+  // torneo: el modificador que hayas elegido (o uno al azar)
+  if (tourney && opts.mod) {
+    battle.mod = opts.mod === 'azar' ? pick(DUEL_MODS) : DUEL_MODS.filter(function (m) { return m.id === opts.mod; })[0] || null;
+    if (battle.mod) battle.boards.forEach(function (bd) { applyDuelMod(bd, battle.mod.id); });
+  }
   // roguelike: la ruleta solo elige el jefe final; las ventajas llegan cada ROGUE_PICK_EVERY s
   if (mode === 'rogue') {
     battle.boss = pick(BOSS_ORDER);
@@ -183,7 +190,7 @@ function startBattle(mode, opts) {
   musicFor(battle);
   if (battle.intro) { showDuelRoulette(); return; }
   showBanner(mode === 'campaign' ? 'Fase ' + stage.id + ': ' + stage.name : tourney ? 'Torneo contra ' + battle.other.name : mode === 'duel' ? '⚔️ Duelo contra ' + battle.other.name : '🤝 Con ' + battle.other.name + ' contra la horda',
-    tourney ? 'Juega a ' + RIVAL_STYLES[battle.rival.style].name.toLowerCase() : 'Prepárate…');
+    tourney ? 'Juega a ' + RIVAL_STYLES[battle.rival.style].name.toLowerCase() + (battle.mod ? ' · ' + battle.mod.name : '') : 'Prepárate…');
   sfx('start');
 }
 function applyDuelMod(bd, id) {
@@ -484,7 +491,7 @@ function endBattle(won, draw) {
       res.lines.push(b.other.name + ' aguantó más que tú.');
     }
     if (b.mod && b.mod.id === 'oro' && won && !draw) res.gold *= 2;
-    if (b.mod) res.lines.push(b.mod.name + ' · Jefe final: ' + BOSSES[b.boss].name);
+    if (b.mod) res.lines.push(b.mod.name + (b.boss ? ' · Jefe final: ' + BOSSES[b.boss].name : ''));
     var arena0 = arenaIndex();
     addTrophies(res.trophies);
     if (arenaIndex() > arena0) res.lines.push('¡Nueva arena: ' + ARENAS[arenaIndex()].name + '!');

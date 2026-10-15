@@ -50,8 +50,14 @@ var IMG = {};
 var ASSET_VER = { 'fx/fusion': 2, 'fx/fusion-eco': 2, 'fx/invocar': 2, 'fx/estado-aturdido': 2, 'fx/estado-veneno': 2, 'fx/estado-critico': 2,
   'fx/veneno-impacto': 2, 'fx/fuego-impacto': 2, 'enemies/coloso2': 2, 'fx/eco-resuena': 2, 'fx/oria-interes': 2, 'ui/vida': 2, 'icons/gota': 2, 'chests/madera': 2, 'chests/plata': 2, 'chests/oro': 2, 'chests/comandante': 2, 'chests/legendario': 2,
   'tiles/altar': 3, 'tiles/fuente': 3, 'tiles/atalaya': 3, 'units/valka': 4, 'fx/valka-tiro': 2,
-  'units/board/valka-idle': 5, 'units/board/valka-attack': 5 };
+  'units/board/valka-idle': 5, 'units/board/valka-attack': 5,
+  'units/board/garra-idle': 5, 'units/board/garra-attack': 5 };
+// poses igualadas de tamaño (todas con el cuerpo del mismo alto)
+['aurora', 'brasa', 'doblon', 'eco', 'elian', 'fenix', 'garra', 'hilda', 'tilo', 'marea', 'melodia', 'midas', 'mirra', 'pyra', 'rocco', 'seren', 'ulric', 'valka', 'volta'].forEach(function (id) {
+  ASSET_VER['units/board/' + id + '-idle'] = 6; ASSET_VER['units/board/' + id + '-attack'] = 6;
+});
 ['cronos', 'eco', 'garra', 'halcon', 'kaia', 'lyra', 'oria', 'rocco', 'seren', 'sombra', 'titan', 'fenix'].forEach(function (id) { ASSET_VER['units/' + id] = 3; });
+ASSET_VER['units/garra'] = 4;
 function assetV(key) { return ASSET_VER[key] ? '?v=' + ASSET_VER[key] : ''; }
 // tropas sin aura en su casilla
 var NO_CELL_AURA = { eco: true, marea: true, frida: true, pyra: true, valka: true, hilda: true, tilo: true, elian: true };
@@ -121,7 +127,7 @@ function art(key) { var im = IMG[key]; return im && im.ready ? im : null; }
 ['garra-lobo', 'garra-lobo-2'].forEach(function (k) {
   var im = new Image();
   im.onload = function () { im.ready = true; };
-  im.src = 'assets/fx/' + k + '.webp?v=2';
+  im.src = 'assets/fx/' + k + '.webp?v=3';
   IMG['fx/' + k] = im;
 });
 /* Lobo de Garra corriendo por el camino: w.dir dice hacia dónde mira y
@@ -168,6 +174,9 @@ function drawWolf(c, w) {
 
 /* Poses del tablero: cuerpo entero sin chapa, en reposo y disparando,
    con el mismo encuadre (pies abajo en el centro) para que no salte.
+   Se pintan a escala fija por píxel (512 px de alto = r * 2,35): el
+   lienzo puede ser más ancho o alto que 512 sin encoger a la tropa, y el
+   cuerpo de todas mide lo mismo (unos 465 px).
    face: hacia dónde mira la pose de ataque (1 derecha, -1 izquierda). */
 var POSES = {
   lyra: { face: 1 }, brasa: { face: -1 }, rocco: { face: 1 }, sombra: { face: -1 },
@@ -202,7 +211,7 @@ var FX_OF = { fire: 'fuego', ice: 'hielo', poison: 'veneno', bomb: 'canon', arro
     IMG['fx/' + el + '-' + part] = im;
   });
 });
-['ventisca', 'marea', 'meteoro', 'crater', 'nyx-maldicion', 'nyx-chispas', 'sol-escudo', 'morgana-ensamblaje', 'torvald-forja', 'torvald-carga', 'boreas-ventisca', 'midas-critico', 'eco-resuena', 'fusion-eco', 'oria-interes', 'muerte-puf', 'invocar', 'invocar-aro', 'acelerar', 'rayo-cadena', 'congelado-1', 'congelado-2', 'ganancia-mana', 'pyra-estallido', 'icono-armadura', 'icono-barrera', 'fusion', 'fusion-doblon', 'mover', 'ralentizado-1', 'ralentizado-2', 'ralentizado-3', 'ralentizado-4', 'ralentizado-5'].concat(Object.keys(ELEMENTS).map(function (el) { return 'conector-' + el; })).forEach(function (k) {
+['ventisca', 'marea', 'meteoro', 'crater', 'nyx-maldicion', 'nyx-chispas', 'sol-escudo', 'morgana-ensamblaje', 'torvald-forja', 'torvald-carga', 'boreas-ventisca', 'midas-critico', 'eco-resuena', 'fusion-eco', 'oria-interes', 'muerte-puf', 'garra-espiritu', 'invocar', 'invocar-aro', 'acelerar', 'rayo-cadena', 'congelado-1', 'congelado-2', 'ganancia-mana', 'pyra-estallido', 'icono-armadura', 'icono-barrera', 'fusion', 'fusion-doblon', 'mover', 'ralentizado-1', 'ralentizado-2', 'ralentizado-3', 'ralentizado-4', 'ralentizado-5'].concat(Object.keys(ELEMENTS).map(function (el) { return 'conector-' + el; })).forEach(function (k) {
   var im = new Image();
   im.onload = function () { im.ready = true; };
   im.src = 'assets/fx/' + k + '.webp' + assetV('fx/' + k);
@@ -485,13 +494,13 @@ function drawUnit(c, id, x, y, r, rank, now, opt) {
       if (opt.aim != null && Math.cos(opt.aim) * POSES[id].face < 0) c.scale(-1, 1);
       // al compás: se balancea un poco mientras toca
       if (u.buff && !opt.still) c.rotate(Math.sin(now / 300 + x * 0.05) * 0.05);
-      var sa = r * 2.35;
-      drawOutlined(c, hit, -sa / 2, -sa, sa, sa, opt.flash);
+      var sa = r * 2.35 / 512;
+      drawOutlined(c, hit, -hit.naturalWidth * sa / 2, -hit.naturalHeight * sa, hit.naturalWidth * sa, hit.naturalHeight * sa, opt.flash);
     } else {
       // respiración: se estira un poco hacia arriba
       if (!opt.still) c.scale(1, 1 + Math.sin(now / 520 + x * 0.05) * 0.025);
-      var si = r * 2.35;
-      drawOutlined(c, idle, -si / 2, -si, si, si, opt.flash);
+      var si = r * 2.35 / 512;
+      drawOutlined(c, idle, -idle.naturalWidth * si / 2, -idle.naturalHeight * si, idle.naturalWidth * si, idle.naturalHeight * si, opt.flash);
     }
     c.restore();
     if (!opt.noRank) drawRankStars(c, rank, r);

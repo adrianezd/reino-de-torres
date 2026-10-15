@@ -2491,3 +2491,18 @@ body[data-screen="collection"], body[data-screen="commanders"], body[data-screen
 .deck-tray.drop-on .tc { animation: dropWiggle 0.6s ease-in-out infinite; }
 .deck-tray .tc.drop-here { animation: none; transform: scale(1.1); outline: 3px solid #ffe066; outline-offset: 2px; border-radius: 12px; }
 @keyframes dropWiggle { 50% { transform: rotate(2deg); } }
+
+/* torneo: arena, rival y modificador con flechas (tourneyPicker) */
+.tp-row { display: grid; grid-template-areas: 'label label label' 'prev val next'; grid-template-columns: 44px 1fr 44px; align-items: center; gap: 4px 6px; margin-bottom: 10px; }
+.tp-label { grid-area: label; text-align: center; font: 400 0.8rem 'Lilita One', sans-serif; color: var(--muted); letter-spacing: 0.04em; text-transform: uppercase; }
+.tp-arrow { width: 44px; height: 44px; border-radius: 12px; border: 3px solid var(--ink); background: linear-gradient(180deg, #ffd34d, #f08a24); color: #3a1d00; font-size: 1.1rem; box-shadow: 0 3px 0 var(--ink); cursor: pointer; }
+.tp-arrow:active { transform: translateY(2px); box-shadow: 0 1px 0 var(--ink); }
+.tp-row .tp-arrow[data-dir="-1"] { grid-area: prev; }
+.tp-row .tp-arrow[data-dir="1"] { grid-area: next; }
+.tp-val { grid-area: val; min-height: 44px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; text-align: center; padding: 6px; border-radius: 12px; background: rgba(0,0,0,0.25); }
+.tp-val b { font: 400 1rem 'Lilita One', sans-serif; color: #fff; }
+.tp-val small { font-size: 0.7rem; color: var(--muted); line-height: 1.25; }
+.tp-pic { width: 100%; aspect-ratio: 16 / 9; object-fit: cover; border-radius: 10px; border: 2px solid var(--ink); }
+.tp-any { display: grid; place-items: center; font: 400 2.4rem 'Titan One', sans-serif; color: #ffe58a; background: rgba(255,255,255,0.08); }
+.tp-ico { width: 36px; height: 36px; object-fit: contain; }
+.tp-lv.lv0 { color: #7be08a; } .tp-lv.lv1 { color: #ffe58a; } .tp-lv.lv2 { color: #ff7b7b; }

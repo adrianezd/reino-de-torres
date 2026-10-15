@@ -7,8 +7,19 @@
    La ventana sale sola al entrar con una versión nueva (meta.lastSeenVersion)
    y también desde Opciones.
    ========================================================= */
-var APP_VERSION = '1.26.0';
+var APP_VERSION = '1.27.0';
 var APP_PATCH_NOTES = [
+  {
+    version: '1.27.0',
+    summary: 'Garra y sus lobos nuevos, torneo a tu gusto y tropas del mismo tamaño',
+    items: [
+      'Garra estrena dibujo, sus lobos son nuevos y al soltar cada uno aparece un espíritu de lobo.',
+      'Torneo: elige la arena (con su tablero de muestra), si el rival es fácil, normal o difícil, y el modificador, con las flechas.',
+      'Todas las tropas se ven del mismo tamaño en la partida. Valka, Garra y Elian ya no salen más pequeñas.',
+      'Al morir, los monstruos se deshacen en un destello de luz en vez de la nube de antes.',
+      'Las cartas de Hilda, Tilo y Elian ya dicen bien cuánto suben al mejorarlas.'
+    ]
+  },
   {
     version: '1.26.0',
     summary: 'Hilda, Tilo y Elian con dibujo, Valka nueva y tienda más grande',

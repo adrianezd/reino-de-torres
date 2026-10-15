@@ -243,6 +243,7 @@ function renderMenu(name, arg) {
       }).join('') + '</div>' +
       '<div class="tn-cmd"><span class="tn-faces">' + COMMANDER_ORDER.map(function (k) { return '<img src="' + COMMANDERS[k].pic + '" alt="" style="--cc:' + COMMANDERS[k].color + '">'; }).join('') + '</span><span>Comandantes al nivel <b>' + TOURNEY_CMD_LV + '</b></span></div></div>' +
       '<div class="tn-panel tn-prize"><img src="' + chestPic('comandante') + '" alt=""><span><b>Premio</b>' + prizeChips(0, 120, 4) + '<small>Cofre de comandante</small></span></div>' +
+      tourneyPicker() +
       '<button class="btn btn-green tn-go" data-tourney="1">Jugar</button>' +
       recordChips(meta.tourneyWins || 0, meta.tourneyLosses || 0);
   } else if (name === 'collection') {
@@ -1024,6 +1025,38 @@ function bindDeckDrag(m) {
     card.addEventListener('dragstart', function (ev) { ev.preventDefault(); });
   });
 }
+/* Torneo: arena (con su tablero de vista previa), dificultad del rival y
+   modificador, cada uno con flechas. Se guarda en meta.tourneyPick.
+   arena: -1 al azar o el índice de ARENAS · level: 0 fácil, 1 normal,
+   2 difícil · mod: '' sin modificador, 'azar' o el id de DUEL_MODS. */
+var TOURNEY_LEVELS = ['Fácil', 'Normal', 'Difícil'];
+var TOURNEY_PICK = {
+  arena: function () { return [-1].concat(ARENAS.map(function (a, i) { return i; })); },
+  level: function () { return [0, 1, 2]; },
+  mod: function () { return ['', 'azar'].concat(DUEL_MODS.map(function (m) { return m.id; })); }
+};
+function tourneyPick() {
+  var p = meta.tourneyPick || {}, out = { arena: -1, level: 1, mod: '' };
+  Object.keys(out).forEach(function (k) { if (TOURNEY_PICK[k]().indexOf(p[k]) !== -1) out[k] = p[k]; });
+  return out;
+}
+function tourneyPicker() {
+  var t = tourneyPick(), md = DUEL_MODS.filter(function (m) { return m.id === t.mod; })[0];
+  var row = function (k, label, body) {
+    return '<div class="tp-row"><span class="tp-label">' + label + '</span>' +
+      '<button class="tp-arrow" data-tstep="' + k + '" data-dir="-1" aria-label="Anterior">◀</button>' +
+      '<span class="tp-val">' + body + '</span>' +
+      '<button class="tp-arrow" data-tstep="' + k + '" data-dir="1" aria-label="Siguiente">▶</button></div>';
+  };
+  var arena = t.arena < 0 ? '<span class="tp-pic tp-any">?</span><b>Al azar</b>'
+    : '<img class="tp-pic" src="' + arenaPic(t.arena) + '" alt=""><b>' + esc(ARENAS[t.arena].name) + '</b>';
+  var mod = !t.mod ? '<b>Sin modificador</b>' : t.mod === 'azar' ? '<b>Al azar</b>'
+    : '<img class="tp-ico" src="' + md.pic + '" alt=""><b>' + esc(md.name) + '</b><small>' + esc(md.desc) + '</small>';
+  return '<div class="tn-panel tn-pick"><h3>Partida</h3>' +
+    row('arena', 'Arena', arena) +
+    row('level', 'Rival', '<b class="tp-lv lv' + t.level + '">' + TOURNEY_LEVELS[t.level] + '</b>') +
+    row('mod', 'Modificador', mod) + '</div>';
+}
 function bindMenu() {
   var m = $('menu');
   m.querySelectorAll('[data-go]').forEach(function (b) {
@@ -1053,7 +1086,17 @@ function bindMenu() {
   });
   m.querySelectorAll('[data-road]').forEach(function (b) { b.onclick = function () { claimRoadStop(+b.dataset.road); }; });
   m.querySelectorAll('[data-duel]').forEach(function (b) { b.onclick = function () { startBattle('duel', { level: +b.dataset.duel }); }; });
-  m.querySelectorAll('[data-tourney]').forEach(function (b) { b.onclick = function () { startBattle('duel', { tourney: true, level: 1, tmode: meta.tourneyMode || 'clasico' }); }; });
+  m.querySelectorAll('[data-tourney]').forEach(function (b) {
+    b.onclick = function () { var t = tourneyPick(); startBattle('duel', { tourney: true, level: t.level, arena: t.arena, mod: t.mod, tmode: meta.tourneyMode || 'clasico' }); };
+  });
+  m.querySelectorAll('[data-tstep]').forEach(function (b) {
+    b.onclick = function () {
+      var k = b.dataset.tstep, list = TOURNEY_PICK[k](), t = tourneyPick(), i = list.indexOf(t[k]);
+      meta.tourneyPick = meta.tourneyPick || {};
+      meta.tourneyPick[k] = list[(i + +b.dataset.dir + list.length) % list.length];
+      saveMeta(); sfx('tap'); renderMenu('tourney');
+    };
+  });
   m.querySelectorAll('[data-tmode]').forEach(function (b) { b.onclick = function () { meta.tourneyMode = b.dataset.tmode; saveMeta(); sfx('tap'); renderMenu('tourney'); }; });
   m.querySelectorAll('[data-rogue]').forEach(function (b) { b.onclick = function () { startBattle('rogue'); }; });
   var cu = $('cmdUp');
@@ -1298,14 +1341,16 @@ function showCardModal(id, tab) {
   var need = cardsNeeded(c.lv), gold = cardUpgradeGold(c.lv), maxed = c.lv >= CARD_MAX;
   var dmgAt = function (lv) { return Math.round(u.dmg * (1 + CARD_BONUS * (lv - 1))); };
   var manaAt = function (lv) { return Math.round(u.manaGen.amount * (1 + CARD_BONUS * (lv - 1))); };
-  var buffAt = function (lv) { return Math.round(u.buff.speed * (1 + CARD_BONUS * (lv - 1)) * 100); };
+  // lo que da la de apoyo (velocidad, daño, crítico o ácido) y su icono
+  var bk = u.buff && BUFF_KINDS.filter(function (k) { return u.buff[k[0]]; })[0];
+  var buffAt = function (lv) { var v = u.buff[bk[0]] * (1 + CARD_BONUS * (lv - 1)) * 100; return v < 10 ? String(Math.round(v * 10) / 10).replace('.', ',') : Math.round(v); };
   var stats = unitStatsHtml(u, c.lv), traits = unitTraitsHtml(u);
   var pct = maxed ? 100 : Math.min(100, c.n / need * 100);
   var why = maxed ? '' : c.n < need ? (need - c.n === 1 ? 'Falta 1 carta' : 'Faltan ' + (need - c.n) + ' cartas') : meta.gold < gold ? 'Te faltan ' + (gold - meta.gold) + ' 🪙' : '';
   var gain = maxed ? ''
     : u.dmg ? '<span class="uc-gain">⚔️ ' + dmgAt(c.lv) + ' → <b>' + dmgAt(c.lv + 1) + '</b></span>'
     : u.manaGen ? '<span class="uc-gain">💧 ' + manaAt(c.lv) + ' → <b>' + manaAt(c.lv + 1) + '</b></span>'
-    : u.buff ? '<span class="uc-gain">🎵 ' + buffAt(c.lv) + '% → <b>' + buffAt(c.lv + 1) + '%</b></span>'
+    : bk ? '<span class="uc-gain">' + bk[1] + ' ' + buffAt(c.lv) + '% → <b>' + buffAt(c.lv + 1) + '%</b></span>'
     : u.wild ? '<span class="uc-gain">🎲 ' + Math.round(u.wild.echo * (1 + CARD_BONUS * (c.lv - 1)) * 100) + '% → <b>' + Math.round(u.wild.echo * (1 + CARD_BONUS * c.lv) * 100) + '%</b></span>'
     : u.interest ? '<span class="uc-gain">🔒 ' + Math.round(u.interest.cap * (1 + CARD_BONUS * (c.lv - 1))) + ' → <b>' + Math.round(u.interest.cap * (1 + CARD_BONUS * c.lv)) + '</b></span>' : '';
   var html = '<div class="modal-card unit-card rar-' + u.rarity + '" style="--rc:' + rar.color + ';--ec:' + el.color + '">' +
@@ -1586,7 +1631,7 @@ function showCodes() {
     var err = $('codeErr');
     if (!err) return;
     if (r.error) { sfx('no'); buzz(20); err.textContent = r.error; err.hidden = false; return; }
-    var extra = [r.gold ? '+' + r.gold + ' 🪙' : '', r.gems ? '+' + r.gems + ' 💎' : '', r.trophies ? '+' + r.trophies + ' 🏆' : ''].filter(Boolean).join(' · ') || 'Ya tenías esos trofeos';
+    var extra = [r.gold ? '+' + r.gold + ' 🪙' : '', r.gems ? '+' + r.gems + ' 💎' : '', r.trophies ? '+' + r.trophies + ' 🏆' : '', r.campaign ? 'Campaña completa' : ''].filter(Boolean).join(' · ') || 'Ya tenías esos trofeos';
     if (r.chest) { showChest(r.chest); if (extra) toast('Además: ' + extra); return; }
     sfx('chest');
     openOverlay('<div class="modal-card chest-modal"><div class="chest-ico" style="--cc:#b48bff">🎟️</div><h2>¡Código canjeado!</h2><p class="gold-big">' + extra + '</p><button class="btn btn-green" id="chestOk">¡Genial!</button></div>');
@@ -1961,7 +2006,7 @@ function buildBattleHud() {
   $('emoteBar').innerHTML = EMOTES.map(function (e) { return '<button data-emo="' + e + '">' + e + '</button>'; }).join('');
   $('emoteBar').querySelectorAll('[data-emo]').forEach(function (eb) { eb.onclick = function () { sendEmote(eb.dataset.emo); }; });
   $('bMod').hidden = !b.mod;
-  $('bMod').innerHTML = b.mod ? '<img src="' + b.mod.pic + '" alt="' + esc(b.mod.name) + '"><img src="' + enemyIcon(b.boss, true) + '" alt="' + esc(BOSSES[b.boss].name) + '">' : '';
+  $('bMod').innerHTML = b.mod ? '<img src="' + b.mod.pic + '" alt="' + esc(b.mod.name) + '">' + (b.boss ? '<img src="' + enemyIcon(b.boss, true) + '" alt="' + esc(BOSSES[b.boss].name) + '">' : '') : '';
   $('unitInfo').hidden = true;
   hideCoach();
   updateHud(true);
@@ -2281,7 +2326,7 @@ function showReplay(res) {
   $('rpBack').onclick = function () { clearInterval(tick); urls.forEach(URL.revokeObjectURL); closeOverlay(); showResult(res); };
 }
 function modInfo(b) {
-  return b.mod.name + ': ' + b.mod.desc + ' Jefe final: ' + BOSSES[b.boss].name + '.' +
+  return b.mod.name + ': ' + b.mod.desc + (b.boss ? ' Jefe final: ' + BOSSES[b.boss].name + '.' : '') +
     (b.player.skills.length ? ' Habilidades: ' + b.player.skills.map(function (k) { return CMD_SKILLS[k].name; }).join(', ') + '.' : '');
 }
 
