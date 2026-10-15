@@ -1356,18 +1356,37 @@ function drawTileFloor(type, cc, G, i, now, b) {
   var pic = art('tiles/' + type), t = TILES[type];
   var s = Math.min(G.cw, G.ch), pulse = Math.sin(now / 500 + i);
   var fr = b && floorRect(b, i, cc, G);
-  // con loseta, en su sitio (la fila de abajo tapa su canto, salvo en la
-  // última); si no, donde va la de piedra
-  var r = fr ? { x: fr.x, y: fr.y, w: fr.w, h: fr.h, vh: Math.min(fr.h, G.ch + 0.02) }
-    : { x: cc.x - s * 0.485, y: cc.y - s * 0.485, w: s * 0.97, h: s * 0.97, vh: s * 0.97 };
+  // con loseta, justo sobre la parte que se ve de ella (sin sus bordes
+  // transparentes, para no meterse en las de al lado); si no, donde va la de piedra
+  var r;
+  if (fr) {
+    var bx = opaqueBox(fr.pic);
+    r = { x: fr.x + bx.x0 * fr.w, y: fr.y + bx.y0 * fr.h, w: (bx.x1 - bx.x0) * fr.w, h: (bx.y1 - bx.y0) * fr.h };
+  } else r = { x: cc.x - s * 0.485, y: cc.y - s * 0.485, w: s * 0.97, h: s * 0.97 };
   if (pic) {
-    var h = fr ? r.h : r.w * pic.naturalHeight / pic.naturalWidth;
-    glow(ctx, r.x + r.w / 2, r.y + r.vh / 2, s * 0.6, t.color, 0.25 + pulse * 0.1);
-    ctx.drawImage(pic, r.x, r.y, r.w, h);
+    glow(ctx, r.x + r.w / 2, r.y + r.h / 2, s * 0.55, t.color, 0.22 + pulse * 0.1);
+    ctx.drawImage(pic, r.x, r.y, r.w, r.h);
   }
-  rrect(ctx, r.x + 0.03, r.y + 0.03, r.w - 0.06, r.vh - 0.06, 0.1);
+  rrect(ctx, r.x + 0.03, r.y + 0.03, r.w - 0.06, r.h - 0.06, 0.1);
   if (!pic) { ctx.fillStyle = alpha(t.color, 0.18 + pulse * 0.06); ctx.fill(); }
   ctx.strokeStyle = alpha(t.color, 0.6 + pulse * 0.25); ctx.lineWidth = 0.04; ctx.stroke();
+}
+// parte opaca de una imagen, en fracciones de su ancho y alto (se mide una vez)
+function opaqueBox(pic) {
+  if (pic._box) return pic._box;
+  var box = { x0: 0, y0: 0, x1: 1, y1: 1 };
+  try {
+    var w = pic.naturalWidth, h = pic.naturalHeight, cv = document.createElement('canvas');
+    cv.width = w; cv.height = h;
+    var c = cv.getContext('2d'); c.drawImage(pic, 0, 0);
+    var d = c.getImageData(0, 0, w, h).data, x0 = w, y0 = h, x1 = -1, y1 = -1;
+    for (var y = 0; y < h; y++) for (var x = 0; x < w; x++) if (d[(y * w + x) * 4 + 3] > 40) {
+      if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y;
+    }
+    if (x1 >= 0) box = { x0: x0 / w, y0: y0 / h, x1: (x1 + 1) / w, y1: (y1 + 1) / h };
+  } catch (e) {}
+  pic._box = box;
+  return box;
 }
 /* Co-op: la cuadrícula del aliado, encima del camino de tu tablero, sobre
    una placa oscura con borde dorado (sin tablero propio ni camino). */

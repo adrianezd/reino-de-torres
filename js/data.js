@@ -183,7 +183,7 @@ var UNITS = {
   marea: {
     element: 'hielo', name: 'Marea', title: 'Sacerdotisa del Oleaje', role: 'Retroceso', rarity: 'comun',
     color: '#2f8fe0', color2: '#bfe9ff', skin: '#f3d2b4',
-    dmg: 18, rate: 0.7, proj: 'ice', knock: { dist: 0.5, perRank: 0.15, cd: 3 }, target: 'first',
+    dmg: 26, rate: 0.75, proj: 'ice', knock: { dist: 0.5, perRank: 0.15, cd: 3 }, target: 'first',
     desc: 'Su ola empuja a los monstruos hacia atrás por el camino. A cada uno, como mucho una vez cada 3 segundos; a los jefes no los mueve.'
   },
   // tangle: el monstruo enredado recibe pct más daño de todos (+perRank por rango) durante dur segundos
@@ -198,35 +198,35 @@ var UNITS = {
   pyra: {
     element: 'fuego', name: 'Pyra', title: 'Reina de Ceniza', role: 'Ascuas', rarity: 'mitica', chestOnly: true,
     color: '#e0541c', color2: '#ffb347', skin: '#f2c49c',
-    dmg: 30, rate: 1.1, proj: 'fire', embers: { max: 5, pct: 0.12, boss: 0.04, splash: 0.5 }, target: 'first',
-    desc: 'Cada golpe deja una ascua. Con 5 ascuas el monstruo estalla y pierde un 12% de su vida máxima (un 4% los jefes), y salpica a los de al lado.'
+    dmg: 30, rate: 1.1, proj: 'fire', embers: { max: 4, pct: 0.15, boss: 0.05, splash: 0.5 }, target: 'first',
+    desc: 'Cada golpe deja una ascua. Con 4 ascuas el monstruo estalla y pierde un 15% de su vida máxima (un 5% los jefes), y salpica a los de al lado.'
   },
   // legion: +per de daño por cada otra tropa en tu tablero; con extra[0] tropas
   // o más, cada disparo alcanza a un segundo enemigo, y con extra[1], a un tercero
   valka: {
     element: 'metal', name: 'Valka', title: 'General de Acero', role: 'Legión', rarity: 'legendaria', chestOnly: true,
     color: '#8a9bb5', color2: '#ffd34d', skin: '#f3cfae',
-    dmg: 52, rate: 0.75, proj: 'arrow', legion: { per: 0.07, extra: [6, 10] }, target: 'first',
-    desc: 'Cuantas más tropas tengas en el campo, más fuerte: +7% de daño por cada una, y con 6 o más sus lanzas alcanzan a dos enemigos (con 10, a tres).'
+    dmg: 60, rate: 0.75, proj: 'arrow', legion: { per: 0.06, extra: [6, 10] }, target: 'first',
+    desc: 'Cuantas más tropas tengas en el campo, más fuerte: +6% de daño por cada una, y con 6 o más sus lanzas alcanzan a dos enemigos (con 10, a tres).'
   },
   // apoyos al estilo de los de Rush Royale: no atacan y potencian a sus vecinas
   hilda: {
     element: 'metal', name: 'Hilda', title: 'Afiladora', role: 'Apoyo', rarity: 'rara',
     color: '#9aa4b8', color2: '#ffb347', skin: '#f3cfae',
-    buff: { dmg: 0.15 },
-    desc: 'No ataca. Su piedra de afilar da a las tropas de al lado un 15% más de daño por cada rango suyo.'
+    buff: { dmg: 0.22 },
+    desc: 'No ataca. Su piedra de afilar da a las tropas de al lado un 22% más de daño por cada rango suyo.'
   },
   tilo: {
     element: 'naturaleza', name: 'Tilo', title: 'Químico', role: 'Apoyo', rarity: 'rara',
     color: '#7bd93f', color2: '#e8ff7a', skin: '#ffd9b8',
-    buff: { acid: 0.04 },
-    desc: 'No ataca. Las tropas de al lado mojan sus golpes en ácido: el monstruo pierde armadura y durante 3 segundos recibe un 4% más de daño por cada rango suyo.'
+    buff: { acid: 0.12 },
+    desc: 'No ataca. Las tropas de al lado mojan sus golpes en ácido: el monstruo pierde armadura y durante 3 segundos recibe un 12% más de daño por cada rango suyo.'
   },
   elian: {
     element: 'arcano', name: 'Elian', title: 'Inquisidor', role: 'Apoyo', rarity: 'rara',
     color: '#f5e6a8', color2: '#ffd34d', skin: '#f3cfae',
-    buff: { crit: 0.07 },
-    desc: 'No ataca. Bendice con su luz a las tropas de al lado: un 7% de golpe crítico doble por cada rango suyo.'
+    buff: { crit: 0.18 },
+    desc: 'No ataca. Bendice con su luz a las tropas de al lado: un 18% de golpe crítico doble por cada rango suyo (como mucho un 75%).'
   }
 };
 var UNIT_ORDER = ['lyra', 'brasa', 'nivea', 'doblon', 'rocco', 'volta', 'mirra', 'melodia', 'kaia', 'sombra', 'cronos', 'halcon', 'eco', 'oria', 'ulric', 'fenix', 'aurora', 'titan', 'boreas', 'midas', 'seren', 'garra', 'marea', 'frida', 'pyra', 'valka', 'hilda', 'tilo', 'elian'];
@@ -512,12 +512,13 @@ var TILES = {
   // merge: rangos de más al fusionar encima · crit: probabilidad de golpe doble · splash: zona que se suma
   vortice:  { name: 'Vórtice',  icon: '🌀', color: '#8a6bff', desc: 'Al fusionar dos tropas encima, la nueva sube un rango más.', merge: 1 },
   diana:    { name: 'Diana',    icon: '🎯', color: '#ff3b5c', desc: 'La tropa que esté encima tiene un 20% de golpe crítico doble.', crit: 0.2 },
-  semillero: { name: 'Semillero', icon: '💥', color: '#5fdc4a', desc: 'La tropa que esté encima hace daño en zona, o más zona si ya lo hacía.', splash: 0.35 }
+  // off: no sale en los tableros (el Semillero no tiene losa ilustrada)
+  semillero: { name: 'Semillero', icon: '💥', color: '#5fdc4a', off: true, desc: 'La tropa que esté encima hace daño en zona, o más zona si ya lo hacía.', splash: 0.35 }
 };
 // cada tablero lleva TILE_COUNT casillas especiales distintas, al azar entre todas
 var TILE_COUNT = 3;
 function pickTileTypes(n, rnd, skip) {
-  var all = Object.keys(TILES).filter(function (k) { return !skip || skip.indexOf(k) === -1; });
+  var all = Object.keys(TILES).filter(function (k) { return !TILES[k].off && (!skip || skip.indexOf(k) === -1); });
   for (var i = all.length - 1; i > 0; i--) { var j = Math.floor((rnd || Math.random)() * (i + 1)), t = all[i]; all[i] = all[j]; all[j] = t; }
   return all.slice(0, n);
 }

@@ -211,7 +211,7 @@ var FX_OF = { fire: 'fuego', ice: 'hielo', poison: 'veneno', bomb: 'canon', arro
     IMG['fx/' + el + '-' + part] = im;
   });
 });
-['ventisca', 'marea', 'meteoro', 'crater', 'nyx-maldicion', 'nyx-chispas', 'sol-escudo', 'morgana-ensamblaje', 'torvald-forja', 'torvald-carga', 'boreas-ventisca', 'midas-critico', 'eco-resuena', 'fusion-eco', 'oria-interes', 'muerte-puf', 'garra-espiritu', 'invocar', 'invocar-aro', 'acelerar', 'rayo-cadena', 'congelado-1', 'congelado-2', 'ganancia-mana', 'pyra-estallido', 'icono-armadura', 'icono-barrera', 'fusion', 'fusion-doblon', 'mover', 'ralentizado-1', 'ralentizado-2', 'ralentizado-3', 'ralentizado-4', 'ralentizado-5'].concat(Object.keys(ELEMENTS).map(function (el) { return 'conector-' + el; })).forEach(function (k) {
+['ventisca', 'marea', 'meteoro', 'crater', 'nyx-maldicion', 'nyx-chispas', 'sol-escudo', 'morgana-ensamblaje', 'torvald-forja', 'torvald-carga', 'boreas-ventisca', 'midas-critico', 'eco-resuena', 'fusion-eco', 'oria-interes', 'muerte-puf', 'muerte-estallido', 'muerte-veneno', 'muerte-fuego', 'muerte-humo', 'garra-espiritu', 'invocar', 'invocar-aro', 'acelerar', 'rayo-cadena', 'congelado-1', 'congelado-2', 'ganancia-mana', 'pyra-estallido', 'icono-armadura', 'icono-barrera', 'fusion', 'fusion-doblon', 'mover', 'ralentizado-1', 'ralentizado-2', 'ralentizado-3', 'ralentizado-4', 'ralentizado-5'].concat(Object.keys(ELEMENTS).map(function (el) { return 'conector-' + el; })).forEach(function (k) {
   var im = new Image();
   im.onload = function () { im.ready = true; };
   im.src = 'assets/fx/' + k + '.webp' + assetV('fx/' + k);

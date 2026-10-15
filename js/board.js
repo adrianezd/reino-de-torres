@@ -573,6 +573,7 @@ Board.prototype.hit = function (e, dmg, unitDef, kind) {
     }
     if (dmg <= 0) { e.hitT = HIT_TIME; return; }
   }
+  e.lastHit = deathKind(unitDef, kind);
   var src = unitDef ? unitDef.id : 'cmd';
   this.dmgBy[src] = (this.dmgBy[src] || 0) + Math.min(dmg, Math.max(0, e.hp));
   e.hp -= dmg;
@@ -756,7 +757,7 @@ Board.prototype.applyHit = function (e, dmg, d, u) {
     if (e.armor > 0) e.armor = Math.max(0, e.armor - acid * 0.5);
   }
   // Diana y la luz de Elian: golpe crítico doble
-  var crit = (at >= 0 && this.tiles[at] === 'diana' ? TILES.diana.crit : 0) + (at >= 0 ? Math.min(0.6, this.nearBuff(at, 'crit')) : 0);
+  var crit = (at >= 0 && this.tiles[at] === 'diana' ? TILES.diana.crit : 0) + (at >= 0 ? Math.min(0.75, this.nearBuff(at, 'crit')) : 0);
   if (crit > 0 && Math.random() < crit) {
     // Diana: golpe crítico doble
     dmg *= 2; e.critT = 0.55;
@@ -779,11 +780,21 @@ Board.prototype.applyHit = function (e, dmg, d, u) {
 var MAX_PARTS = 160;
 // con el ahorro de batería, muchos menos trocitos
 function maxParts() { return typeof meta !== 'undefined' && meta.settings.saver ? 40 : MAX_PARTS; }
+/* Cómo muere el monstruo (assets/fx/muerte-*): según el último golpe.
+   Fuego y quemaduras, fuego; veneno, veneno; golpes pesados (bombas,
+   engranajes, balas, monedas, mordiscos), humo y piedras; el resto, estallido. */
+var DEATH_HEAVY = { bomb: true, gear: true, bullet: true, coin: true };
+function deathKind(d, kind) {
+  if (kind === 'fire' || kind === 'ember' || kind === 'meteor') return 'fuego';
+  if (kind === 'poison') return 'veneno';
+  if (DEATH_HEAVY[kind] || (d && d.wolves)) return 'humo';
+  return 'estallido';
+}
 Board.prototype.deathFx = function (e) {
   var col = e.boss ? BOSSES[e.kind].color : ENEMIES[e.kind].color, big = e.boss ? 1.8 : 1;
-  // destello de luz (assets/fx/luz-impacto) en vez de la nube de antes
-  if (!art('fx/luz-impacto')) this.addFx('pop', { x: e.x, y: e.y }, col);
-  else this.fx.push({ type: 'pic', key: 'fx/luz-impacto', x: e.x, y: e.y - 0.12, size: 0.75 * big, rot: 0, grow: 0.3, life: 0.4, max: 0.4 });
+  var dk = 'fx/muerte-' + (e.lastHit || 'estallido');
+  if (!art(dk)) this.addFx('pop', { x: e.x, y: e.y }, col);
+  else this.fx.push({ type: 'pic', key: dk, x: e.x, y: e.y - 0.15, size: 0.95 * big, rot: 0, grow: 0.35, life: 0.5, max: 0.5 });
   var parts = 0;
   for (var k = 0; k < this.fx.length; k++) if (this.fx[k].type === 'part') parts++;
   var many = maxParts() < MAX_PARTS ? 2 : 5;
@@ -930,6 +941,7 @@ Board.prototype.update = function (dt) {
       var pd = e.poison * dt * (1 - e.armor * 0.5);
       if (e.poisonBy) this.dmgBy[e.poisonBy] = (this.dmgBy[e.poisonBy] || 0) + Math.min(pd, Math.max(0, e.hp));
       e.hp -= pd; this.damage += pd;
+      e.lastHit = e.poisonBy && UNITS[e.poisonBy] && UNITS[e.poisonBy].element === 'fuego' ? 'fuego' : 'veneno';
       e.poisonT -= dt;
       if (e.poisonT <= 0) e.poison = 0;
       if (e.hp <= 0) { this.kill(e); continue; }

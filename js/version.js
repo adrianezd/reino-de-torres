@@ -7,8 +7,22 @@
    La ventana sale sola al entrar con una versión nueva (meta.lastSeenVersion)
    y también desde Opciones.
    ========================================================= */
-var APP_VERSION = '1.27.0';
+var APP_VERSION = '1.28.0';
 var APP_PATCH_NOTES = [
+  {
+    version: '1.28.0',
+    summary: 'Muertes según el golpe y cartas nuevas equilibradas',
+    items: [
+      'Los monstruos mueren de cuatro formas según el golpe que los remata: estallido, veneno, fuego o humo y piedras.',
+      'Las casillas especiales encajan en la losa de cada tablero sin pisar las de al lado. El Semillero deja de salir.',
+      'Hilda: +22% de daño a las vecinas por rango (antes 15%).',
+      'Tilo: el ácido hace recibir un 12% más de daño por rango (antes 4%).',
+      'Elian: 18% de crítico por rango, como mucho 75% (antes 7%).',
+      'Marea pega más fuerte y algo más rápido.',
+      'Pyra estalla con 4 ascuas y quita un 15% de la vida (5% a los jefes).',
+      'Valka pega más de base; da un 6% por cada tropa en el campo (antes 7%).'
+    ]
+  },
   {
     version: '1.27.0',
     summary: 'Garra y sus lobos nuevos, torneo a tu gusto y tropas del mismo tamaño',
