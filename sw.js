@@ -6,7 +6,7 @@
 // archivo por su cuenta: si uno falla, los demás se quedan. El arte (EXTRA)
 // se baja después, de pocos en pocos y sin bloquear, y lo que se vaya
 // usando se guarda igualmente al pedirlo.
-var CACHE = 'reino-de-torres-v94';
+var CACHE = 'reino-de-torres-v95';
 // tropas con el dibujo nuevo (assets/personajes)
 var NEW_ART = ['cronos', 'eco', 'garra', 'halcon', 'kaia', 'lyra', 'oria', 'rocco', 'seren', 'sombra', 'titan', 'fenix'];
 var CORE = ['./', 'index.html', 'style.css', 'favicon.svg', 'manifest.json', 'js/data.js', 'js/version.js', 'js/art.js', 'js/meta.js', 'js/board.js', 'js/battle.js', 'js/music.js', 'js/ui.js',

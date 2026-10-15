@@ -2506,3 +2506,20 @@ body[data-screen="collection"], body[data-screen="commanders"], body[data-screen
 .tp-any { display: grid; place-items: center; font: 400 2.4rem 'Titan One', sans-serif; color: #ffe58a; background: rgba(255,255,255,0.08); }
 .tp-ico { width: 36px; height: 36px; object-fit: contain; }
 .tp-lv.lv0 { color: #7be08a; } .tp-lv.lv1 { color: #ffe58a; } .tp-lv.lv2 { color: #ff7b7b; }
+
+/* hoja de stats de la ficha de tropa (unitStatsHtml) */
+.us-sheet { margin: 8px 0 6px; padding: 4px 10px; border-radius: 16px; background: linear-gradient(180deg, rgba(10,16,52,0.85), rgba(10,16,52,0.6)); border: 2px solid color-mix(in srgb, var(--ec) 55%, transparent); box-shadow: inset 0 0 18px color-mix(in srgb, var(--ec) 18%, transparent), 0 3px 0 var(--ink); }
+.us-row { display: grid; grid-template-columns: 34px 1fr auto; align-items: center; gap: 8px; padding: 7px 0; animation: popIn 0.3s backwards; }
+.us-row + .us-row { border-top: 1px solid rgba(255,255,255,0.08); }
+.us-row:nth-child(2) { animation-delay: 0.03s; } .us-row:nth-child(3) { animation-delay: 0.06s; } .us-row:nth-child(4) { animation-delay: 0.09s; } .us-row:nth-child(5) { animation-delay: 0.12s; }
+.us-ico { width: 34px; height: 34px; display: grid; place-items: center; border-radius: 50%; font-style: normal; font-size: 1.05rem; background: radial-gradient(circle at 35% 30%, color-mix(in srgb, var(--ec) 70%, #fff), color-mix(in srgb, var(--ec) 60%, #000)); border: 2px solid var(--ink); box-shadow: 0 2px 0 var(--ink); }
+.us-ico x-ico, .us-ico .mi { width: 1.25em; height: 1.25em; }
+.us-name { display: flex; flex-direction: column; gap: 4px; min-width: 0; font-size: 0.8rem; font-weight: 800; color: #e8ecff; text-align: left; }
+.us-bar { display: block; height: 7px; border-radius: 99px; background: rgba(0,0,0,0.45); overflow: hidden; box-shadow: inset 0 1px 2px rgba(0,0,0,0.6); }
+.us-bar span { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, color-mix(in srgb, var(--ec) 70%, #000), var(--ec), color-mix(in srgb, var(--ec) 50%, #fff)); }
+.us-val { font: 400 1.15rem 'Lilita One', sans-serif; color: #fff; text-shadow: 0 2px 0 var(--ink); white-space: nowrap; text-align: right; }
+.us-val em { display: block; font-style: normal; font-size: 0.78rem; color: #7be08a; line-height: 1; }
+.uc-traits { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+.uc-trait { border-radius: 12px; padding: 6px 8px; align-items: flex-start; text-align: left; }
+.uc-trait > span { display: flex; flex-direction: column; min-width: 0; }
+.uc-trait small { line-height: 1.2; }

@@ -1059,7 +1059,7 @@ function drawBoard(b, L, now, isMain) {
     }
     drawUnit(ctx, u.id, cc2.x, uy, r, u.rank, now, { frozen: u.frozen > 0, board: true, atk: u.atk, aim: u.aim, recoil: u.recoil || 0, flash: pose ? pose.flash : 0 });
     if (pose) ctx.restore();
-    if (b.tiles[i]) drawTileIcon(b.tiles[i], cc2.x + G.cw * 0.33, cc2.y - G.ch * 0.33, 0.13);
+    // (sin icono de la casilla especial encima: la losa entera y su borde ya se ven alrededor)
     ctx.globalAlpha = 1;
   }
 
@@ -1362,6 +1362,9 @@ function drawTileFloor(type, cc, G, i, now, b) {
   if (fr) {
     var bx = opaqueBox(fr.pic);
     r = { x: fr.x + bx.x0 * fr.w, y: fr.y + bx.y0 * fr.h, w: (bx.x1 - bx.x0) * fr.w, h: (bx.y1 - bx.y0) * fr.h };
+  } else if (b && b.floor && b.floor[i] === 'none') {
+    // casilla ya dibujada en el tablero: la losa especial la cubre entera
+    r = { x: cc.x - G.cw * 0.46, y: cc.y - G.ch * 0.46, w: G.cw * 0.92, h: G.ch * 0.92 };
   } else r = { x: cc.x - s * 0.485, y: cc.y - s * 0.485, w: s * 0.97, h: s * 0.97 };
   if (pic) {
     glow(ctx, r.x + r.w / 2, r.y + r.h / 2, s * 0.55, t.color, 0.22 + pulse * 0.1);
@@ -1444,7 +1447,12 @@ function drawPathSigns(G) {
 // con loseta de canto, la tropa sube un poco para pisar su cara de arriba
 // (si no, los pies le quedan en el borde de abajo)
 var FLOOR_LIFT = 0.16;
-function unitLift(b, i, G) { return b.floor && b.floor[i] !== STONE_TILE && b.floor[i] !== 'none' && art('tiles/' + b.floor[i]) ? G.ch * FLOOR_LIFT : 0; }
+// en los tableros con las casillas dibujadas (ownTiles), un poco menos: sin canto
+var OWN_TILE_LIFT = 0.1;
+function unitLift(b, i, G) {
+  if (b.floor && b.floor[i] === 'none') return G.ch * OWN_TILE_LIFT;
+  return b.floor && b.floor[i] !== STONE_TILE && art('tiles/' + b.floor[i]) ? G.ch * FLOOR_LIFT : 0;
+}
 // dónde se pinta la loseta de una casilla (null si es la lisa o no ha cargado)
 function floorRect(b, i, cc, G) {
   var pic = b.floor && b.floor[i] !== STONE_TILE && b.floor[i] !== 'none' && art('tiles/' + b.floor[i]);

@@ -7,8 +7,19 @@
    La ventana sale sola al entrar con una versión nueva (meta.lastSeenVersion)
    y también desde Opciones.
    ========================================================= */
-var APP_VERSION = '1.29.0';
+var APP_VERSION = '1.30.0';
 var APP_PATCH_NOTES = [
+  {
+    version: '1.30.0',
+    summary: 'Fichas de tropa renovadas y tableros más finos',
+    items: [
+      'Stats nuevas en la ficha de cada tropa: cada valor con su barra comparada con las demás y, en verde, cuánto sube al mejorarla.',
+      'Los vídeos de las tropas se ven en el tablero nuevo del prado, con sus losetas y los efectos de ahora.',
+      'En los tableros con las casillas dibujadas, las tropas pisan el centro y las casillas especiales cubren la casilla entera.',
+      'Ya no sale el iconito de la casilla especial encima de la tropa.',
+      'Pantano: sin portales encima de la fila de abajo.'
+    ]
+  },
   {
     version: '1.29.0',
     summary: 'Cuatro tableros nuevos',

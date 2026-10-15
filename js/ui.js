@@ -1360,7 +1360,7 @@ function showCardModal(id, tab) {
     '<p class="uc-title">' + esc(u.title) + '</p>' +
     '<div class="uc-chips"><span class="uc-chip rar">' + (u.rarity === 'legendaria' || u.rarity === 'mitica' ? '★ ' : '') + rar.name + '</span><span class="uc-chip el">' + el.icon + ' ' + el.name + '</span><span class="uc-chip">' + esc(u.role) + '</span></div>' +
     '<p class="uc-desc">' + esc(u.desc) + (u.chestOnly ? '<br><em>🎁 Solo sale en el cofre de oro</em>' : '') + '</p>' +
-    ucTabs(id, '<div class="pause-stats uc-stats">' + stats + '</div>' + (traits ? '<div class="uc-traits">' + traits + '</div>' : ''), tab) +
+    ucTabs(id, stats + (traits ? '<div class="uc-traits">' + traits + '</div>' : ''), tab) +
     '<div class="uc-level"><span class="uc-lvmedal">' + c.lv + '</span><div class="uc-lvbody"><div class="uc-lvtop"><b>' + (maxed ? 'Nivel máximo' : 'Nivel ' + c.lv) + '</b>' + gain + '</div>' +
     '<div class="ubar' + (canUpgradeCard(id) ? ' ok' : '') + '"><span style="width:' + pct + '%"></span><em>' + (maxed ? 'MÁX' : c.n + '/' + need) + '</em></div></div></div>' +
     // mejorar en dos toques: el primero enseña lo que gana, el segundo lo confirma
@@ -1391,20 +1391,59 @@ function showCardModal(id, tab) {
   $('mcX').onclick = closeOverlay;
 }
 
-function unitStatsHtml(u, lv) {
-  var mult = 1 + CARD_BONUS * (lv - 1), dmg = Math.round((u.dmg || 0) * mult);
-  var stat = function (icon, val, label) { return '<div class="ps-stat"><i>' + icon + '</i><b>' + val + '</b><small>' + label + '</small></div>'; };
-  if (u.wolves) return stat('⚔️', dmg, 'Mordisco') + stat('🐺', u.wolves.bites, 'Mordiscos') + stat('⏱️', String(Math.round(10 / u.rate) / 10).replace('.', ',') + ' s', 'Cada lobo');
-  if (u.wild) return stat('✨', 'Todas', 'Fusión') + stat('🎲', Math.round(u.wild.echo * mult * 100) + '%', 'Resuena') + stat('⬆', '+2', 'Rangos');
-  if (u.interest) return stat('💧', Math.round(u.interest.pct * 100) + '%', 'Interés') + stat('⏱️', u.interest.every + ' s', 'Cada') + stat('🔒', Math.round(u.interest.cap * mult), 'Tope');
-  return u.dmg
-    ? stat('⚔️', dmg, 'Daño') + stat('⏱️', String(u.rate).replace('.', ','), 'Disparos/s') + stat('📈', Math.round(dmg * u.rate), 'Daño/s')
-    : u.manaGen
-      ? stat('💧', '+' + Math.round(u.manaGen.amount * mult), 'Maná') + stat('⏱️', u.manaGen.every + ' s', 'Cada') + stat('✨', '×rango', 'Fusión')
-      : stat('🎵', '+' + Math.round(u.buff.speed * mult * 100) + '%', 'Velocidad') + stat('📍', '4', 'Vecinas') + stat('✨', '×rango', 'Fusión');
+/* Hoja de stats de una tropa: cada fila con su icono, una barra que la
+   compara con la mejor de todas en eso y el valor a su nivel; si se puede
+   mejorar, en verde lo que tendrá al subir (up: false para no enseñarlo). */
+var STAT_MAX = {};
+function statMax(key, f) {
+  if (STAT_MAX[key] == null) STAT_MAX[key] = Math.max.apply(null, UNIT_ORDER.map(function (k) { return f(UNITS[k]) || 0; }));
+  return STAT_MAX[key];
 }
+function fmtStat(v) { return v >= 10 || v === Math.round(v) ? String(Math.round(v)) : String(Math.round(v * 10) / 10).replace('.', ','); }
+function unitStatsHtml(u, lv, up) {
+  var m = function (l) { return 1 + CARD_BONUS * (l - 1); }, next = up !== false && lv < CARD_MAX, rows = [];
+  // grow: si sube con el nivel de la carta · max: la mejor de todas, para la barra
+  var row = function (icon, label, val, unit, grow, max) {
+    var num = typeof val === 'number', v = num ? val * (grow ? m(lv) : 1) : val, v2 = num && grow && next ? val * m(lv + 1) : null;
+    var pct = num && max ? Math.max(6, Math.min(100, v / (max * (grow ? m(CARD_MAX) : 1)) * 100)) : 0;
+    rows.push('<div class="us-row"><i class="us-ico">' + icon + '</i><span class="us-name">' + label +
+      (pct ? '<span class="us-bar"><span style="width:' + pct.toFixed(0) + '%"></span></span>' : '') + '</span>' +
+      '<b class="us-val">' + (num ? fmtStat(v) : v) + (unit || '') +
+      (v2 != null && fmtStat(v2) !== fmtStat(v) ? '<em>→ ' + fmtStat(v2) + (unit || '') + '</em>' : '') + '</b></div>');
+  };
+  var dps = function (x) { return (x.dmg || 0) * (x.rate || 0); };
+  if (u.wolves) {
+    row('⚔️', 'Mordisco', u.dmg, '', true, statMax('dmg', function (x) { return x.dmg; }));
+    row('🐺', 'Mordiscos por lobo', u.wolves.bites, '');
+    row('⏱️', 'Un lobo cada', 1 / u.rate, ' s');
+  } else if (u.dmg) {
+    row('⚔️', 'Daño por golpe', u.dmg, '', true, statMax('dmg', function (x) { return x.dmg; }));
+    row('⏱️', 'Disparos por segundo', u.rate, '', false, statMax('rate', function (x) { return x.rate; }));
+    row('📈', 'Daño por segundo', dps(u), '', true, statMax('dps', dps));
+  }
+  if (u.manaGen) { row('💧', 'Maná', u.manaGen.amount, '', true, statMax('mana', function (x) { return x.manaGen && x.manaGen.amount; })); row('⏱️', 'Cada', u.manaGen.every, ' s'); }
+  if (u.interest) { row('💧', 'Interés', u.interest.pct * 100, '%'); row('🔒', 'Tope', u.interest.cap, '', true); row('⏱️', 'Cada', u.interest.every, ' s'); }
+  if (u.wild) { row('🎲', 'Resuena', u.wild.echo * 100, '%', true); row('⬆', 'Rangos al resonar', 2, ''); }
+  if (u.buff) {
+    BUFF_KINDS.forEach(function (k) {
+      if (u.buff[k[0]]) row(k[1], k[4].replace(' %', '') + ' por rango', u.buff[k[0]] * 100, '%', true, statMax('buff-' + k[0], function (x) { return x.buff && x.buff[k[0]] * 100; }));
+    });
+    row('📍', 'Vecinas que potencia', 4, '');
+  }
+  if (u.splash) row('💥', 'Zona de daño', u.splash * 100, '%', false, statMax('splash', function (x) { return x.splash && x.splash * 100; }));
+  if (u.poison) row(u.element === 'fuego' ? '🔥' : '☠️', (u.element === 'fuego' ? 'Quemadura' : 'Veneno') + ' por segundo', u.poison.dps, '', true, statMax('poison', function (x) { return x.poison && x.poison.dps; }));
+  if (u.chain) row('⚡', 'Saltos de cadena', u.chain, '', false, statMax('chain', function (x) { return x.chain; }));
+  if (u.crit) row('🗡️', 'Crítico ×' + String(u.crit.mult).replace('.', ','), u.crit.chance * 100, '%');
+  if (u.stun) row('⏳', 'Aturde ' + String(u.stun.dur).replace('.', ',') + ' s', u.stun.chance * 100, '%');
+  if (u.slow) row('❄️', 'Ralentiza hasta', u.slow.max * 100, '%');
+  if (u.bossMult) row('👑', 'Daño a jefes', '×' + u.bossMult, '');
+  return '<div class="us-sheet" style="--ec:' + ELEMENTS[u.element].color + '">' + rows.join('') + '</div>';
+}
+// rasgos que ya salen como fila en la hoja de stats: no se repiten abajo
+var TRAITS_IN_SHEET = { 'Área': 1, 'Quema': 1, 'Veneno': 1, 'Cadena': 1, 'Crítico': 1, 'Aturde': 1, 'Ralentiza': 1, 'Cazajefes': 1,
+  'Ritmo': 1, 'Afilado': 1, 'Luz': 1, 'Ácido': 1, 'Intereses': 1, 'Resuena': 1, 'Manada': 1 };
 function unitTraitsHtml(u) {
-  return unitTraits(u).map(function (t) { return '<span class="uc-trait"><i>' + t[0] + '</i><b>' + t[1] + '</b><small>' + t[2] + '</small></span>'; }).join('');
+  return unitTraits(u).filter(function (t) { return !TRAITS_IN_SHEET[t[1]]; }).map(function (t) { return '<span class="uc-trait"><i>' + t[0] + '</i><span><b>' + t[1] + '</b><small>' + t[2] + '</small></span></span>'; }).join('');
 }
 // Ficha de una tropa que aún no tienes: qué hace y cómo conseguirla.
 function showLockedCard(id) {
@@ -1416,7 +1455,7 @@ function showLockedCard(id) {
     '<p class="uc-title">' + esc(u.title) + '</p>' +
     '<div class="uc-chips"><span class="uc-chip rar">' + (u.rarity === 'legendaria' || u.rarity === 'mitica' ? '★ ' : '') + rar.name + '</span><span class="uc-chip el">' + el.icon + ' ' + el.name + '</span><span class="uc-chip">' + esc(u.role) + '</span></div>' +
     '<p class="uc-desc">' + esc(u.desc) + '</p>' +
-    ucTabs(id, '<div class="pause-stats uc-stats">' + unitStatsHtml(u, 1) + '</div>' + (traits ? '<div class="uc-traits">' + traits + '</div>' : '')) +
+    ucTabs(id, unitStatsHtml(u, 1, false) + (traits ? '<div class="uc-traits">' + traits + '</div>' : '')) +
     '<div class="uc-get"><b>🔒 Aún no la tienes</b>' + unitSources(id).map(function (t) { return '<small>' + esc(t) + '</small>'; }).join('') + '</div>' +
     '<button class="btn btn-ghost" id="mcClose">Cerrar</button></div>');
   startCardDemo($('ucDemo'), id);
@@ -1425,19 +1464,22 @@ function showLockedCard(id) {
   $('mcX').onclick = closeOverlay;
 }
 
-/* Mini partida en la ficha de una tropa: un trozo del tablero del prado
-   (el camino de arriba y la primera fila de losetas) con la tropa en su
-   loseta disparando a los monstruos que pasan (Melodía, con Lyra al lado).
+/* Mini partida en la ficha de una tropa: un trozo del tablero nuevo del
+   prado (el camino de arriba y las dos primeras filas, con sus losetas) con
+   la tropa en su loseta disparando a los monstruos que pasan (las de apoyo,
+   con Lyra al lado). Se pinta como en la partida: mismo tamaño de tropa,
+   la loseta y su canto, y las muertes y efectos de ahora.
    DEMO_CROP: el recorte de la ilustración, en sus píxeles. */
-var DEMO_CROP = { x: 420, y: 112, w: 880, h: 335 };
+var DEMO_FIELD = 'prado3';
+var DEMO_CROP = { x: 205, y: 60, w: 840, h: 320 };
 function startCardDemo(cv, id) {
   if (!cv) return;
-  var F = FIELDS.prado, cell = (F.gx1 - F.gx0) / COLS, D = DEMO_CROP;
-  var W = D.w / cell, H = D.h / cell, PY = (F.way[3][1] - D.y) / cell;
+  var F = FIELDS[DEMO_FIELD], cell = (F.gx1 - F.gx0) / COLS, D = DEMO_CROP;
+  var W = D.w / cell, H = D.h / cell, PY = (F.way[6][1] - D.y) / cell;
   var ch = (F.gy1 - F.gy0) / ROWS / cell, y0 = (F.gy0 - D.y) / cell, col0 = (F.gx0 - D.x) / cell;
-  // la tropa en la casilla del centro de la fila (y su pareja, en la de al lado)
+  // la tropa en la casilla del centro de la primera fila (y su pareja, en la de al lado)
   var geo = makeGeo({ W: W, H: H, x0: col0 + 2, y0: y0, cw: 1, ch: ch, way: [{ x: -0.6, y: PY }, { x: W + 0.6, y: PY }] });
-  var floor = [0, 1, 2, 3, 4].map(function () { return 'bosque-3'; });
+  var ft = FIELD_TILES[DEMO_FIELD], floorK = ft.set + '-1';
   var pair = UNITS[id].buff || UNITS[id].wild;
   var deck = pair ? [id, 'lyra'] : [id];
   var lv = {}; deck.forEach(function (k) { lv[k] = meta.cards[k] ? meta.cards[k].lv : 1; });
@@ -1464,7 +1506,7 @@ function startCardDemo(cv, id) {
     }
     b.update(dt);
     dc.setTransform(r, 0, 0, r, 0, 0);
-    var g = dc.createLinearGradient(0, 0, 0, chh); g.addColorStop(0, '#6fc322'); g.addColorStop(1, '#4f9a1c');
+    var g = dc.createLinearGradient(0, 0, 0, chh); g.addColorStop(0, '#7cc23a'); g.addColorStop(1, '#5aa22a');
     dc.fillStyle = g; dc.fillRect(0, 0, cw, chh);
     dc.save(); dc.translate(ox, oy); dc.scale(sc, sc);
     var pic = art(F.image);
@@ -1475,17 +1517,16 @@ function startCardDemo(cv, id) {
       dc.fillStyle = '#c9a66b'; dc.fillRect(-1, PY - 0.42, W + 2, 0.84);
       dc.fillStyle = '#e6c78c'; dc.fillRect(-1, PY - 0.36, W + 2, 0.72);
     }
-    // la fila de losetas, como en la partida
-    floor.forEach(function (k, ci) {
-      var tp = art('tiles/' + k);
-      if (!tp) return;
+    // las dos primeras filas de losetas, como en la partida (la de abajo tapa el canto de la de arriba)
+    var tp = art('tiles/' + floorK);
+    if (tp) for (var row = 0; row < 2; row++) for (var ci = 0; ci < COLS; ci++) {
       var tw = 1.02, th = Math.min(tw * tp.naturalHeight / tp.naturalWidth, ch * 1.16);
-      dc.drawImage(tp, col0 + ci + 0.5 - tw / 2, y0 - 0.02, tw, th);
-    });
+      dc.drawImage(tp, col0 + ci + 0.5 - tw / 2, y0 + row * ch - 0.02, tw, th);
+    }
     for (var i = 0; i < 2; i++) {
       if (!b.cells[i]) continue;
-      var c = b.cc(i), u = b.cells[i];
-      drawUnit(dc, u.id, c.x, c.y - 0.02 - ch * FLOOR_LIFT, 0.42 * ch * (1 + u.anim * 0.25), u.rank, t, { board: true, atk: u.atk, aim: u.aim, recoil: u.recoil || 0 });
+      var c = b.cc(i), u = b.cells[i], lift = tp ? ch * FLOOR_LIFT : 0;
+      drawUnit(dc, u.id, c.x, c.y - 0.02 - lift, 0.42 * Math.min(1, ch) * (1 + u.anim * 0.25), u.rank, t, { board: true, atk: u.atk, aim: u.aim, recoil: u.recoil || 0 });
     }
     b.enemies.slice().sort(function (p, q) { return p.y - q.y; }).forEach(function (e) {
       drawEnemy(dc, e, ENEMIES[e.kind].size * 0.82, t);
