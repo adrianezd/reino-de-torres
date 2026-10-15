@@ -7,8 +7,18 @@
    La ventana sale sola al entrar con una versión nueva (meta.lastSeenVersion)
    y también desde Opciones.
    ========================================================= */
-var APP_VERSION = '1.24.0';
+var APP_VERSION = '1.25.0';
 var APP_PATCH_NOTES = [
+  {
+    version: '1.25.0',
+    summary: 'Tres tropas raras de apoyo y casillas especiales ilustradas',
+    items: [
+      'Hilda (rara, metal): no ataca; afila las armas de las tropas de al lado y hacen más daño.',
+      'Tilo (rara, naturaleza): no ataca; las tropas de al lado golpean con ácido, que quita armadura y hace que el monstruo reciba más daño.',
+      'Elian (rara, arcano): no ataca; su luz da golpe crítico doble a las tropas de al lado.',
+      'Las casillas especiales estrenan dibujo: Altar, Fuente, Atalaya, Vórtice y Diana ocupan toda la losa.'
+    ]
+  },
   {
     version: '1.24.0',
     summary: 'Tres casillas especiales nuevas y más maná por baja',

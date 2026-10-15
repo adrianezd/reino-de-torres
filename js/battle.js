@@ -1038,7 +1038,7 @@ function drawBoard(b, L, now, isMain) {
     var pose = summonPose(u.drop) || mergePose(u.pop);
     // aro de notas bajo las tropas que acelera Melodía (assets/fx/acelerar)
     var acel = art('fx/acelerar');
-    if (acel && UNITS[u.id].dmg && neighbors(i).some(function (j) { var v = b.cells[j]; return v && UNITS[v.id].buff && !(v.frozen > 0); })) {
+    if (acel && UNITS[u.id].dmg && neighbors(i).some(function (j) { var v = b.cells[j]; return v && UNITS[v.id].buff && UNITS[v.id].buff.speed && !(v.frozen > 0); })) {
       var aw = G.cw * 0.95, ah = aw * acel.naturalHeight / acel.naturalWidth;
       ctx.save(); ctx.globalAlpha *= 0.5 + 0.15 * Math.sin(now / 260 + i);
       ctx.drawImage(acel, cc2.x - aw / 2, uy + r * 0.9 - ah * 0.6, aw, ah);
@@ -1342,35 +1342,25 @@ function drawGate(x, y) {
   rrect(ctx, x - 0.32, y - 0.38, 0.64, 0.5, 0.12); ctx.fillStyle = '#5a3a20'; ctx.fill(); ink(ctx, 0.04);
   ctx.fillStyle = '#ffd166'; star(ctx, x, y - 0.12, 0.14); ctx.fill();
 }
-/* Casilla especial (altar, fuente, atalaya) sobre su losa de piedra: la
-   losa no cambia; encima van un borde que late del color de la casilla y
-   su ilustración en pequeño, como emblema. */
+/* Casilla especial: su losa ilustrada (assets/tiles/<tipo>) ocupa el sitio
+   de la del tablero, con un borde que late del color de la casilla. Sin
+   ilustración, la losa de siempre teñida de ese color. */
 function drawTileFloor(type, cc, G, i, now, b) {
   var pic = art('tiles/' + type), t = TILES[type];
   var s = Math.min(G.cw, G.ch), pulse = Math.sin(now / 500 + i);
   var fr = b && floorRect(b, i, cc, G);
-  if (fr) {
-    // con loseta: el borde abraza lo que se ve de ella (la fila de abajo
-    // tapa su canto, salvo en la última) y el emblema va en su centro
-    var vh = Math.min(fr.h, G.ch + 0.02);
-    rrect(ctx, fr.x + 0.03, fr.y + 0.03, fr.w - 0.06, vh - 0.06, 0.1);
-    ctx.strokeStyle = alpha(t.color, 0.75 + pulse * 0.2); ctx.lineWidth = 0.05; ctx.stroke();
-    var fx = fr.x + fr.w / 2, fy = fr.y + vh * 0.5;
-    if (!pic) { ctx.fillStyle = alpha(t.color, 0.18 + pulse * 0.06); ctx.fill(); return; }
-    glow(ctx, fx, fy, s * 0.42, t.color, 0.35 + pulse * 0.12);
-    var ew = fr.w * 0.5, eh = ew * pic.naturalHeight / pic.naturalWidth;
-    ctx.drawImage(pic, fx - ew / 2, fy - eh / 2, ew, eh);
-    return;
+  // con loseta, en su sitio (la fila de abajo tapa su canto, salvo en la
+  // última); si no, donde va la de piedra
+  var r = fr ? { x: fr.x, y: fr.y, w: fr.w, h: fr.h, vh: Math.min(fr.h, G.ch + 0.02) }
+    : { x: cc.x - s * 0.485, y: cc.y - s * 0.485, w: s * 0.97, h: s * 0.97, vh: s * 0.97 };
+  if (pic) {
+    var h = fr ? r.h : r.w * pic.naturalHeight / pic.naturalWidth;
+    glow(ctx, r.x + r.w / 2, r.y + r.vh / 2, s * 0.6, t.color, 0.25 + pulse * 0.1);
+    ctx.drawImage(pic, r.x, r.y, r.w, h);
   }
-  rrect(ctx, cc.x - s * 0.45, cc.y - s * 0.45, s * 0.9, s * 0.9, 0.1);
-  ctx.strokeStyle = alpha(t.color, 0.75 + pulse * 0.2); ctx.lineWidth = 0.05; ctx.stroke();
-  if (!pic) {
-    ctx.fillStyle = alpha(t.color, 0.18 + pulse * 0.06); ctx.fill();
-    return;
-  }
-  glow(ctx, cc.x, cc.y, s * 0.45, t.color, 0.35 + pulse * 0.12);
-  var w = s * 0.58, h = w * pic.naturalHeight / pic.naturalWidth;
-  ctx.drawImage(pic, cc.x - w / 2, cc.y - h / 2, w, h);
+  rrect(ctx, r.x + 0.03, r.y + 0.03, r.w - 0.06, r.vh - 0.06, 0.1);
+  if (!pic) { ctx.fillStyle = alpha(t.color, 0.18 + pulse * 0.06); ctx.fill(); }
+  ctx.strokeStyle = alpha(t.color, 0.6 + pulse * 0.25); ctx.lineWidth = 0.04; ctx.stroke();
 }
 /* Co-op: la cuadrícula del aliado, encima del camino de tu tablero, sobre
    una placa oscura con borde dorado (sin tablero propio ni camino). */

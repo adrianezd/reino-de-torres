@@ -242,8 +242,19 @@ Board.prototype.interestAmount = function (u) {
 Board.prototype.echoChance = function () {
   return UNITS.eco.wild.echo * (1 + 0.5 * ((this.power.eco || 1) - 1)) * this.cardMult('eco');
 };
-Board.prototype.buffSpeed = function (u) {
-  return UNITS[u.id].buff.speed * u.rank * (1 + 0.1 * ((this.power[u.id] || 1) - 1)) * this.cardMult(u.id);
+// lo que da una tropa de apoyo de cada cosa (speed, dmg, crit, acid; 0 si no la da)
+Board.prototype.buffAmount = function (u, key) {
+  return (UNITS[u.id].buff[key] || 0) * u.rank * (1 + 0.1 * ((this.power[u.id] || 1) - 1)) * this.cardMult(u.id);
+};
+Board.prototype.buffSpeed = function (u) { return this.buffAmount(u, 'speed'); };
+// suma de lo que dan las de apoyo vecinas de la casilla i (las congeladas no)
+Board.prototype.nearBuff = function (i, key) {
+  var s = 0;
+  neighbors(i).forEach(function (j) {
+    var v = this.cells[j];
+    if (v && UNITS[v.id].buff && !(v.frozen > 0)) s += this.buffAmount(v, key);
+  }, this);
+  return s;
 };
 Board.prototype.affinity = function (i) {
   var u = this.cells[i];
@@ -282,14 +293,11 @@ Board.prototype.unitDamage = function (i) {
   var m = RANK_MULT[u.rank] * this.unitPower(u.id) * (1 + AFFINITY_BONUS * this.affMult * this.affinity(i)) * (1 + this.posBonus(i));
   if (d.legion) m *= 1 + d.legion.per * this.allies(i);
   if (this.tiles[i] === 'altar') m *= 1 + TILES.altar.dmg;
+  m *= 1 + this.nearBuff(i, 'dmg');
   return (d.dmg || 0) * m;
 };
 Board.prototype.unitSpeed = function (i) {
-  var s = 1;
-  neighbors(i).forEach(function (j) {
-    var v = this.cells[j];
-    if (v && UNITS[v.id].buff && !(v.frozen > 0)) s += this.buffSpeed(v);
-  }, this);
+  var s = 1 + this.nearBuff(i, 'speed');
   if (this.tiles[i] === 'atalaya') s += TILES.atalaya.speed;
   return s;
 };
@@ -538,6 +546,7 @@ Board.prototype.hit = function (e, dmg, unitDef, kind) {
   if (unitDef && unitDef.bossMult && e.boss) dmg *= unitDef.bossMult;
   if (unitDef && e.boss) dmg *= this.bossDmgMult;
   if (e.tangleT > 0) dmg *= 1 + e.tanglePct;
+  if (e.acidT > 0) dmg *= 1 + e.acidPct;
   if (!(unitDef && unitDef.pierce)) dmg *= 1 - e.armor;
   else if (e.armor > 0) {
     // las que perforan (Titán, Midas) le rompen la armadura para siempre
@@ -728,7 +737,16 @@ Board.prototype.applyHit = function (e, dmg, d, u) {
       this.hit(e, burst, d, 'ember');
     }
   }
-  if (at >= 0 && this.tiles[at] === 'diana' && Math.random() < TILES.diana.crit) {
+  var acid = at >= 0 ? this.nearBuff(at, 'acid') : 0;
+  if (acid > 0) {
+    // Tilo: ácido; quita armadura y el monstruo recibe más daño un rato
+    e.acidPct = e.acidT > 0 ? Math.max(e.acidPct, acid) : acid;
+    e.acidT = 3;
+    if (e.armor > 0) e.armor = Math.max(0, e.armor - acid * 0.5);
+  }
+  // Diana y la luz de Elian: golpe crítico doble
+  var crit = (at >= 0 && this.tiles[at] === 'diana' ? TILES.diana.crit : 0) + (at >= 0 ? Math.min(0.6, this.nearBuff(at, 'crit')) : 0);
+  if (crit > 0 && Math.random() < crit) {
     // Diana: golpe crítico doble
     dmg *= 2; e.critT = 0.55;
     this.addText(e.x, e.y - 0.5, '¡' + fmtNum(dmg) + '!', GAME_PALETTE.damageRed, true, true);
@@ -898,6 +916,7 @@ Board.prototype.update = function (dt) {
     if (e.critT > 0) e.critT -= dt;
     if (e.breakT > 0) e.breakT -= dt;
     if (e.tangleT > 0) e.tangleT -= dt;
+    if (e.acidT > 0) e.acidT -= dt;
     if (e.knockCd > 0) e.knockCd -= dt;
     if (e.stun > 0) { e.stun -= dt; }
     else e.d += e.speed * evSpeed * (1 - e.slowPct) * (this.guarded() ? SOL_SLOW : 1) * dt;

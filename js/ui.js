@@ -1088,7 +1088,7 @@ function unitTraits(u) {
   if (u.bossMult) t.push(['👑', 'Cazajefes', '×' + u.bossMult + ' a jefes']);
   if (u.pierce) t.push(['🛡️', 'Perfora', 'Sin armadura']);
   if (u.bounty) t.push(['💧', 'Botín', '+' + u.bounty + ' maná por baja']);
-  if (u.buff) t.push(['🎵', 'Ritmo', '+' + Math.round(u.buff.speed * 100) + '% vecinas']);
+  BUFF_KINDS.forEach(function (k) { if (u.buff && u.buff[k[0]]) t.push([k[1], k[2], '+' + Math.round(u.buff[k[0]] * 100) + '% ' + k[3] + ' por rango']); });
   if (u.twin) t.push(['📍', 'Gemelas', '+' + Math.round(u.twin * 100) + '% por cada igual al lado']);
   if (u.mixed) t.push(['📍', 'Variedad', '+' + Math.round(u.mixed * 100) + '% por cada vecina distinta']);
   if (u.edge) t.push(['📍', 'Borde', '+' + Math.round(u.edge * 100) + '% en las casillas de fuera']);
@@ -1124,6 +1124,9 @@ function ucTabs(id, statsHtml, tab) {
 }
 /* Árbol de talentos: un piso por nivel de TALENT_LV con dos ramas; la
    elegida brilla y se puede cambiar cuando quieras. */
+// lo que da cada tropa de apoyo a sus vecinas: clave de buff, icono, rasgo, texto y fila de nivel
+var BUFF_KINDS = [['speed', '🎵', 'Ritmo', 'vel. a vecinas', 'Velocidad %'], ['dmg', '🗡️', 'Afilado', 'daño a vecinas', 'Daño %'],
+  ['crit', '✨', 'Luz', 'crítico a vecinas', 'Crítico %'], ['acid', '🧪', 'Ácido', 'daño recibido', 'Ácido %']];
 function talentPicks(id) { return (meta.talents && meta.talents[id]) || []; }
 function talentPending(id) {
   var lv = meta.cards[id] ? meta.cards[id].lv : 0, picks = talentPicks(id);
@@ -1204,7 +1207,7 @@ function cardGainRows(u, lv) {
   }
   if (u.poison) rows.push([u.element === 'fuego' ? '🔥' : '☠️', u.element === 'fuego' ? 'Quema/s' : 'Veneno/s', Math.round(u.poison.dps * m(lv)), Math.round(u.poison.dps * m(lv + 1))]);
   if (u.manaGen) rows.push(['💧', 'Maná', Math.round(u.manaGen.amount * m(lv)), Math.round(u.manaGen.amount * m(lv + 1))]);
-  if (u.buff) rows.push(['🎵', 'Velocidad %', Math.round(u.buff.speed * m(lv) * 100), Math.round(u.buff.speed * m(lv + 1) * 100)]);
+  BUFF_KINDS.forEach(function (k) { if (u.buff && u.buff[k[0]]) rows.push([k[1], k[4], Math.round(u.buff[k[0]] * m(lv) * 100), Math.round(u.buff[k[0]] * m(lv + 1) * 100)]); });
   if (u.wild) rows.push(['🎲', 'Resuena %', Math.round(u.wild.echo * m(lv) * 100), Math.round(u.wild.echo * m(lv + 1) * 100)]);
   if (u.interest) rows.push(['🔒', 'Tope', Math.round(u.interest.cap * m(lv)), Math.round(u.interest.cap * m(lv + 1))]);
   return rows;
@@ -1972,7 +1975,7 @@ function refreshUnitInfo() {
   var bits = [];
   if (d.dmg) bits.push('⚔️ ' + fmtNum(b.player.unitDamage(i)) + (d.wolves ? ' por mordisco' : ' por golpe'));
   if (d.manaGen) bits.push('💧 +' + b.player.manaAmount(u) + ' cada ' + d.manaGen.every + ' s');
-  if (d.buff) bits.push('🎵 +' + Math.round(b.player.buffSpeed(u) * 100) + '% vel. a vecinas');
+  BUFF_KINDS.forEach(function (k) { if (d.buff && d.buff[k[0]]) bits.push(k[1] + ' +' + Math.round(b.player.buffAmount(u, k[0]) * 100) + '% ' + k[3]); });
   if (d.interest) bits.push('💧 +' + b.player.interestAmount(u) + ' cada ' + d.interest.every + ' s');
   if (d.wild) bits.push('✨ Se fusiona con cualquiera de rango ' + u.rank + ' · 🎲 ' + Math.round(b.player.echoChance() * 100) + '%');
   if (aff) bits.push(ELEMENTS[d.element].icon + ' Afinidad +' + Math.round(aff * AFFINITY_BONUS * 100) + '%');

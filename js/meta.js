@@ -637,7 +637,7 @@ function buyGold(i) {
 }
 
 /* ---------- códigos ---------- */
-// huella SHA-256 en hexadecimal (los códigos de CODES van así)
+// huella SHA-256 en hexadecimal (los códigos de CODES llevan sus 8 primeros)
 function sha256Hex(s) {
   if (!window.crypto || !crypto.subtle || !window.TextEncoder) return Promise.reject(new Error('sin cifrado'));
   return crypto.subtle.digest('SHA-256', new TextEncoder().encode(s)).then(function (buf) {
@@ -648,11 +648,11 @@ function sha256Hex(s) {
 function redeemCode(raw) {
   var code = String(raw || '').toUpperCase().replace(/[^A-Z0-9Ñ]/g, '');
   if (!code) return Promise.resolve({ error: 'Escribe un código' });
-  return sha256Hex(code).then(function (h) {
-    var c = CODES[h];
+  return sha256Hex(code).then(function (full) {
+    var h = full.slice(0, 8), c = CODES[h];
     if (!c) return { error: 'Ese código no existe' };
-    // antes se guardaba el código tal cual; ahora, su huella
-    if (meta.codes.indexOf(h) !== -1 || meta.codes.indexOf(code) !== -1) return { error: 'Ya canjeaste ese código' };
+    // antes se guardaba el código tal cual y luego su huella entera; ahora, la corta
+    if (meta.codes.indexOf(h) !== -1 || meta.codes.indexOf(full) !== -1 || meta.codes.indexOf(code) !== -1) return { error: 'Ya canjeaste ese código' };
     meta.codes.push(h);
     meta.gold += c.gold || 0;
     meta.gems += c.gems || 0;

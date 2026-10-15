@@ -48,7 +48,8 @@ function star(c, x, y, r, pts) {
 var IMG = {};
 // imágenes redibujadas: llevan ?v= para que no salga la vieja de la caché
 var ASSET_VER = { 'fx/fusion': 2, 'fx/fusion-eco': 2, 'fx/invocar': 2, 'fx/estado-aturdido': 2, 'fx/estado-veneno': 2, 'fx/estado-critico': 2,
-  'fx/veneno-impacto': 2, 'fx/fuego-impacto': 2, 'enemies/coloso2': 2, 'fx/eco-resuena': 2, 'fx/oria-interes': 2, 'ui/vida': 2, 'icons/gota': 2, 'chests/madera': 2, 'chests/plata': 2, 'chests/oro': 2, 'chests/comandante': 2, 'chests/legendario': 2 };
+  'fx/veneno-impacto': 2, 'fx/fuego-impacto': 2, 'enemies/coloso2': 2, 'fx/eco-resuena': 2, 'fx/oria-interes': 2, 'ui/vida': 2, 'icons/gota': 2, 'chests/madera': 2, 'chests/plata': 2, 'chests/oro': 2, 'chests/comandante': 2, 'chests/legendario': 2,
+  'tiles/altar': 3, 'tiles/fuente': 3, 'tiles/atalaya': 3 };
 ['cronos', 'eco', 'garra', 'halcon', 'kaia', 'lyra', 'oria', 'rocco', 'seren', 'sombra', 'titan', 'fenix'].forEach(function (id) { ASSET_VER['units/' + id] = 3; });
 function assetV(key) { return ASSET_VER[key] ? '?v=' + ASSET_VER[key] : ''; }
 // tropas sin aura en su casilla
@@ -56,7 +57,7 @@ var NO_CELL_AURA = { eco: true, marea: true, frida: true, pyra: true, valka: tru
 var IMG_LIST = {
   units: UNIT_ORDER.filter(function (id) { return !UNITS[id].noArt; }),
   enemies: ['blob', 'ghost', 'brute', 'orco', 'rocoso', 'escarcha', 'escudado', 'gelido', 'coloso', 'coloso2', 'nigro', 'dragon'],
-  tiles: ['altar', 'fuente', 'atalaya', 'piedra-1'].concat(Object.keys(FIELD_TILES).reduce(function (a, k) { var t = FIELD_TILES[k]; for (var n = 1; n <= t.n; n++) a.push(t.set + '-' + n); return a; }, [])),
+  tiles: ['altar', 'fuente', 'atalaya', 'vortice', 'diana', 'piedra-1'].concat(Object.keys(FIELD_TILES).reduce(function (a, k) { var t = FIELD_TILES[k]; for (var n = 1; n <= t.n; n++) a.push(t.set + '-' + n); return a; }, [])),
   boards: ['lava2', 'hielo', 'roca', 'veneno', 'prado3', 'hielo2', 'lava3', 'suelo-prado', 'camino'],
   ui: ['boton', 'fondo', 'vida', 'cartel-entrada', 'cartel-salida', 'portal-entrada', 'portal-salida'],
   commanders: COMMANDER_ORDER,

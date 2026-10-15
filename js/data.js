@@ -32,7 +32,9 @@ Object.keys(RARITY).forEach(function (k) { RARITY[k].color = GAME_PALETTE.rariti
    dmg: daño por disparo a rango 1 · rate: disparos por segundo
    proj: tipo de proyectil (para el dibujo)
    efectos opcionales: slow, poison, splash, chain, crit, stun, bossMult,
-   manaGen (no dispara: genera maná), buff (no dispara: acelera vecinos),
+   manaGen (no dispara: genera maná), buff (no dispara: potencia a sus vecinas,
+   cada valor por rango: speed velocidad, dmg daño, crit golpe crítico doble,
+   acid ácido que quita armadura y hace recibir más daño 3 s),
    pierce (ignora la armadura), bounty (maná extra por cada baja suya),
    wild (comodín de fusión), interest (intereses del maná), wolves (lobos por el camino),
    stunPic / critPic (dibujo que salta sobre el enemigo al aturdirlo o con un crítico),
@@ -206,9 +208,28 @@ var UNITS = {
     color: '#8a9bb5', color2: '#ffd34d', skin: '#f3cfae',
     dmg: 52, rate: 0.75, proj: 'arrow', legion: { per: 0.07, extra: [6, 10] }, target: 'first',
     desc: 'Cuantas más tropas tengas en el campo, más fuerte: +7% de daño por cada una, y con 6 o más sus lanzas alcanzan a dos enemigos (con 10, a tres).'
+  },
+  // apoyos al estilo de los de Rush Royale: no atacan y potencian a sus vecinas
+  hilda: {
+    element: 'metal', name: 'Hilda', title: 'Afiladora', role: 'Apoyo', rarity: 'rara', noArt: true,
+    color: '#9aa4b8', color2: '#ffb347', skin: '#f3cfae',
+    buff: { dmg: 0.15 },
+    desc: 'No ataca. Su piedra de afilar da a las tropas de al lado un 15% más de daño por cada rango suyo.'
+  },
+  tilo: {
+    element: 'naturaleza', name: 'Tilo', title: 'Químico', role: 'Apoyo', rarity: 'rara', noArt: true,
+    color: '#7bd93f', color2: '#e8ff7a', skin: '#ffd9b8',
+    buff: { acid: 0.04 },
+    desc: 'No ataca. Las tropas de al lado mojan sus golpes en ácido: el monstruo pierde armadura y durante 3 segundos recibe un 4% más de daño por cada rango suyo.'
+  },
+  elian: {
+    element: 'arcano', name: 'Elian', title: 'Inquisidor', role: 'Apoyo', rarity: 'rara', noArt: true,
+    color: '#f5e6a8', color2: '#ffd34d', skin: '#f3cfae',
+    buff: { crit: 0.07 },
+    desc: 'No ataca. Bendice con su luz a las tropas de al lado: un 7% de golpe crítico doble por cada rango suyo.'
   }
 };
-var UNIT_ORDER = ['lyra', 'brasa', 'nivea', 'doblon', 'rocco', 'volta', 'mirra', 'melodia', 'kaia', 'sombra', 'cronos', 'halcon', 'eco', 'oria', 'ulric', 'fenix', 'aurora', 'titan', 'boreas', 'midas', 'seren', 'garra', 'marea', 'frida', 'pyra', 'valka'];
+var UNIT_ORDER = ['lyra', 'brasa', 'nivea', 'doblon', 'rocco', 'volta', 'mirra', 'melodia', 'kaia', 'sombra', 'cronos', 'halcon', 'eco', 'oria', 'ulric', 'fenix', 'aurora', 'titan', 'boreas', 'midas', 'seren', 'garra', 'marea', 'frida', 'pyra', 'valka', 'hilda', 'tilo', 'elian'];
 UNIT_ORDER.forEach(function (id) { UNITS[id].id = id; });
 // tropas que pueden usar los rivales y aliados de la máquina
 var AI_UNITS = UNIT_ORDER.filter(function (id) { return !UNITS[id].chestOnly; });
@@ -375,22 +396,23 @@ var SHOP_GOLD = [
   { gold: 3000, gems: 180 }
 ];
 
-/* Códigos de regalo: se canjean una vez cada uno. Se guardan como huella
-   SHA-256 del código en mayúsculas y sin espacios (así no se leen en el
-   código del juego). Para añadir uno: la huella del texto y su premio.
+/* Códigos de regalo: se canjean una vez cada uno. Se guardan como los 8
+   primeros caracteres de la huella SHA-256 del código en mayúsculas y sin
+   espacios (así no se leen en el código del juego). Para añadir uno: esa
+   huella corta y su premio.
    gold / gems: cantidad · chest: tipo de cofre que se abre al canjearlo ·
    trophies: te deja con al menos esos trofeos. */
 var CODES = {
-  '0a53889993db4a2a580275582d42ce3294e95b605e42af39d2ec2c78d88abac9': { gold: 500, gems: 50 },
-  '941681e1010f15496320554974d321f276759bb95545d33accede6a0b0def20a': { chest: 'oro' },
-  '2e58ab21fd2998963cb4668692dadbd7a657013552b31674da6be370919d3d78': { gems: 30 },
-  '10dc77720c8fef1d706ddd79cfc6d6515990c58d338a2881dcdd8b0ff931cb4d': { gems: 100 },
-  'e739bbf58ca177dc7e362fee47a12accc554bea13347fdb0b271429111fddc97': { gems: 15000 },
-  '8c4557908504f60bf10af97ea6d82eced9de6ea638a2c86abc43b713adef1a20': { gems: 250 },
-  '0c7141e6a68286482ff42b50a2b5e371bf44534c2b05971b91e7e3d9e53e5027': { gems: 500 },
-  'e675b0857b3a616cfaea9d3617a21ecaf1a7b3c5b67bb637797f4b3afe1577ee': { gems: 150 },
-  'd814714034eb9e32a223ac0000ffcfffed2fb7d85e0b2a623bb0218c59e33d41': { gold: 400 },
-  '30c03231011b471f86480c0e694edca51f52a24e4a4be75522f95d413c7b8120': { trophies: 6000 }
+  '0a538899': { gold: 500, gems: 50 },
+  '941681e1': { chest: 'oro' },
+  '2e58ab21': { gems: 30 },
+  '10dc7772': { gems: 100 },
+  'e739bbf5': { gems: 15000 },
+  '8c455790': { gems: 250 },
+  '0c7141e6': { gems: 500 },
+  'e675b085': { gems: 150 },
+  'd8147140': { gold: 400 },
+  '30c03231': { trophies: 6000 }
 };
 
 /* Arenas del 1 contra 1: se llega con los trofeos que tienes (at). Cada una
