@@ -74,7 +74,7 @@ function startBattle(mode, opts) {
   // el 1 contra 1 (no el torneo) se juega en el tablero de tu arena
   var choices = onlyNewFields(stage ? [].concat(BIOME_FIELD[biome] || 'prado') : mode === 'duel' && !opts.tourney ? [ARENAS[arenaIndex()].field] : Object.keys(FIELD_GEOS));
   // en el torneo se puede elegir la arena
-  if (tourney && opts.arena >= 0 && ARENAS[opts.arena]) choices = onlyNewFields([ARENAS[opts.arena].field]);
+  if (tourney && FIELDS[opts.arena]) choices = onlyNewFields([opts.arena]);
   var ready = choices.filter(loaded);
   var fid = ready.length ? pick(ready) : loaded('prado') ? 'prado' : null;
   if (reto) {
@@ -141,8 +141,9 @@ function startBattle(mode, opts) {
     UNIT_ORDER.forEach(function (id) { allyCard[id] = Math.max(1, (lv[id] || 1)); });
     // la cuadrícula del aliado va encima de tu tablero, en el mismo espacio
     // (mismo camino, mismas coordenadas): sus disparos van a tus monstruos
-    var allyGeo = Object.assign({}, geo, { y0: -COOP_GAP - ROWS * geo.ch });
-    battle.other = new Board({ name: pick(ALLY_NAMES), ai: true, aiLevel: 2, deck: allyDeck, cardLv: allyCard, commander: pick(COMMANDER_ORDER), cmdLv: myCmdLv, lives: lives, biome: biome, geo: allyGeo, floorTile: floorTile });
+    // (ally: sin las losas dibujadas del tablero, que son las tuyas)
+    var allyGeo = Object.assign({}, geo, { y0: -COOP_GAP - ROWS * geo.ch, ally: true });
+    battle.other = new Board({ name: pick(ALLY_NAMES), ai: true, aiLevel: 2, deck: allyDeck, cardLv: allyCard, commander: pick(COMMANDER_ORDER), cmdLv: myCmdLv, lives: lives, biome: biome, geo: allyGeo, floorTile: floorTile === 'none' ? STONE_TILE : floorTile });
   }
   if (battle.other) { battle.boards.push(battle.other); battle.other.battle = battle; }
   if (mode === 'coop') {
@@ -957,7 +958,8 @@ function drawBoard(b, L, now, isMain) {
       // por arriba, abajo y los lados hasta donde llegue la pantalla
       var upx = F.cw / G.W; // píxeles de la imagen por unidad
       if (F.road) drawRoad(F, upx);
-      ctx.drawImage(pic, -F.cx / upx, -F.cy / upx, F.iw / upx, F.ih / upx);
+      // co-op: los bordes de arriba y abajo se funden con el fondo (encima va la cuadrícula del aliado)
+      ctx.drawImage(battle.mode === 'coop' ? fadedTop(pic, F) : pic, -F.cx / upx, -F.cy / upx, F.iw / upx, F.ih / upx);
     } else ctx.drawImage(pic, F.cx * kx, F.cy * ky, F.cw * kx, F.ch * ky, 0, 0, G.W, G.H);
     if (F.fade) {
       // funde los bordes superior e inferior con el césped de alrededor
@@ -1360,7 +1362,8 @@ function drawTileFloor(type, cc, G, i, now, b) {
   // con loseta, justo sobre la parte que se ve de ella (sin sus bordes
   // transparentes, para no meterse en las de al lado); si no, donde va la de piedra
   var r;
-  if (fr) {
+  if (allySlab(G, i)) r = { x: cc.x - G.cw * 0.42, y: cc.y - G.ch * 0.42, w: G.cw * 0.84, h: G.ch * 0.84 };
+  else if (fr) {
     // si el juego de losetas dice dónde está su cara de arriba (face), solo ahí,
     // para que se siga viendo el canto de la loseta alrededor
     var face = G.field && FIELD_TILES[G.field] && FIELD_TILES[G.field].face;
@@ -1369,7 +1372,7 @@ function drawTileFloor(type, cc, G, i, now, b) {
   } else if (b && b.floor && b.floor[i] === 'none') {
     // casilla ya dibujada en el tablero: la losa especial la cubre entera
     // (justo encima de la dibujada si el tablero dice dónde está cada una)
-    var sl = G.px && G.px.slabs;
+    var sl = !G.ally && G.px && G.px.slabs;
     if (sl) {
       var F = G.px, cell = (F.gx1 - F.gx0) / COLS, sx = sl.xs[i % COLS], sy = sl.ys[Math.floor(i / COLS)];
       r = { x: (sx[0] - F.cx) / cell, y: (sy[0] - F.cy) / cell, w: (sx[1] - sx[0]) / cell, h: (sy[1] - sy[0]) / cell };
@@ -1469,7 +1472,33 @@ function floorRect(b, i, cc, G) {
   var w = G.cw * 1.02, h = Math.min(w * pic.naturalHeight / pic.naturalWidth, G.ch * 1.16);
   return { pic: pic, x: cc.x - w / 2, y: cc.y - G.ch / 2 - 0.02, w: w, h: h };
 }
+// la ilustración con sus franjas de arriba y abajo desvaneciéndose (se hace una vez)
+function fadedTop(pic, F) {
+  if (pic._fade) return pic._fade;
+  try {
+    var w = pic.naturalWidth, h = pic.naturalHeight, cv = document.createElement('canvas'), c = cv.getContext('2d');
+    cv.width = w; cv.height = h;
+    c.drawImage(pic, 0, 0);
+    var top = Math.max(80, F.cy * 1.1) / F.ih, bot = Math.max(60, F.ih - F.cy - F.ch) / F.ih, g = c.createLinearGradient(0, 0, 0, h);
+    g.addColorStop(0, 'rgba(0,0,0,0)'); g.addColorStop(Math.min(0.45, top), 'rgba(0,0,0,1)');
+    g.addColorStop(Math.max(0.55, 1 - bot), 'rgba(0,0,0,1)'); g.addColorStop(1, 'rgba(0,0,0,0)');
+    c.globalCompositeOperation = 'destination-in';
+    c.fillStyle = g; c.fillRect(0, 0, w, h);
+    pic._fade = cv;
+  } catch (e) { pic._fade = pic; }
+  return pic._fade;
+}
+// co-op: en los tableros con las losas dibujadas, el aliado lleva esas mismas
+// losas (recortadas de la ilustración) en vez de la piedra lisa
+function allySlab(G, i) {
+  var sl = G.ally && G.px && G.px.slabs, pic = sl && art(G.image);
+  if (!pic) return null;
+  var F = G.px, kx = pic.naturalWidth / F.iw, ky = pic.naturalHeight / F.ih, sx = sl.xs[i % COLS], sy = sl.ys[Math.floor(i / COLS)];
+  return { pic: pic, sx: sx[0] * kx, sy: sy[0] * ky, sw: (sx[1] - sx[0]) * kx, sh: (sy[1] - sy[0]) * ky };
+}
 function drawStoneTile(b, i, cc, G) {
+  var as = allySlab(G, i);
+  if (as) { ctx.drawImage(as.pic, as.sx, as.sy, as.sw, as.sh, cc.x - G.cw * 0.47, cc.y - G.ch * 0.47, G.cw * 0.94, G.ch * 0.94); return true; }
   // tableros con sus casillas ya dibujadas: nada encima
   if (b.floor && b.floor[i] === 'none') return false;
   var fr = floorRect(b, i, cc, G);

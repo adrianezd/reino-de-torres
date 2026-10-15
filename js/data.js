@@ -660,7 +660,7 @@ var WAVE_EVENTS = [
    en todas sus oleadas de jefe. El torneo no lleva ruleta. */
 var DUEL_MODS = [
   { id: 'mana2',     name: 'Doble de maná',  pic: 'assets/icons/gota.webp?v=2',     desc: 'Empezáis con el doble y todo el maná que ganáis vale el doble.' },
-  { id: 'rebajas',   name: 'Mejoras a mitad', pic: 'assets/icons/mejorar.webp', desc: 'Mejorar tropas en la partida cuesta la mitad.' },
+  { id: 'rebajas',   name: 'Mejoras a mitad', pic: 'assets/icons/mejorar.webp?v=2', desc: 'Mejorar tropas en la partida cuesta la mitad.' },
   { id: 'veteranos', name: 'Veteranos',      pic: 'assets/icons/estrella.webp', desc: 'Cada tropa invocada tiene un 25% de salir con rango 2.' },
   { id: 'carga',     name: 'Carga rápida',   pic: 'assets/icons/rapido.webp',   desc: 'Los comandantes se cargan el doble de rápido.' },
   { id: 'subita',    name: 'Muerte súbita',  pic: 'assets/icons/calavera.webp', desc: 'Una sola vida para cada uno.' },

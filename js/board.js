@@ -18,6 +18,9 @@ var WAYPOINTS = [
   { x: BOARD_W - PATH_W / 2, y: ENTRY_Y }
 ];
 var BASE_CROSS_TIME = 17; // segundos que tarda un monstruo normal en dar la vuelta
+// los empujones van en proporción al camino (medidos en uno de PATH_REF_LEN casillas),
+// así en todos los tableros hacen retroceder el mismo tiempo de recorrido
+var PATH_REF_LEN = 15;
 
 /* Geometría de un tablero: casillas (x0, y0, cw, ch), tamaño (W, H) y
    recorrido de los monstruos (way). Hay dos: el tablero dibujado y el
@@ -109,6 +112,8 @@ var BIOME_FIELD = { prado: ['prado', 'prado3'], bosque: ['prado', 'prado3'], pan
 // de momento solo se juega en los tableros nuevos: cada uno viejo se cambia
 // por el nuevo que más se le parece
 var NEW_FIELDS = ['prado3', 'hielo2', 'lava4', 'roca2', 'veneno2', 'estelar', 'magico'];
+// nombre de cada tablero (para elegirlo en el torneo)
+var FIELD_NAMES = { prado3: 'Prado del Reino', hielo2: 'Glaciar Eterno', lava4: 'Río de Lava', roca2: 'Ruinas de Piedra', veneno2: 'Pantano Tóxico', estelar: 'Cielo Estelar', magico: 'Santuario Mágico' };
 var NEW_FIELD_OF = { prado: 'prado3', veneno: 'veneno2', hielo: 'hielo2', roca: 'roca2', lava2: 'lava4', lava3: 'lava4', estelar2: 'magico' };
 function onlyNewFields(list) {
   var out = [];
@@ -760,7 +765,7 @@ Board.prototype.applyHit = function (e, dmg, d, u) {
   }
   if (d.knock && !e.boss && !(e.knockCd > 0)) {
     // Marea: la ola lo devuelve hacia atrás por el camino
-    e.d = Math.max(0, e.d - (d.knock.dist + d.knock.perRank * (u.rank - 1)));
+    e.d = Math.max(0, e.d - (d.knock.dist + d.knock.perRank * (u.rank - 1)) * this.geo.len / PATH_REF_LEN);
     e.knockCd = d.knock.cd;
     var kp = this.pos(e.d); e.x = kp.x; e.y = kp.y;
     if (art('fx/marea-tiro')) this.fx.push({ type: 'pic', key: 'fx/marea-tiro', x: e.x, y: e.y, size: 0.7, rot: 0, grow: 0.4, life: 0.4, max: 0.4 });

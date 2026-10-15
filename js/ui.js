@@ -1033,11 +1033,11 @@ function bindDeckDrag(m) {
 }
 /* Torneo: arena (con su tablero de vista previa), dificultad del rival y
    modificador, cada uno con flechas. Se guarda en meta.tourneyPick.
-   arena: -1 al azar o el índice de ARENAS · level: 0 fácil, 1 normal,
+   arena: -1 al azar o el tablero (uno de NEW_FIELDS) · level: 0 fácil, 1 normal,
    2 difícil · mod: '' sin modificador, 'azar' o el id de DUEL_MODS. */
 var TOURNEY_LEVELS = ['Fácil', 'Normal', 'Difícil'];
 var TOURNEY_PICK = {
-  arena: function () { return [-1].concat(ARENAS.map(function (a, i) { return i; })); },
+  arena: function () { return [-1].concat(NEW_FIELDS); },
   level: function () { return [0, 1, 2]; },
   mod: function () { return ['', 'azar'].concat(DUEL_MODS.map(function (m) { return m.id; })); }
 };
@@ -1055,11 +1055,11 @@ function tourneyPicker() {
       '<button class="tp-arrow" data-tstep="' + k + '" data-dir="1" aria-label="Siguiente">▶</button></div>';
   };
   var arena = t.arena < 0 ? '<span class="tp-pic tp-any">?</span><b>Al azar</b>'
-    : '<img class="tp-pic" src="' + arenaPic(t.arena) + '" alt=""><b>' + esc(ARENAS[t.arena].name) + '</b>';
+    : '<img class="tp-pic" src="assets/boards/' + t.arena + '.webp" alt=""><b>' + esc(FIELD_NAMES[t.arena] || t.arena) + '</b>';
   var mod = !t.mod ? '<b>Sin modificador</b>' : t.mod === 'azar' ? '<b>Al azar</b>'
     : '<img class="tp-ico" src="' + md.pic + '" alt=""><b>' + esc(md.name) + '</b><small>' + esc(md.desc) + '</small>';
   return '<div class="tn-panel tn-pick"><h3>Partida</h3>' +
-    row('arena', 'Arena', arena) +
+    row('arena', 'Tablero', arena) +
     row('level', 'Rival', '<b class="tp-lv lv' + t.level + '">' + TOURNEY_LEVELS[t.level] + '</b>') +
     row('mod', 'Modificador', mod) + '</div>';
 }

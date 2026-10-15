@@ -7,8 +7,19 @@
    La ventana sale sola al entrar con una versión nueva (meta.lastSeenVersion)
    y también desde Opciones.
    ========================================================= */
-var APP_VERSION = '1.31.5';
+var APP_VERSION = '1.31.6';
 var APP_PATCH_NOTES = [
+  {
+    version: '1.31.6',
+    summary: 'Co-op arreglado y torneo con todos los tableros',
+    items: [
+      'Co-op: las casillas especiales de tu aliado ya no salen repetidas en tu tablero ni tapan tus tropas.',
+      'Co-op: la cuadrícula de tu aliado lleva las mismas losas que el tablero y el dibujo se funde con el fondo por arriba y por abajo.',
+      'En el torneo puedes elegir cualquiera de los siete tableros.',
+      'Los empujones hacia atrás hacen retroceder lo mismo en todos los tableros, sea el camino largo o corto.',
+      'La flecha de mejorar ya no lleva un 2 dentro.'
+    ]
+  },
   {
     version: '1.31.5',
     summary: 'Tablero mágico nuevo y hielo retocado',
