@@ -7,8 +7,19 @@
    La ventana sale sola al entrar con una versión nueva (meta.lastSeenVersion)
    y también desde Opciones.
    ========================================================= */
-var APP_VERSION = '1.25.0';
+var APP_VERSION = '1.26.0';
 var APP_PATCH_NOTES = [
+  {
+    version: '1.26.0',
+    summary: 'Hilda, Tilo y Elian con dibujo, Valka nueva y tienda más grande',
+    items: [
+      'Hilda, Tilo y Elian ya tienen su dibujo, y su efecto sale hacia las tropas que potencian.',
+      'Valka estrena retrato, poses y lanza.',
+      'La tienda trae seis ofertas al día, en dos filas de tres.',
+      'Mantén pulsada una carta de tu colección y arrástrala sobre una del mazo para cambiarlas. También sirve para ordenar el mazo.',
+      'De momento todas las partidas se juegan en los tableros nuevos de prado, hielo y lava.'
+    ]
+  },
   {
     version: '1.25.0',
     summary: 'Tres tropas raras de apoyo y casillas especiales ilustradas',

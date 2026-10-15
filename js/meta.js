@@ -570,7 +570,7 @@ function stageUnlocked(n) { return n === 1 || (meta.campaign[n - 1] || 0) > 0; }
 /* ---------- tienda ---------- */
 // Ofertas del día: se eligen la primera vez que se abre la tienda en el día
 // (semilla = fecha) y se guardan, para que no cambien al desbloquear tropas.
-// Tres de cartas por oro y una de carta épica o legendaria por gemas.
+// Cinco de cartas por oro y una de carta épica, mítica o legendaria por gemas.
 // Pueden ser de tropas que aún no tienes (la primera carta la desbloquea),
 // salvo las legendarias y míticas, que solo salen en el cofre de oro (en la
 // tienda solo aparecen las que ya tienes).
@@ -578,6 +578,14 @@ function shopOffers() {
   var key = todayKey();
   if (meta.shop.day !== key) meta.shop = { day: key, bought: [], offers: null };
   if (!meta.shop.offers) { meta.shop.offers = makeShopOffers(key); saveMeta(); }
+  else if (meta.shop.offers.length < 6) {
+    // las de hoy se hicieron cuando había cuatro: se completan sin tocar las que había
+    var have = meta.shop.offers.map(function (o) { return o.id; });
+    makeShopOffers(key).forEach(function (o) {
+      if (meta.shop.offers.length < 6 && have.indexOf(o.id) === -1) { o.i = meta.shop.offers.length; meta.shop.offers.push(o); }
+    });
+    saveMeta();
+  }
   return meta.shop.offers;
 }
 function makeShopOffers(key) {
@@ -599,8 +607,10 @@ function makeShopOffers(key) {
     }
   };
   add(['comun'], 'gold');
+  add(['comun'], 'gold');
   add([rnd() < 0.5 ? 'comun' : 'rara', 'comun'], 'gold');
   add(['rara', 'comun'], 'gold');
+  add(['epica', 'rara', 'comun'], 'gold');
   var g = rnd();
   add([g < 0.08 ? 'legendaria' : g < 0.33 ? 'mitica' : 'epica', 'epica', 'mitica'], 'gems');
   out.forEach(function (o, i) { o.i = i; });

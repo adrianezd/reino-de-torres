@@ -211,19 +211,19 @@ var UNITS = {
   },
   // apoyos al estilo de los de Rush Royale: no atacan y potencian a sus vecinas
   hilda: {
-    element: 'metal', name: 'Hilda', title: 'Afiladora', role: 'Apoyo', rarity: 'rara', noArt: true,
+    element: 'metal', name: 'Hilda', title: 'Afiladora', role: 'Apoyo', rarity: 'rara',
     color: '#9aa4b8', color2: '#ffb347', skin: '#f3cfae',
     buff: { dmg: 0.15 },
     desc: 'No ataca. Su piedra de afilar da a las tropas de al lado un 15% más de daño por cada rango suyo.'
   },
   tilo: {
-    element: 'naturaleza', name: 'Tilo', title: 'Químico', role: 'Apoyo', rarity: 'rara', noArt: true,
+    element: 'naturaleza', name: 'Tilo', title: 'Químico', role: 'Apoyo', rarity: 'rara',
     color: '#7bd93f', color2: '#e8ff7a', skin: '#ffd9b8',
     buff: { acid: 0.04 },
     desc: 'No ataca. Las tropas de al lado mojan sus golpes en ácido: el monstruo pierde armadura y durante 3 segundos recibe un 4% más de daño por cada rango suyo.'
   },
   elian: {
-    element: 'arcano', name: 'Elian', title: 'Inquisidor', role: 'Apoyo', rarity: 'rara', noArt: true,
+    element: 'arcano', name: 'Elian', title: 'Inquisidor', role: 'Apoyo', rarity: 'rara',
     color: '#f5e6a8', color2: '#ffd34d', skin: '#f3cfae',
     buff: { crit: 0.07 },
     desc: 'No ataca. Bendice con su luz a las tropas de al lado: un 7% de golpe crítico doble por cada rango suyo.'

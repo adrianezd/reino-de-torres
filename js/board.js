@@ -76,6 +76,15 @@ var FIELDS = {
 };
 // con varios tableros para un bioma se elige uno al azar en cada partida
 var BIOME_FIELD = { prado: ['prado', 'prado3'], bosque: ['prado', 'prado3'], pantano: ['prado', 'veneno'], hielo: ['hielo', 'hielo2'], ruinas: 'roca', desierto: 'roca', volcan: ['lava2', 'lava3'], cripta: ['lava2', 'lava3'] };
+// de momento solo se juega en los tableros nuevos: cada uno viejo se cambia
+// por el nuevo que más se le parece
+var NEW_FIELDS = ['prado3', 'hielo2', 'lava3'];
+var NEW_FIELD_OF = { prado: 'prado3', veneno: 'prado3', hielo: 'hielo2', roca: 'hielo2', lava2: 'lava3' };
+function onlyNewFields(list) {
+  var out = [];
+  list.forEach(function (f) { f = NEW_FIELD_OF[f] || f; if (NEW_FIELDS.indexOf(f) !== -1 && out.indexOf(f) === -1) out.push(f); });
+  return out.length ? out : NEW_FIELDS.slice();
+}
 function fieldGeo(id) {
   var f = FIELDS[id], cell = (f.gx1 - f.gx0) / COLS;
   var P = function (q) { return { x: (q[0] - f.cx) / cell, y: (q[1] - f.cy) / cell }; };
@@ -862,7 +871,18 @@ Board.prototype.update = function (dt) {
     if (d.buff) {
       // la bardo toca: pose de ataque a ratos
       u.gen += dt;
-      if (u.gen >= 2.4) { u.gen = 0; u.atk = 0.5; u.recoil = 1; }
+      if (u.gen >= 2.4) {
+        u.gen = 0; u.atk = 0.5; u.recoil = 1;
+        // su efecto (assets/fx/<tropa>-tiro) sale hacia cada vecina que potencia
+        var bk = 'fx/' + u.id + '-tiro', bp = this.cc(i);
+        if (art(bk)) neighbors(i).forEach(function (j) {
+          var v = this.cells[j];
+          if (!v || !UNITS[v.id].dmg) return;
+          var q = this.cc(j);
+          this.fx.push({ type: 'pic', key: bk, x: bp.x + (q.x - bp.x) * 0.55, y: bp.y - 0.15 + (q.y - bp.y) * 0.55, size: 0.62,
+            rot: Math.atan2(q.y - bp.y, q.x - bp.x), grow: 0.5, life: 0.45, max: 0.45 });
+        }, this);
+      }
     }
     if (d.wild) {
       // Eco ensaya su hechizo de cristales de vez en cuando

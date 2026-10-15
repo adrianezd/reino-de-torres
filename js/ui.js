@@ -673,7 +673,7 @@ function campaignMap(nextSt) {
 }
 
 /* ---------- arenas y camino de trofeos ---------- */
-function arenaPic(i) { var f = ARENAS[i].field; return f === 'prado' ? 'assets/tablero.webp' : 'assets/boards/' + f + '.webp'; }
+function arenaPic(i) { var f = NEW_FIELD_OF[ARENAS[i].field] || ARENAS[i].field; return f === 'prado' ? 'assets/tablero.webp' : 'assets/boards/' + f + '.webp'; }
 // franja del 1 contra 1: tu arena, tus trofeos y lo que falta para la siguiente parada
 function arenaStrip() {
   var ai = arenaIndex(), ni = roadNext(), pend = roadPending();
@@ -946,6 +946,84 @@ function cardHtml(id, enRejilla) {
     '<span class="tc-bar' + (pct >= 100 ? ' full' : '') + '"><i style="width:' + pct + '%"></i><em>' + (max ? 'MÁX' : c.n + '/' + need) + '</em></span>' +
     '<b class="tc-name">' + esc(u.name) + '</b></button>';
 }
+/* Arrastrar cartas al mazo: una de la colección soltada sobre una del mazo
+   la sustituye, y dos del mazo se cambian de sitio. Con el dedo hay que
+   mantenerla pulsada un momento (si no, es desplazar la pantalla); con el
+   ratón basta con moverla. */
+var cardDragged = false;
+function bindDeckDrag(m) {
+  var tray = m.querySelector('.deck-tray');
+  if (!tray) return;
+  m.querySelectorAll('.tc[data-card]:not(.locked)').forEach(function (card) {
+    card.addEventListener('pointerdown', function (e) {
+      if (e.button) return;
+      var id = card.dataset.card, fromDeck = tray.contains(card), x0 = e.clientX, y0 = e.clientY;
+      var ghost = null, over = null, holdT = null, done = false, lastY = y0, lastX = x0;
+      // cerca del borde de arriba o de abajo, la pantalla se desplaza sola
+      var scroller = (function (el) { while (el && el !== document.body) { var o = getComputedStyle(el).overflowY; if ((o === 'auto' || o === 'scroll') && el.scrollHeight > el.clientHeight) return el; el = el.parentElement; } return document.scrollingElement; })(tray);
+      var autoScroll = function () {
+        if (!ghost || done) return;
+        var edge = 90, v = lastY < edge ? -(edge - lastY) / 6 : lastY > innerHeight - edge ? (lastY - innerHeight + edge) / 6 : 0;
+        if (v) { scroller.scrollTop += v; hover(lastX, lastY); }
+        requestAnimationFrame(autoScroll);
+      };
+      var hover = function (x, y) {
+        var t = target(x, y);
+        if (t !== over) { if (over) over.classList.remove('drop-here'); over = t; if (over) over.classList.add('drop-here'); }
+      };
+      var start = function () {
+        if (ghost || done) return;
+        var r = card.getBoundingClientRect();
+        ghost = card.cloneNode(true); ghost.classList.add('tc-ghost');
+        ghost.style.width = r.width + 'px'; ghost.style.left = (x0 - r.width / 2) + 'px'; ghost.style.top = (y0 - r.height / 2) + 'px';
+        document.body.appendChild(ghost); card.classList.add('tc-lifted'); tray.classList.add('drop-on');
+        if (navigator.vibrate && meta.settings.vibra) navigator.vibrate(15);
+        sfx('tap'); requestAnimationFrame(autoScroll);
+      };
+      var target = function (x, y) {
+        var el = document.elementFromPoint(x, y), t = el && el.closest('.deck-tray .tc[data-card]');
+        return t && t !== card ? t : null;
+      };
+      var move = function (ev) {
+        if (!ghost) {
+          var dist = Math.hypot(ev.clientX - x0, ev.clientY - y0);
+          if (e.pointerType === 'mouse' ? dist > 6 : false) start();
+          else if (dist > 10) { end(); return; }
+          if (!ghost) return;
+        }
+        ev.preventDefault();
+        lastX = ev.clientX; lastY = ev.clientY;
+        ghost.style.transform = 'translate(' + (ev.clientX - x0) + 'px,' + (ev.clientY - y0) + 'px) scale(1.08) rotate(-4deg)';
+        hover(ev.clientX, ev.clientY);
+      };
+      var noScroll = function (ev) { if (ghost) ev.preventDefault(); };
+      var end = function (ev) {
+        if (done) return;
+        done = true; clearTimeout(holdT);
+        document.removeEventListener('pointermove', move); document.removeEventListener('pointerup', end); document.removeEventListener('pointercancel', end);
+        document.removeEventListener('touchmove', noScroll);
+        if (!ghost) return;
+        ghost.remove(); card.classList.remove('tc-lifted'); tray.classList.remove('drop-on');
+        if (over) over.classList.remove('drop-here');
+        cardDragged = true; setTimeout(function () { cardDragged = false; }, 50);
+        if (!over || !ev || ev.type !== 'pointerup') return;
+        var k = meta.deck.indexOf(over.dataset.card);
+        if (k === -1) return;
+        if (fromDeck) { var j = meta.deck.indexOf(id); meta.deck[j] = meta.deck[k]; meta.deck[k] = id; }
+        else if (meta.deck.indexOf(id) !== -1) { toast('Ya está en el mazo'); return; }
+        else meta.deck[k] = id;
+        saveMeta(); sfx('merge'); renderMenu('collection');
+      };
+      if (e.pointerType !== 'mouse') holdT = setTimeout(start, 260);
+      document.addEventListener('pointermove', move, { passive: false });
+      document.addEventListener('pointerup', end); document.addEventListener('pointercancel', end);
+      document.addEventListener('touchmove', noScroll, { passive: false });
+    });
+    // sin el menú del navegador al mantener pulsada la carta ni el arrastre de su imagen
+    card.addEventListener('contextmenu', function (ev) { ev.preventDefault(); });
+    card.addEventListener('dragstart', function (ev) { ev.preventDefault(); });
+  });
+}
 function bindMenu() {
   var m = $('menu');
   m.querySelectorAll('[data-go]').forEach(function (b) {
@@ -1046,7 +1124,8 @@ function bindMenu() {
   m.querySelectorAll('[data-rf]').forEach(function (b) { b.onclick = function () { collFilter = b.dataset.rf; sfx('tap'); renderMenu('collection'); }; });
   m.querySelectorAll('[data-ef]').forEach(function (b) { b.onclick = function () { collEl = b.dataset.ef; sfx('tap'); renderMenu('collection'); }; });
   m.querySelectorAll('[data-sort]').forEach(function (b) { b.onclick = function () { collSort = b.dataset.sort; sfx('tap'); renderMenu('collection'); }; });
-  m.querySelectorAll('[data-card]').forEach(function (b) { b.onclick = function () { sfx('tap'); showCardModal(b.dataset.card); }; });
+  m.querySelectorAll('[data-card]').forEach(function (b) { b.onclick = function () { if (cardDragged) return; sfx('tap'); showCardModal(b.dataset.card); }; });
+  bindDeckDrag(m);
   m.querySelectorAll('[data-offer]').forEach(function (b) {
     b.onclick = function () {
       var o = shopOffers()[+b.dataset.offer], r = buyOffer(+b.dataset.offer);

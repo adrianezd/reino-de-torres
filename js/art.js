@@ -49,11 +49,12 @@ var IMG = {};
 // imágenes redibujadas: llevan ?v= para que no salga la vieja de la caché
 var ASSET_VER = { 'fx/fusion': 2, 'fx/fusion-eco': 2, 'fx/invocar': 2, 'fx/estado-aturdido': 2, 'fx/estado-veneno': 2, 'fx/estado-critico': 2,
   'fx/veneno-impacto': 2, 'fx/fuego-impacto': 2, 'enemies/coloso2': 2, 'fx/eco-resuena': 2, 'fx/oria-interes': 2, 'ui/vida': 2, 'icons/gota': 2, 'chests/madera': 2, 'chests/plata': 2, 'chests/oro': 2, 'chests/comandante': 2, 'chests/legendario': 2,
-  'tiles/altar': 3, 'tiles/fuente': 3, 'tiles/atalaya': 3 };
+  'tiles/altar': 3, 'tiles/fuente': 3, 'tiles/atalaya': 3, 'units/valka': 4, 'fx/valka-tiro': 2,
+  'units/board/valka-idle': 5, 'units/board/valka-attack': 5 };
 ['cronos', 'eco', 'garra', 'halcon', 'kaia', 'lyra', 'oria', 'rocco', 'seren', 'sombra', 'titan', 'fenix'].forEach(function (id) { ASSET_VER['units/' + id] = 3; });
 function assetV(key) { return ASSET_VER[key] ? '?v=' + ASSET_VER[key] : ''; }
 // tropas sin aura en su casilla
-var NO_CELL_AURA = { eco: true, marea: true, frida: true, pyra: true, valka: true };
+var NO_CELL_AURA = { eco: true, marea: true, frida: true, pyra: true, valka: true, hilda: true, tilo: true, elian: true };
 var IMG_LIST = {
   units: UNIT_ORDER.filter(function (id) { return !UNITS[id].noArt; }),
   enemies: ['blob', 'ghost', 'brute', 'orco', 'rocoso', 'escarcha', 'escudado', 'gelido', 'coloso', 'coloso2', 'nigro', 'dragon'],
@@ -174,7 +175,8 @@ var POSES = {
   melodia: { face: 1 }, cronos: { face: 1 }, halcon: { face: 1 }, ulric: { face: 1 },
   fenix: { face: -1 }, aurora: { face: 1 }, titan: { face: -1 }, boreas: { face: 1 }, midas: { face: 1 },
   kaia: { face: 1 }, seren: { face: 1 }, eco: { face: -1 }, oria: { face: 1 }, garra: { face: 1 },
-  marea: { face: 1 }, frida: { face: 1 }, pyra: { face: 1 }, valka: { face: 1 }
+  marea: { face: 1 }, frida: { face: 1 }, pyra: { face: 1 }, valka: { face: 1 },
+  hilda: { face: 1 }, tilo: { face: 1 }, elian: { face: 1 }
 };
 // tropas con el arte nuevo (assets/personajes): sus poses llevan otra versión
 var NEW_POSE = { cronos: 1, eco: 1, garra: 1, halcon: 1, kaia: 1, lyra: 1, oria: 1, rocco: 1, seren: 1, sombra: 1, titan: 1, fenix: 1 };
@@ -183,7 +185,7 @@ Object.keys(POSES).forEach(function (id) {
   ['idle', 'attack'].forEach(function (pose) {
     var im = new Image();
     im.onload = function () { im.ready = true; };
-    im.src = 'assets/units/board/' + id + '-' + pose + '.webp' + (NEW_POSE[id] ? (pose === 'idle' ? '?v=4' : '?v=2') : pose === 'idle' ? '?v=3' : '');
+    im.src = 'assets/units/board/' + id + '-' + pose + '.webp' + (assetV('units/board/' + id + '-' + pose) || (NEW_POSE[id] ? (pose === 'idle' ? '?v=4' : '?v=2') : pose === 'idle' ? '?v=3' : ''));
     IMG['pose/' + id + '-' + pose] = im;
   });
 });
@@ -212,10 +214,12 @@ var FX_OF = { fire: 'fuego', ice: 'hielo', poison: 'veneno', bomb: 'canon', arro
 var UNIT_SHOT = { lyra: 0.5, kaia: 0.56, halcon: 0.6, seren: 0.46, sombra: 0.52, titan: 0.46, cronos: 0.32, rocco: 0.36,
   marea: 0.42, frida: 0.5, pyra: 0.3, valka: 0.62, fenix: 0.5 };
 var UNIT_SHOT_SPIN = { cronos: true, rocco: true, marea: true, pyra: true };
-Object.keys(UNIT_SHOT).forEach(function (id) {
+// las de apoyo no disparan: su efecto sale hacia las vecinas que potencian
+var SUPPORT_FX = ['hilda', 'tilo', 'elian'];
+Object.keys(UNIT_SHOT).concat(SUPPORT_FX).forEach(function (id) {
   var im = new Image();
   im.onload = function () { im.ready = true; };
-  im.src = 'assets/fx/' + id + '-tiro.webp';
+  im.src = 'assets/fx/' + id + '-tiro.webp' + assetV('fx/' + id + '-tiro');
   IMG['fx/' + id + '-tiro'] = im;
 });
 var FX_TURNS = { 'fx/fuego-bola': true, 'fx/hielo-bola': true, 'fx/hielo-destello': true, 'fx/canon-destello': true,

@@ -72,7 +72,7 @@ function startBattle(mode, opts) {
   // que le pegue para el decorado de alrededor
   var loaded = function (k) { return art(FIELD_GEOS[k].image); };
   // el 1 contra 1 (no el torneo) se juega en el tablero de tu arena
-  var choices = stage ? [].concat(BIOME_FIELD[biome] || 'prado') : mode === 'duel' && !opts.tourney ? [ARENAS[arenaIndex()].field] : Object.keys(FIELD_GEOS);
+  var choices = onlyNewFields(stage ? [].concat(BIOME_FIELD[biome] || 'prado') : mode === 'duel' && !opts.tourney ? [ARENAS[arenaIndex()].field] : Object.keys(FIELD_GEOS));
   var ready = choices.filter(loaded);
   var fid = ready.length ? pick(ready) : loaded('prado') ? 'prado' : null;
   if (reto) {
