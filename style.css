@@ -1026,7 +1026,7 @@ x-ico.off { filter: grayscale(1) brightness(0.45); opacity: 0.75; }
 .cmd-banner::after { display: none; }
 .cmd-banner:active { transform: translateY(2px); }
 /* la figura del comandante asoma por encima del banner */
-.cmd-banner img { position: absolute; left: 5%; bottom: 10%; height: 132%; width: auto; filter: drop-shadow(0 3px 0 rgba(0,0,0,0.45)); }
+.cmd-banner img { position: absolute; left: 4%; bottom: 10%; height: 118%; width: auto; max-width: 30%; object-fit: contain; object-position: 50% 100%; filter: drop-shadow(0 3px 0 rgba(0,0,0,0.45)); }
 .cb-txt { position: absolute; left: 31%; right: 34%; top: 50%; transform: translateY(-50%); text-align: left; line-height: 1.05; }
 .cb-txt small { display: block; font-size: 0.72rem; color: #fff1b8; -webkit-text-stroke-width: 4px; }
 .cb-txt b { display: block; font-size: clamp(0.9rem, 4.4vw, 1.15rem); line-height: 1; white-space: normal; -webkit-text-stroke-width: 6px; text-shadow: 0 3px 0 var(--edge); }
@@ -2023,7 +2023,7 @@ x-ico.off { filter: grayscale(1) brightness(0.45); opacity: 0.75; }
   background: none; filter: none;
 }
 .deck-panel .cmd-banner::before { inset: 12% 3% 0 3%; }
-.deck-panel .cmd-banner img { height: 148%; bottom: 11%; }
+.deck-panel .cmd-banner img { height: 128%; bottom: 11%; }
 .deck-panel .cb-slot { top: 30.7%; height: 37%; }
 .deck-panel .deck-preview {
   position: absolute; left: 9.18%; top: 48.94%; width: 81.56%; height: 39.64%; aspect-ratio: auto; margin: 0;
@@ -2093,7 +2093,9 @@ x-ico.off { filter: grayscale(1) brightness(0.45); opacity: 0.75; }
 
 /* figura del comandante encajada en su hueco: entera, sin pasarse del
    ancho (Brann es el triple de ancho que Morgana) y apoyada abajo */
-.ch-stage { width: 38%; min-height: 0; height: 168px; align-self: center; }
+.ch-stage { width: 36%; min-height: 0; height: 156px; align-self: center; }
+/* la tarjeta nunca más baja que la figura (si no, la cortaba por abajo) */
+.cmd-hero .ch-top { min-height: 164px; }
 .ch-body {
   left: 0; right: 0; bottom: 0; top: 0; width: 100%; height: 100%; max-width: 100%; transform: none;
   object-fit: contain; object-position: 50% 100%;
@@ -2558,7 +2560,7 @@ body[data-screen="collection"], body[data-screen="commanders"], body[data-screen
 .unit-card .us-bar span { background: linear-gradient(180deg, #d9bda6, #a3826c 55%, #6e5444); }
 .unit-card .us-val { min-width: 52px; padding: 3px 9px; border-radius: 9px; background: #12161c; box-shadow: inset 0 1px 3px rgba(0,0,0,0.6); }
 .unit-card .uc-trait { background: #1b222b; border: 2px solid #3d444c; }
-.unit-card .uc-level { min-height: 70px; padding: 10px 14px 10px 10px; border: 0; border-radius: 0; background: url(assets/ui/ficha-nivel.webp) center / 100% 100% no-repeat; }
+.unit-card .uc-level { min-height: 70px; padding: 10px 14px 10px 10px; border: 0; border-radius: 0; background: url(assets/ui/ficha-nivel.webp?v=2) center / 100% 100% no-repeat; }
 .unit-card .uc-lvmedal {
   width: 50px; height: 52px; border: 0; border-radius: 0; box-shadow: none; padding-bottom: 4px;
   background: url(assets/ui/ficha-escudo.webp) center / 100% 100% no-repeat; color: #f1c24a; font-size: 1.5rem;
@@ -2567,3 +2569,17 @@ body[data-screen="collection"], body[data-screen="commanders"], body[data-screen
 .unit-card .uc-level .ubar { height: 15px; background: #0e1f14; border: 2px solid #7a5a2a; }
 .unit-card .uc-level .ubar span, .unit-card .uc-level .ubar.ok span { background: url(assets/ui/ficha-barra.webp) left center / 100% 100% no-repeat; border-radius: 999px; }
 .unit-card .uc-level .ubar em { line-height: 11px; text-shadow: 0 1px 0 #000; }
+
+/* botón verde ilustrado de Mejorar (assets/ui/ficha-mejorar, de la plantilla de ficha):
+   los cantos con las gemas no se estiran, solo el centro */
+.btn.btn-up, .btn.btn-up:disabled {
+  min-height: 62px; padding: 6px 30px 10px; border-radius: 0; box-shadow: none; background: none; color: #fff;
+  border: solid transparent; border-width: 0 46px; border-image: url(assets/ui/ficha-mejorar.webp) 0 46 fill / 0 46px stretch;
+  font-size: 1.45rem; -webkit-text-stroke: 5px #0e3a1c; paint-order: stroke fill; text-shadow: 0 3px 0 #0e3a1c;
+  filter: drop-shadow(0 4px 0 rgba(10,12,40,0.45));
+}
+.btn.btn-up::before, .btn.btn-up::after { display: none; }
+.btn.btn-up:active { transform: translateY(3px); box-shadow: none; filter: drop-shadow(0 1px 0 rgba(10,12,40,0.45)); }
+.btn.btn-up:disabled { filter: grayscale(0.9) brightness(0.7); }
+.btn.btn-up { display: flex; align-items: center; justify-content: center; gap: 6px; white-space: nowrap; padding: 4px 6px 8px; }
+.btn.btn-up x-ico { flex-shrink: 0; }

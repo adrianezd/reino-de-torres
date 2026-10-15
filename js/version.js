@@ -7,8 +7,16 @@
    La ventana sale sola al entrar con una versión nueva (meta.lastSeenVersion)
    y también desde Opciones.
    ========================================================= */
-var APP_VERSION = '1.31.0';
+var APP_VERSION = '1.31.1';
 var APP_PATCH_NOTES = [
+  {
+    version: '1.31.1',
+    summary: 'Comandantes a su tamaño y botón de mejorar nuevo',
+    items: [
+      'Los comandantes ya caben enteros en el inicio y en Mazo, sin salirse ni cortarse.',
+      'El botón de Mejorar de tropas y comandantes estrena dibujo.'
+    ]
+  },
   {
     version: '1.31.0',
     summary: 'Comandantes redibujados y ficha de tropa nueva',
