@@ -7,8 +7,15 @@
    La ventana sale sola al entrar con una versión nueva (meta.lastSeenVersion)
    y también desde Opciones.
    ========================================================= */
-var APP_VERSION = '1.31.1';
+var APP_VERSION = '1.31.2';
 var APP_PATCH_NOTES = [
+  {
+    version: '1.31.2',
+    summary: 'Brann y Merlo retocados',
+    items: [
+      'Brann y Merlo estrenan retrato y figura, con meteoros, cráter y marea de maná nuevos.'
+    ]
+  },
   {
     version: '1.31.1',
     summary: 'Comandantes a su tamaño y botón de mejorar nuevo',
