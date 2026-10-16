@@ -1171,9 +1171,13 @@ function drawBoard(b, L, now, isMain) {
     var p = toS(e.x, e.y - (e.boss ? 0.92 : ENEMIES[e.kind].size + 0.16));
     // el número da un saltito al recibir un golpe
     var fs = Math.max(9, sc * (e.boss ? 0.3 : 0.22)) * (1 + 0.3 * (e.hitT > 0 ? e.hitT / HIT_TIME : 0));
-    var txt = fmtNum(e.hp > 0 ? Math.max(1, Math.ceil(e.hp)) : 0), tw = 0;
-    // mientras le quede vida nunca pone 0: como mínimo 1 hasta que muere
-    if (meta.settings.dmgNums) { drawOutlinedText(ctx, txt, p.x, p.y, fs, e.boss ? '#ffd166' : '#ffffff'); tw = ctx.measureText(txt).width; }
+    // daño que lleva encima: amarillo, naranja o rojo según cuánta vida ha perdido
+    var lost = Math.min(e.maxHp, e.maxHp - Math.max(0, e.hp)), tw = 0;
+    if (meta.settings.dmgNums && lost >= 1) {
+      var lf = lost / e.maxHp, txt = fmtNum(Math.floor(lost));
+      drawOutlinedText(ctx, txt, p.x, p.y, fs, lf < 0.34 ? '#ffe14d' : lf < 0.67 ? '#ff9a2e' : '#ff3b3b');
+      tw = ctx.measureText(txt).width;
+    }
     // a la izquierda del número: placa de armadura y escudo de vida
     var ix = p.x - tw / 2 - fs * 0.15, is = Math.max(10, fs * 1.05);
     [[e.armor > 0, 'fx/icono-armadura'], [e.barrier > 0, 'fx/icono-barrera']].forEach(function (q) {

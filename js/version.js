@@ -7,8 +7,16 @@
    La ventana sale sola al entrar con una versión nueva (meta.lastSeenVersion)
    y también desde Opciones.
    ========================================================= */
-var APP_VERSION = '1.31.6';
+var APP_VERSION = '1.31.7';
 var APP_PATCH_NOTES = [
+  {
+    version: '1.31.7',
+    summary: 'Daño de los monstruos a la vista',
+    items: [
+      'Encima de cada monstruo ya no sale la vida que le queda, sino el daño que le has hecho.',
+      'El número cambia de color según lo tocado que esté: amarillo, naranja y rojo cuando está a punto de caer.'
+    ]
+  },
   {
     version: '1.31.6',
     summary: 'Co-op arreglado y torneo con todos los tableros',

@@ -29,7 +29,7 @@ function defaultMeta() {
     cmdTree: {},             // comandante -> ramas elegidas en cada piso de su árbol (CMD_TREE)
     freeChestAt: 0,         // cuándo está listo el siguiente cofre gratis (ms)
     slots: [null, null, null, null],   // cofres ganados: { type, unlockAt } (unlockAt: cuándo se abre; 0 si no se ha empezado)
-    // vibra: vibración · saver: ahorro de batería · dmgNums: vida de los monstruos y golpes críticos en números
+    // vibra: vibración · saver: ahorro de batería · dmgNums: daño de los monstruos y golpes críticos en números
     settings: { sound: true, music: true, vibra: true, saver: false, dmgNums: true },
     seenTutorial: false,
     lastSeenVersion: '',  // última versión cuyas novedades se han visto (js/version.js)
