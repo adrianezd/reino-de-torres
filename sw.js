@@ -6,7 +6,7 @@
 // archivo por su cuenta: si uno falla, los demás se quedan. El arte (EXTRA)
 // se baja después, de pocos en pocos y sin bloquear, y lo que se vaya
 // usando se guarda igualmente al pedirlo.
-var CACHE = 'reino-de-torres-v103';
+var CACHE = 'reino-de-torres-v104';
 // tropas con el dibujo nuevo (assets/personajes)
 var NEW_ART = ['cronos', 'eco', 'garra', 'halcon', 'kaia', 'lyra', 'oria', 'rocco', 'seren', 'sombra', 'titan', 'fenix'];
 var CORE = ['./', 'index.html', 'style.css', 'favicon.svg', 'manifest.json', 'js/data.js', 'js/version.js', 'js/art.js', 'js/meta.js', 'js/board.js', 'js/battle.js', 'js/music.js', 'js/ui.js',
@@ -19,6 +19,8 @@ var EXTRA = ['assets/icons/gota.webp?v=2', 'assets/ui/boton.webp', 'assets/ui/bo
   .concat(['marea', 'frida', 'pyra', 'valka'].reduce(function (a, id) { return a.concat(['assets/units/' + id + '.webp?v=2', 'assets/units/board/' + id + '-idle.webp?v=3', 'assets/units/board/' + id + '-attack.webp']); }, []))
   .concat(['marea', 'frida', 'pyra', 'valka', 'fenix'].map(function (id) { return 'assets/fx/' + id + '-tiro.webp'; }))
   .concat(['invocar-aro', 'acelerar', 'rayo-cadena', 'congelado-1', 'congelado-2', 'ganancia-mana', 'pyra-estallido', 'icono-armadura', 'icono-barrera', 'estado-enredado', 'estado-ascuas'].map(function (k) { return 'assets/fx/' + k + '.webp'; }));
+// 1.32.0: Aurora, set 2
+EXTRA = EXTRA.concat(['assets/units/aurora.webp?v=3', 'assets/units/board/aurora-idle.webp?v=7', 'assets/units/board/aurora-attack.webp?v=7', 'assets/fx/aurora-rayo.webp', 'assets/fx/aurora-aturdido.webp']);
 function cacheEach(c, list) { return Promise.all(list.map(function (u) { return c.add(u).catch(function () {}); })); }
 // el arte, de 6 en 6 (lo que ya esté guardado no se vuelve a bajar)
 function warmExtra() {

@@ -58,6 +58,8 @@ var ASSET_VER = { 'fx/fusion': 2, 'fx/fusion-eco': 2, 'fx/invocar': 2, 'fx/estad
 });
 ['cronos', 'eco', 'garra', 'halcon', 'kaia', 'lyra', 'oria', 'rocco', 'seren', 'sombra', 'titan', 'fenix'].forEach(function (id) { ASSET_VER['units/' + id] = 3; });
 ASSET_VER['units/garra'] = 4;
+// Aurora, set 2 (assets/personajes/aurora-set-2.jpg)
+ASSET_VER['units/aurora'] = 3; ASSET_VER['units/board/aurora-idle'] = 7; ASSET_VER['units/board/aurora-attack'] = 7;
 // efectos de los comandantes redibujados (assets/comandantes/*-set.jpg)
 ['ventisca', 'marea', 'meteoro', 'crater', 'nyx-maldicion', 'nyx-chispas', 'sol-escudo', 'morgana-ensamblaje', 'torvald-forja', 'torvald-carga'].forEach(function (k) { ASSET_VER['fx/' + k] = 3; });
 ['crater', 'meteoro', 'marea'].forEach(function (k) { ASSET_VER['fx/' + k] = 4; }); // Brann y Merlo, set 2
@@ -215,7 +217,7 @@ var FX_OF = { fire: 'fuego', ice: 'hielo', poison: 'veneno', bomb: 'canon', arro
     IMG['fx/' + el + '-' + part] = im;
   });
 });
-['ventisca', 'marea', 'meteoro', 'crater', 'nyx-maldicion', 'nyx-chispas', 'sol-escudo', 'morgana-ensamblaje', 'torvald-forja', 'torvald-carga', 'boreas-ventisca', 'midas-critico', 'eco-resuena', 'fusion-eco', 'oria-interes', 'muerte-puf', 'muerte-estallido', 'muerte-veneno', 'muerte-fuego', 'muerte-humo', 'garra-espiritu', 'invocar', 'invocar-aro', 'acelerar', 'rayo-cadena', 'congelado-1', 'congelado-2', 'ganancia-mana', 'pyra-estallido', 'icono-armadura', 'icono-barrera', 'fusion', 'fusion-doblon', 'mover', 'ralentizado-1', 'ralentizado-2', 'ralentizado-3', 'ralentizado-4', 'ralentizado-5'].concat(Object.keys(ELEMENTS).map(function (el) { return 'conector-' + el; })).forEach(function (k) {
+['ventisca', 'marea', 'meteoro', 'crater', 'nyx-maldicion', 'nyx-chispas', 'sol-escudo', 'morgana-ensamblaje', 'torvald-forja', 'torvald-carga', 'boreas-ventisca', 'midas-critico', 'eco-resuena', 'fusion-eco', 'oria-interes', 'muerte-puf', 'muerte-estallido', 'muerte-veneno', 'muerte-fuego', 'muerte-humo', 'garra-espiritu', 'invocar', 'invocar-aro', 'acelerar', 'rayo-cadena', 'congelado-1', 'congelado-2', 'ganancia-mana', 'pyra-estallido', 'icono-armadura', 'icono-barrera', 'fusion', 'fusion-doblon', 'mover', 'ralentizado-1', 'ralentizado-2', 'ralentizado-3', 'ralentizado-4', 'ralentizado-5', 'aurora-rayo', 'aurora-aturdido'].concat(Object.keys(ELEMENTS).map(function (el) { return 'conector-' + el; })).forEach(function (k) {
   var im = new Image();
   im.onload = function () { im.ready = true; };
   im.src = 'assets/fx/' + k + '.webp' + assetV('fx/' + k);

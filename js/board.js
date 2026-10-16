@@ -682,7 +682,7 @@ Board.prototype.fire = function (i, u) {
     var jumps = d.chain + Math.floor((u.rank - 1) / 2);
     this.fx.push({ type: 'pic', key: 'fx/rayo-destello', x: from.x, y: from.y - 0.12, size: 0.5, rot: 0, grow: 0.5, life: 0.2, max: 0.2 });
     for (var j = 0; j < jumps && cur; j++) {
-      this.fx.push({ type: 'bolt', x1: prev.x, y1: prev.y, x2: cur.x, y2: cur.y, life: 0.18, max: 0.18, color: d.color2 });
+      this.fx.push({ type: 'bolt', x1: prev.x, y1: prev.y, x2: cur.x, y2: cur.y, life: 0.18, max: 0.18, color: d.color2, pic: d.boltPic });
       this.fx.push({ type: 'pic', key: 'fx/rayo-impacto', x: cur.x, y: cur.y, size: 0.55, rot: 0, grow: 0.5, life: 0.3, max: 0.3 });
       hitSet[cur.id] = true;
       this.applyHit(cur, dmg, d, u);

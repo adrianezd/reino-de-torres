@@ -296,7 +296,7 @@ var ROGUE_LATE = 1.11;
 var COOP_HP = 2.4;
 function hpScale() {
   var b = battle, w = Math.max(1, b.wave);
-  var s = 42 * Math.pow(1.17, w - 1);
+  var s = 52 * Math.pow(1.18, w - 1);
   if (b.stage) {
     // la dureza de la fase llega poco a poco: la primera oleada, al 55 %
     var ramp = b.maxWaves > 1 ? 0.55 + 0.45 * (w - 1) / (b.maxWaves - 1) : 1;
@@ -315,7 +315,22 @@ function isBossWave(w) {
   if (battle.mode === 'campaign') return w === battle.maxWaves;
   return w % (battle.mod && battle.mod.id === 'jefes' ? 3 : 5) === 0;
 }
-// Se decide una oleada antes de que llegue, para poder anunciar la siguiente.
+// monstruos que pueden protagonizar una oleada, según por cuál vas
+function leadPool(w) {
+  var p = ['blob', 'imp'];
+  if (w >= 3) p.push('brute', 'orco');
+  if (w >= 4) p.push('ghost', 'escudado');
+  if (w >= 5) p.push('escarcha');
+  if (w >= 6) p.push('rocoso');
+  return p;
+}
+// parte de la oleada que es del protagonista; el resto, monstruos variados
+var LEAD_SHARE = 0.7;
+// segundos que gira el sorteo de la siguiente oleada (showWaveDraw) y los que se queda a la vista
+var DRAW_SPIN = 1.9, DRAW_HOLD = 1.6;
+/* Se decide una oleada antes de que llegue, para poder anunciar la siguiente.
+   Cada oleada tiene un monstruo protagonista sorteado (nunca el mismo de la
+   anterior); cuántos salen depende de su vida, así la dureza no cambia. */
 function planWave(w) {
   var b = battle;
   var caos = b.mod && b.mod.id === 'caos';
@@ -331,15 +346,24 @@ function planWave(w) {
   if (w >= 5) mix.push('escarcha', 'orco');
   if (w >= 6) mix.push('rocoso');
   if (w >= 8) mix.push('brute', 'ghost', 'rocoso', 'escarcha');
+  var pool = leadPool(w), prev = b.next && b.next.wave === w - 1 ? b.next.lead : null;
+  if (prev && pool.length > 1) pool = pool.filter(function (k) { return k !== prev; });
+  var lead = bpick(pool);
+  var avgHp = mix.reduce(function (s, k) { return s + ENEMIES[k].hp; }, 0) / mix.length;
+  var nFill = Math.round(count * (1 - LEAD_SHARE));
+  var nLead = Math.max(3, Math.min(Math.round(count * 1.6), Math.round(count * LEAD_SHARE * avgHp / ENEMIES[lead].hp)));
   var queue = [];
-  for (var i = 0; i < count; i++) queue.push({ kind: bpick(mix) });
+  for (var i = 0; i < nFill; i++) queue.push({ kind: bpick(mix) });
+  for (i = 0; i < nLead; i++) queue.push({ kind: lead });
+  for (i = queue.length - 1; i > 0; i--) { var j = Math.floor(brand() * (i + 1)), sw = queue[i]; queue[i] = queue[j]; queue[j] = sw; }
+  count = queue.length;
   if (isBossWave(w)) {
     var rot = BOSS_ORDER[(w / 5 - 1) % BOSS_ORDER.length];
     // roguelike: rotan los jefes y el de la ruleta llega en la última oleada
     var boss = b.stage ? b.stage.boss : b.mode === 'rogue' ? (w === b.maxWaves ? b.boss : rot) : b.boss || rot;
     queue.push({ kind: boss, boss: true, final: b.mode === 'rogue' && w === b.maxWaves });
   }
-  return { wave: w, event: event, queue: queue, count: count };
+  return { wave: w, event: event, queue: queue, count: count, lead: lead, drawn: false };
 }
 function startWave() {
   var b = battle;
@@ -407,6 +431,9 @@ function updateBattle(dt) {
   if (b.mode === 'rogue' && b.time >= b.nextPick) { b.nextPick += ROGUE_PICK_EVERY; offerRogue(); if (b.picking) return; }
   if (b.moveCd > 0) b.moveCd = Math.max(0, b.moveCd - dt / (b.speed || 1));
   if (b.tutorial) updateCoach(dt);
+  // sorteo de la siguiente oleada: al salir el último monstruo de la actual
+  // (o antes de la primera), sin parar la partida
+  if (b.next && !b.next.drawn && (!b.wave || !b.queue.length)) { b.next.drawn = true; showWaveDraw(b.next); }
   if (b.gap > 0) {
     // en el tutorial, la primera oleada espera a que invoques dos tropas
     if (!(b.tutorial && b.wave === 0 && b.player.summons < 2)) b.gap -= dt;
@@ -1106,7 +1133,8 @@ function drawBoard(b, L, now, isMain) {
     if (f.type === 'bolt') {
       // rayo ilustrado estirado entre los dos puntos (se voltea al azar para
       // que chisporrotee) y un trazo quebrado encima
-      var cad = art('fx/rayo-cadena'), bim = cad || art('fx/rayo-bola');
+      // (el propio de la tropa, si tiene: boltPic)
+      var cad = (f.pic && art(f.pic)) || art('fx/rayo-cadena'), bim = cad || art('fx/rayo-bola');
       ctx.globalAlpha = f.life / f.max;
       if (bim) {
         var bl = Math.hypot(f.x2 - f.x1, f.y2 - f.y1), bh = cad ? Math.min(0.55, bl * bim.naturalHeight / bim.naturalWidth * 1.4) : 0.42;

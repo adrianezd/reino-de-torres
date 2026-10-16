@@ -2126,13 +2126,15 @@ function waveInfoHtml(b) {
     (!b.wave ? 'Coloca tus tropas' : left ? (left === 1 ? 'Queda 1' : 'Quedan ' + left) : '¡Superada!') + '</small></span>';
   var nx = b.next;
   if (!nx) return now + '<span class="wi-next"><b class="wi-last">👑 ¡Última oleada!</b></span>';
+  // hasta que el sorteo (showWaveDraw) no termina, la siguiente es una incógnita
+  if (!nx.shown) return now + '<span class="wi-next"><small>' + (b.wave ? 'Siguiente' : 'Llega') + '</small><i class="wi-chip wi-unknown">' + (nx.drawn ? '🎲' : '❔') + '</i></span>';
   var groups = [], by = {};
   nx.queue.forEach(function (q) {
     var k = (q.boss ? 'B' : '') + q.kind;
     if (!by[k]) { by[k] = { kind: q.kind, boss: !!q.boss, n: 0 }; groups.push(by[k]); }
     by[k].n++;
   });
-  groups.sort(function (p, q) { return (p.boss - q.boss) || (q.n - p.n); });
+  groups.sort(function (p, q) { return (q.boss - p.boss) || ((q.kind === nx.lead) - (p.kind === nx.lead)) || (q.n - p.n); });
   var chips = groups.slice(0, 5).map(function (g) {
     var name = g.boss ? BOSSES[g.kind].name : ENEMIES[g.kind].name;
     return '<i class="wi-chip' + (g.boss ? ' boss' : '') + '" title="' + esc(name) + '"><img src="' + enemyIcon(g.kind, g.boss) + '" alt="' + esc(name) + '">' + (g.boss ? '👑' : '×' + g.n) + '</i>';
@@ -2157,6 +2159,57 @@ function refreshUnitInfo() {
   box.innerHTML = icons('<img src="' + unitIcon(u.id, u.rank, 72) + '" alt=""><div><b>' + esc(d.name) + ' · Rango ' + u.rank + '</b><small>' + esc(d.role) + ' · ' + bits.join(' · ') + '</small><small class="hint">Toca otra igual para fusionar o una casilla vacía para moverla</small></div>');
   box.hidden = false;
 }
+/* ---------- sorteo de la siguiente oleada ----------
+   Una ruleta pequeña sobre tu tablero gira entre los monstruos posibles y
+   se para en el protagonista de la siguiente oleada (plan.lead). La partida
+   sigue mientras tanto; al pararse, la franja de arriba lo enseña. */
+var WD_W = 64; // ancho de cada casilla de la ruleta pequeña, con su hueco (.wd-card en style.css)
+function showWaveDraw(plan) {
+  var b = battle, old = $('waveDraw');
+  if (old) old.remove();
+  var items = leadPool(plan.wave), REPS = 7;
+  var win = items.indexOf(plan.lead);
+  var cards = '';
+  for (var k = 0; k < items.length * REPS; k++) {
+    var kind = items[k % items.length];
+    cards += '<span class="wd-card"><img src="' + enemyIcon(kind, false) + '" alt=""></span>';
+  }
+  var boss = plan.queue.filter(function (q) { return q.boss; })[0];
+  var el = document.createElement('div');
+  el.id = 'waveDraw'; el.className = 'wave-draw';
+  el.style.top = Math.round((layout.main ? layout.main.oy : 60) + 6) + 'px';
+  el.innerHTML = '<small>Oleada ' + plan.wave + '</small><div class="wd-track"><div class="wd-strip">' + cards + '</div><i class="wd-mark"></i></div><b class="wd-name">¿Quién vendrá?</b>';
+  $('arena').appendChild(el);
+  var track = el.querySelector('.wd-track'), strip = el.querySelector('.wd-strip');
+  var from = Math.floor(Math.random() * items.length), to = items.length * (REPS - 2) + win, at = -1;
+  function alive() { return battle === b && !b.ended && el.isConnected; }
+  function place(k) {
+    strip.style.transform = 'translateX(' + (track.clientWidth / 2 - (k * WD_W + WD_W / 2)) + 'px)';
+    var cur = Math.round(k);
+    if (cur !== at) { at = cur; tone(760 + (cur % 3) * 60, 0.025, 'square', 0.03); }
+  }
+  place(from);
+  var t0 = performance.now(), dur = DRAW_SPIN * 1000;
+  function step(now) {
+    if (!alive()) return;
+    var t = Math.min(1, (now - t0) / dur), e = 1 - Math.pow(1 - t, 4);
+    place(from + (to - from) * e);
+    if (t < 1) { requestAnimationFrame(step); return; }
+    strip.children[to].classList.add('win');
+    el.classList.add('done');
+    el.querySelector('.wd-name').innerHTML = esc(ENEMIES[plan.lead].name) + (boss ? '<em>👑 y ' + esc(BOSSES[boss.kind].name) + '</em>' : '') + (plan.event ? '<em>' + esc(plan.event.name) + '</em>' : '');
+    plan.shown = true;
+    updateHud(true);
+    sfx('power');
+    setTimeout(function () {
+      if (!el.isConnected) return;
+      el.classList.add('out');
+      setTimeout(function () { el.remove(); }, 300);
+    }, DRAW_HOLD * 1000);
+  }
+  requestAnimationFrame(step);
+}
+
 /* ---------- 1 contra 1: ruleta del modificador y del jefe final ----------
    Dos franjas cruzan el mapa de lado a lado: primero gira la del modificador
    y se para en el que ha tocado (battle.mod), luego la del jefe (battle.boss).

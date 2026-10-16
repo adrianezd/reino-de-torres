@@ -38,6 +38,7 @@ Object.keys(RARITY).forEach(function (k) { RARITY[k].color = GAME_PALETTE.rariti
    pierce (ignora la armadura), bounty (maná extra por cada baja suya),
    wild (comodín de fusión), interest (intereses del maná), wolves (lobos por el camino),
    stunPic / critPic (dibujo que salta sobre el enemigo al aturdirlo o con un crítico),
+   boltPic (rayo propio que se estira entre los enemigos de la cadena),
    target: 'first' | 'strong'
 */
 var UNITS = {
@@ -143,7 +144,7 @@ var UNITS = {
   aurora: {
     element: 'arcano', name: 'Aurora', title: 'Archimaga', role: 'Tormenta', rarity: 'legendaria', chestOnly: true,
     color: '#6a4bd8', color2: '#9ff3ff', skin: '#f3dcc8',
-    dmg: 22, rate: 0.9, proj: 'bolt', chain: 4, stun: { chance: 0.15, dur: 1 }, target: 'first',
+    dmg: 22, rate: 0.9, proj: 'bolt', chain: 4, stun: { chance: 0.15, dur: 1 }, stunPic: 'fx/aurora-aturdido', boltPic: 'fx/aurora-rayo', target: 'first',
     desc: 'Rayos que saltan entre muchos enemigos y a veces los dejan aturdidos.'
   },
   titan: {

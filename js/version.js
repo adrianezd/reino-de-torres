@@ -7,8 +7,18 @@
    La ventana sale sola al entrar con una versión nueva (meta.lastSeenVersion)
    y también desde Opciones.
    ========================================================= */
-var APP_VERSION = '1.31.7';
+var APP_VERSION = '1.32.0';
 var APP_PATCH_NOTES = [
+  {
+    version: '1.32.0',
+    summary: 'Oleadas sorteadas y Aurora nueva',
+    items: [
+      'Cada oleada tiene un monstruo protagonista elegido al azar, y nunca repite el de la anterior.',
+      'Antes de cada oleada, una ruleta sobre tu tablero sortea qué monstruo viene. La partida no se para y arriba ves quién te toca.',
+      'Los monstruos tienen más vida, sobre todo en las oleadas altas: las partidas largas se acaban antes.',
+      'Aurora estrena dibujo: retrato, poses, un rayo propio que salta entre los enemigos y su propio remolino al aturdir.'
+    ]
+  },
   {
     version: '1.31.7',
     summary: 'Daño de los monstruos a la vista',

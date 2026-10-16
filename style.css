@@ -1742,6 +1742,30 @@ x-ico.off { filter: grayscale(1) brightness(0.45); opacity: 0.75; }
 .rl-desc { min-height: 1.3em; margin: 6px 16px 0; text-align: center; font-size: 0.82rem; color: #fff; text-shadow: 0 1px 0 var(--ink); }
 .rl-skip { text-align: center; color: var(--muted); font-size: 0.8rem; }
 
+/* sorteo de la siguiente oleada (showWaveDraw): no tapa los toques */
+.wave-draw {
+  position: absolute; left: 50%; transform: translateX(-50%); z-index: 4; width: 212px; pointer-events: none;
+  display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 5px 0 6px;
+  background: rgba(12,16,48,0.86); border: 2px solid var(--ui-gold); border-radius: 14px; box-shadow: 0 0 0 2px var(--ink), 0 4px 0 rgba(0,0,0,0.4);
+  animation: rlIn 0.25s ease-out;
+}
+.wave-draw.out { opacity: 0; transition: opacity 0.3s; }
+.wave-draw > small { font-size: 0.68rem; color: var(--gold); text-shadow: 0 1px 0 var(--ink); }
+.wd-track { position: relative; width: 100%; height: 62px; overflow: hidden; background: linear-gradient(180deg, #2a1a0c, #4a2e14 50%, #2a1a0c); }
+.wd-track::before, .wd-track::after { content: ''; position: absolute; top: 0; bottom: 0; width: 22%; z-index: 2; }
+.wd-track::before { left: 0; background: linear-gradient(90deg, rgba(20,12,4,0.95), transparent); }
+.wd-track::after { right: 0; background: linear-gradient(-90deg, rgba(20,12,4,0.95), transparent); }
+.wd-strip { display: flex; height: 100%; align-items: center; will-change: transform; }
+/* WD_W de js/ui.js = ancho + márgenes (56 + 4 + 4) */
+.wd-card { flex: none; width: 56px; height: 54px; margin: 0 4px; border-radius: 10px; display: grid; place-items: center; background: linear-gradient(180deg, #2f4192, #1a245e); border: 2px solid var(--ink); }
+.wd-card img { width: 44px; height: 44px; object-fit: contain; }
+.wd-card.win { border-color: var(--gold); box-shadow: 0 0 12px 3px rgba(255,209,102,0.85); animation: rlWin 0.45s ease-out forwards; }
+.wd-mark { position: absolute; left: 50%; top: 0; bottom: 0; width: 64px; transform: translateX(-50%); z-index: 3; border-left: 2px solid var(--gold); border-right: 2px solid var(--gold); }
+.wd-name { font-family: 'Lilita One'; font-weight: 400; font-size: 0.95rem; color: #fff; text-shadow: 0 2px 0 var(--ink); text-align: center; line-height: 1.15; }
+.wd-name em { display: block; font-style: normal; font-family: system-ui, sans-serif; font-size: 0.7rem; color: var(--gold); }
+.wave-draw:not(.done) .wd-name { color: var(--muted); }
+.wi-unknown { width: 30px; height: 30px; justify-content: center; font-size: 1.1rem; background: rgba(255,255,255,0.08); border-radius: 8px; }
+
 .skill-pick { position: absolute; inset: 0; z-index: 8; display: grid; place-items: center; padding: 16px; background: rgba(8,10,30,0.7); animation: rlIn 0.25s ease-out; }
 .skill-pick.out { opacity: 0; transition: opacity 0.35s; }
 .sp-card { width: 100%; max-width: 420px; background: var(--ui-panel-bg); border: 3px solid var(--cc, var(--gold)); border-radius: 18px; padding: 12px; box-shadow: 0 0 0 3px var(--ink), 0 0 30px rgba(0,0,0,0.5); }
