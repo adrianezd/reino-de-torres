@@ -1086,7 +1086,7 @@ function drawBoard(b, L, now, isMain) {
       ctx.globalAlpha *= pose.a;
       ctx.translate(cc2.x, footY + pose.dy); ctx.scale(pose.sx, pose.sy); ctx.translate(-cc2.x, -footY);
     }
-    drawUnit(ctx, u.id, cc2.x, uy, r, u.rank, now, { frozen: u.frozen > 0, board: true, atk: u.atk, aim: u.aim, recoil: u.recoil || 0, flash: pose ? pose.flash : 0 });
+    drawUnit(ctx, u.id, cc2.x, uy, r, u.rank, now, { frozen: u.frozen > 0, board: true, atk: u.atk, atkMax: u.atkMax, atkN: u.atkN, aim: u.aim, recoil: u.recoil || 0, flash: pose ? pose.flash : 0 });
     if (pose) ctx.restore();
     // (sin icono de la casilla especial encima: la losa entera y su borde ya se ven alrededor)
     ctx.globalAlpha = 1;
@@ -1701,7 +1701,12 @@ function onUp(ev) {
     if (b.canMerge(sel, i)) { b.merge(sel, i); sfx('merge'); buzz(25); battle.selected = null; refreshUnitInfo(); return; }
     if (!b.cells[i]) { moveUnit(sel, i); battle.selected = null; refreshUnitInfo(); return; }
   }
-  if (b.cells[i]) { battle.selected = sel === i ? null : i; sfx('tap'); }
+  if (b.cells[i]) {
+    battle.selected = sel === i ? null : i; sfx('tap');
+    // al tocarla hace su animación de ataque
+    var tu = b.cells[i];
+    if (!(tu.frozen > 0)) { startAtk(tu, TAP_ANIM_TIME); tu.recoil = 1; }
+  }
   else battle.selected = null;
   refreshUnitInfo();
 }

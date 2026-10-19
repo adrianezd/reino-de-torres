@@ -7,8 +7,17 @@
    La ventana sale sola al entrar con una versión nueva (meta.lastSeenVersion)
    y también desde Opciones.
    ========================================================= */
-var APP_VERSION = '1.32.0';
+var APP_VERSION = '1.33.0';
 var APP_PATCH_NOTES = [
+  {
+    version: '1.33.0',
+    summary: 'Tropas con animación de ataque',
+    items: [
+      'Garra, Hilda, Tilo, Valka y Aurora encadenan varias poses al atacar y cambian de golpe en cada disparo.',
+      'Toca cualquier tropa del tablero y hará su ataque.',
+      'En el vídeo de la ficha de una tropa, tócala para verla atacar.'
+    ]
+  },
   {
     version: '1.32.0',
     summary: 'Oleadas sorteadas y Aurora nueva',

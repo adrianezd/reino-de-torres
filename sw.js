@@ -6,7 +6,7 @@
 // archivo por su cuenta: si uno falla, los demás se quedan. El arte (EXTRA)
 // se baja después, de pocos en pocos y sin bloquear, y lo que se vaya
 // usando se guarda igualmente al pedirlo.
-var CACHE = 'reino-de-torres-v104';
+var CACHE = 'reino-de-torres-v105';
 // tropas con el dibujo nuevo (assets/personajes)
 var NEW_ART = ['cronos', 'eco', 'garra', 'halcon', 'kaia', 'lyra', 'oria', 'rocco', 'seren', 'sombra', 'titan', 'fenix'];
 var CORE = ['./', 'index.html', 'style.css', 'favicon.svg', 'manifest.json', 'js/data.js', 'js/version.js', 'js/art.js', 'js/meta.js', 'js/board.js', 'js/battle.js', 'js/music.js', 'js/ui.js',
@@ -21,6 +21,8 @@ var EXTRA = ['assets/icons/gota.webp?v=2', 'assets/ui/boton.webp', 'assets/ui/bo
   .concat(['invocar-aro', 'acelerar', 'rayo-cadena', 'congelado-1', 'congelado-2', 'ganancia-mana', 'pyra-estallido', 'icono-armadura', 'icono-barrera', 'estado-enredado', 'estado-ascuas'].map(function (k) { return 'assets/fx/' + k + '.webp'; }));
 // 1.32.0: Aurora, set 2
 EXTRA = EXTRA.concat(['assets/units/aurora.webp?v=3', 'assets/units/board/aurora-idle.webp?v=7', 'assets/units/board/aurora-attack.webp?v=7', 'assets/fx/aurora-rayo.webp', 'assets/fx/aurora-aturdido.webp']);
+// 1.33.0: poses extra de la animación de ataque
+EXTRA = EXTRA.concat(['garra-attack2', 'garra-attack3', 'hilda-attack2', 'hilda-attack3', 'tilo-attack2', 'tilo-attack3', 'tilo-attack4', 'valka-attack2', 'aurora-attack2'].map(function (k) { return 'assets/units/board/' + k + '.webp?v=1'; }));
 function cacheEach(c, list) { return Promise.all(list.map(function (u) { return c.add(u).catch(function () {}); })); }
 // el arte, de 6 en 6 (lo que ya esté guardado no se vuelve a bajar)
 function warmExtra() {

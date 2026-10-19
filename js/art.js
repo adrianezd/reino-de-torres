@@ -196,6 +196,45 @@ var POSES = {
 // tropas con el arte nuevo (assets/personajes): sus poses llevan otra versión
 var NEW_POSE = { cronos: 1, eco: 1, garra: 1, halcon: 1, kaia: 1, lyra: 1, oria: 1, rocco: 1, seren: 1, sombra: 1, titan: 1, fenix: 1 };
 var ATK_POSE_TIME = 0.15;
+/* Animación de ataque de las tropas con más poses en sus otras hojas
+   (assets/personajes): cada disparo, o cada toque en la tropa, hace la
+   siguiente secuencia de la lista, repartida a lo largo de ATK_ANIM_TIME.
+   Garra: brazos arriba, carrera y conjuro; Hilda: martillo y dos tiros;
+   Tilo: frasco, vertido, mano y lanzamiento; Valka y Aurora, dos poses. */
+var ATK_ANIM = {
+  garra: [['attack3', 'attack'], ['attack2'], ['attack3', 'attack2']],
+  hilda: [['attack2', 'attack'], ['attack3'], ['attack2', 'attack3']],
+  tilo: [['attack2', 'attack3'], ['attack'], ['attack2', 'attack4']],
+  valka: [['attack'], ['attack2']],
+  aurora: [['attack2', 'attack'], ['attack']]
+};
+var ATK_ANIM_TIME = 0.36, TAP_ANIM_TIME = 0.6;
+// pone a la tropa en pose de ataque durante t segundos (más si tiene animación)
+function startAtk(u, t) {
+  u.atk = u.atkMax = ATK_ANIM[u.id] ? Math.max(t, ATK_ANIM_TIME) : t;
+  u.atkN = (u.atkN || 0) + 1;
+}
+// la pose de ataque que toca ahora según lo que lleva de animación
+function atkFrame(id, opt) {
+  var seqs = ATK_ANIM[id];
+  if (seqs && opt.atkMax) {
+    var seq = seqs[(opt.atkN || 0) % seqs.length];
+    var k = Math.min(seq.length - 1, Math.floor(Math.max(0, 1 - opt.atk / opt.atkMax) * seq.length));
+    var im = art('pose/' + id + '-' + seq[k]);
+    if (im) return im;
+  }
+  return art('pose/' + id + '-attack');
+}
+Object.keys(ATK_ANIM).forEach(function (id) {
+  var extra = {};
+  ATK_ANIM[id].forEach(function (seq) { seq.forEach(function (p) { if (p !== 'attack') extra[p] = 1; }); });
+  Object.keys(extra).forEach(function (pose) {
+    var im = new Image();
+    im.onload = function () { im.ready = true; };
+    im.src = 'assets/units/board/' + id + '-' + pose + '.webp?v=1';
+    IMG['pose/' + id + '-' + pose] = im;
+  });
+});
 Object.keys(POSES).forEach(function (id) {
   ['idle', 'attack'].forEach(function (pose) {
     var im = new Image();
@@ -476,7 +515,7 @@ function drawUnit(c, id, x, y, r, rank, now, opt) {
   // en el tablero: cuerpo recortado sin chapa, con pose de reposo y de ataque
   var idle = opt.board && art('pose/' + id + '-idle');
   // las que solo potencian (Melodía) tocan sin parar: siempre en pose de ataque
-  var hit = idle && (atk || u.buff) && art('pose/' + id + '-attack');
+  var hit = idle && (atk || u.buff) && atkFrame(id, opt);
   if (idle) {
     var foot = r * 0.9;
     c.fillStyle = 'rgba(0,0,0,0.35)'; c.beginPath(); c.ellipse(0, foot, r * 0.7, r * 0.2, 0, 0, Math.PI * 2); c.fill();

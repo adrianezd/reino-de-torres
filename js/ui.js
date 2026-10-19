@@ -1500,6 +1500,8 @@ function startCardDemo(cv, id) {
   // vida de los monstruos: unos cuantos golpes de la tropa
   var dps = UNITS[b.cells[0].id].dmg ? b.unitDamage(0) * UNITS[b.cells[0].id].rate : 20;
   var kinds = ['blob', 'orco', 'ghost', 'brute'], nk = 0, spawnT = 0, last = 0;
+  // al tocar el vídeo, la tropa hace su animación de ataque
+  cv.onclick = function () { var tu = b.cells[pair ? 1 : 0]; if (tu) { startAtk(tu, TAP_ANIM_TIME); tu.recoil = 1; } };
   var dc = cv.getContext('2d');
   function frame(t) {
     if (!cv.isConnected) return;
@@ -1535,7 +1537,7 @@ function startCardDemo(cv, id) {
     for (var i = 0; i < 2; i++) {
       if (!b.cells[i]) continue;
       var c = b.cc(i), u = b.cells[i], lift = tp ? ch * FLOOR_LIFT : 0;
-      drawUnit(dc, u.id, c.x, c.y - 0.02 - lift, 0.42 * Math.min(1, ch) * (1 + u.anim * 0.25), u.rank, t, { board: true, atk: u.atk, aim: u.aim, recoil: u.recoil || 0 });
+      drawUnit(dc, u.id, c.x, c.y - 0.02 - lift, 0.42 * Math.min(1, ch) * (1 + u.anim * 0.25), u.rank, t, { board: true, atk: u.atk, atkMax: u.atkMax, atkN: u.atkN, aim: u.aim, recoil: u.recoil || 0 });
     }
     b.enemies.slice().sort(function (p, q) { return p.y - q.y; }).forEach(function (e) {
       drawEnemy(dc, e, ENEMIES[e.kind].size * 0.82, t);

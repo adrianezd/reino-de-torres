@@ -675,7 +675,7 @@ Board.prototype.fire = function (i, u) {
   var from = this.cc(i);
   u.aim = Math.atan2(target.y - from.y, target.x - from.x);
   u.recoil = 1;
-  u.atk = ATK_POSE_TIME; // pose de ataque mientras sale el proyectil
+  startAtk(u, ATK_POSE_TIME); // pose de ataque mientras sale el proyectil
   if (d.chain) {
     // rayo instantáneo que salta entre enemigos
     var hitSet = {}, cur = target, prev = from, dmg = this.unitDamage(i);
@@ -719,7 +719,7 @@ Board.prototype.releaseWolf = function (i, u) {
   var d = this.def(u.id), p = this.cc(i), start = this.geo.len - 0.15, at = this.pos(start);
   u.aim = Math.atan2(at.y - p.y, at.x - p.x);
   u.recoil = 1;
-  u.atk = 0.5;
+  startAtk(u, 0.5);
   this.wolves.push({ d: start, x: at.x, y: at.y, dir: -1, t: 0, biteT: 0, bitten: {}, v: Math.random() < 0.5 ? '' : '-2',
     bites: d.wolves.bites + Math.floor((u.rank - 1) / 2), dmg: this.unitDamage(i), def: d, unit: u });
   this.fx.push({ type: 'pic', key: 'fx/muerte-puf', x: at.x, y: at.y - 0.05, size: 0.55, rot: 0, grow: 0.4, life: 0.4, max: 0.4 });
@@ -894,7 +894,7 @@ Board.prototype.update = function (dt) {
       if (u.gen >= d.manaGen.every) {
         u.gen = 0;
         var amt = this.addMana(this.manaAmount(u));
-        u.atk = 0.5; u.recoil = 1; // pose de ataque y rebote al repartir el maná
+        startAtk(u, 0.5); u.recoil = 1; // pose de ataque y rebote al repartir el maná
         var p = this.cc(i);
         if (art('fx/ganancia-mana')) this.fx.push({ type: 'pic', key: 'fx/ganancia-mana', x: p.x, y: p.y - 0.2, size: 0.8, rot: 0, grow: 0.45, life: 0.6, max: 0.6 });
         this.addText(p.x, p.y - 0.5, '+' + amt + ' 💧', GAME_PALETTE.manaBlue);
@@ -909,7 +909,7 @@ Board.prototype.update = function (dt) {
         var gain = this.interestAmount(u);
         if (gain > 0) {
           gain = this.addMana(gain);
-          u.atk = 0.5; u.recoil = 1;
+          startAtk(u, 0.5); u.recoil = 1;
           var pi = this.cc(i);
           this.addText(pi.x, pi.y - 0.5, '+' + gain + ' 💧', GAME_PALETTE.goldYellow);
           this.fx.push({ type: 'pic', key: 'fx/oria-interes', x: pi.x, y: pi.y - 0.15, size: 0.95, rot: 0, grow: 0.45, life: 0.6, max: 0.6 });
@@ -921,7 +921,7 @@ Board.prototype.update = function (dt) {
       // la bardo toca: pose de ataque a ratos
       u.gen += dt;
       if (u.gen >= 2.4) {
-        u.gen = 0; u.atk = 0.5; u.recoil = 1;
+        u.gen = 0; startAtk(u, 0.5); u.recoil = 1;
         // su efecto (assets/fx/<tropa>-tiro) sale hacia cada vecina que potencia
         var bk = 'fx/' + u.id + '-tiro', bp = this.cc(i);
         if (art(bk)) neighbors(i).forEach(function (j) {
@@ -936,7 +936,7 @@ Board.prototype.update = function (dt) {
     if (d.wild) {
       // Eco ensaya su hechizo de cristales de vez en cuando
       u.gen += dt;
-      if (u.gen >= 5) { u.gen = 0; u.atk = 0.6; u.recoil = 1; }
+      if (u.gen >= 5) { u.gen = 0; startAtk(u, 0.6); u.recoil = 1; }
     }
     if (!d.dmg) continue;
     u.cd -= dt * d.rate * this.unitSpeed(i) * (1 + 0.06 * (u.rank - 1));
